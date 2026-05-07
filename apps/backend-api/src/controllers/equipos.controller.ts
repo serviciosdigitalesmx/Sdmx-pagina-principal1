@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { serviceOrdersService } from '../services/service-orders.service';
+import { serviceOrdersService } from '../services/service-orders.service.js';
 import { AuthRequest } from '../middleware/auth';
 
 export const crearEquipo = async (req: AuthRequest, res: Response) => {

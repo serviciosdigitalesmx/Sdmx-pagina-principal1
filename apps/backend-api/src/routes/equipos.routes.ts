@@ -7,7 +7,7 @@ import {
   actualizarEquipo, 
   agregarFotoSeguimiento, 
   obtenerHistorial 
-} from '../controllers/equipos.controller';
+} from '../controllers/equipos.controller.js';
 import { authMiddleware } from '../middleware/auth';
 
 const router = Router();

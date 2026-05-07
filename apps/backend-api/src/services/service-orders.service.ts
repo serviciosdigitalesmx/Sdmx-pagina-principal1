@@ -1,106 +1,90 @@
-import { supabase } from './supabase';
-import { ServiceOrderCreateRequestDto, ServiceOrderUpdateRequestDto, ServiceOrderResponseDto } from '@sdmx/contracts';
+import { supabase } from './supabase.js';
+import type { 
+  ServiceOrderCreateRequestDto, 
+  ServiceOrderStatusUpdateRequestDto,
+  DashboardSummaryDto,
+  ServiceOrderDto,
+  TimelineEventDto
+} from '@sdmx/contracts';
 
 export class ServiceOrdersService {
-  async create(tenantId: string, data: ServiceOrderCreateRequestDto): Promise<ServiceOrderResponseDto> {
-    const { cliente_id, tipo_dispositivo, marca_modelo, falla_reportada, fecha_promesa, costo_estimado, checklist, foto_recepcion_url, notas_internas } = data;
-    const { data: order, error } = await supabase
-      .from('equipos')
+  async dashboardSummary(token: string): Promise<DashboardSummaryDto> {
+    // Implementa la lógica para contar órdenes por estado. Usa la tabla real.
+    const { data, error } = await supabase
+      .from('service_orders')
+      .select('status', { count: 'exact', head: true });
+    // ... lógica de agregación
+    return {
+      openOrders: 0,
+      inProgressOrders: 0,
+      readyOrders: 0,
+      totalCustomers: 0,
+      totalSalesMxn: 0,
+    };
+  }
+
+  async createServiceOrder(token: string, request: ServiceOrderCreateRequestDto): Promise<ServiceOrderDto> {
+    const { data, error } = await supabase
+      .from('service_orders')
       .insert({
-        tenant_id: tenantId,
-        cliente_id,
-        tipo_dispositivo,
-        marca_modelo,
-        falla_reportada,
-        fecha_promesa,
-        costo_estimado,
-        checklist: checklist || { cargador: false, pantalla: false, prende: false, respaldo: false },
-        foto_recepcion_url,
-        notas_internas,
-        estado: 'Recibido',
-        fecha_ingreso: new Date().toISOString().split('T')[0],
+        tenant_id: request.tenantId,
+        branch_id: request.branchId,
+        customer_id: request.customerId,
+        device_type: request.deviceType,
+        device_brand: request.deviceBrand,
+        device_model: request.deviceModel,
+        reported_issue: request.reportedIssue,
+        estimated_cost: request.estimatedCost,
+        notes: request.notes,
+        reception_checklist: request.receptionChecklist,
+        reception_photo_base64: request.receptionPhotoBase64,
+        source_quote_folio: request.sourceQuoteFolio,
+        promised_date: request.promisedDate,
+        status: 'received'
       })
-      .select('*, clientes(*)')
+      .select()
       .single();
-    if (error) throw new Error(error.message);
-    await supabase.from('equipo_historial').insert({
-      equipo_id: order.id,
-      estado_nuevo: 'Recibido',
-      comentario: 'Orden creada desde recepción'
-    });
-    return order;
-  }
-
-  async findAll(tenantId: string, filters: any): Promise<ServiceOrderResponseDto[]> {
-    let query = supabase.from('equipos').select('*, clientes(*)').eq('tenant_id', tenantId);
-    if (filters.estado && filters.estado !== 'todos') query = query.eq('estado', filters.estado);
-    if (filters.tecnico) query = query.eq('tecnico_asignado', filters.tecnico);
-    if (filters.folio) query = query.ilike('folio', `%${filters.folio}%`);
-    if (filters.cliente) query = query.ilike('clientes.nombre', `%${filters.cliente}%`);
-    if (filters.desde) query = query.gte('fecha_ingreso', filters.desde);
-    if (filters.hasta) query = query.lte('fecha_ingreso', filters.hasta);
-    const { data, error } = await query.order('created_at', { ascending: false });
     if (error) throw new Error(error.message);
     return data;
   }
 
-  async findById(tenantId: string, id: string): Promise<ServiceOrderResponseDto> {
+  async listServiceOrders(token: string): Promise<ServiceOrderDto[]> {
     const { data, error } = await supabase
-      .from('equipos')
-      .select('*, clientes(*), equipo_fotos(*)')
-      .eq('id', id)
-      .eq('tenant_id', tenantId)
-      .single();
-    if (error) throw new Error('Orden no encontrada');
+      .from('service_orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
     return data;
   }
 
-  async findByFolioForClient(folio: string): Promise<any> {
+  async updateServiceOrderStatus(token: string, serviceOrderId: string, request: ServiceOrderStatusUpdateRequestDto): Promise<ServiceOrderDto> {
     const { data, error } = await supabase
-      .from('equipos')
-      .select('*, clientes(nombre, telefono), equipo_fotos(url, tipo)')
+      .from('service_orders')
+      .update({ status: request.status })
+      .eq('id', serviceOrderId)
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async listStatusTimeline(token: string, serviceOrderId: string): Promise<TimelineEventDto[]> {
+    const { data, error } = await supabase
+      .from('service_order_timeline')
+      .select('*')
+      .eq('service_order_id', serviceOrderId)
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
+  async getPortalOrderPublic(folio: string): Promise<ServiceOrderDto> {
+    const { data, error } = await supabase
+      .from('service_orders')
+      .select('*')
       .eq('folio', folio)
       .single();
     if (error) throw new Error('Folio no encontrado');
-    return data;
-  }
-
-  async update(tenantId: string, id: string, updates: ServiceOrderUpdateRequestDto): Promise<ServiceOrderResponseDto> {
-    const { data: old } = await supabase.from('equipos').select('estado').eq('id', id).eq('tenant_id', tenantId).single();
-    const { data, error } = await supabase
-      .from('equipos')
-      .update({ ...updates, updated_at: new Date() })
-      .eq('id', id)
-      .eq('tenant_id', tenantId)
-      .select('*, clientes(*)')
-      .single();
-    if (error) throw new Error(error.message);
-    if (updates.estado && old && old.estado !== updates.estado) {
-      await supabase.from('equipo_historial').insert({
-        equipo_id: id,
-        estado_anterior: old.estado,
-        estado_nuevo: updates.estado,
-        comentario: updates.comentario_estado || `Cambio a ${updates.estado}`
-      });
-    }
-    return data;
-  }
-
-  async addFollowUpPhoto(equipoId: string, url: string, tenantId: string): Promise<void> {
-    await supabase.from('equipo_fotos').insert({
-      equipo_id: equipoId,
-      url,
-      tipo: 'seguimiento'
-    });
-  }
-
-  async getHistory(equipoId: string, tenantId: string): Promise<any[]> {
-    const { data, error } = await supabase
-      .from('equipo_historial')
-      .select('*')
-      .eq('equipo_id', equipoId)
-      .order('created_at', { ascending: false });
-    if (error) throw new Error(error.message);
     return data;
   }
 }
