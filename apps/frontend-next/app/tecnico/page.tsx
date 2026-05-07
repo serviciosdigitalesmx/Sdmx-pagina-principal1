@@ -1,131 +1,90 @@
 'use client';
-import { useState } from 'react';
-import { apiClient } from '@/lib/apiClient';
-import { SaasShell } from '@/components/ui/SaasShell';
-import { Search, Clock, ArrowRight } from 'lucide-react';
-import { formatDate } from '@/lib/format';
+import { useEffect, useState } from 'react';
+import { useApi } from '@/hooks/useApi';
+import { uploadImage } from '@/lib/storage';
 
-interface TimelineEntry {
-  id: string;
-  from_status: string;
-  to_status: string;
-  note: string | null;
-  created_at: string;
-}
+export default function TecnicoPage() {
+  const [equipos, setEquipos] = useState([]);
+  const [filtros, setFiltros] = useState({ estado: 'todos', tecnico: '', busqueda: '' });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selected, setSelected] = useState<any>(null);
+  const [nuevasFotos, setNuevasFotos] = useState<File[]>([]);
+  const { get, put } = useApi();
 
-export default function Page() {
-  const [id, setId] = useState('');
-  const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const cargarEquipos = async () => {
+    const data = await get('/api/equipos', filtros);
+    setEquipos(data);
+  };
+  useEffect(() => { cargarEquipos(); }, [filtros]);
 
-  const load = async () => {
-    if (!id) return;
-    setLoading(true);
-    setError('');
-    try {
-      const response = await apiClient.get<TimelineEntry[]>(`/api/service-orders/${id}/timeline`);
-      if (response.success && response.data) {
-        setTimeline(response.data);
-      } else {
-        setError(response.error?.message || 'No se pudo cargar el historial');
-      }
-    } catch (e) {
-      setError('Error de conexión con el servidor');
-    } finally {
-      setLoading(false);
+  const abrirModal = async (id: string) => {
+    const equipo = await get(`/api/equipos/${id}`);
+    setSelected(equipo);
+    setModalOpen(true);
+  };
+  const guardarCambio = async (campo: string, valor: any) => {
+    if (!selected) return;
+    await put(`/api/equipos/${selected.id}`, { [campo]: valor });
+    setSelected({ ...selected, [campo]: valor });
+    cargarEquipos();
+  };
+  const subirFotos = async () => {
+    if (!selected || nuevasFotos.length === 0) return;
+    for (const foto of nuevasFotos) {
+      const url = await uploadImage(foto, `seguimiento/${selected.id}`);
+      await put(`/api/equipos/${selected.id}`, { fotos_seguimiento: [url] });
     }
+    setNuevasFotos([]);
+    cargarEquipos();
+    abrirModal(selected.id);
+  };
+  const getColor = (fechaPromesa: string) => {
+    const dias = (new Date(fechaPromesa).getTime() - new Date().getTime()) / (1000*3600*24);
+    if (dias <= 2) return 'border-red-500 bg-red-500/10';
+    if (dias <= 4) return 'border-yellow-500 bg-yellow-500/10';
+    return 'border-green-500 bg-green-500/10';
   };
 
   return (
-    <SaasShell 
-      title="Seguimiento Técnico" 
-      subtitle="Historial detallado de cambios de estado y notas internas"
-    >
-      <div className="space-y-8">
-        <section className="srf-card p-8">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
-              <input 
-                value={id} 
-                onChange={(e) => setId(e.target.value)} 
-                placeholder="Ingresa el ID de la orden de servicio..."
-                className="srf-input pl-12"
-              />
-            </div>
-            <button 
-              onClick={load} 
-              disabled={loading || !id}
-              className="srf-btn-primary px-10 py-4 flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>Consultar Historial</>
-              )}
-            </button>
-          </div>
-        </section>
-
-        {error && (
-          <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-2xl flex items-center gap-3">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            {error}
-          </div>
-        )}
-
-        <section className="relative">
-          {timeline.length > 0 ? (
-            <div className="space-y-6">
-              {timeline.map((entry, index) => (
-                <div key={entry.id} className="flex gap-6 group">
-                  <div className="flex flex-col items-center">
-                    <div className="w-10 h-10 rounded-2xl bg-slate-800 border border-blue-500/30 flex items-center justify-center text-blue-400 group-hover:scale-110 transition-transform shadow-lg">
-                      <Clock className="h-5 w-5" />
-                    </div>
-                    {index !== timeline.length - 1 && (
-                      <div className="w-0.5 flex-1 bg-gradient-to-b from-blue-500/30 to-transparent my-2" />
-                    )}
-                  </div>
-                  
-                  <div className="flex-1 srf-card-soft p-6 group-hover:border-blue-500/40 transition-colors">
-                    <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
-                      <div className="flex items-center gap-3">
-                        <span className="px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                          {entry.from_status}
-                        </span>
-                        <ArrowRight className="h-4 w-4 text-slate-600" />
-                        <span className="px-3 py-1 rounded-lg bg-orange-500/10 border border-orange-500/30 text-[10px] font-black uppercase tracking-widest text-orange-400">
-                          {entry.to_status}
-                        </span>
-                      </div>
-                      <time className="text-xs font-medium text-slate-500">
-                        {formatDate(entry.created_at, { dateStyle: 'long', timeStyle: 'short' })}
-                      </time>
-                    </div>
-
-                    {entry.note ? (
-                      <div className="bg-slate-900/50 rounded-xl p-4 border border-slate-800">
-                        <p className="text-slate-300 text-sm leading-relaxed">
-                          {entry.note}
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-slate-500 text-sm italic">Sin observaciones adicionales.</p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : !loading && id ? (
-            <div className="text-center py-20 srf-card-soft opacity-60">
-               <p className="text-slate-400 font-medium">No se encontraron eventos para esta orden.</p>
-               <p className="text-slate-600 text-xs mt-1">Verifica que el ID sea correcto.</p>
-            </div>
-          ) : null}
-        </section>
+    <div className="p-4">
+      <div className="flex gap-4 mb-6 flex-wrap">
+        <input type="text" placeholder="Buscar folio, cliente..." className="input flex-1" value={filtros.busqueda} onChange={e => setFiltros({...filtros, busqueda: e.target.value})} />
+        <select value={filtros.estado} onChange={e => setFiltros({...filtros, estado: e.target.value})} className="input"><option value="todos">Todos los estados</option><option>Recibido</option><option>En Diagnóstico</option><option>En Reparación</option><option>Esperando Refacción</option><option>Listo</option></select>
+        <button onClick={cargarEquipos} className="btn-secondary">Actualizar</button>
       </div>
-    </SaasShell>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {equipos.map((eq: any) => (
+          <div key={eq.id} className={`border rounded-xl p-4 cursor-pointer ${getColor(eq.fecha_promesa)}`} onClick={() => abrirModal(eq.id)}>
+            <div className="flex justify-between"><span className="font-mono text-sm">{eq.folio}</span><span className="text-xs">{eq.estado}</span></div>
+            <div className="font-bold mt-1">{eq.clientes?.nombre}</div>
+            <div className="text-sm text-gray-300">{eq.marca_modelo}</div>
+            <div className="text-xs text-gray-400 mt-2">Promesa: {eq.fecha_promesa}</div>
+          </div>
+        ))}
+      </div>
+      {modalOpen && selected && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-900 w-full max-w-4xl rounded-2xl max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-gray-900 p-4 border-b flex justify-between"><h3 className="text-xl font-bold">{selected.folio}</h3><button onClick={() => setModalOpen(false)} className="text-white">Cerrar</button></div>
+            <div className="p-6 space-y-6">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div><label>Cliente</label><input type="text" value={selected.clientes?.nombre} onChange={e => guardarCambio('cliente_nombre', e.target.value)} className="input w-full" /></div>
+                <div><label>Teléfono</label><input type="text" value={selected.clientes?.telefono} onChange={e => guardarCambio('cliente_telefono', e.target.value)} className="input w-full" /></div>
+                <div><label>Equipo</label><input type="text" value={`${selected.tipo_dispositivo} - ${selected.marca_modelo}`} disabled className="input w-full" /></div>
+                <div><label>Fecha promesa</label><input type="date" value={selected.fecha_promesa} onChange={e => guardarCambio('fecha_promesa', e.target.value)} className="input w-full" /></div>
+                <div><label>Costo estimado</label><input type="number" step="0.01" value={selected.costo_estimado || ''} onChange={e => guardarCambio('costo_estimado', e.target.value)} className="input w-full" /></div>
+                <div><label>Estado</label><select value={selected.estado} onChange={e => guardarCambio('estado', e.target.value)} className="input w-full"><option>Recibido</option><option>En Diagnóstico</option><option>En Reparación</option><option>Esperando Refacción</option><option>Listo</option><option>Entregado</option></select></div>
+                <div><label>Técnico asignado</label><input type="text" value={selected.tecnico_asignado || ''} onChange={e => guardarCambio('tecnico_asignado', e.target.value)} className="input w-full" /></div>
+                <div><label>YouTube ID (Live)</label><input type="text" value={selected.youtube_id || ''} onChange={e => guardarCambio('youtube_id', e.target.value)} className="input w-full" /></div>
+              </div>
+              <div><label>Falla reportada</label><textarea value={selected.falla_reportada} onChange={e => guardarCambio('falla_reportada', e.target.value)} rows={2} className="input w-full" /></div>
+              <div><label>Seguimiento (cliente)</label><textarea value={selected.seguimiento_cliente || ''} onChange={e => guardarCambio('seguimiento_cliente', e.target.value)} rows={3} className="input w-full" /></div>
+              <div><label>Notas internas</label><textarea value={selected.notas_internas || ''} onChange={e => guardarCambio('notas_internas', e.target.value)} rows={3} className="input w-full" /></div>
+              <div><label>Fotos de seguimiento</label><input type="file" multiple accept="image/*" onChange={e => setNuevasFotos(Array.from(e.target.files || []))} /><button onClick={subirFotos} className="btn-primary mt-2">Subir fotos</button></div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
