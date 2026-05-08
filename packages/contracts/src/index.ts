@@ -330,7 +330,7 @@ export interface ServiceOrderDto {
   accessories?: string | null;
   internal_notes?: string | null;
   warranty_until?: string | null; // ISO timestamp
-  evidence_metadata?: any; // JSON array metadata for evidence images
+  evidence_metadata?: any[]; // JSON array metadata for evidence images
   promised_date?: string | null;
   costo_estimado?: number | null;
   created_at?: string;
@@ -356,7 +356,7 @@ export interface ServiceOrderCreateRequestDto {
   accessories?: string;
   internalNotes?: string;
   warrantyUntil?: string; // ISO timestamp
-  evidenceMetadata?: any;
+  evidenceMetadata?: any[];
   receptionChecklist?: any;
   receptionPhotoBase64?: string;
   sourceQuoteFolio?: string;
@@ -366,7 +366,7 @@ export interface ServiceOrderCreateRequestDto {
   reportedIssue?: string;
 }
 
-export interface ServiceOrderStatusUpdateRequestDto { status: ServiceStatus }
+export interface ServiceOrderStatusUpdateRequestDto { status: ServiceStatus; note?: string }
 
 export interface TimelineEventDto {
   id: string;
