@@ -10,8 +10,8 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Burger's Racing | Menú y pedidos",
-  description: 'Menú de hamburguesas, tacos, tortas, hotdogs y más con pedido por WhatsApp'
+  title: "Sr. Fix | Gestión de Talleres",
+  description: 'Plataforma profesional para la gestión de talleres y servicios técnicos'
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
