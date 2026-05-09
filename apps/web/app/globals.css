@@ -3,16 +3,16 @@
 @tailwind utilities;
 
 :root {
-  --srf-bg: #0b1220;
-  --srf-panel: rgba(21, 31, 53, 0.9);
-  --srf-panel-soft: rgba(15, 23, 42, 0.74);
-  --srf-card: #2B2B2B;
-  --srf-muted: #8A8F95;
-  --srf-white: #F2F2F2;
-  --srf-blue: #1F7EDC;
-  --srf-blue-bright: #2FA4FF;
-  --srf-orange: #FF6A2A;
-  --srf-orange-dark: #E85A1F;
+  --srf-bg: #08110c;
+  --srf-panel: rgba(12, 21, 17, 0.92);
+  --srf-panel-soft: rgba(10, 18, 15, 0.82);
+  --srf-card: #0f1814;
+  --srf-muted: #b7c4bc;
+  --srf-white: #edf7ef;
+  --srf-blue: #22c55e;
+  --srf-blue-bright: #4ade80;
+  --srf-orange: #22c55e;
+  --srf-orange-dark: #16a34a;
   --srf-green: #22c55e;
 }
 
@@ -28,9 +28,9 @@ body {
   margin: 0;
   min-height: 100dvh;
   background:
-    radial-gradient(circle at top left, rgba(31, 126, 220, 0.16) 0%, transparent 28%),
-    radial-gradient(circle at 84% 14%, rgba(255, 106, 42, 0.12) 0%, transparent 22%),
-    linear-gradient(180deg, #0b1220 0%, #101827 100%);
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.16) 0%, transparent 24%),
+    radial-gradient(circle at 84% 14%, rgba(59, 130, 246, 0.12) 0%, transparent 20%),
+    linear-gradient(180deg, #08110c 0%, #0f1720 100%);
   color: var(--srf-white);
   font-family: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
 }

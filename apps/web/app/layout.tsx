@@ -10,8 +10,8 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'Fixi | Premium SaaS',
-  description: 'Sistema de Gestión Fixi'
+  title: 'Don Cepillo | Catálogo y pedidos',
+  description: 'Catálogo web de productos de limpieza con pedido por WhatsApp'
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
