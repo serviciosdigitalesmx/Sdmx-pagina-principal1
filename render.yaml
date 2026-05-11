@@ -19,3 +19,19 @@ services:
         sync: false
       - key: FRONTEND_ORIGIN
         sync: false
+  - type: web
+    name: sdmx-web
+    runtime: node
+    rootDir: apps/web
+    plan: starter
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: NEXT_PUBLIC_API_BASE_URL
+        sync: false

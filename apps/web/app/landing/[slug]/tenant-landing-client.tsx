@@ -79,6 +79,11 @@ export default function TenantLandingClient({ slug }: { slug: string }) {
     setError("");
     setResult(null);
     try {
+      // Sanitize budget to ensure numeric value (strip currency symbols, commas)
+      const rawBudget = (budget || "").toString();
+      const sanitized = parseFloat(rawBudget.replace(/[^0-9.]/g, "")) || 0;
+      const estimatedCost = estimateQuote(sanitized).total;
+
       const response = await apiClient.post<PublicRequestResult>("/api/public/requests", {
         tenantSlug: tenant.slug,
         fullName,
@@ -88,7 +93,7 @@ export default function TenantLandingClient({ slug }: { slug: string }) {
         deviceBrand,
         deviceModel,
         reportedIssue,
-        estimatedCost: quote.total,
+        estimatedCost,
       });
       if (!response.success || !response.data) throw new Error(getApiErrorMessage(response.error, "No se pudo enviar la solicitud"));
       setResult(response.data);
