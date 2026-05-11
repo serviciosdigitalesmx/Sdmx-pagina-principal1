@@ -8,6 +8,11 @@ const assert = (condition: boolean, message: string): void => {
   if (!condition) throw new Error(message);
 };
 
+const normalizeTenantSlug = (email?: string | null): string => {
+  const localPart = String(email || 'default').split('@')[0] || 'default';
+  return localPart.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'default';
+};
+
 const syncAuthTenantMetadata = async (authUserId: string, tenantId: string): Promise<void> => {
   await supabase.authAdminUpdate(authUserId, {
     app_metadata: {
@@ -127,8 +132,43 @@ export const authService = {
   },
 
   async sessionFromToken(accessToken: string): Promise<SessionDto> {
-    const session = await loadSession(accessToken);
-    assert(Boolean(session.user), 'Usuario no encontrado');
-    return session;
+    try {
+      const session = await loadSession(accessToken);
+      assert(Boolean(session.user), 'Usuario no encontrado');
+      return session;
+    } catch (error) {
+      const auth = await supabase.authUser(accessToken);
+      const email = String(auth.email || '').trim().toLowerCase();
+      if (!email) throw error instanceof Error ? error : new Error('No se pudo resolver el correo del usuario');
+
+      const tenantSlug = normalizeTenantSlug(email);
+      const tenantRows = await supabase.upsertAsService<Array<{ id: string }>>(
+        'tenants',
+        {
+          name: email.split('@')[0] || email,
+          slug: tenantSlug
+        },
+        'slug'
+      );
+
+      const tenantId = String(tenantRows[0].id);
+      const existingUsers = await supabase.queryAsService<UserDto[]>(
+        `users?auth_user_id=eq.${encodeURIComponent(auth.id)}&select=*`
+      );
+
+      if (!existingUsers[0]) {
+        const fullName = email.split('@')[0] || email;
+        await supabase.insertAsService<UserDto[]>('users', {
+          id: randomUUID(),
+          auth_user_id: auth.id,
+          tenant_id: tenantId,
+          full_name: fullName,
+          email
+        });
+      }
+
+      await syncAuthTenantMetadata(auth.id, tenantId);
+      return loadSession(accessToken);
+    }
   }
 };

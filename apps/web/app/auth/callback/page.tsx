@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { buildApiUrl } from "@/lib/api-base";
-import { setToken } from "@/lib/auth/tokenManager";
+import { setRefreshToken, setToken } from "@/lib/auth/tokenManager";
 import { getApiErrorMessage } from "@/lib/getApiErrorMessage";
 import type { ApiResponse } from "@sdmx/contracts";
 import type { Session } from "@/lib/session";
@@ -46,7 +46,12 @@ export default function AuthCallbackPage() {
           throw new Error(getApiErrorMessage(bootstrapPayload?.error, 'No se pudo completar el bootstrap de OAuth'));
         }
 
-        setToken(bootstrapPayload.data.accessToken || accessToken);
+        if (bootstrapPayload.data.accessToken || accessToken) {
+          setToken(bootstrapPayload.data.accessToken || accessToken);
+        }
+        if (bootstrapPayload.data.refreshToken) {
+          setRefreshToken(bootstrapPayload.data.refreshToken);
+        }
         window.history.replaceState({}, document.title, '/hub');
         router.replace('/hub');
       } catch (error) {

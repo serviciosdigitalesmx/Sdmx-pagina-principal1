@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { clearToken, getToken, setToken } from "@/lib/auth/tokenManager";
+import { clearAllTokens, getRefreshToken, getToken, setRefreshToken, setToken } from "@/lib/auth/tokenManager";
 import { apiClient } from "@/lib/apiClient";
 import type { Session } from "@/lib/session";
 import { login as backendLogin, logout as backendLogout } from "@/services/auth.service";
@@ -34,9 +34,12 @@ async function loadSession(): Promise<Session | null> {
 }
 
 async function refreshSessionRequest(): Promise<Session | null> {
-  const refresh = await apiClient.post<{ accessToken?: string; session?: Session }>("/auth/refresh", {}, { credentials: 'include' });
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return null;
+  const refresh = await apiClient.post<{ accessToken?: string; session?: Session; refreshToken?: string }>("/auth/refresh", { refreshToken }, { credentials: 'include' });
   if (!refresh.success || !refresh.data) return null;
   if (refresh.data.accessToken) setToken(refresh.data.accessToken);
+  if (refresh.data.refreshToken) setRefreshToken(refresh.data.refreshToken);
   if (refresh.data.session) return refresh.data.session;
   return loadSession();
 }
@@ -49,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const bootstrap = async () => {
     const current = getToken() ? await loadSession() : await refreshSessionRequest();
     if (!current) {
-      clearToken();
+      clearAllTokens();
       setSession(null);
       setLoading(false);
       return;
@@ -74,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     },
     logout: async () => {
       await backendLogout();
-      clearToken();
+      clearAllTokens();
       setSession(null);
       router.push("/login");
     },
