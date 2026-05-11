@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import { buildSimplePdf } from '../lib/pdf.js';
+import { getApiErrorMessage } from '../lib/getApiErrorMessage.js';
 
 const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -51,8 +52,8 @@ export async function getPublicTenant(req: Request, res: Response) {
         portalUrl: buildPortalUrl()
       }
     });
-  } catch (e: any) {
-    return res.status(400).json({ success: false, error: { code: 'DOMAIN_ERROR', message: e.message } });
+  } catch (error: unknown) {
+    return res.status(400).json({ success: false, error: { code: 'DOMAIN_ERROR', message: getApiErrorMessage(error, 'Tenant lookup error') } });
   }
 }
 
@@ -138,8 +139,8 @@ export async function createPublicRequest(req: Request, res: Response) {
         portalUrl: buildPortalUrl(order.folio)
       }
     });
-  } catch (e: any) {
-    return res.status(400).json({ success: false, error: { code: 'DOMAIN_ERROR', message: e.message } });
+  } catch (error: unknown) {
+    return res.status(400).json({ success: false, error: { code: 'DOMAIN_ERROR', message: getApiErrorMessage(error, 'Create request error') } });
   }
 }
 
@@ -171,7 +172,7 @@ export async function generateOrderPdf(req: Request, res: Response) {
     res.setHeader('Content-Disposition', `inline; filename=\"orden-${order.folio}.pdf\"`);
     res.setHeader('Cache-Control', 'no-store');
     return res.send(Buffer.from(pdfBuffer));
-  } catch (error: any) {
-    return res.status(400).json({ success: false, error: { code: 'DOMAIN_ERROR', message: error?.message || 'PDF error' } });
+  } catch (error: unknown) {
+    return res.status(400).json({ success: false, error: { code: 'DOMAIN_ERROR', message: getApiErrorMessage(error, 'PDF error') } });
   }
 }

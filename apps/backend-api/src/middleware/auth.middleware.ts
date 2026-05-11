@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { loadSession } from '../services/context.js';
+import { getApiErrorMessage } from '../lib/getApiErrorMessage.js';
 
 export async function requireAuth(req: Request & { session?: any; tenantId?: string }, res: Response, next: NextFunction) {
   try {
@@ -17,8 +18,8 @@ export async function requireAuth(req: Request & { session?: any; tenantId?: str
     req.headers['x-access-token'] = token;
 
     return next();
-  } catch (e: any) {
-    return res.status(401).json({ success: false, error: { code: 'UNAUTH', message: e.message || 'Unauthorized' } });
+  } catch (error: unknown) {
+    return res.status(401).json({ success: false, error: { code: 'UNAUTH', message: getApiErrorMessage(error, 'Unauthorized') } });
   }
 }
 
