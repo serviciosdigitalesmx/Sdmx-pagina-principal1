@@ -57,11 +57,11 @@ export class ServiceOrdersService {
       device_brand: request.deviceBrand ?? request.deviceInfo?.brand ?? null,
       device_model: request.deviceModel ?? request.deviceInfo?.model ?? null,
       reported_issue: request.reportedIssue ?? request.problemDescription ?? null,
-      serial_number: (request as any).serialNumber ?? null,
-      accessories: (request as any).accessories ?? null,
-      internal_notes: (request as any).internalNotes ?? null,
-      warranty_until: (request as any).warrantyUntil ?? null,
-      evidence_metadata: (request as any).evidenceMetadata ?? null,
+      serial_number: request.serialNumber ?? null,
+      accessories: request.accessories ?? null,
+      internal_notes: request.internalNotes ?? null,
+      warranty_until: request.warrantyUntil ?? null,
+      evidence_metadata: Array.isArray(request.evidenceMetadata) ? request.evidenceMetadata : [],
       estimated_cost: request.estimatedCost ?? null,
       notes: request.notes ?? null,
       reception_checklist: request.receptionChecklist ?? null,
@@ -101,7 +101,7 @@ export class ServiceOrdersService {
     const current = existing && existing[0] ? existing[0] : null;
 
     // Validate status transitions and required fields
-    const toStatus = (request as any).status || (request as any).status;
+    const toStatus = request.status;
     if (toStatus && current) {
       this._validateStatusTransition(current, toStatus, request);
     }
@@ -120,7 +120,7 @@ export class ServiceOrdersService {
       service_order_id: id,
       from_status: fromStatus,
       to_status: toStatus,
-      note: (request as any).note ?? null,
+      note: request.note ?? null,
       actor_user_id: session.user?.id ?? null,
       created_at: new Date().toISOString()
     });

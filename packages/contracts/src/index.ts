@@ -18,6 +18,19 @@ export interface ServiceOrder {
   created_at?: string;
 }
 
+export interface EquipoWithFolio extends ServiceOrderDto {
+  clientes?: { nombre: string; telefono: string };
+  equipo_fotos?: Array<{ id: string; url: string }>;
+  folio?: string;
+  estado?: string;
+  fecha_promesa?: string;
+  marca_modelo?: string;
+  falla_reportada?: string;
+  costo_estimado?: number;
+  seguimiento_cliente?: string;
+  youtube_id?: string;
+}
+
 // Common response wrapper
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -329,19 +342,27 @@ export interface ServiceOrderDto {
   serial_number?: string | null;
   accessories?: string | null;
   internal_notes?: string | null;
-  warranty_until?: string | null; // ISO timestamp
-  evidence_metadata?: any; // JSON array metadata for evidence images
+  warranty_until?: string; // ISO timestamp
+  evidence_metadata?: any[]; // JSON array metadata for evidence images
   promised_date?: string | null;
   costo_estimado?: number | null;
   created_at?: string;
   updated_at?: string;
+  // Legacy fields that should be removed or refactored
+  // cliente_nombre?: string;
+  // cliente_telefono?: string;
+  // equipo_tipo?: string;
 }
 
 export interface ServiceOrderCreateRequestDto {
   customer_id?: string;
   device_info?: DeviceInfo;
+  device_type?: string;
+  device_brand?: string;
+  device_model?: string;
   problem_description?: string;
   promised_date?: string;
+  estimated_price?: number;
   // camelCase aliases used by backend
   customerId?: string;
   deviceInfo?: DeviceInfo;
@@ -356,7 +377,7 @@ export interface ServiceOrderCreateRequestDto {
   accessories?: string;
   internalNotes?: string;
   warrantyUntil?: string; // ISO timestamp
-  evidenceMetadata?: any;
+  evidenceMetadata?: any[];
   receptionChecklist?: any;
   receptionPhotoBase64?: string;
   sourceQuoteFolio?: string;
@@ -364,9 +385,10 @@ export interface ServiceOrderCreateRequestDto {
   tenantId?: string;
   branchId?: string;
   reportedIssue?: string;
+  status?: string;
 }
 
-export interface ServiceOrderStatusUpdateRequestDto { status: ServiceStatus }
+export interface ServiceOrderStatusUpdateRequestDto { status: ServiceStatus; note?: string }
 
 export interface TimelineEventDto {
   id: string;
@@ -413,7 +435,6 @@ export interface FinanceTransactionDto {
 }
 
 export interface FinanceMonthlyDto { month?: string; total_mxn?: number; months?: Array<{ month: string; total_mxn?: number }>; range?: ReportDateRangeDto }
-
 export interface FinanceSummaryDto {
   total_mxn?: number;
   totalIncomeCents?: number;
