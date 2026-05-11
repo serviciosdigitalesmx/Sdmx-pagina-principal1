@@ -74,7 +74,7 @@ export default function TecnicoPageClient() {
         <button onClick={cargarEquipos} className="btn-secondary">Actualizar</button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {equipos.map((eq: any) => (
+        {equipos.map((eq: EquipoItem) => (
           <div key={eq.id} className={`border rounded-xl p-4 cursor-pointer ${getColor(eq.fecha_promesa)}`} onClick={() => abrirModal(eq.id)}>
             <div className="flex justify-between"><span className="font-mono text-sm">{eq.folio}</span><span className="text-xs">{eq.estado}</span></div>
             <div className="font-bold mt-1">{eq.clientes?.nombre}</div>

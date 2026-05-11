@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient, SupabaseClientOptions } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -13,29 +13,29 @@ const client = createClient(supabaseUrl, supabaseServiceKey);
 
 // Define a typed adapter interface so services can call generically.
 export type SupabaseAdapter = {
-  client: any;
+  client: SupabaseClient;
   storage: any;
-  query<T = any>(path: string, token?: string): Promise<T>;
-  queryAsService<T = any>(path: string): Promise<T>;
-  insert<T = any>(table: string, token: string | undefined, payload: any): Promise<T>;
-  insertAsService<T = any>(table: string, payload: any): Promise<T>;
-  upsertAsService<T = any>(table: string, payload: any, onConflict?: string | string[]): Promise<T>;
-  patch<T = any>(path: string, token: string | undefined, payload: any): Promise<T>;
-  rpc<T = any>(name: string, token: string | undefined, payload?: any): Promise<T>;
+  query<T>(path: string, token?: string): Promise<T>;
+  queryAsService<T>(path: string): Promise<T>;
+  insert<T>(table: string, token: string | undefined, payload: unknown): Promise<T>;
+  insertAsService<T>(table: string, payload: unknown): Promise<T>;
+  upsertAsService<T>(table: string, payload: unknown, onConflict?: string | string[]): Promise<T>;
+  patch<T>(path: string, token: string | undefined, payload: unknown): Promise<T>;
+  rpc<T>(name: string, token: string | undefined, payload?: unknown): Promise<T>;
   authAdminCreate(email: string, password: string): Promise<any>;
-  authAdminUpdate(userId: string, data: any): Promise<any>;
+  authAdminUpdate(userId: string, data: unknown): Promise<any>;
   authLogin(email: string, password: string): Promise<any>;
   authRefresh(refreshToken: string): Promise<any>;
   authUser(token: string): Promise<any>;
-  createSignedUrl(bucket: string, path: string, expiresIn: number): Promise<any>;
-  from(table: string): any;
+  createSignedUrl(bucket: string, path: string, expiresIn: number): Promise<unknown>;
+  from(table: string): ReturnType<SupabaseClient['from']>;
 };
 
 export const supabase: SupabaseAdapter = {
   client,
   storage: client.storage,
 
-  async query<T = any>(path: string, token?: string) {
+  async query<T>(path: string, token?: string) {
     const url = `${supabaseUrl}/rest/v1/${path}`;
     const res = await fetch(url, {
       headers: {
@@ -48,11 +48,11 @@ export const supabase: SupabaseAdapter = {
     return (await res.json()) as T;
   },
 
-  async queryAsService<T = any>(path: string) {
+  async queryAsService<T>(path: string) {
     return this.query<T>(path, supabaseServiceKey);
   },
 
-  async insert<T = any>(table: string, token: string | undefined, payload: any) {
+  async insert<T>(table: string, token: string | undefined, payload: unknown) {
     const url = `${supabaseUrl}/rest/v1/${table}`;
     const res = await fetch(url, {
       method: 'POST',
@@ -68,11 +68,11 @@ export const supabase: SupabaseAdapter = {
     return (await res.json()) as T;
   },
 
-  async insertAsService<T = any>(table: string, payload: any) {
+  async insertAsService<T>(table: string, payload: unknown) {
     return this.insert<T>(table, supabaseServiceKey, payload);
   },
 
-  async upsertAsService<T = any>(table: string, payload: any, _onConflict?: string | string[]) {
+  async upsertAsService<T>(table: string, payload: unknown, _onConflict?: string | string[]) {
     try {
       // @ts-ignore - use client.from(table).upsert when available
       const { data, error } = await client.from(table).upsert(payload).select('*');
@@ -95,7 +95,7 @@ export const supabase: SupabaseAdapter = {
     }
   },
 
-  async patch<T = any>(path: string, token: string | undefined, payload: any) {
+  async patch<T>(path: string, token: string | undefined, payload: unknown) {
     const url = `${supabaseUrl}/rest/v1/${path}`;
     const res = await fetch(url, {
       method: 'PATCH',
@@ -111,7 +111,7 @@ export const supabase: SupabaseAdapter = {
     return (await res.json()) as T;
   },
 
-  async rpc<T = any>(name: string, token: string | undefined, payload?: any) {
+  async rpc<T>(name: string, token: string | undefined, payload?: unknown) {
     // @ts-ignore
     const result = await client.rpc(name, payload);
     if (result?.error) throw result.error;
@@ -120,7 +120,6 @@ export const supabase: SupabaseAdapter = {
 
   from(table: string) {
     // proxy to client.from for query builder usage
-    // @ts-ignore
     return client.from(table);
   },
 
@@ -133,7 +132,7 @@ export const supabase: SupabaseAdapter = {
     throw new Error('authAdminCreate not available in this client');
   },
 
-  async authAdminUpdate(userId: string, data: any) {
+  async authAdminUpdate(userId: string, data: unknown) {
     // @ts-ignore
     if (client.auth && (client.auth as any).admin && (client.auth as any).admin.updateUserById) {
       // @ts-ignore
@@ -161,7 +160,7 @@ export const supabase: SupabaseAdapter = {
       },
     });
     if (!res.ok) throw new Error(await res.text());
-    return (await res.json()) as any;
+    return (await res.json()) as unknown;
   },
 
   async createSignedUrl(bucket: string, path: string, expiresIn: number) {

@@ -1,11 +1,13 @@
 'use client';
 import { useState } from 'react';
-export default function EquipoForm({ initialData, onNext, onBack, onFotoChange }: any) {
-  const [tipo, setTipo] = useState(initialData.equipo_tipo || '');
+import type { ServiceOrderCreateRequestDto } from '@sdmx/contracts';
+
+export default function EquipoForm({ initialData, onNext, onBack, onFotoChange }: { initialData: Partial<ServiceOrderCreateRequestDto>; onNext: (data: ServiceOrderCreateRequestDto)=>void; onBack: ()=>void; onFotoChange: (file: File|null)=>void }) {
+  const [tipo, setTipo] = useState(initialData.device_type || initialData.deviceInfo?.type || '');
   const [modelo, setModelo] = useState(initialData.equipo_modelo || '');
   const [falla, setFalla] = useState(initialData.falla || '');
   const [fechaPromesa, setFechaPromesa] = useState(initialData.fecha_promesa || '');
-  const [costo, setCosto] = useState(initialData.costo_estimado || '');
+  const [costo, setCosto] = useState((initialData.costo_estimado ?? initialData.estimatedCost ?? '') as any);
   const [checklist, setChecklist] = useState({ cargador: false, pantalla: false, prende: false, respaldo: false });
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
