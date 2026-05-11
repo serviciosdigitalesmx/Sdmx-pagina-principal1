@@ -1,13 +1,23 @@
-'use client';
 import { useState } from 'react';
-export default function ClienteForm({ initialData, onNext, onLoadCotizacion, folioCotizacion, setFolioCotizacion }: any) {
-  const [nombre, setNombre] = useState(initialData.cliente_nombre || '');
-  const [telefono, setTelefono] = useState(initialData.cliente_telefono || '');
-  const [email, setEmail] = useState(initialData.cliente_email || '');
+
+interface ClienteFormProps {
+  initialData: { nombre?: string; telefono?: string; email?: string; };
+  onNext: (data: { nombre: string; telefono: string; email?: string }) => void;
+  onLoadCotizacion: () => void;
+  folioCotizacion: string;
+  setFolioCotizacion: (folio: string) => void;
+}
+
+export default function ClienteForm({ initialData, onNext, onLoadCotizacion, folioCotizacion, setFolioCotizacion }: ClienteFormProps) {
+  const [nombre, setNombre] = useState(initialData.nombre || '');
+  const [telefono, setTelefono] = useState(initialData.telefono || '');
+  const [email, setEmail] = useState(initialData.email || '');
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onNext({ cliente_nombre: nombre, cliente_telefono: telefono, cliente_email: email });
+    onNext({ nombre, telefono, email });
   };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="bg-gray-800 p-4 rounded mb-4">

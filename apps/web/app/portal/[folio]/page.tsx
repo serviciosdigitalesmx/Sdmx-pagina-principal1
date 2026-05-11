@@ -3,21 +3,22 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/lib/apiClient';
 import { getApiErrorMessage } from '@/lib/getApiErrorMessage';
+import type { EquipoWithFolio } from '@sdmx/contracts';
 
 export default function PortalClientePage() {
   const { folio } = useParams();
-  const [equipo, setEquipo] = useState<any>(null);
-  const [error, setError] = useState('');
+  const [equipo, setEquipo] = useState<EquipoWithFolio | null>(null);
+  const [error, setError] = useState<string>('');
   const [dias, setDias] = useState<number | null>(null);
 
   useEffect(() => {
     if (folio) {
       apiClient.get(`/api/equipos/folio/${folio}`).then((response) => {
         if (!response.success || !response.data) {
-          setError(getApiErrorMessage(response.error, 'Folio no encontrado'));
+          setError(getApiErrorMessage(response.error ?? undefined, 'Folio no encontrado'));
           return;
         }
-        setEquipo(response.data);
+        setEquipo(response.data as EquipoWithFolio);
       }).catch(() => setError('Folio no encontrado'));
     }
   }, [folio]);

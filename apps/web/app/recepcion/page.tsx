@@ -6,6 +6,7 @@ import { uploadImage } from '@/lib/storage';
 import ClienteForm from '@/components/equipos/ClienteForm';
 import EquipoForm from '@/components/equipos/EquipoForm';
 import Confirmacion from '@/components/equipos/Confirmacion';
+import type { ServiceOrderCreateRequestDto } from '@sdmx/contracts';
 
 type CotizacionData = {
   nombre: string;
@@ -17,16 +18,27 @@ type CotizacionData = {
   urgencia: string;
 };
 
-type OrdenRecepcion = {
-  cliente_telefono: string;
-  folio: string;
+type ReceptionFormData = Partial<ServiceOrderCreateRequestDto> & {
+  nombre?: string;
+  telefono?: string;
+  email?: string;
+  urgencia?: string;
+  checklist?: {
+    cargador: boolean;
+    pantalla: boolean;
+    prende: boolean;
+    respaldo: boolean;
+  };
 };
 
-type FormPatch = Record<string, unknown>;
+type OrdenRecepcion = {
+  folio: string;
+  // client_id: string; // If this comes from the backend after creation
+};
 
 export default function RecepcionPage() {
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState<Record<string, unknown>>({});
+  const [formData, setFormData] = useState<ReceptionFormData>({});
   const [folioCotizacion, setFolioCotizacion] = useState('');
   const [fotoRecepcion, setFotoRecepcion] = useState<File | null>(null);
   const router = useRouter();
@@ -37,27 +49,59 @@ export default function RecepcionPage() {
     if (response.success && response.data) {
       const data = response.data;
       setFormData({
-        cliente_nombre: data.nombre,
-        cliente_telefono: data.telefono,
-        cliente_email: data.email,
-        equipo_tipo: data.dispositivo,
-        equipo_modelo: data.modelo,
-        falla: data.descripcion,
+        nombre: data.nombre,
+        telefono: data.telefono,
+        email: data.email,
+        device_type: data.dispositivo,
+        device_brand: data.dispositivo,
+        device_model: data.modelo,
+        problem_description: data.descripcion,
         urgencia: data.urgencia
       });
     }
   };
 
-  const handleSubmit = async (finalData: Record<string, unknown>) => {
+  const handleSubmit = async (finalData: ReceptionFormData) => {
     let fotoUrl = null;
     if (fotoRecepcion) fotoUrl = await uploadImage(fotoRecepcion, 'recepciones');
-    const response = await apiClient.post<OrdenRecepcion>('/api/equipos', { ...finalData, foto_recepcion_url: fotoUrl });
+
+    // Map ReceptionFormData to ServiceOrderCreateRequestDto
+    const serviceOrderPayload: ServiceOrderCreateRequestDto = {
+      customer_id: finalData.customer_id,
+      device_type: finalData.device_type,
+      device_brand: finalData.device_brand,
+      device_model: finalData.device_model,
+      problem_description: finalData.problem_description,
+      promised_date: finalData.promised_date,
+      estimated_price: finalData.estimated_price,
+    };
+
+    const response = await apiClient.post<OrdenRecepcion>('/api/equipos', {
+      ...serviceOrderPayload,
+      foto_recepcion_url: fotoUrl,
+      nombre: finalData.nombre,
+      telefono: finalData.telefono,
+      email: finalData.email,
+      urgencia: finalData.urgencia,
+      checklist: finalData.checklist,
+    });
     if (response.success && response.data) {
       const orden = response.data;
-      const waLink = `https://wa.me/${orden.cliente_telefono}?text=¡Hola! Tu orden ${orden.folio} ha sido registrada. Estado: ${window.location.origin}/portal/${orden.folio}`;
+      // Use finalData.telefono which is guaranteed to exist after ClienteForm
+      const waLink = `https://wa.me/${finalData.telefono ?? ''}?text=¡Hola! Tu orden ${orden.folio} ha sido registrada. Estado: ${window.location.origin}/portal/${orden.folio}`;
       window.open(waLink, '_blank');
       router.push(`/dashboard?folio=${orden.folio}`);
     }
+  };
+
+  const confirmationData: ServiceOrderCreateRequestDto = {
+    customer_id: formData.customer_id,
+    device_type: formData.device_type,
+    device_brand: formData.device_brand,
+    device_model: formData.device_model,
+    problem_description: formData.problem_description,
+    promised_date: formData.promised_date,
+    estimated_price: formData.estimated_price,
   };
 
   return (
@@ -71,9 +115,9 @@ export default function RecepcionPage() {
           <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${step>=3?'bg-blue-600':'bg-gray-600'}`}>3</div>
         </div>
       </div>
-      {step === 1 && <ClienteForm initialData={formData} onNext={(data: FormPatch)=>{setFormData({...formData,...data}); setStep(2);}} onLoadCotizacion={cargarDesdeCotizacion} folioCotizacion={folioCotizacion} setFolioCotizacion={setFolioCotizacion} />}
-      {step === 2 && <EquipoForm initialData={formData} onNext={(data: FormPatch)=>{setFormData({...formData,...data}); setStep(3);}} onBack={()=>setStep(1)} onFotoChange={setFotoRecepcion} />}
-      {step === 3 && <Confirmacion data={formData} onConfirm={handleSubmit} onBack={()=>setStep(2)} />}
+      {step === 1 && <ClienteForm initialData={formData} onNext={(data: { nombre: string; telefono: string; email?: string })=>{setFormData({...formData,...data}); setStep(2);}} onLoadCotizacion={cargarDesdeCotizacion} folioCotizacion={folioCotizacion} setFolioCotizacion={setFolioCotizacion} />}
+      {step === 2 && <EquipoForm initialData={formData} onNext={(data: Partial<ServiceOrderCreateRequestDto>)=>{setFormData({...formData,...data}); setStep(3);}} onBack={()=>setStep(1)} onFotoChange={setFotoRecepcion} />}
+      {step === 3 && <Confirmacion data={confirmationData} onConfirm={() => handleSubmit(formData)} onBack={()=>setStep(2)} />}
     </div>
   );
 }

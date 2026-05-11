@@ -1,11 +1,11 @@
 import TenantLandingClient from "./tenant-landing-client";
 
 interface PageProps {
-  params: { slug: string };
+  params: Promise<{ slug?: string; folio?: string }>;
 }
 
-export default function Page({ params }: PageProps) {
-  const { slug } = params;
-
+export default async function Page({ params }: PageProps) {
+  const { slug, folio } = await params;
   return <TenantLandingClient slug={slug} />;
 }
+

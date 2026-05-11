@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.1.19",
-    "@nestjs/core": "^11.1.19"
+    "@nestjs/core": "^11.1.19",
+    "@sdmx/contracts": "^1.0.0"
   }
 }

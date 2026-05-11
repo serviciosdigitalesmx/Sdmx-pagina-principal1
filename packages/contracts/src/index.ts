@@ -18,6 +18,19 @@ export interface ServiceOrder {
   created_at?: string;
 }
 
+export interface EquipoWithFolio extends ServiceOrderDto {
+  clientes?: { nombre: string; telefono: string };
+  equipo_fotos?: Array<{ id: string; url: string }>;
+  folio?: string;
+  estado?: string;
+  fecha_promesa?: string;
+  marca_modelo?: string;
+  falla_reportada?: string;
+  costo_estimado?: number;
+  seguimiento_cliente?: string;
+  youtube_id?: string;
+}
+
 // Common response wrapper
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -335,13 +348,21 @@ export interface ServiceOrderDto {
   costo_estimado?: number | null;
   created_at?: string;
   updated_at?: string;
+  // Legacy fields that should be removed or refactored
+  // cliente_nombre?: string;
+  // cliente_telefono?: string;
+  // equipo_tipo?: string;
 }
 
 export interface ServiceOrderCreateRequestDto {
   customer_id?: string;
   device_info?: DeviceInfo;
+  device_type?: string;
+  device_brand?: string;
+  device_model?: string;
   problem_description?: string;
   promised_date?: string;
+  estimated_price?: number;
   // camelCase aliases used by backend
   customerId?: string;
   deviceInfo?: DeviceInfo;
@@ -414,7 +435,6 @@ export interface FinanceTransactionDto {
 }
 
 export interface FinanceMonthlyDto { month?: string; total_mxn?: number; months?: Array<{ month: string; total_mxn?: number }>; range?: ReportDateRangeDto }
-
 export interface FinanceSummaryDto {
   total_mxn?: number;
   totalIncomeCents?: number;
@@ -471,4 +491,3 @@ export interface PurchasesExpensesReportDto {
   purchasesBySupplier: Array<{ supplier_id: string; supplier_name: any; count: number; total_amount_cents: number }>;
   expensesByCategory: Array<{ category_id: string; category_name: any; count: number; total_amount_cents: number }>;
 }
-

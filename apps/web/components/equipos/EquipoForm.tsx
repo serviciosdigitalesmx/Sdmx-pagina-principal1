@@ -4,18 +4,27 @@ import type { ServiceOrderCreateRequestDto } from '@sdmx/contracts';
 
 export default function EquipoForm({ initialData, onNext, onBack, onFotoChange }: { initialData: Partial<ServiceOrderCreateRequestDto>; onNext: (data: ServiceOrderCreateRequestDto)=>void; onBack: ()=>void; onFotoChange: (file: File|null)=>void }) {
   const [tipo, setTipo] = useState(initialData.device_type || initialData.deviceInfo?.type || '');
-  const [modelo, setModelo] = useState(initialData.equipo_modelo || '');
-  const [falla, setFalla] = useState(initialData.falla || '');
-  const [fechaPromesa, setFechaPromesa] = useState(initialData.fecha_promesa || '');
-  const [costo, setCosto] = useState((initialData.costo_estimado ?? initialData.estimatedCost ?? '') as any);
+  const [marca, setMarca] = useState(initialData.device_brand || '');
+  const [modelo, setModelo] = useState(initialData.device_model || '');
+  const [falla, setFalla] = useState(initialData.problem_description || '');
+  const [fechaPromesa, setFechaPromesa] = useState(initialData.promised_date || '');
+  const [costo, setCosto] = useState((initialData.estimated_price ?? '') as any);
   const [checklist, setChecklist] = useState({ cargador: false, pantalla: false, prende: false, respaldo: false });
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onNext({ equipo_tipo: tipo, equipo_modelo: modelo, falla, fecha_promesa: fechaPromesa, costo_estimado: costo, checklist });
+    onNext({
+      device_type: tipo,
+      device_brand: marca,
+      device_model: modelo,
+      problem_description: falla,
+      promised_date: fechaPromesa,
+      estimated_price: costo,
+    });
   };
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div><label>Tipo de dispositivo *</label><select value={tipo} onChange={(e) => setTipo(e.target.value)} required className="w-full input"><option value="">Selecciona</option><option>Smartphone</option><option>Tablet</option><option>Laptop</option><option>Computadora</option><option>Otro</option></select></div>
+      <div><label>Marca *</label><input type="text" value={marca} onChange={(e) => setMarca(e.target.value)} required className="w-full input" /></div>
       <div><label>Marca y modelo *</label><input type="text" value={modelo} onChange={(e) => setModelo(e.target.value)} required className="w-full input" /></div>
       <div><label>Falla reportada *</label><textarea value={falla} onChange={(e) => setFalla(e.target.value)} required rows={3} className="w-full input" /></div>
       <div className="border p-4 rounded"><p className="font-semibold mb-2">Checklist de recepción:</p><div className="grid grid-cols-2 gap-2"><label><input type="checkbox" checked={checklist.cargador} onChange={e => setChecklist({...checklist, cargador: e.target.checked})} /> Cargador</label><label><input type="checkbox" checked={checklist.pantalla} onChange={e => setChecklist({...checklist, pantalla: e.target.checked})} /> Pantalla OK</label><label><input type="checkbox" checked={checklist.prende} onChange={e => setChecklist({...checklist, prende: e.target.checked})} /> Prende</label><label><input type="checkbox" checked={checklist.respaldo} onChange={e => setChecklist({...checklist, respaldo: e.target.checked})} /> Datos respaldados</label></div></div>
