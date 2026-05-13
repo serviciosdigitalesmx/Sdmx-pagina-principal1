@@ -1,3 +1,6 @@
+import { fixService } from './services/fixService';
+import { CONFIG } from './config';
+
 type OperativoRequestMethod = 'GET' | 'POST';
 
 interface OperativoBackendEnvelope {
@@ -19,8 +22,8 @@ interface InternalUserRecord {
   [key: string]: unknown;
 }
 
+
 const API_URL = String(CONFIG.API_URL || '').trim();
-const FRONT_PASSWORD = String(CONFIG.FRONT_PASSWORD || 'Admin1').trim();
 const OPERATIVO_IVA_RATE = 0.16;
 const DEFAULT_LOGIN_BUTTON_HTML = '<span>INGRESAR</span>';
 const DEFAULT_GUARDAR_BUTTON_HTML = '<i class="fa-solid fa-save"></i> Guardar Orden';
@@ -86,99 +89,6 @@ function operativoRequireElement<T extends HTMLElement>(id: string): T {
     throw new Error(`Elemento no encontrado: ${id}`);
   }
   return el as T;
-}
-
-function operativoGetBackendUrl(): string {
-  return API_URL;
-}
-
-function operativoBuildGetUrl(action: string, payload: Record<string, unknown> = {}): string {
-  const params = new URLSearchParams();
-  params.set('action', action);
-  params.set('t', String(Date.now()));
-  Object.entries(payload).forEach(([key, value]) => {
-    if (value === undefined || value === null) return;
-    if (typeof value === 'object') {
-      params.set(key, JSON.stringify(value));
-      return;
-    }
-    params.set(key, String(value));
-  });
-  return `${operativoGetBackendUrl()}?${params.toString()}`;
-}
-
-async function operativoReadJson<T>(response: Response): Promise<T> {
-  const text = await response.text();
-  if (!text.trim()) {
-    throw new Error(`Respuesta vacía (${response.status})`);
-  }
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    throw new Error(`Respuesta inválida (${response.status}): ${text.slice(0, 180)}`);
-  }
-}
-
-function backendErrorMessage(data: OperativoBackendEnvelope): string {
-  const errorText = typeof data.error === 'string' ? data.error.trim() : '';
-  if (errorText) return errorText;
-  if (data.success === false) return 'La operación fue rechazada';
-  return '';
-}
-
-function operativoCanRetryAsGet(action: string): boolean {
-  return !/^(guardar_|registrar_|eliminar_|archivar_|transferir_|recibir_|cambiar_|login_|validar_|crear_|reabrir_)/.test(String(action || '').trim().toLowerCase());
-}
-
-async function operativoRequestBackend<T, P extends object = Record<string, unknown>>(
-  action: string,
-  payload: P = {} as P,
-  method: OperativoRequestMethod = 'POST'
-): Promise<T> {
-  const requestGet = (): Promise<Response> => fetch(operativoBuildGetUrl(action, payload as Record<string, unknown>), { method: 'GET' });
-  const requestPost = (): Promise<Response> => fetch(operativoGetBackendUrl(), {
-    method: 'POST',
-    body: JSON.stringify({ action, ...(payload as Record<string, unknown>) })
-  });
-
-  try {
-    const response = method === 'GET' ? await requestGet() : await requestPost();
-    const data = await operativoReadJson<T & OperativoBackendEnvelope>(response);
-    const errorText = backendErrorMessage(data);
-    if (errorText) {
-      throw new Error(errorText);
-    }
-    return data as T;
-  } catch (error) {
-    if (method !== 'POST' || !operativoCanRetryAsGet(action)) throw error;
-    const response = await requestGet();
-    const data = await operativoReadJson<T & OperativoBackendEnvelope>(response);
-    const errorText = backendErrorMessage(data);
-    if (errorText) {
-      throw new Error(errorText);
-    }
-    return data as T;
-  }
-}
-
-async function operativoRequestBackendWithRetry<T, P extends object = Record<string, unknown>>(
-  action: string,
-  payload: P = {} as P,
-  method: OperativoRequestMethod = 'POST',
-  maxAttempts = 2
-): Promise<T> {
-  let lastError: Error | null = null;
-  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    try {
-      return await operativoRequestBackend<T, P>(action, payload, method);
-    } catch (error) {
-      lastError = error instanceof Error ? error : new Error(String(error));
-      if (attempt < maxAttempts) {
-        await new Promise(resolve => window.setTimeout(resolve, 350));
-      }
-    }
-  }
-  throw lastError || new Error('Error de conexión');
 }
 
 function readInternalUser(): InternalUserRecord | null {
@@ -461,7 +371,7 @@ async function cargarDesdeFolioCotizacion(): Promise<void> {
 
   setMensajeFolio('Buscando solicitud...');
   try {
-    const data = await operativoRequestBackend<SolicitudLookupResponse>('solicitud', { folio }, 'GET');
+    const data = await fixService.obtenerSolicitud(folio);
     if (!data || data.error || !data.solicitud) {
       throw new Error(data?.error || 'No se encontró la solicitud');
     }
@@ -605,7 +515,7 @@ async function guardarOrden(): Promise<void> {
   };
 
   try {
-    const result = await operativoRequestBackendWithRetry<OperativoGuardarResponse, SrFix.OperativoOrdenInput>('crear_equipo', payload, 'POST', 2);
+    const result = await fixService.crearEquipo(payload);
     if (!result.success) {
       throw new Error(result.error || 'Error al guardar');
     }
@@ -879,75 +789,50 @@ async function login(): Promise<void> {
   if (loginEnCurso) return;
   loginEnCurso = true;
   password = elPasswordInput.value.trim();
-  const trustedInternalAccess = hasOperativoAccess();
-
-  if (!trustedInternalAccess) {
     if (!password) {
-      loginEnCurso = false;
-      mostrarErrorLogin('Ingresa la contraseña');
-      return;
+        loginEnCurso = false;
+        mostrarErrorLogin('Ingresa la contraseña');
+        return;
     }
-    if (password !== FRONT_PASSWORD) {
-      loginEnCurso = false;
-      mostrarErrorLogin('Contraseña incorrecta');
-      return;
-    }
-  }
 
   setLoginButtonLoading(true);
   ocultarErrorLogin();
 
   try {
-    await operativoRequestBackend<Record<string, unknown>>('semaforo', {}, 'GET');
+    const result = await fixService.login({ usuario: 'admin', password });
+    
+    if (result.ok) {
+      elLoginScreen.classList.add('hidden');
+      elApp.classList.remove('hidden');
 
-    const remember = elRememberMe.checked;
-    if (!trustedInternalAccess) {
-      sessionStorage.setItem('srfix_pass_operativo', password);
-      if (remember) {
-        localStorage.setItem('srfix_pass_operativo', password);
-      } else {
-        localStorage.removeItem('srfix_pass_operativo');
+      const fecha = new Date();
+      fecha.setDate(fecha.getDate() + 3);
+      elFechaPromesa.valueAsDate = fecha;
+      actualizarFechaActual();
+      if (fechaTimer !== null) {
+        window.clearInterval(fechaTimer);
       }
+      fechaTimer = window.setInterval(actualizarFechaActual, 60000);
+      cargarBorradorLocal();
+      mostrarToast('Sesión iniciada', 'success');
+    } else {
+      mostrarErrorLogin(result.error || 'Contraseña incorrecta');
     }
-
-    elLoginScreen.classList.add('hidden');
-    elApp.classList.remove('hidden');
-
-    const fecha = new Date();
-    fecha.setDate(fecha.getDate() + 3);
-    elFechaPromesa.valueAsDate = fecha;
-    actualizarFechaActual();
-    if (fechaTimer !== null) {
-      window.clearInterval(fechaTimer);
-    }
-    fechaTimer = window.setInterval(actualizarFechaActual, 60000);
-    cargarBorradorLocal();
-    mostrarToast('Sesión iniciada', 'success');
   } catch (error) {
     const message = error instanceof Error ? error.message : 'No se pudo iniciar sesión';
-    mostrarErrorLogin(`No se pudo iniciar sesión por conexión o backend. ${message}`);
+    mostrarErrorLogin(`Error de conexión con el servidor: ${message}`);
   } finally {
     setLoginButtonLoading(false);
     loginEnCurso = false;
   }
 }
 
+
 function logout(): void {
   if (!confirm('¿Cerrar sesión? Se perderán los datos no guardados.')) {
     return;
   }
-  sessionStorage.removeItem('srfix_pass_operativo');
-  localStorage.removeItem('srfix_pass_operativo');
-  localStorage.removeItem('srfix_borrador_orden');
-  try {
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'srfix:logout' }, '*');
-      return;
-    }
-  } catch {
-    // Sin acción.
-  }
-  location.reload();
+  fixService.logout();
 }
 
 function bindWindowActions(): void {

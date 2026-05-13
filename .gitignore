@@ -1,0 +1,21 @@
+# Dependencias
+node_modules/
+
+# Compilación Frontend
+js/
+sw.js
+dist/
+
+# Compilación Backend
+server/dist/
+server/node_modules/
+
+# Entorno y Secretos
+.env
+server/.env
+*.log
+
+# IDE
+.vscode/
+.idea/
+.DS_Store

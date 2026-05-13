@@ -4,8 +4,10 @@ declare global {
   const CONFIG: {
     API_URL: string;
     APP_URL?: string;
-    FRONT_PASSWORD?: string;
+    SUGGESTIONS_KEY: string;
+    TIENDA_WHATSAPP: string;
   };
+
 
   namespace SrFix {
     type DateISO = string;
@@ -15,6 +17,14 @@ declare global {
     type UserId = string;
     type Folio = string;
     type PermissionKey = string;
+
+    /**
+     * Genérico para asegurar el aislamiento de datos por cliente (tenant)
+     * Requerido para arquitectura SaaS Multitenant.
+     */
+    type TenantEntity<T> = T & {
+      tenant_id: TenantId;
+    };
     type ModuleId =
       | 'operativo'
       | 'tecnico'
@@ -171,11 +181,9 @@ declare global {
     }
 
     interface SolicitudesListResponse {
-      solicitudes: SolicitudRecord[];
-      total: number;
-      page: number;
-      pageSize: number;
-      hasMore: boolean;
+      rows: SolicitudRecord[];
+      total?: number;
+      hasMore?: boolean;
     }
 
     interface SolicitudResponse {
@@ -235,30 +243,20 @@ declare global {
     }
 
     interface ClienteRecord {
-      ID?: string;
+      ID: string;
       NOMBRE: string;
-      TELEFONO?: string;
+      TELEFONO: string;
       EMAIL?: string;
       ETIQUETA?: string;
+      MOROSO: boolean;
       NOTAS?: string;
-      moroso?: boolean;
-      totalEquipos?: number;
-      totalCotizaciones?: number;
-      totalReparaciones?: number;
-      ticketPromedio?: MoneyCents | number | string;
-      ultimaVisita?: DateISO | string;
     }
 
     interface ClienteHistorialEquipo {
-      FOLIO?: Folio;
-      TIPO?: string;
-      MODELO?: string;
-      FALLA?: string;
-      DIAGNOSTICO?: string;
-      ESTADO?: string;
-      FECHA_INGRESO?: DateISO | string;
-      FECHA_ENTREGA?: DateISO | string;
-      COSTO_ESTIMADO?: MoneyCents | number | string;
+      folio: string;
+      dispositivo: string;
+      estado: string;
+      fecha: string;
     }
 
     interface ClienteHistorialCotizacion {
@@ -282,13 +280,12 @@ declare global {
     }
 
     interface ClientesListResponse {
-      clientes: ClienteRecord[];
+      items: ClienteRecord[];
       total?: number;
-      page?: number;
-      pageSize?: number;
       hasMore?: boolean;
       duplicados?: string[];
     }
+
 
     interface ClienteDetailResponse {
       cliente?: ClienteRecord;
@@ -332,38 +329,37 @@ declare global {
     }
 
     interface StockProductoRecord {
+      ID: string;
       SKU: string;
-      NOMBRE: string;
-      PROVEEDOR?: string;
-      CATEGORIA?: string;
-      MARCA?: string;
-      MODELO_COMPATIBLE?: string;
-      ESTATUS?: 'activo' | 'inactivo' | string;
-      STOCK_ACTUAL?: number | string;
-      STOCK_MINIMO?: number | string;
-      COSTO?: MoneyCents | number | string;
-      PRECIO?: MoneyCents | number | string;
-      UNIDAD?: string;
-      UBICACION?: string;
+      PRODUCTO: string;
+      CATEGORIA: string;
+      SUCURSAL: string;
+      CANTIDAD: number;
+      MINIMO: number;
+      COSTO: number;
+      PRECIO_VENTA: number;
       NOTAS?: string;
-      ALERTA_STOCK?: boolean;
-      ALERTA_NIVEL?: 'bajo' | 'critico' | 'agotado' | string;
-      SUCURSAL_ID?: BranchId | string;
     }
 
     interface StockMovimientoRecord {
-      FECHA?: DateISO | string;
-      TIPO_MOVIMIENTO?: 'entrada' | 'salida' | 'ajuste' | 'consumo' | string;
-      CANTIDAD?: number | string;
-      COSTO_UNITARIO?: MoneyCents | number | string;
-      FOLIO_EQUIPO?: Folio | string;
-      REFERENCIA?: string;
-      USUARIO?: string;
+      ID: string;
+      FECHA: string;
+      TIPO: 'ENTRADA' | 'SALIDA';
+      CANTIDAD: number;
+      RESPONSABLE: string;
       NOTAS?: string;
     }
 
+    interface StockListResponse {
+      items: StockProductoRecord[];
+      hasMore: boolean;
+    }
+
     interface StockFoliosRelacionResponse {
-      folios?: Array<{ folio: Folio }>;
+      ok: boolean;
+      equipo?: string;
+      cliente?: string;
+      error?: string;
     }
 
     interface StockMovimientosResponse {
@@ -388,37 +384,22 @@ declare global {
     }
 
     interface ProveedorRecord {
-      ID?: string;
-      NOMBRE_COMERCIAL: string;
-      RAZON_SOCIAL?: string;
-      CONTACTO?: string;
-      TELEFONO?: string;
-      WHATSAPP?: string;
+      ID: string;
+      NOMBRE: string;
+      CATEGORIA: string;
+      CONTACTO: string;
       EMAIL?: string;
-      DIRECCION?: string;
-      CIUDAD_ESTADO?: string;
-      CATEGORIAS?: string;
-      TIEMPO_ENTREGA?: string;
-      CONDICIONES_PAGO?: string;
-      CALIFICACION_PROMEDIO?: number | string;
-      CALIFICACION_PRECIO?: number | string;
-      CALIFICACION_RAPIDEZ?: number | string;
-      CALIFICACION_CALIDAD?: number | string;
-      CALIFICACION_CONFIABILIDAD?: number | string;
-      ESTATUS?: 'activo' | 'inactivo' | string;
-      NOTAS?: string;
+      TELEFONO: string;
+      CALIFICACION: number;
+      ESTATUS: string;
     }
 
     interface ProveedoresListResponse {
-      proveedores: ProveedorRecord[];
+      rows: ProveedorRecord[];
       total?: number;
-      page?: number;
-      pageSize?: number;
       hasMore?: boolean;
-      filtros?: {
-        categorias?: string[];
-      };
     }
+
 
     interface ProveedorDetailResponse {
       proveedor?: ProveedorRecord;
@@ -516,42 +497,21 @@ declare global {
     }
 
     interface GastoRecord {
-      ID?: string | number;
-      FECHA: DateISO | string;
-      TIPO?: 'fijo' | 'variable' | string;
-      CATEGORIA?: string;
+      ID: string;
+      FECHA: string;
+      CATEGORIA: string;
       CONCEPTO: string;
       DESCRIPCION?: string;
-      MONTO?: MoneyCents | number | string;
-      METODO_PAGO?: string;
-      PROVEEDOR?: string;
-      FOLIO_RELACIONADO?: Folio | string;
-      COMPROBANTE_URL?: string;
+      SUCURSAL: string;
+      TOTAL: number;
       NOTAS?: string;
-      SUCURSAL_ID?: BranchId | string;
-      FECHA_CREACION?: DateISO | string;
-      FECHA_ACTUALIZACION?: DateISO | string;
-      fecha?: DateISO | string;
-      tipo?: string;
-      categoria?: string;
-      concepto?: string;
-      descripcion?: string;
-      monto?: MoneyCents | number | string;
-      metodoPago?: string;
-      proveedor?: string;
-      folioRelacionado?: Folio | string;
-      comprobanteUrl?: string;
-      notas?: string;
-      sucursalId?: BranchId | string;
     }
 
     interface GastosListResponse {
-      gastos: GastoRecord[];
-      total?: number;
-      page?: number;
-      pageSize?: number;
-      hasMore?: boolean;
+      items: GastoRecord[];
+      hasMore: boolean;
     }
+
 
     interface GastoResumenMensualItem {
       mes: string;
@@ -605,18 +565,10 @@ declare global {
     }
 
     interface ReporteOperativoResumen {
-      equiposRecibidos?: number | string;
-      equiposEntregados?: number | string;
-      cotizacionesGeneradas?: number | string;
-      promedioDiasEntrega?: number | string;
-      stockCritico?: number | string;
-      ventasEstimadas?: MoneyCents | number | string;
-      gastos?: MoneyCents | number | string;
-      ingresos?: MoneyCents | number | string;
-      egresos?: MoneyCents | number | string;
-      utilidad?: MoneyCents | number | string;
-      serviciosFrecuentes?: number | string;
-      clientesRecurrentes?: number | string;
+      totalRecibidos: number;
+      totalEntregados: number;
+      totalCotizaciones: number;
+      totalVentas: number;
     }
 
     interface ReporteOperativoEquipoRecibido {
@@ -654,19 +606,19 @@ declare global {
       total?: number | string;
     }
 
-    interface ReporteOperativoDetalle {
-      equiposRecibidos?: ReporteOperativoEquipoRecibido[];
-      cotizaciones?: ReporteOperativoCotizacion[];
-      porTecnico?: ReporteOperativoTecnico[];
-      stockCritico?: ReporteOperativoStockCritico[];
-      serviciosFrecuentes?: ReporteOperativoServicioFrecuente[];
-      clientesRecurrentes?: ReporteOperativoClienteRecurrente[];
+    interface ReporteOperativoDetalleItem {
+      concepto: string;
+      cantidad: number;
+      total: number;
     }
 
+    type ReporteOperativoDetalle = ReporteOperativoDetalleItem[];
+    
     interface ReporteOperativoResponse {
       resumen?: ReporteOperativoResumen;
       detalle?: ReporteOperativoDetalle;
     }
+
 
     interface SucursalRecord {
       ID?: string;
@@ -716,22 +668,24 @@ declare global {
     }
 
     interface SecurityActionRecord {
-      clave: string;
-      titulo: string;
-      descripcion?: string;
-      accion?: string;
-      requiereAdmin?: boolean;
+      ACCION: string;
+      FECHA: string;
+      DESCRIPCION: string;
+      AUTORIZO: string;
     }
 
     interface SecurityConfigState {
-      mensajeAutorizacion?: string;
-      bitacoraActiva?: boolean;
-      adminPasswordConfigured?: boolean;
+      mensaje_autorizacion?: string;
+      bitacora_activa?: boolean;
+      admin_last_change?: string;
     }
 
     interface SecurityConfigResponse {
       acciones: SecurityActionRecord[];
       config: SecurityConfigState;
+      stats?: {
+        acciones_hoy: number;
+      };
     }
 
     interface SecurityUserRecord {

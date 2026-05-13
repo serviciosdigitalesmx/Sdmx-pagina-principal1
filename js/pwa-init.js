@@ -1,10 +1,11 @@
+"use strict";
 (function () {
-const BUILD_VERSION = '2026.05.12.3';
+    const BUILD_VERSION = '2026.05.13.1';
     const MANIFEST_PATH = `./manifest.webmanifest?v=${encodeURIComponent(BUILD_VERSION)}`;
-    const SW_PATH = `./sw.js?v=${encodeURIComponent(BUILD_VERSION)}`;
+    // El SW ahora se genera en js/sw.js
+    const SW_PATH = `./js/sw.js?v=${encodeURIComponent(BUILD_VERSION)}`;
     const CACHE_RESET_KEY = 'srfix_cache_reset_version';
     let deferredPrompt = null;
-
     function ensureMeta(name, content, attr = 'name') {
         let el = document.head.querySelector(`meta[${attr}="${name}"]`);
         if (!el) {
@@ -14,7 +15,6 @@ const BUILD_VERSION = '2026.05.12.3';
         }
         el.setAttribute('content', content);
     }
-
     function ensureLink(rel, href) {
         let el = document.head.querySelector(`link[rel="${rel}"]`);
         if (!el) {
@@ -24,7 +24,6 @@ const BUILD_VERSION = '2026.05.12.3';
         }
         el.setAttribute('href', href);
     }
-
     function ensurePwaHead() {
         ensureLink('manifest', MANIFEST_PATH);
         ensureLink('icon', './favicon.png');
@@ -35,7 +34,6 @@ const BUILD_VERSION = '2026.05.12.3';
         ensureMeta('apple-mobile-web-app-status-bar-style', 'black-translucent');
         ensureMeta('apple-mobile-web-app-title', 'SrFix');
     }
-
     function ensureOfflineBanner() {
         let banner = document.getElementById('pwa-offline-banner');
         if (!banner) {
@@ -47,7 +45,6 @@ const BUILD_VERSION = '2026.05.12.3';
         }
         return banner;
     }
-
     function ensureInstallButton() {
         let btn = document.getElementById('pwa-install-btn');
         if (!btn) {
@@ -59,57 +56,64 @@ const BUILD_VERSION = '2026.05.12.3';
             document.body.appendChild(btn);
         }
         btn.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
+            if (!deferredPrompt)
+                return;
             deferredPrompt.prompt();
             try {
                 await deferredPrompt.userChoice;
-            } catch (e) {}
+            }
+            catch (e) { }
             deferredPrompt = null;
             btn.classList.add('hidden');
         });
         return btn;
     }
-
     function updateOfflineState() {
         const banner = ensureOfflineBanner();
         banner.classList.toggle('hidden', navigator.onLine);
         document.body.classList.toggle('is-offline', !navigator.onLine);
     }
-
     function registerServiceWorker() {
-        if (!('serviceWorker' in navigator)) return;
-        if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return;
+        if (!('serviceWorker' in navigator))
+            return;
+        if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1')
+            return;
         navigator.serviceWorker.register(SW_PATH).then((reg) => {
-            try { reg.update(); } catch (e) {}
-        }).catch(() => {});
+            try {
+                reg.update();
+            }
+            catch (e) { }
+        }).catch(() => { });
     }
-
     function resetClientCacheIfNeeded() {
         const previousVersion = localStorage.getItem(CACHE_RESET_KEY) || '';
-        if (previousVersion === BUILD_VERSION) return;
+        if (previousVersion === BUILD_VERSION)
+            return;
         localStorage.setItem(CACHE_RESET_KEY, BUILD_VERSION);
-
         if ('caches' in window) {
-            caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key)))).catch(() => {});
+            caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key)))).catch(() => { });
         }
-
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then((regs) => {
                 regs.forEach((reg) => {
-                    try { reg.unregister(); } catch (e) {}
+                    try {
+                        reg.unregister();
+                    }
+                    catch (e) { }
                 });
-            }).catch(() => {});
+            }).catch(() => { });
         }
-
         if (navigator.serviceWorker && typeof navigator.serviceWorker.getRegistration === 'function') {
             navigator.serviceWorker.getRegistration().then((reg) => {
                 if (reg) {
-                    try { reg.update(); } catch (e) {}
+                    try {
+                        reg.update();
+                    }
+                    catch (e) { }
                 }
-            }).catch(() => {});
+            }).catch(() => { });
         }
     }
-
     function setupInstallPrompt() {
         const btn = ensureInstallButton();
         window.addEventListener('beforeinstallprompt', (event) => {
@@ -122,7 +126,6 @@ const BUILD_VERSION = '2026.05.12.3';
             deferredPrompt = null;
         });
     }
-
     ensurePwaHead();
     resetClientCacheIfNeeded();
     window.addEventListener('online', updateOfflineState);

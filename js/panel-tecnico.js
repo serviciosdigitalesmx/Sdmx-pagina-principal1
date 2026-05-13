@@ -1,711 +1,616 @@
-"use strict";
-;
-(function () {
-    const BACKEND_URL = String(CONFIG.API_URL || '').trim();
-    const FRONT_PASSWORD = String(CONFIG.FRONT_PASSWORD || 'Admin1').trim();
-    const LOGO_URL = './logo.webp';
-    // ==========================================
-    // VARIABLES GLOBALES
-    // ==========================================
-    let PASSWORD = '';
-    let equiposData = [];
-    let equiposFiltrados = [];
-    let seguimientoFotosBase64 = [];
-    let intervalo = null;
-    let audioCtx = null;
-    let audioUnlocked = false;
-    let urgentesPrevio = 0;
-    let primeraCargaTecnico = true;
-    let ultimoBeepRojoTs = 0;
-    let ultimaFirmaSemaforo = '';
-    let loginEnCurso = false;
-    let cargaDatosSeq = 0;
-    let cargaDatosEnCurso = false;
-    let seguimientoOriginalSerializado = '[]';
-    let filtros = {
-        texto: '',
-        color: 'todos',
-        estado: 'todos',
-        orden: 'dias_asc'
-    };
-    function readInternalUser() {
-        try {
-            const raw = sessionStorage.getItem('srfix_auth_user') || localStorage.getItem('srfix_auth_user');
-            if (!raw)
-                return null;
-            const parsed = JSON.parse(raw);
-            if (!parsed || typeof parsed !== 'object')
-                return null;
-            return parsed;
-        }
-        catch {
+import { fixService } from './services/fixService';
+const LOGO_URL = './logo.webp';
+// ==========================================
+// VARIABLES GLOBALES
+// ==========================================
+let PASSWORD = '';
+let equiposData = [];
+let equiposFiltrados = [];
+let seguimientoFotosBase64 = [];
+let intervalo = null;
+let audioCtx = null;
+let audioUnlocked = false;
+let urgentesPrevio = 0;
+let primeraCargaTecnico = true;
+let ultimoBeepRojoTs = 0;
+let ultimaFirmaSemaforo = '';
+let loginEnCurso = false;
+let cargaDatosSeq = 0;
+let cargaDatosEnCurso = false;
+let seguimientoOriginalSerializado = '[]';
+let filtros = {
+    texto: '',
+    color: 'todos',
+    estado: 'todos',
+    orden: 'dias_asc'
+};
+function readInternalUser() {
+    try {
+        const raw = sessionStorage.getItem('srfix_auth_user') || localStorage.getItem('srfix_auth_user');
+        if (!raw)
             return null;
-        }
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== 'object')
+            return null;
+        return parsed;
     }
-    function getRequestedFolio() {
-        try {
-            const params = new URLSearchParams(window.location.search);
-            const folio = String(params.get('folio') || '').trim().toUpperCase();
-            return folio || '';
-        }
-        catch {
-            return '';
-        }
+    catch {
+        return null;
     }
-    function clearRequestedFolio() {
-        try {
-            const url = new URL(window.location.href);
-            url.searchParams.delete('folio');
-            history.replaceState({}, document.title, url.toString());
-        }
-        catch {
-            // No-op.
-        }
+}
+function getRequestedFolio() {
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const folio = String(params.get('folio') || '').trim().toUpperCase();
+        return folio || '';
     }
-    function isEmbeddedIntegratorAccess() {
-        try {
-            if (window.parent === window)
-                return false;
-            const params = new URLSearchParams(window.location.search);
-            if (params.get('integrador') === '1')
-                return true;
-            const parentHref = String((window.parent.location && window.parent.location.href) || '');
-            return /integrador\.html/i.test(parentHref);
-        }
-        catch {
-            return false;
-        }
-    }
-    function hasTecnicoAccess() {
-        if (isEmbeddedIntegratorAccess())
-            return true;
-        const user = readInternalUser();
-        if (!user)
-            return false;
-        const rol = String(user.ROL || '').toLowerCase();
-        return ['admin', 'operativo', 'tecnico', 'supervisor'].includes(rol);
-    }
-    function tecnicoGetElement(id) {
-        const el = document.getElementById(id);
-        if (!el) {
-            throw new Error(`Elemento no encontrado: ${id}`);
-        }
-        return el;
-    }
-    function tecnicoGetBackendUrl() {
-        return BACKEND_URL;
-    }
-    function tecnicoBuildGetUrl(action, payload = {}) {
-        const params = new URLSearchParams();
-        params.set('action', action);
-        params.set('t', String(Date.now()));
-        Object.entries(payload).forEach(([key, value]) => {
-            if (value === undefined || value === null)
-                return;
-            if (typeof value === 'object') {
-                params.set(key, JSON.stringify(value));
-                return;
-            }
-            params.set(key, String(value));
-        });
-        return `${tecnicoGetBackendUrl()}?${params.toString()}`;
-    }
-    async function tecnicoReadJson(response) {
-        const text = await response.text();
-        if (!text.trim()) {
-            throw new Error(`Respuesta vacia (${response.status})`);
-        }
-        try {
-            return JSON.parse(text);
-        }
-        catch {
-            throw new Error(`Respuesta invalida (${response.status}): ${text.slice(0, 180)}`);
-        }
-    }
-    function tecnicoBackendErrorMessage(data) {
-        const errorText = typeof data.error === 'string' ? data.error.trim() : '';
-        if (errorText)
-            return errorText;
-        if (data.success === false)
-            return 'La operacion fue rechazada';
+    catch {
         return '';
     }
-    function tecnicoNormalizarEquipoRecord(raw) {
-        const source = raw || {};
-        const clienteNombre = String(source.CLIENTE_NOMBRE ??
-            source.clienteNombre ??
-            source.cliente ??
-            source.NOMBRE_CLIENTE ??
-            source.NOMBRE ??
-            '').trim();
-        const clienteTelefono = String(source.CLIENTE_TELEFONO ??
-            source.clienteTelefono ??
-            source.telefono ??
-            source.TELEFONO ??
-            '').trim();
-        const dispositivo = String(source.DISPOSITIVO ??
-            source.dispositivo ??
-            source.EQUIPO ??
-            source.TIPO ??
-            '').trim();
-        const modelo = String(source.MODELO ??
-            source.modelo ??
-            source.MODELO_EQUIPO ??
-            '').trim();
-        return {
-            ...source,
-            FOLIO: String(source.FOLIO || '').trim().toUpperCase(),
-            CLIENTE_NOMBRE: clienteNombre,
-            CLIENTE_TELEFONO: clienteTelefono,
-            DISPOSITIVO: dispositivo,
-            MODELO: modelo,
-            FALLA_REPORTADA: String(source.FALLA_REPORTADA || source.fallaReportada || source.FALLA || source.falla || '').trim(),
-            ESTADO: String(source.ESTADO || source.estado || 'Recibido').trim(),
-            TECNICO_ASIGNADO: String(source.TECNICO_ASIGNADO || source.tecnicoAsignado || source.tecnico || '').trim(),
-            FECHA_INGRESO: String(source.FECHA_INGRESO || source.fechaIngreso || source.FECHA_CREACION || source.fechaCreacion || ''),
-            FECHA_PROMESA: String(source.FECHA_PROMESA || source.fechaPromesa || ''),
-            FECHA_ULTIMA_ACTUALIZACION: String(source.FECHA_ULTIMA_ACTUALIZACION || source.fechaUltimaActualizacion || source.FECHA_ACTUALIZACION || ''),
-            YOUTUBE_ID: String(source.YOUTUBE_ID || source.youtubeId || '').trim(),
-            FOTO_RECEPCION: String(source.FOTO_RECEPCION || source.fotoRecepcion || source.FOTO || source.foto || source.IMAGEN_RECEPCION || source.imagenRecepcion || ''),
-            CASO_RESOLUCION_TECNICA: String(source.CASO_RESOLUCION_TECNICA || source.casoResolucionTecnica || '').trim(),
-            NOTAS_INTERNAS: String(source.NOTAS_INTERNAS || source.notasInternas || '').trim(),
-            SEGUIMIENTO_CLIENTE: String(source.SEGUIMIENTO_CLIENTE || source.seguimientoCliente || '').trim(),
-            SEGUIMIENTO_FOTOS: source.SEGUIMIENTO_FOTOS,
-            CHECK_CARGADOR: String(source.CHECK_CARGADOR || '').trim(),
-            CHECK_PANTALLA: String(source.CHECK_PANTALLA || '').trim(),
-            CHECK_PRENDE: String(source.CHECK_PRENDE || '').trim(),
-            CHECK_RESPALDO: String(source.CHECK_RESPALDO || '').trim(),
-            diasRestantes: Number(source.diasRestantes || 0),
-            color: source.color || 'gris'
-        };
+}
+function clearRequestedFolio() {
+    try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete('folio');
+        history.replaceState({}, document.title, url.toString());
     }
-    function tecnicoExtraerEquiposResponse(data) {
-        const envelope = data && typeof data === 'object' && 'data' in data ? data.data : data;
-        const source = envelope || {};
-        const equiposRaw = Array.isArray(source.equipos) ? source.equipos : [];
-        return {
-            ...source,
-            equipos: equiposRaw.map(eq => tecnicoNormalizarEquipoRecord(eq))
-        };
+    catch {
+        // No-op.
     }
-    function tecnicoCanRetryAsGet(action) {
-        return !/^(guardar_|registrar_|eliminar_|archivar_|transferir_|recibir_|cambiar_|login_|validar_|crear_|reabrir_)/.test(String(action || '').trim().toLowerCase());
+}
+function isEmbeddedIntegratorAccess() {
+    try {
+        if (window.parent === window)
+            return false;
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('integrador') === '1')
+            return true;
+        const parentHref = String((window.parent.location && window.parent.location.href) || '');
+        return /integrador\.html/i.test(parentHref);
     }
-    async function tecnicoFetchWithTimeout(url, options, timeoutMs = 15000) {
-        const controller = new AbortController();
-        const timer = window.setTimeout(() => controller.abort(), timeoutMs);
-        try {
-            return await fetch(url, { ...options, signal: controller.signal });
-        }
-        catch (error) {
-            if (error instanceof DOMException && error.name === 'AbortError') {
-                throw new Error('Tiempo de espera agotado al consultar el backend');
-            }
-            throw error;
-        }
-        finally {
-            window.clearTimeout(timer);
-        }
+    catch {
+        return false;
     }
-    async function tecnicoRequestBackend(action, payload = {}, method = 'POST') {
-        const requestGet = () => tecnicoFetchWithTimeout(tecnicoBuildGetUrl(action, payload), { method: 'GET' });
-        const requestPost = () => tecnicoFetchWithTimeout(tecnicoGetBackendUrl(), {
-            method: 'POST',
-            body: JSON.stringify({ action, ...payload })
-        });
-        try {
-            const response = method === 'GET' ? await requestGet() : await requestPost();
-            const data = await tecnicoReadJson(response);
-            const errorText = tecnicoBackendErrorMessage(data);
-            if (errorText)
-                throw new Error(errorText);
-            return data;
-        }
-        catch (error) {
-            if (method !== 'POST' || !tecnicoCanRetryAsGet(action))
-                throw error;
-            const response = await requestGet();
-            const data = await tecnicoReadJson(response);
-            const errorText = tecnicoBackendErrorMessage(data);
-            if (errorText)
-                throw new Error(errorText);
-            return data;
-        }
+}
+function hasTecnicoAccess() {
+    if (isEmbeddedIntegratorAccess())
+        return true;
+    const user = readInternalUser();
+    if (!user)
+        return false;
+    const rol = String(user.ROL || '').toLowerCase();
+    return ['admin', 'operativo', 'tecnico', 'supervisor'].includes(rol);
+}
+function tecnicoGetElement(id) {
+    const el = document.getElementById(id);
+    if (!el) {
+        throw new Error(`Elemento no encontrado: ${id}`);
     }
-    function setRefreshButtonState(isBusy) {
-        const btn = tecnicoGetElement('btn-refresh');
-        btn.disabled = isBusy;
-        btn.classList.toggle('opacity-60', isBusy);
-        btn.classList.toggle('cursor-wait', isBusy);
-    }
-    function renderLoadErrorState(message) {
-        const grid = tecnicoGetElement('equipos-grid');
-        grid.innerHTML = `
+    return el;
+}
+function tecnicoBackendErrorMessage(data) {
+    const errorText = typeof data.error === 'string' ? data.error.trim() : '';
+    if (errorText)
+        return errorText;
+    if (data.success === false)
+        return 'La operacion fue rechazada';
+    return '';
+}
+function tecnicoNormalizarEquipoRecord(raw) {
+    const source = raw || {};
+    const clienteNombre = String(source.CLIENTE_NOMBRE ??
+        source.clienteNombre ??
+        source.cliente ??
+        source.NOMBRE_CLIENTE ??
+        source.NOMBRE ??
+        '').trim();
+    const clienteTelefono = String(source.CLIENTE_TELEFONO ??
+        source.clienteTelefono ??
+        source.telefono ??
+        source.TELEFONO ??
+        '').trim();
+    const dispositivo = String(source.DISPOSITIVO ??
+        source.dispositivo ??
+        source.EQUIPO ??
+        source.TIPO ??
+        '').trim();
+    const modelo = String(source.MODELO ??
+        source.modelo ??
+        source.MODELO_EQUIPO ??
+        '').trim();
+    return {
+        ...source,
+        FOLIO: String(source.FOLIO || '').trim().toUpperCase(),
+        CLIENTE_NOMBRE: clienteNombre,
+        CLIENTE_TELEFONO: clienteTelefono,
+        DISPOSITIVO: dispositivo,
+        MODELO: modelo,
+        FALLA_REPORTADA: String(source.FALLA_REPORTADA || source.fallaReportada || source.FALLA || source.falla || '').trim(),
+        ESTADO: String(source.ESTADO || source.estado || 'Recibido').trim(),
+        TECNICO_ASIGNADO: String(source.TECNICO_ASIGNADO || source.tecnicoAsignado || source.tecnico || '').trim(),
+        FECHA_INGRESO: String(source.FECHA_INGRESO || source.fechaIngreso || source.FECHA_CREACION || source.fechaCreacion || ''),
+        FECHA_PROMESA: String(source.FECHA_PROMESA || source.fechaPromesa || ''),
+        FECHA_ULTIMA_ACTUALIZACION: String(source.FECHA_ULTIMA_ACTUALIZACION || source.fechaUltimaActualizacion || source.FECHA_ACTUALIZACION || ''),
+        YOUTUBE_ID: String(source.YOUTUBE_ID || source.youtubeId || '').trim(),
+        FOTO_RECEPCION: String(source.FOTO_RECEPCION || source.fotoRecepcion || source.FOTO || source.foto || source.IMAGEN_RECEPCION || source.imagenRecepcion || ''),
+        CASO_RESOLUCION_TECNICA: String(source.CASO_RESOLUCION_TECNICA || source.casoResolucionTecnica || '').trim(),
+        NOTAS_INTERNAS: String(source.NOTAS_INTERNAS || source.notasInternas || '').trim(),
+        SEGUIMIENTO_CLIENTE: String(source.SEGUIMIENTO_CLIENTE || source.seguimientoCliente || '').trim(),
+        SEGUIMIENTO_FOTOS: (source.SEGUIMIENTO_FOTOS || []),
+        CHECK_CARGADOR: String(source.CHECK_CARGADOR || '').trim(),
+        CHECK_PANTALLA: String(source.CHECK_PANTALLA || '').trim(),
+        CHECK_PRENDE: String(source.CHECK_PRENDE || '').trim(),
+        CHECK_RESPALDO: String(source.CHECK_RESPALDO || '').trim(),
+        diasRestantes: Number(source.diasRestantes || 0),
+        color: source.color || 'gris'
+    };
+}
+function tecnicoExtraerEquiposResponse(data) {
+    const envelope = data && typeof data === 'object' && 'data' in data ? data.data : data;
+    const source = envelope || {};
+    const equiposRaw = Array.isArray(source.equipos) ? source.equipos : [];
+    return {
+        ...source,
+        equipos: equiposRaw.map((eq) => tecnicoNormalizarEquipoRecord(eq)),
+    };
+}
+function setRefreshButtonState(isBusy) {
+    const btn = tecnicoGetElement('btn-refresh');
+    btn.disabled = isBusy;
+    btn.classList.toggle('opacity-60', isBusy);
+    btn.classList.toggle('cursor-wait', isBusy);
+}
+function renderLoadErrorState(message) {
+    const grid = tecnicoGetElement('equipos-grid');
+    grid.innerHTML = `
     <div class="col-span-full text-center py-12 text-[#8A8F95]">
       <i class="fa-solid fa-triangle-exclamation text-4xl mb-4 text-[#FF6A2A]"></i>
       <p class="text-[#F2F2F2] font-semibold mb-2">No se pudieron cargar los equipos</p>
       <p>${escapeHtml(message || 'Error de conexion')}</p>
     </div>
   `;
+}
+// Cargar preferencias guardadas
+(function () {
+    if (hasTecnicoAccess()) {
+        tecnicoGetElement('login-screen').classList.add('hidden');
+        tecnicoGetElement('app').classList.remove('hidden');
+        setTimeout(login, 200);
+        return;
     }
-    // Cargar preferencias guardadas
-    (function () {
-        if (hasTecnicoAccess()) {
-            tecnicoGetElement('login-screen').classList.add('hidden');
-            tecnicoGetElement('app').classList.remove('hidden');
-            setTimeout(login, 200);
-            return;
+    const savedPass = sessionStorage.getItem('srfix_pass_tecnico') || localStorage.getItem('srfix_pass_tecnico');
+    if (savedPass) {
+        tecnicoGetElement('password-input').value = savedPass;
+        if (localStorage.getItem('srfix_pass_tecnico')) {
+            tecnicoGetElement('remember-me').checked = true;
         }
-        const savedPass = sessionStorage.getItem('srfix_pass_tecnico') || localStorage.getItem('srfix_pass_tecnico');
-        if (savedPass) {
-            tecnicoGetElement('password-input').value = savedPass;
-            if (localStorage.getItem('srfix_pass_tecnico')) {
-                tecnicoGetElement('remember-me').checked = true;
-            }
-            // Si hay pass guardado, intentamos login automático
-            setTimeout(login, 500);
-        }
-        const savedFiltros = localStorage.getItem('srfix_filtros_tecnico');
-        if (savedFiltros) {
-            try {
-                filtros = JSON.parse(savedFiltros);
-                tecnicoGetElement('buscador').value = filtros.texto || '';
-                tecnicoGetElement('filtro-color').value = filtros.color || 'todos';
-                tecnicoGetElement('filtro-estado').value = filtros.estado || 'todos';
-                tecnicoGetElement('ordenar-por').value = filtros.orden || 'dias_asc';
-            }
-            catch (e) { }
-        }
-    })();
-    function formatearFechaHoraLarga(date = new Date()) {
-        return date.toLocaleString('es-MX', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        // Si hay pass guardado, intentamos login automático
+        setTimeout(login, 500);
     }
-    function actualizarFechaActual() {
-        const el = tecnicoGetElement('fecha-actual');
-        if (!el)
-            return;
-        const texto = formatearFechaHoraLarga();
-        el.textContent = texto.charAt(0).toUpperCase() + texto.slice(1);
-    }
-    // ==========================================
-    // LOGIN / LOGOUT
-    // ==========================================
-    async function login() {
-        if (loginEnCurso)
-            return;
-        loginEnCurso = true;
-        PASSWORD = tecnicoGetElement('password-input').value.trim();
-        const trustedInternalAccess = hasTecnicoAccess();
-        if (!trustedInternalAccess) {
-            if (!PASSWORD) {
-                loginEnCurso = false;
-                return mostrarErrorLogin('Ingresa la contraseña');
-            }
-            if (PASSWORD !== FRONT_PASSWORD) {
-                loginEnCurso = false;
-                return mostrarErrorLogin('Contraseña incorrecta');
-            }
+    const savedFiltros = localStorage.getItem('srfix_filtros_tecnico');
+    if (savedFiltros) {
+        try {
+            filtros = JSON.parse(savedFiltros);
+            tecnicoGetElement('buscador').value = filtros.texto || '';
+            tecnicoGetElement('filtro-color').value = filtros.color || 'todos';
+            tecnicoGetElement('filtro-estado').value = filtros.estado || 'todos';
+            tecnicoGetElement('ordenar-por').value = filtros.orden || 'dias_asc';
         }
-        const btn = tecnicoGetElement('btn-login');
-        btn.disabled = true;
-        btn.innerHTML = '<div class="spinner w-5 h-5"></div> Verificando...';
-        ocultarErrorLogin();
-        const ok = await cargarDatos(true);
-        if (ok) {
-            const remember = tecnicoGetElement('remember-me').checked;
-            if (!trustedInternalAccess) {
-                sessionStorage.setItem('srfix_pass_tecnico', PASSWORD);
-                if (remember) {
-                    localStorage.setItem('srfix_pass_tecnico', PASSWORD);
-                }
-                else {
-                    localStorage.removeItem('srfix_pass_tecnico');
-                }
-            }
+        catch (e) { }
+    }
+})();
+function formatearFechaHoraLarga(date = new Date()) {
+    return date.toLocaleString('es-MX', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+function actualizarFechaActual() {
+    const el = tecnicoGetElement('fecha-actual');
+    if (!el)
+        return;
+    const texto = formatearFechaHoraLarga();
+    el.textContent = texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+// ==========================================
+// LOGIN / LOGOUT
+// ==========================================
+async function login() {
+    if (loginEnCurso)
+        return;
+    loginEnCurso = true;
+    const password = tecnicoGetElement('password-input').value.trim();
+    if (!password) {
+        loginEnCurso = false;
+        return mostrarErrorLogin('Ingresa la contraseña');
+    }
+    const btn = tecnicoGetElement('btn-login');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner w-5 h-5"></div> Verificando...';
+    ocultarErrorLogin();
+    try {
+        // El backend ahora valida y devuelve un JWT
+        const result = await fixService.login({ usuario: 'admin', password });
+        if (result.ok) {
             tecnicoGetElement('login-screen').classList.add('hidden');
             tecnicoGetElement('app').classList.remove('hidden');
             actualizarFechaActual();
             setInterval(actualizarFechaActual, 60000);
             if (intervalo)
                 clearInterval(intervalo);
-            intervalo = setInterval(cargarDatos, 30000);
+            intervalo = window.setInterval(cargarDatos, 30000);
+            await cargarDatos(true);
             await abrirEquipoDesdeQuery();
         }
         else {
-            mostrarErrorLogin('No se pudo iniciar sesión por conexión o backend. Si la clave es Admin1, intenta de nuevo.');
+            mostrarErrorLogin(result.error || 'Contraseña incorrecta');
             btn.innerHTML = 'INGRESAR';
             btn.disabled = false;
         }
-        loginEnCurso = false;
     }
-    function logout() {
-        if (intervalo)
-            clearInterval(intervalo);
-        try {
-            if (window.parent && window.parent !== window) {
-                window.parent.postMessage({ type: 'srfix:logout' }, '*');
-                return;
-            }
+    catch (e) {
+        mostrarErrorLogin('Error de conexión con el servidor');
+        btn.innerHTML = 'INGRESAR';
+        btn.disabled = false;
+    }
+    loginEnCurso = false;
+}
+function logout() {
+    if (intervalo)
+        clearInterval(intervalo);
+    fixService.logout();
+}
+function mostrarErrorLogin(msg) {
+    const el = tecnicoGetElement('login-error');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+}
+function ocultarErrorLogin() {
+    tecnicoGetElement('login-error').classList.add('hidden');
+}
+// ==========================================
+// CARGA DE DATOS
+// ==========================================
+function getAudioCtx() {
+    if (!audioCtx) {
+        const mediaWindow = window;
+        const Ctx = window.AudioContext || mediaWindow.webkitAudioContext;
+        if (!Ctx)
+            return null;
+        audioCtx = new Ctx();
+    }
+    return audioCtx;
+}
+async function unlockAudio() {
+    const ctx = getAudioCtx();
+    if (!ctx)
+        return;
+    try {
+        if (ctx.state === 'suspended')
+            await ctx.resume();
+        audioUnlocked = ctx.state === 'running';
+    }
+    catch (e) {
+        audioUnlocked = false;
+    }
+}
+function beep(freq = 520, duration = 0.12, delay = 0) {
+    const ctx = getAudioCtx();
+    if (!ctx || !audioUnlocked || ctx.state !== 'running')
+        return;
+    const t0 = ctx.currentTime + delay;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(0.14, t0 + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.01);
+}
+function sonidoAlertaRojo() {
+    beep(520, 0.1, 0);
+    beep(430, 0.14, 0.14);
+}
+function calcularFirmaSemaforo(lista = []) {
+    return (lista || [])
+        .map(eq => `${eq.FOLIO}|${eq.ESTADO}|${eq.diasRestantes}|${eq.color}|${eq.TECNICO_ASIGNADO || ''}`)
+        .join('||');
+}
+async function obtenerSemaforoData(pageSize) {
+    const data = await fixService.listarEquipos({ page: 1, pageSize });
+    return tecnicoExtraerEquiposResponse(data);
+}
+async function cargarDatos(esLogin = false) {
+    if (cargaDatosEnCurso)
+        return false;
+    cargaDatosEnCurso = true;
+    const requestSeq = ++cargaDatosSeq;
+    mostrarRefreshing(true);
+    setRefreshButtonState(true);
+    try {
+        const pageSize = Math.max(1000, equiposData.length || 0);
+        const data = await obtenerSemaforoData(pageSize);
+        if (requestSeq !== cargaDatosSeq)
+            return false;
+        const nuevosEquipos = (data.equipos || []).map((eq) => tecnicoNormalizarEquipoRecord(eq));
+        const firmaNueva = calcularFirmaSemaforo(nuevosEquipos);
+        const huboCambios = firmaNueva !== ultimaFirmaSemaforo;
+        equiposData = nuevosEquipos;
+        ultimaFirmaSemaforo = firmaNueva;
+        tecnicoGetElement('count-urgentes').textContent = data.urgentes || 0;
+        tecnicoGetElement('count-atencion').textContent = data.atencion || 0;
+        tecnicoGetElement('count-tiempo').textContent = data.aTiempo || 0;
+        tecnicoGetElement('count-total').textContent = Number(data.total || equiposData.length);
+        const urgentesActual = Number(data.urgentes || 0);
+        const now = Date.now();
+        const cooldownMs = 120000;
+        if (!primeraCargaTecnico && urgentesActual > urgentesPrevio && now - ultimoBeepRojoTs > cooldownMs) {
+            sonidoAlertaRojo();
+            ultimoBeepRojoTs = now;
         }
-        catch (e) { }
-        sessionStorage.removeItem('srfix_pass_tecnico');
-        localStorage.removeItem('srfix_pass_tecnico');
-        location.reload();
+        urgentesPrevio = urgentesActual;
+        primeraCargaTecnico = false;
+        if (huboCambios || esLogin)
+            aplicarFiltrosYOrdenar();
+        actualizarHoraActualizacion();
+        if (!esLogin && huboCambios)
+            mostrarToast('Datos actualizados', 'success');
+        return true;
     }
-    function mostrarErrorLogin(msg) {
-        const el = tecnicoGetElement('login-error');
-        el.textContent = msg;
+    catch (e) {
+        const mensaje = String(e instanceof Error ? e.message : e || '');
+        const esAbort = mensaje.toLowerCase().includes('abort');
+        if (esAbort)
+            return false;
+        console.error('Error cargando datos:', e);
+        renderLoadErrorState(mensaje);
+        if (!esLogin) {
+            mostrarToast(`Error al actualizar: ${mensaje || 'conexion'}`, 'error');
+        }
+        return false;
+    }
+    finally {
+        cargaDatosEnCurso = false;
+        mostrarRefreshing(false);
+        setRefreshButtonState(false);
+    }
+}
+function refrescarManual() {
+    if (cargaDatosEnCurso)
+        return;
+    cargarDatos();
+}
+function mostrarRefreshing(mostrar) {
+    const el = tecnicoGetElement('refreshing-indicator');
+    if (mostrar)
         el.classList.remove('hidden');
-    }
-    function ocultarErrorLogin() {
-        tecnicoGetElement('login-error').classList.add('hidden');
-    }
-    // ==========================================
-    // CARGA DE DATOS
-    // ==========================================
-    function getAudioCtx() {
-        if (!audioCtx) {
-            const mediaWindow = window;
-            const Ctx = window.AudioContext || mediaWindow.webkitAudioContext;
-            if (!Ctx)
-                return null;
-            audioCtx = new Ctx();
-        }
-        return audioCtx;
-    }
-    async function unlockAudio() {
-        const ctx = getAudioCtx();
-        if (!ctx)
-            return;
-        try {
-            if (ctx.state === 'suspended')
-                await ctx.resume();
-            audioUnlocked = ctx.state === 'running';
-        }
-        catch (e) {
-            audioUnlocked = false;
-        }
-    }
-    function beep(freq = 520, duration = 0.12, delay = 0) {
-        const ctx = getAudioCtx();
-        if (!ctx || !audioUnlocked || ctx.state !== 'running')
-            return;
-        const t0 = ctx.currentTime + delay;
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.0001, t0);
-        gain.gain.exponentialRampToValueAtTime(0.14, t0 + 0.01);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(t0);
-        osc.stop(t0 + duration + 0.01);
-    }
-    function sonidoAlertaRojo() {
-        beep(520, 0.1, 0);
-        beep(430, 0.14, 0.14);
-    }
-    function calcularFirmaSemaforo(lista = []) {
-        return (lista || [])
-            .map(eq => `${eq.FOLIO}|${eq.ESTADO}|${eq.diasRestantes}|${eq.color}|${eq.TECNICO_ASIGNADO || ''}`)
-            .join('||');
-    }
-    async function obtenerSemaforoData(pageSize) {
-        const data = await tecnicoRequestBackend('semaforo', { page: 1, pageSize }, 'GET');
-        return tecnicoExtraerEquiposResponse(data);
-    }
-    async function cargarDatos(esLogin = false) {
-        if (cargaDatosEnCurso)
+    else
+        el.classList.add('hidden');
+}
+function actualizarHoraActualizacion() {
+    tecnicoGetElement('last-update').innerHTML = `<i class="fa-regular fa-clock mr-1 text-[#1F7EDC]"></i> ${new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+}
+// ==========================================
+// FILTROS Y ORDENAMIENTO
+// ==========================================
+function aplicarFiltrosYOrdenar() {
+    filtros.texto = tecnicoGetElement('buscador').value.trim().toLowerCase();
+    filtros.color = tecnicoGetElement('filtro-color').value;
+    filtros.estado = tecnicoGetElement('filtro-estado').value;
+    filtros.orden = tecnicoGetElement('ordenar-por').value;
+    localStorage.setItem('srfix_filtros_tecnico', JSON.stringify(filtros));
+    let resultado = equiposData.filter(eq => {
+        if (filtros.color !== 'todos' && eq.color !== filtros.color)
             return false;
-        cargaDatosEnCurso = true;
-        const requestSeq = ++cargaDatosSeq;
-        mostrarRefreshing(true);
-        setRefreshButtonState(true);
-        try {
-            const pageSize = Math.max(1000, equiposData.length || 0);
-            const data = await obtenerSemaforoData(pageSize);
-            if (requestSeq !== cargaDatosSeq)
-                return false;
-                const nuevosEquipos = (data.equipos || []).map(tecnicoNormalizarEquipoRecord);
-                const firmaNueva = calcularFirmaSemaforo(nuevosEquipos);
-            const huboCambios = firmaNueva !== ultimaFirmaSemaforo;
-            equiposData = nuevosEquipos;
-            ultimaFirmaSemaforo = firmaNueva;
-            tecnicoGetElement('count-urgentes').textContent = data.urgentes || 0;
-            tecnicoGetElement('count-atencion').textContent = data.atencion || 0;
-            tecnicoGetElement('count-tiempo').textContent = data.aTiempo || 0;
-            tecnicoGetElement('count-total').textContent = Number(data.total || equiposData.length);
-            const urgentesActual = Number(data.urgentes || 0);
-            const now = Date.now();
-            const cooldownMs = 120000;
-            if (!primeraCargaTecnico && urgentesActual > urgentesPrevio && now - ultimoBeepRojoTs > cooldownMs) {
-                sonidoAlertaRojo();
-                ultimoBeepRojoTs = now;
-            }
-            urgentesPrevio = urgentesActual;
-            primeraCargaTecnico = false;
-            if (huboCambios || esLogin)
-                aplicarFiltrosYOrdenar();
-            actualizarHoraActualizacion();
-            if (!esLogin && huboCambios)
-                mostrarToast('Datos actualizados', 'success');
-            return true;
-        }
-        catch (e) {
-            const mensaje = String(e instanceof Error ? e.message : e || '');
-            const esAbort = mensaje.toLowerCase().includes('abort');
-            if (esAbort)
-                return false;
-            console.error('Error cargando datos:', e);
-            renderLoadErrorState(mensaje);
-            if (!esLogin) {
-                mostrarToast(`Error al actualizar: ${mensaje || 'conexion'}`, 'error');
-            }
+        if (filtros.estado !== 'todos' && eq.ESTADO !== filtros.estado)
             return false;
+        if (filtros.texto) {
+            const texto = filtros.texto;
+            const folio = String(eq.FOLIO || '').toLowerCase();
+            const cliente = String(eq.CLIENTE_NOMBRE || '').toLowerCase();
+            const dispositivo = String(eq.DISPOSITIVO || '').toLowerCase();
+            const modelo = String(eq.MODELO || '').toLowerCase();
+            return folio.includes(texto) ||
+                cliente.includes(texto) ||
+                dispositivo.includes(texto) ||
+                modelo.includes(texto);
         }
-        finally {
-            cargaDatosEnCurso = false;
-            mostrarRefreshing(false);
-            setRefreshButtonState(false);
+        return true;
+    });
+    resultado.sort((a, b) => {
+        const diasA = Number(a.diasRestantes || 0);
+        const diasB = Number(b.diasRestantes || 0);
+        switch (filtros.orden) {
+            case 'dias_asc':
+                return (diasA - diasB)
+                    || String(a.FECHA_PROMESA || '').localeCompare(String(b.FECHA_PROMESA || ''))
+                    || String(a.FOLIO || '').localeCompare(String(b.FOLIO || ''));
+            case 'dias_desc': return diasB - diasA;
+            case 'folio_asc': return (a.FOLIO || '').localeCompare(b.FOLIO || '');
+            case 'folio_desc': return (b.FOLIO || '').localeCompare(a.FOLIO || '');
+            default: return 0;
         }
-    }
-    function refrescarManual() {
-        if (cargaDatosEnCurso)
-            return;
-        cargarDatos();
-    }
-    function mostrarRefreshing(mostrar) {
-        const el = tecnicoGetElement('refreshing-indicator');
-        if (mostrar)
-            el.classList.remove('hidden');
-        else
-            el.classList.add('hidden');
-    }
-    function actualizarHoraActualizacion() {
-        tecnicoGetElement('last-update').innerHTML = `<i class="fa-regular fa-clock mr-1 text-[#1F7EDC]"></i> ${new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
-    }
-    // ==========================================
-    // FILTROS Y ORDENAMIENTO
-    // ==========================================
-    function aplicarFiltrosYOrdenar() {
-        filtros.texto = tecnicoGetElement('buscador').value.trim().toLowerCase();
-        filtros.color = tecnicoGetElement('filtro-color').value;
-        filtros.estado = tecnicoGetElement('filtro-estado').value;
-        filtros.orden = tecnicoGetElement('ordenar-por').value;
-        localStorage.setItem('srfix_filtros_tecnico', JSON.stringify(filtros));
-        let resultado = equiposData.filter(eq => {
-            if (filtros.color !== 'todos' && eq.color !== filtros.color)
-                return false;
-            if (filtros.estado !== 'todos' && eq.ESTADO !== filtros.estado)
-                return false;
-            if (filtros.texto) {
-                const texto = filtros.texto;
-                    const folio = String(eq.FOLIO || '').toLowerCase();
-                    const cliente = String(eq.CLIENTE_NOMBRE || '').toLowerCase();
-                    const dispositivo = String(eq.DISPOSITIVO || '').toLowerCase();
-                    const modelo = String(eq.MODELO || '').toLowerCase();
-                    return folio.includes(texto) ||
-                        cliente.includes(texto) ||
-                        dispositivo.includes(texto) ||
-                        modelo.includes(texto);
-                }
-                return true;
-            });
-        resultado.sort((a, b) => {
-            const diasA = Number(a.diasRestantes || 0);
-            const diasB = Number(b.diasRestantes || 0);
-            switch (filtros.orden) {
-                case 'dias_asc':
-                    return (diasA - diasB)
-                        || String(a.FECHA_PROMESA || '').localeCompare(String(b.FECHA_PROMESA || ''))
-                        || String(a.FOLIO || '').localeCompare(String(b.FOLIO || ''));
-                case 'dias_desc': return diasB - diasA;
-                case 'folio_asc': return (a.FOLIO || '').localeCompare(b.FOLIO || '');
-                case 'folio_desc': return (b.FOLIO || '').localeCompare(a.FOLIO || '');
-                default: return 0;
-            }
-        });
-        equiposFiltrados = resultado;
-        renderizar();
-    }
-    tecnicoGetElement('buscador').addEventListener('input', aplicarFiltrosYOrdenar);
-    tecnicoGetElement('filtro-color').addEventListener('change', aplicarFiltrosYOrdenar);
-    tecnicoGetElement('filtro-estado').addEventListener('change', aplicarFiltrosYOrdenar);
-    tecnicoGetElement('ordenar-por').addEventListener('change', aplicarFiltrosYOrdenar);
-    function limpiarFiltros() {
-        tecnicoGetElement('buscador').value = '';
-        tecnicoGetElement('filtro-color').value = 'todos';
-        tecnicoGetElement('filtro-estado').value = 'todos';
-        tecnicoGetElement('ordenar-por').value = 'dias_asc';
-        aplicarFiltrosYOrdenar();
-    }
-    // ==========================================
-    // RENDERIZADO DE TARJETAS
-    // ==========================================
-    function formatDateWords(dateStr) {
-        if (!dateStr)
-            return '---';
-        try {
-            const date = new Date(dateStr);
-            if (isNaN(date.getTime()))
-                return dateStr;
-            const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-            const d = date.getDate();
-            const m = meses[date.getMonth()];
-            let h = date.getHours();
-            const min = String(date.getMinutes()).padStart(2, '0');
-            const ampm = h >= 12 ? 'PM' : 'AM';
-            h = h % 12 || 12;
-            return `${d} de ${m}, ${h}:${min} ${ampm}`;
-        }
-        catch (e) {
+    });
+    equiposFiltrados = resultado;
+    renderizar();
+}
+tecnicoGetElement('buscador').addEventListener('input', aplicarFiltrosYOrdenar);
+tecnicoGetElement('filtro-color').addEventListener('change', aplicarFiltrosYOrdenar);
+tecnicoGetElement('filtro-estado').addEventListener('change', aplicarFiltrosYOrdenar);
+tecnicoGetElement('ordenar-por').addEventListener('change', aplicarFiltrosYOrdenar);
+function limpiarFiltros() {
+    tecnicoGetElement('buscador').value = '';
+    tecnicoGetElement('filtro-color').value = 'todos';
+    tecnicoGetElement('filtro-estado').value = 'todos';
+    tecnicoGetElement('ordenar-por').value = 'dias_asc';
+    aplicarFiltrosYOrdenar();
+}
+// ==========================================
+// RENDERIZADO DE TARJETAS
+// ==========================================
+function formatDateWords(dateStr) {
+    if (!dateStr)
+        return '---';
+    try {
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime()))
             return dateStr;
+        const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        const d = date.getDate();
+        const m = meses[date.getMonth()];
+        let h = date.getHours();
+        const min = String(date.getMinutes()).padStart(2, '0');
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 || 12;
+        return `${d} de ${m}, ${h}:${min} ${ampm}`;
+    }
+    catch (e) {
+        return dateStr;
+    }
+}
+function formatMoney(value) {
+    const amount = Number(value || 0);
+    return new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN',
+        minimumFractionDigits: 2
+    }).format(isFinite(amount) ? amount : 0);
+}
+function formatDateInput(value) {
+    if (!value)
+        return '';
+    const raw = String(value).trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw))
+        return raw;
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime()))
+        return '';
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function toggleEditField(field) {
+    const map = {
+        cliente: tecnicoGetElement('modal-cliente-input'),
+        telefono: tecnicoGetElement('modal-telefono-input'),
+        equipo: tecnicoGetElement('modal-equipo-edit'),
+        costo: tecnicoGetElement('modal-costo-input'),
+        'fecha-promesa': tecnicoGetElement('modal-fecha-promesa-input')
+    };
+    const el = map[field];
+    if (!el)
+        return;
+    el.classList.toggle('hidden');
+    if (!el.classList.contains('hidden')) {
+        const target = el.matches && el.matches('input,textarea,select') ? el : el.querySelector && el.querySelector('input,textarea,select');
+        if (target && typeof target.focus === 'function') {
+            target.focus();
+            if (typeof target.select === 'function')
+                target.select();
         }
     }
-    function formatMoney(value) {
-        const amount = Number(value || 0);
-        return new Intl.NumberFormat('es-MX', {
-            style: 'currency',
-            currency: 'MXN',
-            minimumFractionDigits: 2
-        }).format(isFinite(amount) ? amount : 0);
+}
+function leerEdicionModalEquipo() {
+    return {
+        clienteNombre: tecnicoGetElement('modal-cliente-input').value.trim(),
+        clienteTelefono: tecnicoGetElement('modal-telefono-input').value.trim(),
+        dispositivo: tecnicoGetElement('modal-equipo-dispositivo').value.trim(),
+        modelo: tecnicoGetElement('modal-equipo-modelo').value.trim(),
+        costo: Number(tecnicoGetElement('modal-costo-input').value || 0),
+        fechaPromesa: tecnicoGetElement('modal-fecha-promesa-input').value,
+        estado: tecnicoGetElement('modal-estado').value,
+        tecnico: tecnicoGetElement('modal-tecnico').value.trim(),
+        yt: tecnicoGetElement('modal-yt').value.trim(),
+        notas: tecnicoGetElement('modal-notas').value,
+        seguimiento: tecnicoGetElement('modal-seguimiento').value,
+        resolucion: tecnicoGetElement('modal-resolucion').value,
+        checkCargador: tecnicoGetElement('check-cargador').checked,
+        checkPantalla: tecnicoGetElement('check-pantalla').checked,
+        checkPrende: tecnicoGetElement('check-prende').checked,
+        checkRespaldo: tecnicoGetElement('check-respaldo').checked
+    };
+}
+function construirCamposActualizacionEquipo(estadoForzado = '') {
+    const ed = leerEdicionModalEquipo();
+    if (estadoForzado)
+        ed.estado = estadoForzado;
+    const campos = {};
+    const pushIfChanged = (key, next, prev, normalizer = (v) => v) => {
+        const nNext = normalizer(next);
+        const nPrev = normalizer(prev);
+        if (String(nNext) !== String(nPrev))
+            campos[key] = nNext;
+    };
+    pushIfChanged('CLIENTE_NOMBRE', ed.clienteNombre, equipoActual?.CLIENTE_NOMBRE || '');
+    pushIfChanged('CLIENTE_TELEFONO', ed.clienteTelefono, equipoActual?.CLIENTE_TELEFONO || '');
+    pushIfChanged('DISPOSITIVO', ed.dispositivo, equipoActual?.DISPOSITIVO || '');
+    pushIfChanged('MODELO', ed.modelo, equipoActual?.MODELO || '');
+    pushIfChanged('COSTO_ESTIMADO', Number(ed.costo || 0), Number(equipoActual?.COSTO_ESTIMADO || 0), (v) => Number(v || 0));
+    pushIfChanged('FECHA_PROMESA', ed.fechaPromesa, formatDateInput(equipoActual?.FECHA_PROMESA || ''));
+    pushIfChanged('ESTADO', ed.estado, equipoActual?.ESTADO || '');
+    pushIfChanged('TECNICO_ASIGNADO', ed.tecnico, equipoActual?.TECNICO_ASIGNADO || '');
+    pushIfChanged('YOUTUBE_ID', ed.yt, equipoActual?.YOUTUBE_ID || '');
+    pushIfChanged('NOTAS_INTERNAS', ed.notas, equipoActual?.NOTAS_INTERNAS || '');
+    pushIfChanged('SEGUIMIENTO_CLIENTE', ed.seguimiento, equipoActual?.SEGUIMIENTO_CLIENTE || '');
+    pushIfChanged('CASO_RESOLUCION_TECNICA', ed.resolucion, equipoActual?.CASO_RESOLUCION_TECNICA || '');
+    pushIfChanged('CHECK_CARGADOR', ed.checkCargador ? 'SÍ' : 'NO', equipoActual?.CHECK_CARGADOR || 'NO');
+    pushIfChanged('CHECK_PANTALLA', ed.checkPantalla ? 'SÍ' : 'NO', equipoActual?.CHECK_PANTALLA || 'NO');
+    pushIfChanged('CHECK_PRENDE', ed.checkPrende ? 'SÍ' : 'NO', equipoActual?.CHECK_PRENDE || 'NO');
+    pushIfChanged('CHECK_RESPALDO', ed.checkRespaldo ? 'SÍ' : 'NO', equipoActual?.CHECK_RESPALDO || 'NO');
+    return { ed, campos };
+}
+function renderizar() {
+    const grid = tecnicoGetElement('equipos-grid');
+    if (!equiposFiltrados.length) {
+        grid.innerHTML = '<div class="col-span-full text-center py-12 text-[#8A8F95]"><i class="fa-solid fa-folder-open text-4xl mb-4 opacity-30"></i><p>No hay equipos con esos filtros</p></div>';
+        return;
     }
-    function formatDateInput(value) {
-        if (!value)
-            return '';
-        const raw = String(value).trim();
-        if (/^\d{4}-\d{2}-\d{2}$/.test(raw))
-            return raw;
-        const d = new Date(raw);
-        if (Number.isNaN(d.getTime()))
-            return '';
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    }
-    function toggleEditField(field) {
-        const map = {
-            cliente: tecnicoGetElement('modal-cliente-input'),
-            telefono: tecnicoGetElement('modal-telefono-input'),
-            equipo: tecnicoGetElement('modal-equipo-edit'),
-            costo: tecnicoGetElement('modal-costo-input'),
-            'fecha-promesa': tecnicoGetElement('modal-fecha-promesa-input')
-        };
-        const el = map[field];
-        if (!el)
-            return;
-        el.classList.toggle('hidden');
-        if (!el.classList.contains('hidden')) {
-            const target = el.matches && el.matches('input,textarea,select') ? el : el.querySelector && el.querySelector('input,textarea,select');
-            if (target && typeof target.focus === 'function') {
-                target.focus();
-                if (typeof target.select === 'function')
-                    target.select();
-            }
+    grid.innerHTML = '';
+    equiposFiltrados.forEach(eq => {
+        // Alerta de inactividad (48h)
+        const ultimaAct = new Date(String(eq.FECHA_ULTIMA_ACTUALIZACION || eq.FECHA_INGRESO || ''));
+        const esInactivo = (Date.now() - ultimaAct.getTime()) > (48 * 60 * 60 * 1000);
+        const inactivoClase = esInactivo && eq.ESTADO !== 'Entregado' ? 'border-2 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'border border-transparent';
+        const diasValor = Number(eq.diasRestantes);
+        const tieneDias = Number.isFinite(diasValor) && String(eq.FECHA_PROMESA || '').trim() !== '';
+        const card = document.createElement('div');
+        card.className = `card-${eq.color} tecnico-ticket rounded-xl p-5 cursor-pointer hover:scale-[1.01] transition-all ${inactivoClase}`;
+        card.onclick = () => abrirModal(eq);
+        const dotClass = eq.color === 'rojo' ? 'bg-red-500 animate-pulse-red' : eq.color === 'amarillo' ? 'bg-yellow-500' : 'bg-green-500';
+        const diasClase = !tieneDias ? 'text-[#8A8F95]' : diasValor <= 2 ? 'text-red-500 font-bold' : diasValor <= 4 ? 'text-yellow-500' : 'text-[#8A8F95]';
+        const equipoTexto = `${String(eq.DISPOSITIVO || '').trim()} ${String(eq.MODELO || '').trim()}`.trim() || 'Equipo sin identificar';
+        const fallaTexto = String(eq.FALLA_REPORTADA || 'Sin descripción').trim();
+        const tecnicoTexto = String(eq.TECNICO_ASIGNADO || '').trim() || 'Por asignar';
+        const precioTexto = Number(eq.COSTO_ESTIMADO || 0) > 0 ? formatMoney(eq.COSTO_ESTIMADO || 0) : 'Sin cotizar';
+        let badgeClass = '';
+        switch (eq.ESTADO) {
+            case 'Recibido':
+                badgeClass = 'badge-recibido';
+                break;
+            case 'En Diagnóstico':
+                badgeClass = 'badge-diagnostico';
+                break;
+            case 'En Reparación':
+                badgeClass = 'badge-reparacion';
+                break;
+            case 'Esperando Refacción':
+                badgeClass = 'badge-esperando';
+                break;
+            case 'Listo':
+                badgeClass = 'badge-listo';
+                break;
+            case 'Entregado':
+                badgeClass = 'badge-entregado';
+                break;
+            default: badgeClass = 'badge-recibido';
         }
-    }
-    function leerEdicionModalEquipo() {
-        return {
-            clienteNombre: tecnicoGetElement('modal-cliente-input').value.trim(),
-            clienteTelefono: tecnicoGetElement('modal-telefono-input').value.trim(),
-            dispositivo: tecnicoGetElement('modal-equipo-dispositivo').value.trim(),
-            modelo: tecnicoGetElement('modal-equipo-modelo').value.trim(),
-            costo: Number(tecnicoGetElement('modal-costo-input').value || 0),
-            fechaPromesa: tecnicoGetElement('modal-fecha-promesa-input').value,
-            estado: tecnicoGetElement('modal-estado').value,
-            tecnico: tecnicoGetElement('modal-tecnico').value.trim(),
-            yt: tecnicoGetElement('modal-yt').value.trim(),
-            notas: tecnicoGetElement('modal-notas').value,
-            seguimiento: tecnicoGetElement('modal-seguimiento').value,
-            resolucion: tecnicoGetElement('modal-resolucion').value,
-            checkCargador: tecnicoGetElement('check-cargador').checked,
-            checkPantalla: tecnicoGetElement('check-pantalla').checked,
-            checkPrende: tecnicoGetElement('check-prende').checked,
-            checkRespaldo: tecnicoGetElement('check-respaldo').checked
-        };
-    }
-    function construirCamposActualizacionEquipo(estadoForzado = '') {
-        const ed = leerEdicionModalEquipo();
-        if (estadoForzado)
-            ed.estado = estadoForzado;
-        const campos = {};
-        const pushIfChanged = (key, next, prev, normalizer = (v) => v) => {
-            const nNext = normalizer(next);
-            const nPrev = normalizer(prev);
-            if (String(nNext) !== String(nPrev))
-                campos[key] = nNext;
-        };
-        pushIfChanged('CLIENTE_NOMBRE', ed.clienteNombre, equipoActual?.CLIENTE_NOMBRE || '');
-        pushIfChanged('CLIENTE_TELEFONO', ed.clienteTelefono, equipoActual?.CLIENTE_TELEFONO || '');
-        pushIfChanged('DISPOSITIVO', ed.dispositivo, equipoActual?.DISPOSITIVO || '');
-        pushIfChanged('MODELO', ed.modelo, equipoActual?.MODELO || '');
-        pushIfChanged('COSTO_ESTIMADO', Number(ed.costo || 0), Number(equipoActual?.COSTO_ESTIMADO || 0), (v) => Number(v || 0));
-        pushIfChanged('FECHA_PROMESA', ed.fechaPromesa, formatDateInput(equipoActual?.FECHA_PROMESA || ''));
-        pushIfChanged('ESTADO', ed.estado, equipoActual?.ESTADO || '');
-        pushIfChanged('TECNICO_ASIGNADO', ed.tecnico, equipoActual?.TECNICO_ASIGNADO || '');
-        pushIfChanged('YOUTUBE_ID', ed.yt, equipoActual?.YOUTUBE_ID || '');
-        pushIfChanged('NOTAS_INTERNAS', ed.notas, equipoActual?.NOTAS_INTERNAS || '');
-        pushIfChanged('SEGUIMIENTO_CLIENTE', ed.seguimiento, equipoActual?.SEGUIMIENTO_CLIENTE || '');
-        pushIfChanged('CASO_RESOLUCION_TECNICA', ed.resolucion, equipoActual?.CASO_RESOLUCION_TECNICA || '');
-        pushIfChanged('CHECK_CARGADOR', ed.checkCargador ? 'SÍ' : 'NO', equipoActual?.CHECK_CARGADOR || 'NO');
-        pushIfChanged('CHECK_PANTALLA', ed.checkPantalla ? 'SÍ' : 'NO', equipoActual?.CHECK_PANTALLA || 'NO');
-        pushIfChanged('CHECK_PRENDE', ed.checkPrende ? 'SÍ' : 'NO', equipoActual?.CHECK_PRENDE || 'NO');
-        pushIfChanged('CHECK_RESPALDO', ed.checkRespaldo ? 'SÍ' : 'NO', equipoActual?.CHECK_RESPALDO || 'NO');
-        return { ed, campos };
-    }
-    function renderizar() {
-        const grid = tecnicoGetElement('equipos-grid');
-        if (!equiposFiltrados.length) {
-            grid.innerHTML = '<div class="col-span-full text-center py-12 text-[#8A8F95]"><i class="fa-solid fa-folder-open text-4xl mb-4 opacity-30"></i><p>No hay equipos con esos filtros</p></div>';
-            return;
-        }
-        grid.innerHTML = '';
-        equiposFiltrados.forEach(eq => {
-            // Alerta de inactividad (48h)
-            const ultimaAct = new Date(String(eq.FECHA_ULTIMA_ACTUALIZACION || eq.FECHA_INGRESO || ''));
-            const esInactivo = (Date.now() - ultimaAct.getTime()) > (48 * 60 * 60 * 1000);
-            const inactivoClase = esInactivo && eq.ESTADO !== 'Entregado' ? 'border-2 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.2)]' : 'border border-transparent';
-            const diasValor = Number(eq.diasRestantes);
-            const tieneDias = Number.isFinite(diasValor) && String(eq.FECHA_PROMESA || '').trim() !== '';
-            const card = document.createElement('div');
-            card.className = `card-${eq.color} tecnico-ticket rounded-xl p-5 cursor-pointer hover:scale-[1.01] transition-all ${inactivoClase}`;
-            card.onclick = () => abrirModal(eq);
-            const dotClass = eq.color === 'rojo' ? 'bg-red-500 animate-pulse-red' : eq.color === 'amarillo' ? 'bg-yellow-500' : 'bg-green-500';
-            const diasClase = !tieneDias ? 'text-[#8A8F95]' : diasValor <= 2 ? 'text-red-500 font-bold' : diasValor <= 4 ? 'text-yellow-500' : 'text-[#8A8F95]';
-            const equipoTexto = `${String(eq.DISPOSITIVO || '').trim()} ${String(eq.MODELO || '').trim()}`.trim() || 'Equipo sin identificar';
-            const fallaTexto = String(eq.FALLA_REPORTADA || 'Sin descripción').trim();
-            const tecnicoTexto = String(eq.TECNICO_ASIGNADO || '').trim() || 'Por asignar';
-            const precioTexto = Number(eq.COSTO_ESTIMADO || 0) > 0 ? formatMoney(eq.COSTO_ESTIMADO || 0) : 'Sin cotizar';
-            let badgeClass = '';
-            switch (eq.ESTADO) {
-                case 'Recibido':
-                    badgeClass = 'badge-recibido';
-                    break;
-                case 'En Diagnóstico':
-                    badgeClass = 'badge-diagnostico';
-                    break;
-                case 'En Reparación':
-                    badgeClass = 'badge-reparacion';
-                    break;
-                case 'Esperando Refacción':
-                    badgeClass = 'badge-esperando';
-                    break;
-                case 'Listo':
-                    badgeClass = 'badge-listo';
-                    break;
-                case 'Entregado':
-                    badgeClass = 'badge-entregado';
-                    break;
-                default: badgeClass = 'badge-recibido';
-            }
-            card.innerHTML = `
+        card.innerHTML = `
                     <div class="flex items-start justify-between gap-3 mb-4">
                         <div class="min-w-0">
                             <div class="flex items-center gap-2 flex-wrap">
@@ -760,340 +665,338 @@
                         </div>
                     </div>
                 `;
-            grid.appendChild(card);
-        });
-    }
-    // ==========================================
-    // MODAL
-    // ==========================================
-    let equipoActual = null;
-    function extraerDriveIdDesdeTexto(texto) {
-        const s = String(texto || '').trim();
-        if (!s)
-            return '';
-        let m = s.match(/\/d\/([a-zA-Z0-9_-]+)/);
-        if (m && m[1])
-            return m[1];
-        m = s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-        if (m && m[1])
-            return m[1];
+        grid.appendChild(card);
+    });
+}
+// ==========================================
+// MODAL
+// ==========================================
+let equipoActual = null;
+function extraerDriveIdDesdeTexto(texto) {
+    const s = String(texto || '').trim();
+    if (!s)
         return '';
+    let m = s.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (m && m[1])
+        return m[1];
+    m = s.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    if (m && m[1])
+        return m[1];
+    return '';
+}
+function obtenerCandidatasImagen(raw) {
+    const resultados = [];
+    const push = (valor) => {
+        const s = String(valor || '').trim();
+        if (!s)
+            return;
+        if (!resultados.includes(s))
+            resultados.push(s);
+    };
+    let valor = raw;
+    if (Array.isArray(valor) && valor.length) {
+        valor = valor[0];
     }
-    function obtenerCandidatasImagen(raw) {
-        const resultados = [];
-        const push = (valor) => {
-            const s = String(valor || '').trim();
-            if (!s)
-                return;
-            if (!resultados.includes(s))
-                resultados.push(s);
-        };
-        let valor = raw;
-        if (Array.isArray(valor) && valor.length) {
-            valor = valor[0];
-        }
-        if (valor && typeof valor === 'object') {
-            const rawObj = valor;
-            valor = rawObj.url || rawObj.src || rawObj.dataUrl || rawObj.base64 || rawObj.FOTO_RECEPCION || rawObj.fotoRecepcion || '';
-        }
-        else if (typeof valor === 'string') {
-            const t = valor.trim();
-            if (t.startsWith('{') || t.startsWith('[')) {
-                try {
-                    const parsed = JSON.parse(t);
-                    if (Array.isArray(parsed) && parsed.length) {
-                        valor = parsed[0];
-                    }
-                    else if (parsed && typeof parsed === 'object' && parsed.url) {
-                        valor = parsed.url;
-                    }
+    if (valor && typeof valor === 'object') {
+        const rawObj = valor;
+        valor = rawObj.url || rawObj.src || rawObj.dataUrl || rawObj.base64 || rawObj.FOTO_RECEPCION || rawObj.fotoRecepcion || '';
+    }
+    else if (typeof valor === 'string') {
+        const t = valor.trim();
+        if (t.startsWith('{') || t.startsWith('[')) {
+            try {
+                const parsed = JSON.parse(t);
+                if (Array.isArray(parsed) && parsed.length) {
+                    valor = parsed[0];
                 }
-                catch (e) { }
+                else if (parsed && typeof parsed === 'object' && parsed.url) {
+                    valor = parsed.url;
+                }
             }
+            catch (e) { }
         }
-        const principal = String(valor || '').trim();
-        if (!principal)
-            return resultados;
-        push(principal);
-        if (principal.startsWith('//')) {
-            push(`https:${principal}`);
-        }
-        const driveId = extraerDriveIdDesdeTexto(principal);
-        if (driveId) {
-            push(`https://drive.google.com/uc?export=view&id=${driveId}`);
-            push(`https://drive.google.com/thumbnail?id=${driveId}&sz=w1600`);
-        }
+    }
+    const principal = String(valor || '').trim();
+    if (!principal)
         return resultados;
+    push(principal);
+    if (principal.startsWith('//')) {
+        push(`https:${principal}`);
     }
-    function obtenerFotoRecepcionRaw(eq) {
-        if (!eq || typeof eq !== 'object')
-            return '';
-        return eq.FOTO_RECEPCION
-            || eq.fotoRecepcion
-            || eq.FOTO
-            || eq.foto
-            || eq.IMAGEN_RECEPCION
-            || eq.imagenRecepcion
-            || '';
+    const driveId = extraerDriveIdDesdeTexto(principal);
+    if (driveId) {
+        push(`https://drive.google.com/uc?export=view&id=${driveId}`);
+        push(`https://drive.google.com/thumbnail?id=${driveId}&sz=w1600`);
     }
-    function cargarFotoRecepcionModal(raw) {
-        const wrap = tecnicoGetElement('modal-foto-wrap');
-        const img = tecnicoGetElement('modal-foto');
-        const candidatas = obtenerCandidatasImagen(raw);
-        if (!candidatas.length) {
-            wrap.classList.add('hidden');
-            img.removeAttribute('src');
-            img.onerror = null;
+    return resultados;
+}
+function obtenerFotoRecepcionRaw(eq) {
+    if (!eq || typeof eq !== 'object')
+        return '';
+    return eq.FOTO_RECEPCION
+        || eq.fotoRecepcion
+        || eq.FOTO
+        || eq.foto
+        || eq.IMAGEN_RECEPCION
+        || eq.imagenRecepcion
+        || '';
+}
+function cargarFotoRecepcionModal(raw) {
+    const wrap = tecnicoGetElement('modal-foto-wrap');
+    const img = tecnicoGetElement('modal-foto');
+    const candidatas = obtenerCandidatasImagen(raw);
+    if (!candidatas.length) {
+        wrap.classList.add('hidden');
+        img.removeAttribute('src');
+        img.onerror = null;
+        return;
+    }
+    let idx = 0;
+    wrap.classList.remove('hidden');
+    img.onerror = () => {
+        idx += 1;
+        if (idx < candidatas.length) {
+            img.src = candidatas[idx];
             return;
         }
-        let idx = 0;
-        wrap.classList.remove('hidden');
-        img.onerror = () => {
-            idx += 1;
-            if (idx < candidatas.length) {
-                img.src = candidatas[idx];
-                return;
-            }
-            img.onerror = null;
-            wrap.classList.add('hidden');
-            img.removeAttribute('src');
-        };
-        img.src = candidatas[idx];
+        img.onerror = null;
+        wrap.classList.add('hidden');
+        img.removeAttribute('src');
+    };
+    img.src = candidatas[idx];
+}
+async function abrirModal(eq) {
+    equipoActual = eq;
+    if (!eq.FOTO_RECEPCION) {
+        const detalle = await obtenerDetalleEquipo(eq.FOLIO);
+        if (detalle)
+            eq = { ...eq, ...detalle };
     }
-    async function abrirModal(eq) {
-        equipoActual = eq;
-        if (!eq.FOTO_RECEPCION) {
-            const detalle = await obtenerDetalleEquipo(eq.FOLIO);
-            if (detalle)
-                eq = { ...eq, ...detalle };
+    equipoActual = eq;
+    tecnicoGetElement('modal-folio').textContent = eq.FOLIO;
+    tecnicoGetElement('modal-folio-detalle').textContent = eq.FOLIO || 'N/A';
+    tecnicoGetElement('modal-cliente').textContent = eq.CLIENTE_NOMBRE || 'N/A';
+    tecnicoGetElement('modal-telefono').textContent = eq.CLIENTE_TELEFONO || 'N/A';
+    tecnicoGetElement('modal-cliente-input').value = eq.CLIENTE_NOMBRE || '';
+    tecnicoGetElement('modal-telefono-input').value = eq.CLIENTE_TELEFONO || '';
+    tecnicoGetElement('modal-equipo-dispositivo').value = eq.DISPOSITIVO || '';
+    tecnicoGetElement('modal-equipo-modelo').value = eq.MODELO || '';
+    tecnicoGetElement('modal-costo-input').value = Number(eq.COSTO_ESTIMADO || 0).toFixed(2);
+    tecnicoGetElement('modal-fecha-promesa-input').value = formatDateInput(eq.FECHA_PROMESA || '');
+    const waBtn = tecnicoGetElement('modal-wa-btn');
+    const waUrl = construirWaUrl(eq.CLIENTE_TELEFONO, eq.FOLIO);
+    if (waUrl) {
+        waBtn.href = waUrl;
+        waBtn.classList.remove('hidden');
+    }
+    else {
+        waBtn.href = '#';
+        waBtn.classList.add('hidden');
+    }
+    tecnicoGetElement('modal-equipo').textContent = `${eq.DISPOSITIVO || ''} ${eq.MODELO || ''}`.trim() || 'N/A';
+    tecnicoGetElement('modal-costo').textContent = Number(eq.COSTO_ESTIMADO || 0) > 0
+        ? formatMoney(eq.COSTO_ESTIMADO)
+        : 'Pendiente por cotizar';
+    tecnicoGetElement('modal-falla').textContent = eq.FALLA_REPORTADA || 'Sin descripción';
+    const fechaPromesaEl = tecnicoGetElement('modal-fecha-promesa');
+    const diasValor = Number(eq.diasRestantes);
+    const tieneDias = Number.isFinite(diasValor) && String(eq.FECHA_PROMESA || '').trim() !== '';
+    const diasClase = !tieneDias ? '' : diasValor <= 2 ? 'text-red-500 font-bold' : diasValor <= 4 ? 'text-yellow-500' : '';
+    fechaPromesaEl.className = `text-[#F2F2F2] ${diasClase}`;
+    fechaPromesaEl.textContent = tieneDias ? `${eq.FECHA_PROMESA || 'N/A'} (${diasValor} días)` : 'N/A';
+    tecnicoGetElement('modal-estado').value = eq.ESTADO || 'Recibido';
+    tecnicoGetElement('modal-tecnico').value = eq.TECNICO_ASIGNADO || '';
+    tecnicoGetElement('modal-yt').value = eq.YOUTUBE_ID || '';
+    tecnicoGetElement('modal-notas').value = eq.NOTAS_INTERNAS || '';
+    tecnicoGetElement('modal-seguimiento').value = eq.SEGUIMIENTO_CLIENTE || '';
+    tecnicoGetElement('modal-resolucion').value = eq.CASO_RESOLUCION_TECNICA || '';
+    seguimientoFotosBase64 = parseSeguimientoFotos(eq.SEGUIMIENTO_FOTOS);
+    seguimientoOriginalSerializado = JSON.stringify(seguimientoFotosBase64);
+    renderizarGaleriaSeguimiento();
+    cargarFotoRecepcionModal(obtenerFotoRecepcionRaw(eq));
+    tecnicoGetElement('check-cargador').checked = checkToBool(eq.CHECK_CARGADOR, eq.CHECK_CARGADOR_BOOL);
+    tecnicoGetElement('check-pantalla').checked = checkToBool(eq.CHECK_PANTALLA, eq.CHECK_PANTALLA_BOOL);
+    tecnicoGetElement('check-prende').checked = checkToBool(eq.CHECK_PRENDE, eq.CHECK_PRENDE_BOOL);
+    tecnicoGetElement('check-respaldo').checked = checkToBool(eq.CHECK_RESPALDO, eq.CHECK_RESPALDO_BOOL);
+    const historial = (eq.NOTAS_INTERNAS || '')
+        .split('\n')
+        .map(l => l.trim())
+        .filter(Boolean)
+        .map(l => `• ${escapeHtml(l)}`)
+        .join('<br>');
+    tecnicoGetElement('modal-historial').innerHTML = historial || '<span class="text-[#8A8F95]">Sin historial de notas</span>';
+    mostrarSeccion('detalles');
+    tecnicoGetElement('modal').classList.remove('hidden');
+}
+async function obtenerDetalleEquipo(folio) {
+    try {
+        const data = await fixService.obtenerEquipo(folio);
+        return data && data.rows ? data.rows[0] : (data.equipo || null);
+    }
+    catch (e) {
+        return null;
+    }
+}
+async function abrirEquipoDesdeQuery() {
+    const folio = getRequestedFolio();
+    if (!folio)
+        return false;
+    const detalle = await obtenerDetalleEquipo(folio);
+    if (!detalle)
+        return false;
+    await abrirModal(detalle);
+    clearRequestedFolio();
+    return true;
+}
+function mostrarSeccion(tabId) {
+    document.querySelectorAll('[data-tab]').forEach((btn) => {
+        const active = String(btn.dataset.tab || '') === tabId;
+        btn.dataset.active = active ? '1' : '0';
+        btn.classList.toggle('active', active);
+        btn.classList.toggle('text-[#1F7EDC]', active);
+        btn.classList.toggle('border-b-2', active);
+        btn.classList.toggle('border-[#1F7EDC]', active);
+        btn.classList.toggle('text-[#8A8F95]', !active);
+    });
+    document.querySelectorAll('.tab-section').forEach(section => {
+        const active = section.id === `section-${tabId}`;
+        section.dataset.active = active ? '1' : '0';
+        section.classList.toggle('hidden', !active);
+    });
+}
+function cerrarModal() {
+    tecnicoGetElement('modal').classList.add('hidden');
+    equipoActual = null;
+    seguimientoFotosBase64 = [];
+    const inputFotos = tecnicoGetElement('modal-seguimiento-fotos');
+    if (inputFotos)
+        inputFotos.value = '';
+}
+async function guardarCambios() {
+    if (!equipoActual) {
+        mostrarToast('No hay equipo seleccionado', 'error');
+        return;
+    }
+    const { campos } = construirCamposActualizacionEquipo();
+    const fotosLimitadas = (seguimientoFotosBase64 || []).slice(0, 8);
+    const fotosSerializadas = JSON.stringify(fotosLimitadas);
+    let adminPasswordActual = '';
+    if (fotosSerializadas !== seguimientoOriginalSerializado) {
+        if (fotosSerializadas.length > 280000) {
+            mostrarToast('SEGUIMIENTO_FOTOS es muy grande. Reduce fotos o tamaño.', 'error');
+            return;
         }
-        equipoActual = eq;
-        tecnicoGetElement('modal-folio').textContent = eq.FOLIO;
-        tecnicoGetElement('modal-folio-detalle').textContent = eq.FOLIO || 'N/A';
-        tecnicoGetElement('modal-cliente').textContent = eq.CLIENTE_NOMBRE || 'N/A';
-        tecnicoGetElement('modal-telefono').textContent = eq.CLIENTE_TELEFONO || 'N/A';
-        tecnicoGetElement('modal-cliente-input').value = eq.CLIENTE_NOMBRE || '';
-        tecnicoGetElement('modal-telefono-input').value = eq.CLIENTE_TELEFONO || '';
-        tecnicoGetElement('modal-equipo-dispositivo').value = eq.DISPOSITIVO || '';
-        tecnicoGetElement('modal-equipo-modelo').value = eq.MODELO || '';
-        tecnicoGetElement('modal-costo-input').value = Number(eq.COSTO_ESTIMADO || 0).toFixed(2);
-        tecnicoGetElement('modal-fecha-promesa-input').value = formatDateInput(eq.FECHA_PROMESA || '');
-        const waBtn = tecnicoGetElement('modal-wa-btn');
-        const waUrl = construirWaUrl(eq.CLIENTE_TELEFONO, eq.FOLIO);
-        if (waUrl) {
-            waBtn.href = waUrl;
-            waBtn.classList.remove('hidden');
+        // Enviamos arreglo, backend lo serializa/persiste de forma segura.
+        campos.SEGUIMIENTO_FOTOS = fotosLimitadas;
+    }
+    if (!Object.keys(campos).length) {
+        mostrarToast('No hay cambios para guardar', 'success');
+        return;
+    }
+    try {
+        const result = await fixService.actualizarEquipo(equipoActual.FOLIO, {
+            ...campos,
+            adminPasswordActual
+        });
+        if (result.ok) {
+            mostrarToast('Cambios guardados', 'success');
+            cerrarModal();
+            await cargarDatos();
         }
         else {
-            waBtn.href = '#';
-            waBtn.classList.add('hidden');
-        }
-        tecnicoGetElement('modal-equipo').textContent = `${eq.DISPOSITIVO || ''} ${eq.MODELO || ''}`.trim() || 'N/A';
-        tecnicoGetElement('modal-costo').textContent = Number(eq.COSTO_ESTIMADO || 0) > 0
-            ? formatMoney(eq.COSTO_ESTIMADO)
-            : 'Pendiente por cotizar';
-        tecnicoGetElement('modal-falla').textContent = eq.FALLA_REPORTADA || 'Sin descripción';
-        const fechaPromesaEl = tecnicoGetElement('modal-fecha-promesa');
-        const diasValor = Number(eq.diasRestantes);
-        const tieneDias = Number.isFinite(diasValor) && String(eq.FECHA_PROMESA || '').trim() !== '';
-        const diasClase = !tieneDias ? '' : diasValor <= 2 ? 'text-red-500 font-bold' : diasValor <= 4 ? 'text-yellow-500' : '';
-        fechaPromesaEl.className = `text-[#F2F2F2] ${diasClase}`;
-        fechaPromesaEl.textContent = tieneDias ? `${eq.FECHA_PROMESA || 'N/A'} (${diasValor} días)` : 'N/A';
-        tecnicoGetElement('modal-estado').value = eq.ESTADO || 'Recibido';
-        tecnicoGetElement('modal-tecnico').value = eq.TECNICO_ASIGNADO || '';
-        tecnicoGetElement('modal-yt').value = eq.YOUTUBE_ID || '';
-        tecnicoGetElement('modal-notas').value = eq.NOTAS_INTERNAS || '';
-        tecnicoGetElement('modal-seguimiento').value = eq.SEGUIMIENTO_CLIENTE || '';
-        tecnicoGetElement('modal-resolucion').value = eq.CASO_RESOLUCION_TECNICA || '';
-        seguimientoFotosBase64 = parseSeguimientoFotos(eq.SEGUIMIENTO_FOTOS);
-        seguimientoOriginalSerializado = JSON.stringify(seguimientoFotosBase64);
-        renderizarGaleriaSeguimiento();
-        cargarFotoRecepcionModal(obtenerFotoRecepcionRaw(eq));
-        tecnicoGetElement('check-cargador').checked = checkToBool(eq.CHECK_CARGADOR, eq.CHECK_CARGADOR_BOOL);
-        tecnicoGetElement('check-pantalla').checked = checkToBool(eq.CHECK_PANTALLA, eq.CHECK_PANTALLA_BOOL);
-        tecnicoGetElement('check-prende').checked = checkToBool(eq.CHECK_PRENDE, eq.CHECK_PRENDE_BOOL);
-        tecnicoGetElement('check-respaldo').checked = checkToBool(eq.CHECK_RESPALDO, eq.CHECK_RESPALDO_BOOL);
-        const historial = (eq.NOTAS_INTERNAS || '')
-            .split('\n')
-            .map(l => l.trim())
-            .filter(Boolean)
-            .map(l => `• ${escapeHtml(l)}`)
-            .join('<br>');
-        tecnicoGetElement('modal-historial').innerHTML = historial || '<span class="text-[#8A8F95]">Sin historial de notas</span>';
-        mostrarSeccion('detalles');
-        tecnicoGetElement('modal').classList.remove('hidden');
-    }
-    async function obtenerDetalleEquipo(folio) {
-        try {
-            const data = await tecnicoRequestBackend('equipo', { folio }, 'GET');
-            return data && data.equipo ? data.equipo : null;
-        }
-        catch (e) {
-            return null;
+            throw new Error(String(data.error || 'Error de conexión'));
         }
     }
-    async function abrirEquipoDesdeQuery() {
-        const folio = getRequestedFolio();
-        if (!folio)
-            return false;
-        const detalle = await obtenerDetalleEquipo(folio);
-        if (!detalle)
-            return false;
-        await abrirModal(detalle);
-        clearRequestedFolio();
-        return true;
+    catch (e) {
+        mostrarToast('Error: ' + String(e instanceof Error ? e.message : e), 'error');
     }
-    function mostrarSeccion(tabId) {
-        document.querySelectorAll('[data-tab]').forEach((btn) => {
-            const active = String(btn.dataset.tab || '') === tabId;
-            btn.dataset.active = active ? '1' : '0';
-            btn.classList.toggle('active', active);
-            btn.classList.toggle('text-[#1F7EDC]', active);
-            btn.classList.toggle('border-b-2', active);
-            btn.classList.toggle('border-[#1F7EDC]', active);
-            btn.classList.toggle('text-[#8A8F95]', !active);
+}
+async function cambiarEstadoEntregado() {
+    if (!equipoActual) {
+        mostrarToast('No hay equipo seleccionado', 'error');
+        return;
+    }
+    const { campos } = construirCamposActualizacionEquipo('Entregado');
+    if (campos.ESTADO !== 'Entregado')
+        campos.ESTADO = 'Entregado';
+    let adminPasswordActual = '';
+    const guard = window.SRFXSecurityGuard;
+    if (!guard || typeof guard.ensureAdminPassword !== 'function') {
+        mostrarToast('No se pudo validar la clave admin', 'error');
+        return;
+    }
+    const auth = await guard.ensureAdminPassword('marcar un equipo como entregado');
+    if (!auth.ok)
+        return;
+    adminPasswordActual = auth.password ?? '';
+    try {
+        const result = await fixService.actualizarEquipo(equipoActual.FOLIO, {
+            ...campos,
+            adminPasswordActual
         });
-        document.querySelectorAll('.tab-section').forEach(section => {
-            const active = section.id === `section-${tabId}`;
-            section.dataset.active = active ? '1' : '0';
-            section.classList.toggle('hidden', !active);
-        });
+        if (result.ok) {
+            mostrarToast('Equipo marcado como entregado', 'success');
+            cerrarModal();
+            await cargarDatos();
+        }
+        else
+            throw new Error(String(data.error || 'Error de conexión'));
     }
-    function cerrarModal() {
-        tecnicoGetElement('modal').classList.add('hidden');
-        equipoActual = null;
-        seguimientoFotosBase64 = [];
-        const inputFotos = tecnicoGetElement('modal-seguimiento-fotos');
-        if (inputFotos)
-            inputFotos.value = '';
+    catch (e) {
+        mostrarToast('Error: ' + String(e instanceof Error ? e.message : e), 'error');
     }
-    async function guardarCambios() {
-        if (!equipoActual) {
-            mostrarToast('No hay equipo seleccionado', 'error');
-            return;
-        }
-        const { campos } = construirCamposActualizacionEquipo();
-        const fotosLimitadas = (seguimientoFotosBase64 || []).slice(0, 8);
-        const fotosSerializadas = JSON.stringify(fotosLimitadas);
-        let adminPasswordActual = '';
-        if (fotosSerializadas !== seguimientoOriginalSerializado) {
-            if (fotosSerializadas.length > 280000) {
-                mostrarToast('SEGUIMIENTO_FOTOS es muy grande. Reduce fotos o tamaño.', 'error');
-                return;
-            }
-            // Enviamos arreglo, backend lo serializa/persiste de forma segura.
-            campos.SEGUIMIENTO_FOTOS = fotosLimitadas;
-        }
-        if (!Object.keys(campos).length) {
-            mostrarToast('No hay cambios para guardar', 'success');
-            return;
-        }
-        try {
-            const data = await tecnicoRequestBackend('actualizar_equipo', {
-                folio: equipoActual.FOLIO,
-                campos: campos,
-                adminPasswordActual: adminPasswordActual
-            }, 'POST');
-            if (data.success) {
-                mostrarToast('Cambios guardados', 'success');
-                cerrarModal();
-                await cargarDatos();
-            }
-            else {
-                throw new Error(String(data.error || 'Error de conexión'));
-            }
-        }
-        catch (e) {
-            mostrarToast('Error: ' + String(e instanceof Error ? e.message : e), 'error');
-        }
+}
+// ==========================================
+// UTILERÍAS
+// ==========================================
+function escapeHtml(unsafe) {
+    if (!unsafe)
+        return '';
+    return unsafe.toString()
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+function checkToBool(value, boolValue) {
+    if (typeof boolValue === 'boolean')
+        return boolValue;
+    const s = String(value || '').trim().toUpperCase();
+    return s === 'SÍ' || s === 'SI' || s === 'TRUE' || s === '1';
+}
+function construirWaUrl(telefono, folio) {
+    const limpio = String(telefono || '').replace(/\D/g, '');
+    if (!limpio)
+        return '';
+    const destino = limpio.length === 10 ? `52${limpio}` : limpio;
+    const mensaje = `Hola, te escribimos de SrFix sobre tu equipo con folio ${folio}.`;
+    return `https://wa.me/${destino}?text=${encodeURIComponent(mensaje)}`;
+}
+function enviarWhatsAppCliente() {
+    if (!equipoActual)
+        return;
+    const telefono = equipoActual.CLIENTE_TELEFONO;
+    if (!telefono) {
+        mostrarToast('El cliente no tiene teléfono registrado', 'error');
+        return;
     }
-    async function cambiarEstadoEntregado() {
-        if (!equipoActual) {
-            mostrarToast('No hay equipo seleccionado', 'error');
-            return;
-        }
-        const { campos } = construirCamposActualizacionEquipo('Entregado');
-        if (campos.ESTADO !== 'Entregado')
-            campos.ESTADO = 'Entregado';
-        let adminPasswordActual = '';
-        const guard = window.SRFXSecurityGuard;
-        if (!guard || typeof guard.ensureAdminPassword !== 'function') {
-            mostrarToast('No se pudo validar la clave admin', 'error');
-            return;
-        }
-        const auth = await guard.ensureAdminPassword('marcar un equipo como entregado');
-        if (!auth.ok)
-            return;
-        adminPasswordActual = auth.password ?? '';
-        try {
-            const data = await tecnicoRequestBackend('actualizar_equipo', {
-                folio: equipoActual.FOLIO,
-                campos: campos,
-                adminPasswordActual: adminPasswordActual
-            }, 'POST');
-            if (data.success) {
-                mostrarToast('Equipo marcado como entregado', 'success');
-                cerrarModal();
-                await cargarDatos();
-            }
-            else
-                throw new Error(String(data.error || 'Error de conexión'));
-        }
-        catch (e) {
-            mostrarToast('Error: ' + String(e instanceof Error ? e.message : e), 'error');
-        }
+    const folio = equipoActual.FOLIO;
+    const estado = equipoActual.ESTADO || 'Recibido';
+    const limpio = String(telefono).replace(/\D/g, '');
+    const destino = limpio.length === 10 ? `52${limpio}` : limpio;
+    const mensaje = `Hola, te escribimos de SrFix para informarte que tu equipo con folio ${folio} se encuentra en estado: ${estado}.`;
+    window.open(`https://wa.me/${destino}?text=${encodeURIComponent(mensaje)}`, '_blank');
+}
+async function descargarFichaPDF() {
+    if (!equipoActual) {
+        mostrarToast('No hay equipo seleccionado', 'error');
+        return;
     }
-    // ==========================================
-    // UTILERÍAS
-    // ==========================================
-    function escapeHtml(unsafe) {
-        if (!unsafe)
-            return '';
-        return unsafe.toString()
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-    function checkToBool(value, boolValue) {
-        if (typeof boolValue === 'boolean')
-            return boolValue;
-        const s = String(value || '').trim().toUpperCase();
-        return s === 'SÍ' || s === 'SI' || s === 'TRUE' || s === '1';
-    }
-    function construirWaUrl(telefono, folio) {
-        const limpio = String(telefono || '').replace(/\D/g, '');
-        if (!limpio)
-            return '';
-        const destino = limpio.length === 10 ? `52${limpio}` : limpio;
-        const mensaje = `Hola, te escribimos de SrFix sobre tu equipo con folio ${folio}.`;
-        return `https://wa.me/${destino}?text=${encodeURIComponent(mensaje)}`;
-    }
-    function enviarWhatsAppCliente() {
-        if (!equipoActual)
-            return;
-        const telefono = equipoActual.CLIENTE_TELEFONO;
-        if (!telefono) {
-            mostrarToast('El cliente no tiene teléfono registrado', 'error');
-            return;
-        }
-        const folio = equipoActual.FOLIO;
-        const estado = equipoActual.ESTADO || 'Recibido';
-        const limpio = String(telefono).replace(/\D/g, '');
-        const destino = limpio.length === 10 ? `52${limpio}` : limpio;
-        const mensaje = `Hola, te escribimos de SrFix para informarte que tu equipo con folio ${folio} se encuentra en estado: ${estado}.`;
-        window.open(`https://wa.me/${destino}?text=${encodeURIComponent(mensaje)}`, '_blank');
-    }
-    async function descargarFichaPDF() {
-        if (!equipoActual) {
-            mostrarToast('No hay equipo seleccionado', 'error');
-            return;
-        }
-        const e = equipoActual;
-        const logoPrincipal = await resolverLogoPdf();
-        const fotoRecepcionPdf = obtenerCandidatasImagen(obtenerFotoRecepcionRaw(e))[0] || '';
-        const html = `
+    const e = equipoActual;
+    const logoPrincipal = await resolverLogoPdf();
+    const fotoRecepcionPdf = obtenerCandidatasImagen(obtenerFotoRecepcionRaw(e))[0] || '';
+    const html = `
                 <!DOCTYPE html>
                 <html lang="es">
                 <head>
@@ -1180,187 +1083,186 @@
                 </body>
                 </html>
             `;
-        const w = window.open('', '_blank');
-        if (!w)
-            return mostrarToast('Permite ventanas emergentes para generar PDF', 'error');
-        w.document.open();
-        w.document.write(html);
-        w.document.close();
-    }
-    async function resolverLogoPdf() {
-        const intentos = [LOGO_URL || './logo.webp', './logo.webp', './logo.png'];
-        for (const ruta of intentos) {
-            try {
-                const url = new URL(ruta, window.location.href).href;
-                const res = await fetch(url);
-                if (!res.ok)
-                    continue;
-                const blob = await res.blob();
-                const dataUrl = await blobToDataUrl(blob);
-                if (dataUrl)
-                    return dataUrl;
-            }
-            catch (e) { }
-        }
-        return '';
-    }
-    function blobToDataUrl(blob) {
-        return new Promise((resolve) => {
-            try {
-                const reader = new FileReader();
-                reader.onload = () => resolve(String(reader.result || ''));
-                reader.onerror = () => resolve('');
-                reader.readAsDataURL(blob);
-            }
-            catch (e) {
-                resolve('');
-            }
-        });
-    }
-    function parseSeguimientoFotos(raw) {
-        if (!raw)
-            return [];
-        if (Array.isArray(raw))
-            return raw.filter(v => typeof v === 'string' && (v.startsWith('data:image/') || /^https?:\/\//.test(v)));
+    const w = window.open('', '_blank');
+    if (!w)
+        return mostrarToast('Permite ventanas emergentes para generar PDF', 'error');
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+}
+async function resolverLogoPdf() {
+    const intentos = [LOGO_URL || './logo.webp', './logo.webp', './logo.png'];
+    for (const ruta of intentos) {
         try {
-            const parsed = JSON.parse(String(raw));
-            if (Array.isArray(parsed)) {
-                return parsed.filter(v => typeof v === 'string' && (v.startsWith('data:image/') || /^https?:\/\//.test(v)));
-            }
+            const url = new URL(ruta, window.location.href).href;
+            const res = await fetch(url);
+            if (!res.ok)
+                continue;
+            const blob = await res.blob();
+            const dataUrl = await blobToDataUrl(blob);
+            if (dataUrl)
+                return dataUrl;
         }
         catch (e) { }
-        return [];
     }
-    function renderizarGaleriaSeguimiento() {
-        const galeria = tecnicoGetElement('modal-seguimiento-galeria');
-        galeria.innerHTML = '';
-        if (!seguimientoFotosBase64.length) {
-            galeria.innerHTML = '<div class="col-span-full text-xs text-[#8A8F95]">Sin fotos de avance.</div>';
-            return;
+    return '';
+}
+function blobToDataUrl(blob) {
+    return new Promise((resolve) => {
+        try {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ''));
+            reader.onerror = () => resolve('');
+            reader.readAsDataURL(blob);
         }
-        seguimientoFotosBase64.forEach((src, idx) => {
-            const item = document.createElement('div');
-            item.className = 'relative rounded-lg overflow-hidden border border-[#1F7EDC] bg-[#1E1E1E]';
-            item.innerHTML = `
+        catch (e) {
+            resolve('');
+        }
+    });
+}
+function parseSeguimientoFotos(raw) {
+    if (!raw)
+        return [];
+    if (Array.isArray(raw))
+        return raw.filter(v => typeof v === 'string' && (v.startsWith('data:image/') || /^https?:\/\//.test(v)));
+    try {
+        const parsed = JSON.parse(String(raw));
+        if (Array.isArray(parsed)) {
+            return parsed.filter(v => typeof v === 'string' && (v.startsWith('data:image/') || /^https?:\/\//.test(v)));
+        }
+    }
+    catch (e) { }
+    return [];
+}
+function renderizarGaleriaSeguimiento() {
+    const galeria = tecnicoGetElement('modal-seguimiento-galeria');
+    galeria.innerHTML = '';
+    if (!seguimientoFotosBase64.length) {
+        galeria.innerHTML = '<div class="col-span-full text-xs text-[#8A8F95]">Sin fotos de avance.</div>';
+        return;
+    }
+    seguimientoFotosBase64.forEach((src, idx) => {
+        const item = document.createElement('div');
+        item.className = 'relative rounded-lg overflow-hidden border border-[#1F7EDC] bg-[#1E1E1E]';
+        item.innerHTML = `
                     <img src="${src}" alt="Seguimiento ${idx + 1}" class="w-full h-24 object-cover">
                     <button type="button" class="absolute top-1 right-1 bg-black/70 text-white text-xs px-2 py-1 rounded" data-foto-idx="${idx}">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 `;
-            galeria.appendChild(item);
-        });
-    }
-    async function manejarFotosSeguimiento(input) {
-        const files = Array.from((input && input.files) || []);
-        if (!files.length)
-            return;
-        try {
-            for (const file of files) {
-                if (seguimientoFotosBase64.length >= 8) {
-                    mostrarToast('Máximo 8 fotos de seguimiento', 'error');
-                    break;
-                }
-                const dataUrl = await comprimirImagenADataURL(file, 1280, 0.75);
-                if (dataUrl)
-                    seguimientoFotosBase64.push(dataUrl);
+        galeria.appendChild(item);
+    });
+}
+async function manejarFotosSeguimiento(input) {
+    const files = Array.from((input && input.files) || []);
+    if (!files.length)
+        return;
+    try {
+        for (const file of files) {
+            if (seguimientoFotosBase64.length >= 8) {
+                mostrarToast('Máximo 8 fotos de seguimiento', 'error');
+                break;
             }
-            renderizarGaleriaSeguimiento();
-            mostrarToast('Fotos de seguimiento agregadas', 'success');
+            const dataUrl = await comprimirImagenADataURL(file, 1280, 0.75);
+            if (dataUrl)
+                seguimientoFotosBase64.push(dataUrl);
         }
-        catch (e) {
-            console.error('Error al procesar fotos de seguimiento:', e);
-            mostrarToast('No se pudieron procesar las fotos', 'error');
-        }
-        finally {
-            if (input)
-                input.value = '';
-        }
-    }
-    function comprimirImagenADataURL(file, maxWidth = 1280, quality = 0.75) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-                const img = new Image();
-                img.onload = () => {
-                    const ratio = Math.min(1, maxWidth / img.width);
-                    const canvas = document.createElement('canvas');
-                    canvas.width = Math.round(img.width * ratio);
-                    canvas.height = Math.round(img.height * ratio);
-                    const ctx = canvas.getContext('2d');
-                    if (!ctx) {
-                        reject(new Error('No se pudo preparar el canvas'));
-                        return;
-                    }
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    resolve(canvas.toDataURL('image/jpeg', quality));
-                };
-                img.onerror = reject;
-                img.src = String(reader.result || '');
-            };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-        });
-    }
-    function mostrarToast(mensaje, tipo = 'success') {
-        const toast = tecnicoGetElement('toast');
-        tecnicoGetElement('toast-message').textContent = mensaje;
-        toast.classList.remove('translate-y-20', 'opacity-0');
-        toast.classList.add('translate-y-0', 'opacity-100');
-        toast.style.borderLeftColor = tipo === 'error' ? '#ef4444' : '#FF6A2A';
-        setTimeout(() => {
-            toast.classList.add('translate-y-20', 'opacity-0');
-            toast.classList.remove('translate-y-0', 'opacity-100');
-        }, 3000);
-    }
-    function bindWindowActions() {
-        Object.assign(window, {
-            login,
-            logout,
-            refrescarManual,
-            limpiarFiltros,
-            toggleEditField,
-            abrirModal,
-            cerrarModal,
-            guardarCambios,
-            cambiarEstadoEntregado,
-            descargarFichaPDF,
-            enviarWhatsAppCliente,
-            manejarFotosSeguimiento,
-            mostrarToast,
-            cargarDatos,
-            aplicarFiltrosYOrdenar,
-            mostrarSeccion,
-            abrirEquipoDesdeQuery
-        });
-    }
-    bindWindowActions();
-    tecnicoGetElement('modal').addEventListener('click', (e) => {
-        const target = e.target;
-        if (target && target.id === 'modal')
-            cerrarModal();
-    });
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => mostrarSeccion(String(btn.dataset.tab || '')));
-    });
-    tecnicoGetElement('modal-seguimiento-fotos').addEventListener('change', (e) => {
-        manejarFotosSeguimiento(e.target instanceof HTMLInputElement ? e.target : null);
-    });
-    tecnicoGetElement('modal-seguimiento-galeria').addEventListener('click', (e) => {
-        const target = e.target;
-        const btn = target?.closest('[data-foto-idx]');
-        if (!btn)
-            return;
-        const idx = Number(btn.getAttribute('data-foto-idx'));
-        if (Number.isNaN(idx))
-            return;
-        seguimientoFotosBase64.splice(idx, 1);
         renderizarGaleriaSeguimiento();
+        mostrarToast('Fotos de seguimiento agregadas', 'success');
+    }
+    catch (e) {
+        console.error('Error al procesar fotos de seguimiento:', e);
+        mostrarToast('No se pudieron procesar las fotos', 'error');
+    }
+    finally {
+        if (input)
+            input.value = '';
+    }
+}
+function comprimirImagenADataURL(file, maxWidth = 1280, quality = 0.75) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+                const ratio = Math.min(1, maxWidth / img.width);
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.round(img.width * ratio);
+                canvas.height = Math.round(img.height * ratio);
+                const ctx = canvas.getContext('2d');
+                if (!ctx) {
+                    reject(new Error('No se pudo preparar el canvas'));
+                    return;
+                }
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                resolve(canvas.toDataURL('image/jpeg', quality));
+            };
+            img.onerror = reject;
+            img.src = String(reader.result || '');
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
     });
-    tecnicoGetElement('modal-wa-btn').addEventListener('click', (e) => {
-        e.preventDefault();
-        enviarWhatsAppCliente();
+}
+function mostrarToast(mensaje, tipo = 'success') {
+    const toast = tecnicoGetElement('toast');
+    tecnicoGetElement('toast-message').textContent = mensaje;
+    toast.classList.remove('translate-y-20', 'opacity-0');
+    toast.classList.add('translate-y-0', 'opacity-100');
+    toast.style.borderLeftColor = tipo === 'error' ? '#ef4444' : '#FF6A2A';
+    setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+    }, 3000);
+}
+function bindWindowActions() {
+    Object.assign(window, {
+        login,
+        logout,
+        refrescarManual,
+        limpiarFiltros,
+        toggleEditField,
+        abrirModal,
+        cerrarModal,
+        guardarCambios,
+        cambiarEstadoEntregado,
+        descargarFichaPDF,
+        enviarWhatsAppCliente,
+        manejarFotosSeguimiento,
+        mostrarToast,
+        cargarDatos,
+        aplicarFiltrosYOrdenar,
+        mostrarSeccion,
+        abrirEquipoDesdeQuery
     });
-    ['click', 'touchstart', 'keydown'].forEach((evt) => {
-        document.addEventListener(evt, unlockAudio, { once: true, passive: true });
-    });
-})();
+}
+bindWindowActions();
+tecnicoGetElement('modal').addEventListener('click', (e) => {
+    const target = e.target;
+    if (target && target.id === 'modal')
+        cerrarModal();
+});
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => mostrarSeccion(String(btn.dataset.tab || '')));
+});
+tecnicoGetElement('modal-seguimiento-fotos').addEventListener('change', (e) => {
+    manejarFotosSeguimiento(e.target instanceof HTMLInputElement ? e.target : null);
+});
+tecnicoGetElement('modal-seguimiento-galeria').addEventListener('click', (e) => {
+    const target = e.target;
+    const btn = target?.closest('[data-foto-idx]');
+    if (!btn)
+        return;
+    const idx = Number(btn.getAttribute('data-foto-idx'));
+    if (Number.isNaN(idx))
+        return;
+    seguimientoFotosBase64.splice(idx, 1);
+    renderizarGaleriaSeguimiento();
+});
+tecnicoGetElement('modal-wa-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    enviarWhatsAppCliente();
+});
+['click', 'touchstart', 'keydown'].forEach((evt) => {
+    document.addEventListener(evt, unlockAudio, { once: true, passive: true });
+});

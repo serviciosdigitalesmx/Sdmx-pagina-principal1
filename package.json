@@ -3,9 +3,11 @@
   "private": true,
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "build:ts": "tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json && cp js/sw.js .",
+    "clean": "rm -rf js/*.js sw.js"
   },
   "devDependencies": {
+    "@types/node": "^25.7.0",
     "typescript": "^5.8.3"
   }
 }

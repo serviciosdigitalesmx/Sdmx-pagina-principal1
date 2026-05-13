@@ -1,3 +1,6 @@
+import { fixService } from './services/fixService';
+import { CONFIG } from './config';
+
 type TecnicoRequestMethod = 'GET' | 'POST';
 
 interface TecnicoBackendEnvelope {
@@ -53,7 +56,7 @@ interface TecnicoEquipoRecord {
   color?: 'rojo' | 'amarillo' | 'verde' | 'gris';
 }
 
-interface TecnicoSemaforoResponse extends TecnicoBackendEnvelope {
+interface TecnicoSemaforoResponse {
   equipos?: TecnicoEquipoRecord[];
   urgentes?: number;
   atencion?: number;
@@ -61,18 +64,18 @@ interface TecnicoSemaforoResponse extends TecnicoBackendEnvelope {
   total?: number;
 }
 
-interface TecnicoDetalleEquipoResponse extends TecnicoBackendEnvelope {
+interface TecnicoDetalleEquipoResponse {
   equipo?: TecnicoEquipoRecord | null;
 }
 
-interface TecnicoActualizarEquipoResponse extends TecnicoBackendEnvelope {
+interface TecnicoActualizarEquipoResponse {
   success?: boolean;
   equipo?: TecnicoEquipoRecord | Record<string, unknown>;
+  error?: string;
 }
 
-;(function (): void {
-const BACKEND_URL = String(CONFIG.API_URL || '').trim();
-const FRONT_PASSWORD: string = String(CONFIG.FRONT_PASSWORD || 'Admin1').trim();
+
+
 const LOGO_URL: string = './logo.webp';
 
 // ==========================================
@@ -160,37 +163,6 @@ function tecnicoGetElement(id: string): any {
   return el;
 }
 
-function tecnicoGetBackendUrl(): string {
-  return BACKEND_URL;
-}
-
-function tecnicoBuildGetUrl(action: string, payload: Record<string, unknown> = {}): string {
-  const params = new URLSearchParams();
-  params.set('action', action);
-  params.set('t', String(Date.now()));
-  Object.entries(payload).forEach(([key, value]) => {
-    if (value === undefined || value === null) return;
-    if (typeof value === 'object') {
-      params.set(key, JSON.stringify(value));
-      return;
-    }
-    params.set(key, String(value));
-  });
-  return `${tecnicoGetBackendUrl()}?${params.toString()}`;
-}
-
-async function tecnicoReadJson<T>(response: Response): Promise<T> {
-  const text = await response.text();
-  if (!text.trim()) {
-    throw new Error(`Respuesta vacia (${response.status})`);
-  }
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    throw new Error(`Respuesta invalida (${response.status}): ${text.slice(0, 180)}`);
-  }
-}
-
 function tecnicoBackendErrorMessage(data: TecnicoBackendEnvelope): string {
   const errorText = typeof data.error === 'string' ? data.error.trim() : '';
   if (errorText) return errorText;
@@ -247,7 +219,7 @@ function tecnicoNormalizarEquipoRecord(raw: Partial<TecnicoEquipoRecord> & Recor
     CASO_RESOLUCION_TECNICA: String(source.CASO_RESOLUCION_TECNICA || source.casoResolucionTecnica || '').trim(),
     NOTAS_INTERNAS: String(source.NOTAS_INTERNAS || source.notasInternas || '').trim(),
     SEGUIMIENTO_CLIENTE: String(source.SEGUIMIENTO_CLIENTE || source.seguimientoCliente || '').trim(),
-    SEGUIMIENTO_FOTOS: source.SEGUIMIENTO_FOTOS as string | string[] | undefined,
+    SEGUIMIENTO_FOTOS: (source.SEGUIMIENTO_FOTOS || []) as string | string[],
     CHECK_CARGADOR: String(source.CHECK_CARGADOR || '').trim(),
     CHECK_PANTALLA: String(source.CHECK_PANTALLA || '').trim(),
     CHECK_PRENDE: String(source.CHECK_PRENDE || '').trim(),
@@ -260,58 +232,15 @@ function tecnicoNormalizarEquipoRecord(raw: Partial<TecnicoEquipoRecord> & Recor
 function tecnicoExtraerEquiposResponse(data: TecnicoSemaforoResponse | { data?: TecnicoSemaforoResponse } | null | undefined): TecnicoSemaforoResponse {
   const envelope = data && typeof data === 'object' && 'data' in data ? (data as { data?: TecnicoSemaforoResponse }).data : data;
   const source = envelope || {};
-  const equiposRaw = Array.isArray(source.equipos) ? source.equipos : [];
+  const equiposRaw = Array.isArray((source as any).equipos) ? (source as any).equipos : [];
+
   return {
     ...source,
-    equipos: equiposRaw.map(eq => tecnicoNormalizarEquipoRecord(eq as Partial<TecnicoEquipoRecord> & Record<string, unknown>))
+    equipos: equiposRaw.map((eq: any) => tecnicoNormalizarEquipoRecord(eq)),
   };
 }
 
-function tecnicoCanRetryAsGet(action: string): boolean {
-  return !/^(guardar_|registrar_|eliminar_|archivar_|transferir_|recibir_|cambiar_|login_|validar_|crear_|reabrir_)/.test(String(action || '').trim().toLowerCase());
-}
 
-async function tecnicoFetchWithTimeout(url: string, options: RequestInit, timeoutMs = 15000): Promise<Response> {
-  const controller = new AbortController();
-  const timer = window.setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...options, signal: controller.signal });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new Error('Tiempo de espera agotado al consultar el backend');
-    }
-    throw error;
-  } finally {
-    window.clearTimeout(timer);
-  }
-}
-
-async function tecnicoRequestBackend<T, P extends object = Record<string, unknown>>(
-  action: string,
-  payload: P = {} as P,
-  method: TecnicoRequestMethod = 'POST'
-): Promise<T> {
-  const requestGet = (): Promise<Response> => tecnicoFetchWithTimeout(tecnicoBuildGetUrl(action, payload as Record<string, unknown>), { method: 'GET' });
-  const requestPost = (): Promise<Response> => tecnicoFetchWithTimeout(tecnicoGetBackendUrl(), {
-    method: 'POST',
-    body: JSON.stringify({ action, ...(payload as Record<string, unknown>) })
-  });
-
-  try {
-    const response = method === 'GET' ? await requestGet() : await requestPost();
-    const data = await tecnicoReadJson<T & TecnicoBackendEnvelope>(response);
-    const errorText = tecnicoBackendErrorMessage(data);
-    if (errorText) throw new Error(errorText);
-    return data as T;
-  } catch (error) {
-    if (method !== 'POST' || !tecnicoCanRetryAsGet(action)) throw error;
-    const response = await requestGet();
-    const data = await tecnicoReadJson<T & TecnicoBackendEnvelope>(response);
-    const errorText = tecnicoBackendErrorMessage(data);
-    if (errorText) throw new Error(errorText);
-    return data as T;
-  }
-}
 
 function setRefreshButtonState(isBusy: boolean): void {
   const btn = tecnicoGetElement('btn-refresh') as HTMLButtonElement;
@@ -332,21 +261,20 @@ function renderLoadErrorState(message: string): void {
 }
 
 // Cargar preferencias guardadas
-        (function() {
+
             if (hasTecnicoAccess()) {
                 tecnicoGetElement('login-screen').classList.add('hidden');
                 tecnicoGetElement('app').classList.remove('hidden');
                 setTimeout(login, 200);
-                return;
-            }
-            const savedPass = sessionStorage.getItem('srfix_pass_tecnico') || localStorage.getItem('srfix_pass_tecnico');
-            if (savedPass) {
-                tecnicoGetElement('password-input').value = savedPass;
-                if (localStorage.getItem('srfix_pass_tecnico')) {
-                    tecnicoGetElement('remember-me').checked = true;
+            } else {
+                const savedPass = sessionStorage.getItem('srfix_pass_tecnico') || localStorage.getItem('srfix_pass_tecnico');
+                if (savedPass) {
+                    tecnicoGetElement('password-input').value = savedPass;
+                    if (localStorage.getItem('srfix_pass_tecnico')) {
+                        tecnicoGetElement('remember-me').checked = true;
+                    }
+                    setTimeout(login, 500);
                 }
-                // Si hay pass guardado, intentamos login automático
-                setTimeout(login, 500);
             }
             const savedFiltros = localStorage.getItem('srfix_filtros_tecnico');
             if (savedFiltros) {
@@ -358,7 +286,7 @@ function renderLoadErrorState(message: string): void {
                     tecnicoGetElement('ordenar-por').value = filtros.orden || 'dias_asc';
                 } catch (e) {}
             }
-        })();
+
 
         function formatearFechaHoraLarga(date: Date = new Date()): string {
             return date.toLocaleString('es-MX', {
@@ -384,17 +312,11 @@ function renderLoadErrorState(message: string): void {
         async function login(): Promise<void> {
             if (loginEnCurso) return;
             loginEnCurso = true;
-            PASSWORD = tecnicoGetElement('password-input').value.trim();
-            const trustedInternalAccess = hasTecnicoAccess();
-            if (!trustedInternalAccess) {
-                if (!PASSWORD) {
-                    loginEnCurso = false;
-                    return mostrarErrorLogin('Ingresa la contraseña');
-                }
-                if (PASSWORD !== FRONT_PASSWORD) {
-                    loginEnCurso = false;
-                    return mostrarErrorLogin('Contraseña incorrecta');
-                }
+            const password = tecnicoGetElement('password-input').value.trim();
+            
+            if (!password) {
+                loginEnCurso = false;
+                return mostrarErrorLogin('Ingresa la contraseña');
             }
 
             const btn = tecnicoGetElement('btn-login');
@@ -402,28 +324,26 @@ function renderLoadErrorState(message: string): void {
             btn.innerHTML = '<div class="spinner w-5 h-5"></div> Verificando...';
             ocultarErrorLogin();
 
-            const ok = await cargarDatos(true);
-
-            if (ok) {
-                const remember = tecnicoGetElement('remember-me').checked;
-                if (!trustedInternalAccess) {
-                    sessionStorage.setItem('srfix_pass_tecnico', PASSWORD);
-                    if (remember) {
-                        localStorage.setItem('srfix_pass_tecnico', PASSWORD);
-                    } else {
-                        localStorage.removeItem('srfix_pass_tecnico');
-                    }
-                }
+            try {
+                // El backend ahora valida y devuelve un JWT
+                const result = await fixService.login({ usuario: 'admin', password });
                 
-                tecnicoGetElement('login-screen').classList.add('hidden');
-                tecnicoGetElement('app').classList.remove('hidden');
-                actualizarFechaActual();
-                setInterval(actualizarFechaActual, 60000);
-                if (intervalo) clearInterval(intervalo);
-                intervalo = setInterval(cargarDatos, 30000);
-                await abrirEquipoDesdeQuery();
-            } else {
-                mostrarErrorLogin('No se pudo iniciar sesión por conexión o backend. Si la clave es Admin1, intenta de nuevo.');
+                if (result.ok) {
+                    tecnicoGetElement('login-screen').classList.add('hidden');
+                    tecnicoGetElement('app').classList.remove('hidden');
+                    actualizarFechaActual();
+                    setInterval(actualizarFechaActual, 60000);
+                    if (intervalo) clearInterval(intervalo);
+                    intervalo = window.setInterval(cargarDatos, 30000);
+                    await cargarDatos(true);
+                    await abrirEquipoDesdeQuery();
+                } else {
+                    mostrarErrorLogin(result.error || 'Contraseña incorrecta');
+                    btn.innerHTML = 'INGRESAR';
+                    btn.disabled = false;
+                }
+            } catch (e) {
+                mostrarErrorLogin('Error de conexión con el servidor');
                 btn.innerHTML = 'INGRESAR';
                 btn.disabled = false;
             }
@@ -432,15 +352,7 @@ function renderLoadErrorState(message: string): void {
 
         function logout(): void {
             if (intervalo) clearInterval(intervalo);
-            try {
-                if (window.parent && window.parent !== window) {
-                    window.parent.postMessage({ type: 'srfix:logout' }, '*');
-                    return;
-                }
-            } catch (e) {}
-            sessionStorage.removeItem('srfix_pass_tecnico');
-            localStorage.removeItem('srfix_pass_tecnico');
-            location.reload();
+            fixService.logout();
         }
 
         function mostrarErrorLogin(msg: string): void {
@@ -505,7 +417,7 @@ function renderLoadErrorState(message: string): void {
         }
 
         async function obtenerSemaforoData(pageSize: number): Promise<TecnicoSemaforoResponse> {
-            const data = await tecnicoRequestBackend<TecnicoSemaforoResponse | { data?: TecnicoSemaforoResponse }>('semaforo', { page: 1, pageSize }, 'GET');
+            const data = await fixService.listarEquipos({ page: 1, pageSize });
             return tecnicoExtraerEquiposResponse(data);
         }
 
@@ -520,7 +432,7 @@ function renderLoadErrorState(message: string): void {
                 const data = await obtenerSemaforoData(pageSize);
                 if (requestSeq !== cargaDatosSeq) return false;
 
-                const nuevosEquipos = (data.equipos || []).map(tecnicoNormalizarEquipoRecord);
+                const nuevosEquipos = ((data as any).equipos || []).map((eq: any) => tecnicoNormalizarEquipoRecord(eq));
                 const firmaNueva = calcularFirmaSemaforo(nuevosEquipos);
                 const huboCambios = firmaNueva !== ultimaFirmaSemaforo;
                 equiposData = nuevosEquipos;
@@ -1026,8 +938,8 @@ function renderLoadErrorState(message: string): void {
 
         async function obtenerDetalleEquipo(folio: string): Promise<TecnicoEquipoRecord | null> {
             try {
-                const data = await tecnicoRequestBackend<TecnicoDetalleEquipoResponse>('equipo', { folio }, 'GET');
-                return data && data.equipo ? data.equipo : null;
+                const data = await fixService.obtenerEquipo(folio);
+                return data && data.rows ? data.rows[0] : (data.equipo || null);
             } catch (e) {
                 return null;
             }
@@ -1092,17 +1004,16 @@ function renderLoadErrorState(message: string): void {
             }
 
             try {
-                const data = await tecnicoRequestBackend<TecnicoActualizarEquipoResponse>('actualizar_equipo', {
-                    folio: equipoActual.FOLIO,
-                    campos: campos,
-                    adminPasswordActual: adminPasswordActual
-                }, 'POST');
-                if (data.success) {
+                const result = await fixService.actualizarEquipo(equipoActual.FOLIO, {
+                    ...campos,
+                    adminPasswordActual
+                });
+                if (result.ok) {
                     mostrarToast('Cambios guardados', 'success');
                     cerrarModal();
                     await cargarDatos();
                 } else {
-                    throw new Error(String(data.error || 'Error de conexión'));
+                    throw new Error(String(result.error || 'Error de conexión'));
                 }
             } catch (e) {
                 mostrarToast('Error: ' + String(e instanceof Error ? e.message : e), 'error');
@@ -1126,16 +1037,15 @@ function renderLoadErrorState(message: string): void {
             if (!auth.ok) return;
             adminPasswordActual = auth.password ?? '';
             try {
-                const data = await tecnicoRequestBackend<TecnicoActualizarEquipoResponse>('actualizar_equipo', {
-                    folio: equipoActual.FOLIO,
-                    campos: campos,
-                    adminPasswordActual: adminPasswordActual
-                }, 'POST');
-                if (data.success) {
+                const result = await fixService.actualizarEquipo(equipoActual.FOLIO, {
+                    ...campos,
+                    adminPasswordActual
+                });
+                if (result.ok) {
                     mostrarToast('Equipo marcado como entregado', 'success');
                     cerrarModal();
                     await cargarDatos();
-                } else throw new Error(String(data.error || 'Error de conexión'));
+                } else throw new Error(String(result.error || 'Error de conexión'));
             } catch (e) {
                 mostrarToast('Error: ' + String(e instanceof Error ? e.message : e), 'error');
             }
@@ -1461,4 +1371,4 @@ function renderLoadErrorState(message: string): void {
         ['click', 'touchstart', 'keydown'].forEach((evt: string) => {
             document.addEventListener(evt, unlockAudio, { once: true, passive: true });
         });
-})();
+

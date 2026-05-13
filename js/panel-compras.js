@@ -1,7 +1,6 @@
 "use strict";
 ;
 (function () {
-    const BACKEND_URL = String(CONFIG.API_URL || '').trim();
     const PAGE_SIZE = 80;
     const elRows = requireElement('rows');
     const elLoading = requireElement('loading');
@@ -73,66 +72,6 @@
             estado: elFiltroEstado.value,
             proveedor: elFiltroProveedor.value
         };
-    }
-    function buildGetUrl(action, payload) {
-        const params = new URLSearchParams();
-        params.set('action', action);
-        params.set('t', String(Date.now()));
-        Object.entries(payload).forEach(([key, raw]) => {
-            if (raw === undefined || raw === null || raw === '')
-                return;
-            if (typeof raw === 'object') {
-                params.set(key, JSON.stringify(raw));
-                return;
-            }
-            params.set(key, String(raw));
-        });
-        return `${BACKEND_URL}?${params.toString()}`;
-    }
-    async function readJson(response) {
-        const text = await response.text();
-        if (!text.trim())
-            throw new Error(`Respuesta vacía (${response.status})`);
-        try {
-            return JSON.parse(text);
-        }
-        catch {
-            throw new Error(`Respuesta inválida (${response.status}): ${text.slice(0, 180)}`);
-        }
-    }
-    function canRetryAsGet(action) {
-        return !/^(guardar_|registrar_|eliminar_|archivar_|transferir_|recibir_|cambiar_|login_|validar_|crear_|reabrir_)/.test(String(action || '').trim().toLowerCase());
-    }
-    async function requestBackend(action, payload = {}, method = 'POST') {
-        const requestGet = () => fetch(buildGetUrl(action, payload), { method: 'GET' });
-        const requestPost = () => fetch(BACKEND_URL, {
-            method: 'POST',
-            body: JSON.stringify({ action, ...payload })
-        });
-        try {
-            const response = method === 'GET' ? await requestGet() : await requestPost();
-            const data = await readJson(response);
-            const errorText = typeof data.error === 'string' ? data.error.trim() : '';
-            if (errorText)
-                throw new Error(errorText);
-            if (Object.prototype.hasOwnProperty.call(data, 'success') && data.success === false) {
-                throw new Error(errorText || `La operación ${action} fue rechazada`);
-            }
-            return data;
-        }
-        catch (error) {
-            if (method !== 'POST' || !canRetryAsGet(action))
-                throw error;
-            const response = await requestGet();
-            const data = await readJson(response);
-            const errorText = typeof data.error === 'string' ? data.error.trim() : '';
-            if (errorText)
-                throw new Error(errorText);
-            if (Object.prototype.hasOwnProperty.call(data, 'success') && data.success === false) {
-                throw new Error(errorText || `La operación ${action} fue rechazada`);
-            }
-            return data;
-        }
     }
     function setKpis(items) {
         requireElement('kpi-total').textContent = String(items.length);
@@ -264,7 +203,7 @@
     function abrirRecepcion(folio) {
         void (async () => {
             try {
-                const data = await requestBackend('orden_compra', { folio, sucursalId: getSucursalActiva() }, 'POST');
+                const data = await fixService.request('orden_compra', { folio, sucursalId: getSucursalActiva() }, 'POST');
                 const orden = data.orden;
                 if (!orden)
                     throw new Error(data.error || 'No se pudo cargar la orden');
@@ -295,8 +234,8 @@
     async function cargarAuxiliares() {
         try {
             const [proveedoresData, foliosData] = await Promise.all([
-                requestBackend('listar_nombres_proveedores', {}, 'POST'),
-                requestBackend('listar_folios_relacion', {}, 'POST')
+                fixService.request('listar_nombres_proveedores', {}, 'POST'),
+                fixService.request('listar_folios_relacion', {}, 'POST')
             ]);
             proveedoresCache = Array.isArray(proveedoresData.proveedores) ? proveedoresData.proveedores : [];
             foliosRelacionCache = Array.isArray(foliosData.folios) ? foliosData.folios : [];
@@ -319,7 +258,7 @@
             elEmpty.classList.add('hidden');
         }
         try {
-            const data = await requestBackend('listar_ordenes_compra', { sucursalId: getSucursalActiva(), page: currentPage, pageSize: PAGE_SIZE, ...getFiltros() }, 'POST');
+            const data = await fixService.request('listar_ordenes_compra', { sucursalId: getSucursalActiva(), page: currentPage, pageSize: PAGE_SIZE, ...getFiltros() }, 'POST');
             const items = Array.isArray(data.ordenes) ? data.ordenes : [];
             if (!append)
                 ordenesCache = items.slice();
@@ -371,7 +310,7 @@
             }))
         };
         try {
-            await requestBackend('guardar_orden_compra', payload, 'POST');
+            await fixService.request('guardar_orden_compra', payload, 'POST');
             cerrarModalOrden();
             await cargarOrdenes({ append: false });
         }
@@ -381,7 +320,7 @@
     }
     async function abrirOrden(folio) {
         try {
-            const data = await requestBackend('orden_compra', { folio, sucursalId: getSucursalActiva() }, 'POST');
+            const data = await fixService.request('orden_compra', { folio, sucursalId: getSucursalActiva() }, 'POST');
             if (!data.orden)
                 throw new Error(data.error || 'No se pudo cargar la orden');
             abrirModalOrden(data.orden, data.items || []);
@@ -392,7 +331,7 @@
     }
     async function cambiarEstado(folio, estado) {
         try {
-            await requestBackend('cambiar_estado_orden_compra', { folio, estado, sucursalId: getSucursalActiva() }, 'POST');
+            await fixService.request('cambiar_estado_orden_compra', { folio, estado, sucursalId: getSucursalActiva() }, 'POST');
             await cargarOrdenes({ append: false });
         }
         catch (error) {
@@ -414,7 +353,7 @@
             return;
         }
         try {
-            await requestBackend('recibir_orden_compra', { folio, usuario, items, sucursalId: getSucursalActiva() }, 'POST');
+            await fixService.request('recibir_orden_compra', { folio, usuario, items, sucursalId: getSucursalActiva() }, 'POST');
             cerrarRecepcion();
             await cargarOrdenes({ append: false });
         }

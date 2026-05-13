@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: sr-fix-api
+    runtime: node
+    plan: free
+    buildCommand: cd server && npm install && npm run build
+    startCommand: cd server && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sr-fix-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_INITIAL_PASSWORD
+        sync: false
+
+
+databases:
+  - name: sr-fix-db
+    plan: free

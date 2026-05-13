@@ -1,4 +1,6 @@
-const CACHE_NAME = 'srfix-static-v6-20260422-1';
+const swSelf = (self as any);
+
+const CACHE_NAME = 'srfix-static-v7-20260513-1';
 const STATIC_ASSETS = [
   './',
   './integrador.html',
@@ -27,29 +29,29 @@ const STATIC_ASSETS = [
   './assets/icons/icon-512x512.png'
 ];
 
-self.addEventListener('install', (event) => {
+swSelf.addEventListener('install', (event: any) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
   );
-  self.skipWaiting();
+  swSelf.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
+swSelf.addEventListener('activate', (event: any) => {
   event.waitUntil(
     caches.keys().then((keys) => Promise.all(
       keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
     ))
   );
-  self.clients.claim();
+  swSelf.clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
+swSelf.addEventListener('fetch', (event: any) => {
   const request = event.request;
   if (request.method !== 'GET') return;
 
   const url = new URL(request.url);
-  const isSameOrigin = url.origin === self.location.origin;
-  const isApiLike = url.searchParams.has('action') || url.pathname.includes('/exec');
+  const isSameOrigin = url.origin === swSelf.location.origin;
+  const isApiLike = url.searchParams.has('action') || url.pathname.includes('/exec') || url.pathname.includes('/api/v1');
 
   if (!isSameOrigin || isApiLike) {
     return;
