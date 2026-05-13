@@ -1,7 +1,6 @@
 "use strict";
 ;
 (function () {
-    const BACKEND_URL = String(CONFIG.API_URL || '').trim();
     const PAGE_SIZE = 80;
     const elRows = requireElement('rows');
     const elLoading = requireElement('loading');
@@ -171,73 +170,9 @@
         });
         elAlertasList.appendChild(frag);
     }
-    function getBackendUrl() {
-        return BACKEND_URL;
-    }
-    function buildGetUrl(action, payload) {
-        const q = new URLSearchParams();
-        q.set('action', action);
-        q.set('t', String(Date.now()));
-        Object.entries(payload).forEach(([key, raw]) => {
-            if (raw === undefined || raw === null || raw === '')
-                return;
-            if (typeof raw === 'object') {
-                q.set(key, JSON.stringify(raw));
-                return;
-            }
-            q.set(key, String(raw));
-        });
-        return `${getBackendUrl()}?${q.toString()}`;
-    }
-    async function readJson(response) {
-        const text = await response.text();
-        if (!text.trim())
-            throw new Error(`Respuesta vacía (${response.status})`);
-        try {
-            return JSON.parse(text);
-        }
-        catch {
-            throw new Error(`Respuesta inválida (${response.status}): ${text.slice(0, 180)}`);
-        }
-    }
-    function canRetryAsGet(action) {
-        const normalized = String(action || '').trim().toLowerCase();
-        return !/^(guardar_|registrar_|eliminar_|archivar_|transferir_|recibir_|cambiar_|login_|validar_|crear_|reabrir_)/.test(normalized);
-    }
-    async function requestBackend(action, payload = {}, method = 'POST') {
-        const requestGet = () => fetch(buildGetUrl(action, payload), { method: 'GET' });
-        const requestPost = () => fetch(getBackendUrl(), {
-            method: 'POST',
-            body: JSON.stringify({ action, ...payload })
-        });
-        try {
-            const response = method === 'GET' ? await requestGet() : await requestPost();
-            const data = await readJson(response);
-            const errorText = typeof data.error === 'string' ? data.error.trim() : '';
-            if (errorText)
-                throw new Error(errorText);
-            if (Object.prototype.hasOwnProperty.call(data, 'success') && data.success === false) {
-                throw new Error(errorText || `La operación ${action} fue rechazada`);
-            }
-            return data;
-        }
-        catch (error) {
-            if (method !== 'POST' || !canRetryAsGet(action))
-                throw error;
-            const response = await requestGet();
-            const data = await readJson(response);
-            const errorText = typeof data.error === 'string' ? data.error.trim() : '';
-            if (errorText)
-                throw new Error(errorText);
-            if (Object.prototype.hasOwnProperty.call(data, 'success') && data.success === false) {
-                throw new Error(errorText || `La operación ${action} fue rechazada`);
-            }
-            return data;
-        }
-    }
     async function cargarFoliosRelacion() {
         try {
-            const data = await requestBackend('listar_folios_relacion', {}, 'POST');
+            const data = await fixService.request('listar_folios_relacion', {}, 'POST');
             foliosRelacionCache = Array.isArray(data.folios) ? data.folios : [];
             const dl = requireElement('folios-relacion-lista');
             dl.innerHTML = '';
@@ -256,7 +191,7 @@
         elAlertasEmpty.classList.add('hidden');
         try {
             const filtros = getFiltros();
-            const data = await requestBackend('obtener_alertas_stock', {
+            const data = await fixService.request('obtener_alertas_stock', {
                 sucursalId: getSucursalActiva(),
                 texto: filtros.texto,
                 categoria: filtros.categoria,
@@ -290,7 +225,7 @@
         }
         const payload = { page: currentPage, pageSize: PAGE_SIZE, sucursalId: getSucursalActiva(), ...getFiltros() };
         try {
-            const data = await requestBackend('listar_productos', payload, 'POST');
+            const data = await fixService.request('listar_productos', payload, 'POST');
             const productos = Array.isArray(data.productos) ? data.productos : [];
             if (!append)
                 productosCache = productos.slice();
@@ -424,7 +359,7 @@
             adminPasswordActual
         };
         try {
-            await requestBackend('guardar_producto', payload, 'POST');
+            await fixService.request('guardar_producto', payload, 'POST');
             cerrarModalProducto();
             await cargarProductos({ append: false });
         }
@@ -470,7 +405,7 @@
             adminPasswordActual
         };
         try {
-            await requestBackend('registrar_movimiento_stock', payload, 'POST');
+            await fixService.request('registrar_movimiento_stock', payload, 'POST');
             cerrarModalMovimiento();
             await cargarProductos({ append: false });
         }
@@ -484,7 +419,7 @@
         requireElement('modal-historial').classList.remove('hidden');
         requireElement('historial-loading').classList.remove('hidden');
         try {
-            const data = await requestBackend('listar_movimientos_producto', {
+            const data = await fixService.request('listar_movimientos_producto', {
                 sucursalId: getSucursalActiva(),
                 sku: producto.SKU,
                 page: 1,
@@ -523,7 +458,7 @@
         if (!confirm(`¿Marcar ${sku} como inactivo?`))
             return;
         try {
-            await requestBackend('eliminar_producto', { sku }, 'POST');
+            await fixService.request('eliminar_producto', { sku }, 'POST');
             await cargarProductos({ append: false });
         }
         catch (error) {
