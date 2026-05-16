@@ -1,10 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
-const tenantId = process.env.NEXT_PUBLIC_DEFAULT_TENANT_ID || 'tenant-local';
-const authToken = process.env.NEXT_PUBLIC_DEFAULT_API_TOKEN || '';
+import { fixService } from '@/services/fixService';
 
 export default function OrdenesPage() {
   const [step, setStep] = useState(1);
@@ -50,29 +47,11 @@ export default function OrdenesPage() {
     setLoading(true);
     setErrorMsg('');
     try {
-      if (!authToken) {
-        throw new Error('NEXT_PUBLIC_DEFAULT_API_TOKEN is required to submit orders');
-      }
-
-      const response = await fetch(`${apiBaseUrl}/api/orders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Error al guardar la orden');
-      }
-
-      setFolio(result.data?.folio || 'ORD-ERROR');
+      const data = await fixService.createOrder(formData);
+      setFolio((data.folio as string) || 'ORD-ERROR');
       setStep(4);
-    } catch (err: any) {
-      setErrorMsg(err?.message || 'Error al guardar la orden');
+    } catch (error: unknown) {
+      setErrorMsg(error instanceof Error ? error.message : 'Error al guardar la orden');
     } finally {
       setLoading(false);
     }

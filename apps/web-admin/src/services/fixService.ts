@@ -63,6 +63,17 @@ class FixService {
     );
     return result.data;
   }
+
+  public async createOrder(data: JsonRecord): Promise<JsonRecord> {
+    const result = await this.request<ApiListResponse<JsonRecord>>(
+      `/api/${this.tenantId}/orders`,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return result.data;
+  }
 }
 
 export const fixService = new FixService();
