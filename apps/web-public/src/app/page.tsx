@@ -37,13 +37,19 @@ const features = [
   "Sistema de referidos para todos los planes",
 ];
 
+const trustSignals = [
+  "Flujo claro desde el primer contacto hasta la operación diaria",
+  "Arquitectura orientada a multi-tenant con separación por tenant_id",
+  "Contacto comercial directo con respuesta por correo",
+];
+
 const planItems = [
   {
     name: "Plan Esencial",
     price: starterPrice,
-    subtitle: "Para arrancar con una operación clara y ordenada.",
+    subtitle: "Operación clara sin fricción.",
     accent: "Desde el primer día",
-    body: "Ideal para talleres pequeños que necesitan capturar clientes, registrar órdenes y dar seguimiento sin caos.",
+    body: "Para talleres que quieren una base sólida para capturar clientes, registrar órdenes y dar seguimiento con consistencia.",
     features: ["Clientes y órdenes", "Notificaciones base", "Acceso operativo"],
     cta: "Comenzar ahora",
     featured: false,
@@ -51,9 +57,9 @@ const planItems = [
   {
     name: "Plan Pro",
     price: growthPrice,
-    subtitle: "El punto de control para crecer sin perder visibilidad.",
-    accent: "Más vendido",
-    body: "Pensado para equipos que ya venden y necesitan automatización, seguimiento comercial y más control.",
+    subtitle: "Automatización invisible para equipos que crecen.",
+    accent: "Elección del operador experto",
+    body: "Diseñado para quienes ya operan con volumen y necesitan más visibilidad sin añadir complejidad al día a día.",
     features: ["Panel completo", "Automatizaciones", "Seguimiento avanzado"],
     cta: "Lo quiero ya",
     featured: true,
@@ -61,30 +67,12 @@ const planItems = [
   {
     name: "Plan Business",
     price: enterprisePrice,
-    subtitle: "Para operación más robusta y multi-sucursal.",
+    subtitle: "Para operación robusta y multi-sucursal.",
     accent: "Control total",
-    body: "Diseñado para quienes requieren procesos más amplios, trazabilidad, soporte y escalabilidad.",
+    body: "Pensado para equipos que requieren trazabilidad, permisos, soporte y una implementación con mayor acompañamiento.",
     features: ["Multi-sucursal", "Permisos y roles", "Acompañamiento"],
     cta: "Hablar con ventas",
     featured: false,
-  },
-];
-
-const testimonials = [
-  {
-    name: "Aarón C.",
-    role: "Taller de celulares",
-    text: "La operación quedó clara desde el primer vistazo. La página sí vende y no se ve genérica.",
-  },
-  {
-    name: "Carlos M.",
-    role: "Sucursal técnica",
-    text: "Los planes, el flujo y la propuesta están directos. Se entiende rápido lo que se compra.",
-  },
-  {
-    name: "María V.",
-    role: "Operación y ventas",
-    text: "El estilo oscuro y los bloques grandes se sienten más premium y ayudan a cerrar mejor.",
   },
 ];
 
@@ -115,8 +103,8 @@ export default function Home() {
               <a className="rounded-full px-4 py-2 text-slate-300 transition hover:bg-white/5 hover:text-white" href="#plans">
                 Planes
               </a>
-              <a className="rounded-full px-4 py-2 text-slate-300 transition hover:bg-white/5 hover:text-white" href="#testimonials">
-                Testimonios
+              <a className="rounded-full px-4 py-2 text-slate-300 transition hover:bg-white/5 hover:text-white" href="#trust">
+                Confianza
               </a>
               <a className="rounded-full bg-blue-500 px-5 py-3 font-semibold text-white transition hover:bg-blue-400" href="/onboarding">
                 Crear cuenta
@@ -141,19 +129,19 @@ export default function Home() {
 
             <div className="max-w-5xl">
               <p className="mx-auto mb-5 inline-flex rounded-full border border-cyan-400/25 bg-cyan-400/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.32em] text-cyan-200">
-                Operación real, no promesas vacías
+                Acceso directo a una operación más ordenada
               </p>
               <h1 className="text-balance text-5xl font-black uppercase leading-[0.92] tracking-[-0.04em] text-white sm:text-6xl lg:text-7xl">
-                Convierte tu taller
+                {productName}. El sistema operativo para talleres que
                 <br />
-                en una
+                ya no compiten por precio.
                 <span className="block text-transparent bg-gradient-to-r from-orange-400 via-orange-500 to-yellow-300 bg-clip-text">
-                  operación profesional
+                  Una experiencia más precisa.
                 </span>
               </h1>
               <p className="mx-auto mt-6 max-w-3xl text-base leading-8 text-slate-300 sm:text-lg">
                 {productName} centraliza recepción, seguimiento, inventario, clientes y finanzas en una sola plataforma para talleres que
-                necesitan orden, visibilidad y atención profesional desde el primer contacto.
+                buscan una operación impecable, visible y fácil de sostener.
               </p>
 
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -194,11 +182,11 @@ export default function Home() {
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-cyan-300">Características</p>
               <h2 className="mt-3 max-w-2xl text-4xl font-black tracking-[-0.04em] text-white sm:text-5xl">
-                Todo lo que necesitas para operar con orden
+                Lo que hace que una operación se sienta de alto nivel
               </h2>
               <p className="mt-4 max-w-2xl text-base leading-8 text-slate-300">
-                Diseñamos la plataforma para que puedas atender clientes, registrar órdenes y dar seguimiento sin depender de hojas sueltas
-                o mensajes perdidos.
+                Diseñamos la plataforma para que atender clientes, registrar órdenes y dar seguimiento se sienta fluido, serio y
+                consistente en cada paso.
               </p>
             </div>
 
@@ -244,10 +232,10 @@ export default function Home() {
         <section id="plans" className="space-y-6 rounded-[36px] border border-white/10 bg-[#0b1730] px-5 py-8 lg:px-10 lg:py-10">
           <div className="max-w-3xl">
             <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-cyan-300">Planes de pago</p>
-            <h2 className="mt-3 text-4xl font-black tracking-[-0.04em] text-white sm:text-5xl">Elige el nivel de control que necesita tu taller</h2>
+            <h2 className="mt-3 text-4xl font-black tracking-[-0.04em] text-white sm:text-5xl">Elige la experiencia que tu operación necesita</h2>
             <p className="mt-4 text-base leading-8 text-slate-300">
-              Cada plan está pensado para una etapa distinta de operación. Los precios están definidos para mostrar claridad comercial desde
-              el primer vistazo.
+              Cada plan responde a una etapa distinta de madurez operativa. Los precios mantienen claridad comercial desde el primer
+              vistazo.
             </p>
           </div>
 
@@ -269,7 +257,7 @@ export default function Home() {
                   </div>
                   {plan.featured ? (
                     <span className="rounded-full bg-orange-400 px-3 py-1 text-xs font-black uppercase tracking-[0.2em] text-slate-950">
-                      Más vendido
+                      Recomendado
                     </span>
                   ) : null}
                 </div>
@@ -304,37 +292,26 @@ export default function Home() {
         </section>
 
         <section
-          id="testimonials"
+          id="trust"
           className="rounded-[36px] border border-white/10 bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.18),transparent_34%),linear-gradient(180deg,#0b1730_0%,#091427_100%)] px-5 py-8 lg:px-10 lg:py-10"
         >
           <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-cyan-300">Prueba social</p>
-              <h2 className="mt-3 text-4xl font-black tracking-[-0.04em] text-white sm:text-5xl">Lo que el mercado ve cuando la página vende bien</h2>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.34em] text-cyan-300">Señales de confianza</p>
+              <h2 className="mt-3 text-4xl font-black tracking-[-0.04em] text-white sm:text-5xl">Lo que hace que FIXI se sienta serio desde el primer vistazo</h2>
             </div>
             <p className="max-w-xl text-base leading-8 text-slate-300">
-              Opiniones y resultados que ayudan a que un taller nuevo entienda rápidamente el valor del sistema y su forma de trabajo.
+              Lenguaje, estructura y contacto directo alineados para transmitir orden, claridad y una presentación de alto nivel.
             </p>
           </div>
 
           <div className="grid gap-4 lg:grid-cols-3">
-            {testimonials.map((item) => (
-              <article key={item.name} className="rounded-[28px] border border-white/10 bg-white/6 p-6">
-                <div className="flex gap-1 text-amber-400">
-                  {"★★★★★".split("").map((star, index) => (
-                    <span key={`${item.name}-${index}`}>{star}</span>
-                  ))}
+            {trustSignals.map((signal) => (
+              <article key={signal} className="rounded-[28px] border border-white/10 bg-white/6 p-6">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300 to-blue-500 text-sm font-black text-slate-950">
+                  ✓
                 </div>
-                <p className="mt-4 text-sm leading-7 text-slate-200">{item.text}</p>
-                <div className="mt-6 flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-white to-slate-300 text-sm font-black text-slate-950">
-                    {item.name.slice(0, 1)}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-white">{item.name}</p>
-                    <p className="text-sm text-slate-400">{item.role}</p>
-                  </div>
-                </div>
+                <p className="mt-5 text-sm leading-7 text-slate-200">{signal}</p>
               </article>
             ))}
           </div>
@@ -364,7 +341,7 @@ export default function Home() {
               <p className="mt-2 text-lg font-semibold text-white">{contactEmail}</p>
               {contactEmailHref ? (
                 <a className="mt-3 inline-block text-sm font-semibold text-cyan-300 transition hover:text-cyan-200" href={contactEmailHref}>
-                  Escribir correo
+                  Contacto comercial
                 </a>
               ) : null}
             </div>
@@ -387,6 +364,7 @@ export default function Home() {
               <a className="mt-3 inline-block text-sm font-semibold text-cyan-300 transition hover:text-cyan-200" href={demoMailtoHref}>
                 Solicitar demo
               </a>
+              <p className="mt-2 text-xs text-slate-400">Atención prioritaria por correo para nuevos proyectos.</p>
             </div>
           </div>
         </section>
