@@ -9,7 +9,7 @@ export interface WhatsAppButtonProps {
 
 export function WhatsAppButton({ phone, order, className = '' }: WhatsAppButtonProps) {
   const theme = useTenantTheme();
-  const message = useWhatsAppTemplate(order as any);
+  const message = useWhatsAppTemplate(order);
   const href = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 
   return {

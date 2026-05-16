@@ -1,20 +1,16 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "display": "Default",
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ES2020",
-    "lib": ["ES2020", "DOM"],
-    "rootDir": "src",
-    "outDir": "js",
+    "target": "es2022",
+    "module": "commonjs",
+    "lib": ["es2022", "DOM"],
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
     "strict": true,
-    "noImplicitAny": true,
-    "exactOptionalPropertyTypes": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
-    "noFallthroughCasesInSwitch": true,
-    "allowJs": false,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "declaration": false
-  },
-  "include": ["src/**/*.ts", "src/**/*.d.ts"]
+    "forceConsistentCasingInFileNames": true
+  }
 }
