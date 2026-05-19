@@ -6,6 +6,7 @@ import ordersRouter from './routes/orders';
 import financeRouter from './routes/finance';
 import customersRouter from './routes/customers';
 import inventoryRouter from './routes/inventory';
+import publicRouter from './routes/public';
 
 dotenv.config();
 
@@ -67,6 +68,7 @@ app.use('/api/customers', customersRouter);
 
 app.use('/api/:tenantId/inventory', inventoryRouter);
 app.use('/api/inventory', inventoryRouter);
+app.use('/api/public', publicRouter);
 
 app.get('/healthz', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
