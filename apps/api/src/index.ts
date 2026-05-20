@@ -100,6 +100,12 @@ app.get('/', (req, res) => {
   res.send(`${apiName} is running`);
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+const isVercel = Boolean(process.env.VERCEL);
+
+if (!isVercel) {
+  app.listen(port, () => {
+    console.log(`Server is running on port ${port}`);
+  });
+}
+
+export default app;
