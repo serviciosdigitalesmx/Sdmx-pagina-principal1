@@ -46,6 +46,16 @@ function resolveAdminBridgeUrl(token: string) {
     return null;
   }
 
+  if (typeof window !== "undefined") {
+    try {
+      if (new URL(adminUrl).origin === window.location.origin) {
+        return null;
+      }
+    } catch {
+      return null;
+    }
+  }
+
   const bridgeUrl = new URL("/auth/bridge", adminUrl);
   bridgeUrl.searchParams.set("token", token);
   return bridgeUrl.toString();
@@ -55,6 +65,51 @@ function resolveTenantLandingUrl(tenantSlug: string) {
   return tenantLandingTemplate.includes("{tenant}")
     ? tenantLandingTemplate.replaceAll("{tenant}", tenantSlug)
     : `${tenantLandingTemplate.replace(/\/$/, "")}/${tenantSlug}`;
+}
+
+function readTenantSlugFromToken(token: string) {
+  try {
+    const payload = token.split(".")[1];
+
+    if (!payload) {
+      return null;
+    }
+
+    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
+    const decoded = JSON.parse(atob(padded));
+
+    if (typeof decoded?.tenant_slug === "string" && decoded.tenant_slug.trim().length > 0) {
+      return decoded.tenant_slug.trim();
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function resolveTenantSlugFromApi(token: string) {
+  const apiUrl = (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
+
+  if (!apiUrl) {
+    return null;
+  }
+
+  const response = await fetch(`${apiUrl}/api/auth/session`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = (await response.json()) as { user?: { tenantSlug?: string } };
+  const tenantSlug = payload.user?.tenantSlug?.trim();
+
+  return tenantSlug ? tenantSlug : null;
 }
 
 export default function HubPage() {
@@ -88,28 +143,48 @@ export default function HubPage() {
   }, [sessionState.tenantSlug]);
 
   useEffect(() => {
-    const url = new URL(window.location.href);
-    const tokenFromUrl = url.searchParams.get("token");
+    const run = async () => {
+      const url = new URL(window.location.href);
+      const tokenFromUrl = url.searchParams.get("token");
 
-    if (tokenFromUrl) {
-      saveAuthToken(tokenFromUrl);
-      url.searchParams.delete("token");
-      window.history.replaceState({}, "", url.toString());
-    }
+      if (tokenFromUrl) {
+        saveAuthToken(tokenFromUrl);
+        url.searchParams.delete("token");
+        window.history.replaceState({}, "", url.toString());
+      }
 
-    const token = tokenFromUrl || readAuthToken();
+      const token = tokenFromUrl || readAuthToken();
 
-    if (!token) {
-      return;
-    }
+      if (!token) {
+        return;
+      }
 
-    const bridgeUrl = resolveAdminBridgeUrl(token);
+      const tenantSlugFromToken = readTenantSlugFromToken(token);
 
-    if (!bridgeUrl) {
-      return;
-    }
+      if (tenantSlugFromToken) {
+        const tenantUrl = resolveTenantLandingUrl(tenantSlugFromToken);
+        window.location.replace(tenantUrl);
+        return;
+      }
 
-    window.location.replace(bridgeUrl);
+      const tenantSlugFromApi = await resolveTenantSlugFromApi(token);
+
+      if (tenantSlugFromApi) {
+        const tenantUrl = resolveTenantLandingUrl(tenantSlugFromApi);
+        window.location.replace(tenantUrl);
+        return;
+      }
+
+      const bridgeUrl = resolveAdminBridgeUrl(token);
+
+      if (!bridgeUrl) {
+        return;
+      }
+
+      window.location.replace(bridgeUrl);
+    };
+
+    void run();
   }, []);
 
   return (

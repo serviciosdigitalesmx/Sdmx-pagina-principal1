@@ -37,6 +37,22 @@ function isAllowedRedirectUrl(candidate: string) {
   }
 }
 
+function resolveAppUrl(requestOrigin: string | undefined) {
+  if (requestOrigin && isAllowedRedirectUrl(requestOrigin)) {
+    return requestOrigin;
+  }
+
+  const configuredAppUrl = process.env.APP_URL?.trim();
+
+  if (configuredAppUrl && isAllowedRedirectUrl(configuredAppUrl)) {
+    return configuredAppUrl;
+  }
+
+  const fallbackOrigin = Array.from(getAllowedAppOrigins()).find((origin) => isAllowedRedirectUrl(origin));
+
+  return fallbackOrigin ?? null;
+}
+
 function signJwt(payload: Record<string, unknown>) {
   const secret = process.env.JWT_SECRET;
 
@@ -68,6 +84,11 @@ export const register = async (req: Request, res: Response) => {
   }
 
   const { workshopName, email, password, phone } = parsed.data;
+  const appUrl = resolveAppUrl(typeof req.headers.origin === 'string' ? req.headers.origin : undefined);
+
+  if (!appUrl) {
+    return res.status(500).json({ error: 'APP_URL is required' });
+  }
 
   const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
     email,
@@ -120,7 +141,7 @@ export const register = async (req: Request, res: Response) => {
         slug: tenant.tenant_slug,
         trialExpiresAt: tenant.trial_expires_at,
       },
-      redirectUrl: `${process.env.APP_URL ?? 'http://localhost:3000'}/onboarding/success?tenant=${encodeURIComponent(tenant.tenant_slug)}&token=${encodeURIComponent(token)}`,
+      redirectUrl: `${appUrl}/onboarding/success?tenant=${encodeURIComponent(tenant.tenant_slug)}&token=${encodeURIComponent(token)}`,
     });
   } catch (error) {
     await supabaseAdmin.auth.admin.deleteUser(authUser.user.id).catch((deleteError) => {
@@ -176,6 +197,11 @@ export const completeGoogleRegistration = async (req: Request, res: Response) =>
   }
 
   const { workshopName, phone, accessToken } = parsed.data;
+  const appUrl = resolveAppUrl(typeof req.headers.origin === 'string' ? req.headers.origin : undefined);
+
+  if (!appUrl) {
+    return res.status(500).json({ error: 'APP_URL is required' });
+  }
   const { data: userResult, error: userError } = await supabaseAdmin.auth.getUser(accessToken);
 
   if (userError || !userResult.user) {
@@ -226,7 +252,7 @@ export const completeGoogleRegistration = async (req: Request, res: Response) =>
         slug: tenant.tenant_slug,
         trialExpiresAt: tenant.trial_expires_at,
       },
-      redirectUrl: `${process.env.APP_URL ?? 'http://localhost:3000'}/onboarding/success?tenant=${encodeURIComponent(tenant.tenant_slug)}&token=${encodeURIComponent(token)}`,
+      redirectUrl: `${appUrl}/onboarding/success?tenant=${encodeURIComponent(tenant.tenant_slug)}&token=${encodeURIComponent(token)}`,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';

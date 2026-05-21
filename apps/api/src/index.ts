@@ -11,6 +11,7 @@ import securityRouter from './routes/security';
 import publicRouter from './routes/public';
 import procurementRouter from './routes/procurement';
 import reportsRouter from './routes/reports';
+import { getApiRoot, getHealth } from './controllers/meta';
 
 dotenv.config();
 
@@ -97,14 +98,14 @@ app.use('/api/:tenantId/reports', reportsRouter);
 app.use('/api/reports', reportsRouter);
 app.use('/api/public', publicRouter);
 
-app.get('/healthz', (req, res) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
 app.get('/', (req, res) => {
   const apiName = process.env.API_NAME ?? 'White-label API';
   res.send(`${apiName} is running`);
 });
+app.get('/api', getApiRoot);
+app.get('/health', getHealth);
+app.get('/healthz', getHealth);
+app.get('/api/health', getHealth);
 
 const isVercel = Boolean(process.env.VERCEL);
 

@@ -14,6 +14,16 @@ function resolveAdminBridgeUrl(token?: string) {
     return null;
   }
 
+  if (typeof window !== "undefined") {
+    try {
+      if (new URL(adminUrl).origin === window.location.origin) {
+        return null;
+      }
+    } catch {
+      return null;
+    }
+  }
+
   const bridgeUrl = new URL("/auth/bridge", adminUrl);
   bridgeUrl.searchParams.set("token", token);
   return bridgeUrl.toString();
