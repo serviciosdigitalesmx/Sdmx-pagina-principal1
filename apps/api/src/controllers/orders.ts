@@ -2,6 +2,22 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { getTenantClient } from '@white-label/database';
 
+function buildPdfAttachment(receiptUrl?: string | null) {
+  if (!receiptUrl) {
+    return null;
+  }
+
+  const isDataUrl = receiptUrl.startsWith('data:');
+  return {
+    type: 'receipt_pdf' as const,
+    label: 'PDF de la orden',
+    url: receiptUrl,
+    fileName: isDataUrl ? null : 'recepcion.pdf',
+    mimeType: 'application/pdf',
+    source: isDataUrl ? ('inline_data_url' as const) : ('stored_url' as const),
+  };
+}
+
 // Esquema de validación para la creación de órdenes
 const createOrderSchema = z.object({
   clientName: z.string().min(1, 'El nombre del cliente es requerido'),
@@ -107,6 +123,8 @@ export const createOrder = async (req: Request, res: Response) => {
       });
     }
 
+    const pdfAttachment = buildPdfAttachment(validatedData.receiptUrl || null);
+
     return res.status(201).json({
       success: true,
       message: 'Orden creada exitosamente',
@@ -115,6 +133,8 @@ export const createOrder = async (req: Request, res: Response) => {
         final_cost: finalCost,
         estimated_cost: estimatedCost,
         receipt_url: validatedData.receiptUrl || null,
+        pdf_attachment: pdfAttachment,
+        attachments: pdfAttachment ? [pdfAttachment] : [],
         include_iva: validatedData.includeIva,
       },
     });
