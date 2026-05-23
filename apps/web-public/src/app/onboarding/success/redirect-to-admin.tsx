@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { saveAuthToken } from "@/lib/auth-storage";
 
 function resolveAdminBridgeUrl(token?: string) {
   if (!token) {
@@ -30,11 +29,8 @@ function resolveAdminBridgeUrl(token?: string) {
 export function AutoRedirectToAdmin({ token }: { token?: string }) {
   useEffect(() => {
     if (!token) {
-      window.location.replace("/onboarding");
       return;
     }
-
-    saveAuthToken(token);
 
     const bridgeUrl = resolveAdminBridgeUrl(token);
 
@@ -42,8 +38,6 @@ export function AutoRedirectToAdmin({ token }: { token?: string }) {
       window.location.replace(bridgeUrl);
       return;
     }
-
-    window.location.replace("/onboarding");
   }, [token]);
 
   return null;
