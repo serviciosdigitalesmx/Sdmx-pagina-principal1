@@ -44,10 +44,11 @@ const initialForm: OrderIntakeFormState = {
   deviceType: "Smartphone",
   deviceModel: "",
   issue: "",
+  includeIva: false,
 };
 
 const initialFiles: OrderIntakeFiles = {
-  intakePhoto: null,
+  intakePhotos: [],
   documents: [],
 };
 
@@ -60,11 +61,21 @@ function normalizeStatus(status?: string) {
   return "recibido";
 }
 
-function whatsappLink(phone?: string | null, folio?: string | null) {
+function buildPortalUrl(baseUrl: string, tenantSlug: string, folio?: string | null) {
+  const base = baseUrl.replace(/\/$/, "");
+  if (!base || !tenantSlug) return "";
+  const folioQuery = folio ? `?folio=${encodeURIComponent(folio)}` : "";
+  return `${base}/t/${encodeURIComponent(tenantSlug)}/portal${folioQuery}`;
+}
+
+function whatsappLink(phone?: string | null, tenantSlug?: string | null, portalBaseUrl?: string | null, folio?: string | null) {
   if (!phone) return null;
   const normalized = phone.replace(/\D/g, "");
   if (!normalized) return null;
-  const message = encodeURIComponent(`Hola, te contacto desde Sr. Fix sobre tu orden ${folio ?? ""}.`);
+  const portalUrl = portalBaseUrl && tenantSlug ? buildPortalUrl(portalBaseUrl, tenantSlug, folio) : "";
+  const message = encodeURIComponent(
+    `Bienvenido a Marca Blanca. Aquí puedes consultar el estatus de tu equipo: ${portalUrl}`
+  );
   return `https://wa.me/${normalized}?text=${message}`;
 }
 
@@ -72,8 +83,55 @@ function getDetailPhone(order?: OrderRow | null) {
   return order?.device_info?.customer_phone ?? null;
 }
 
+function compressImageFile(file: File, maxWidth = 1600, quality = 0.72): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("No se pudo leer la foto"));
+    reader.onload = () => {
+      const image = new Image();
+      image.onerror = () => reject(new Error("No se pudo procesar la foto"));
+      image.onload = () => {
+        const scale = Math.min(1, maxWidth / image.width);
+        const width = Math.max(1, Math.round(image.width * scale));
+        const height = Math.max(1, Math.round(image.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("No se pudo crear el lienzo para comprimir"));
+          return;
+        }
+        ctx.drawImage(image, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            reject(new Error("No se pudo comprimir la foto"));
+            return;
+          }
+          const compressed = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), {
+            type: "image/jpeg",
+            lastModified: Date.now(),
+          });
+          resolve(compressed);
+        }, "image/jpeg", quality);
+      };
+      image.src = String(reader.result ?? "");
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function compressImageFiles(files: File[]) {
+  const limited = files.slice(0, 3);
+  const compressed: File[] = [];
+  for (const file of limited) {
+    compressed.push(await compressImageFile(file));
+  }
+  return compressed;
+}
+
 export default function OrdenesKanbanPage() {
-  const { role } = useAuth();
+  const { role, tenantSlug } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,6 +143,14 @@ export default function OrdenesKanbanPage() {
   const [detail, setDetail] = useState<OrderDetailData | null>(null);
   const [form, setForm] = useState<OrderIntakeFormState>(initialForm);
   const [files, setFiles] = useState<OrderIntakeFiles>(initialFiles);
+  const [creationSummary, setCreationSummary] = useState<{ folio: string; orderId: string; phone: string; portalUrl: string | null } | null>(null);
+
+  const customerPortalBase = process.env.NEXT_PUBLIC_CUSTOMER_TRACKING_URL || process.env.NEXT_PUBLIC_SAAS_DEMO_URL || "";
+  const customerPortalUrl = useMemo(() => {
+    const base = customerPortalBase.replace(/\/$/, "");
+    if (!base || !tenantSlug) return null;
+    return `${base}/t/${encodeURIComponent(tenantSlug)}/portal`;
+  }, [customerPortalBase, tenantSlug]);
 
   useEffect(() => {
     setMounted(true);
@@ -159,7 +225,11 @@ export default function OrdenesKanbanPage() {
 
   const detailOrder = detail?.order ?? null;
   const detailPhone = getDetailPhone(detailOrder as OrderRow | null);
-  const detailWaLink = whatsappLink(detailPhone, detailOrder?.folio);
+  const detailWaLink = whatsappLink(detailPhone, tenantSlug, customerPortalBase, detailOrder?.folio);
+
+  const creationShareLink = creationSummary?.phone
+    ? whatsappLink(creationSummary.phone, tenantSlug, customerPortalBase, creationSummary.folio)
+    : null;
 
   async function refreshOrders() {
     const data = await fixService.getOrders();
@@ -182,14 +252,15 @@ export default function OrdenesKanbanPage() {
         deviceType: form.deviceType.trim(),
         deviceModel: form.deviceModel.trim(),
         issue: form.issue.trim(),
+        includeIva: form.includeIva,
       })) as OrderRow;
 
       if (!created.id) {
         throw new Error("La API no devolvió el id de la orden creada");
       }
 
-      if (files.intakePhoto) {
-        await fixService.uploadOrderAttachment(created.id, files.intakePhoto, "intake_photo");
+      for (const photo of files.intakePhotos) {
+        await fixService.uploadOrderAttachment(created.id, photo, "intake_photo");
       }
 
       for (const document of files.documents) {
@@ -202,6 +273,12 @@ export default function OrdenesKanbanPage() {
       setFiles(initialFiles);
       if (created.id) {
         setSelectedOrderId(created.id);
+        setCreationSummary({
+          folio: created.folio ?? "ORD",
+          orderId: created.id,
+          phone: form.clientPhone.trim(),
+          portalUrl: customerPortalUrl,
+        });
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al crear orden");
@@ -289,9 +366,9 @@ export default function OrdenesKanbanPage() {
                       <p className="mt-2 text-sm text-slate-600">{order.device_model ?? order.device_info?.model ?? "Equipo sin detallar"}</p>
                       <p className="mt-3 text-sm leading-6 text-slate-700">{order.problem_description ?? "Sin descripción"}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
-                        {whatsappLink(getDetailPhone(order), order.folio) ? (
+                        {whatsappLink(getDetailPhone(order), tenantSlug, customerPortalBase, order.folio) ? (
                           <a
-                            href={whatsappLink(getDetailPhone(order), order.folio) ?? "#"}
+                            href={whatsappLink(getDetailPhone(order), tenantSlug, customerPortalBase, order.folio) ?? "#"}
                             target="_blank"
                             rel="noreferrer"
                             className="rounded-full bg-[#1b9e5e] px-3 py-1 text-xs font-semibold text-white"
@@ -310,6 +387,56 @@ export default function OrdenesKanbanPage() {
             );
           })}
         </div>
+
+        {creationSummary ? (
+          <section className="rounded-[28px] border border-emerald-200 bg-emerald-50 p-5 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-white">✓</div>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.22em] text-emerald-700">Orden lista</p>
+                  <h2 className="text-lg font-semibold text-emerald-950">{creationSummary.folio}</h2>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {creationShareLink ? (
+                  <a
+                    href={creationShareLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full bg-[#1b9e5e] px-4 py-2 text-sm font-semibold text-white"
+                  >
+                    Compartir por WhatsApp
+                  </a>
+                ) : (
+                  <span className="rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-500">WhatsApp pendiente</span>
+                )}
+                {detailOrder?.receipt_url ? (
+                  <a
+                    href={detailOrder.receipt_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+                  >
+                    Generar PDF
+                  </a>
+                ) : (
+                  <span className="rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-500">PDF en proceso</span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setCreationSummary(null)}
+                  className="rounded-full border border-emerald-300 px-4 py-2 text-sm font-semibold text-emerald-800"
+                >
+                  Finalizar
+                </button>
+              </div>
+            </div>
+            <p className="mt-3 text-sm text-emerald-800">
+              Se abrió el detalle de la orden y la evidencia queda persistida para el tenant actual.
+            </p>
+          </section>
+        ) : null}
 
         <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#245a82]">Tabla real</p>
@@ -336,7 +463,14 @@ export default function OrdenesKanbanPage() {
           files={files}
           onClose={() => setIsModalOpen(false)}
           onChange={(name, value) => setForm((current) => ({ ...current, [name]: value }))}
-          onPhotoChange={(file) => setFiles((current) => ({ ...current, intakePhoto: file }))}
+          onToggleIva={(checked) => setForm((current) => ({ ...current, includeIva: checked }))}
+          onPhotoChange={(photos) => {
+            void compressImageFiles(photos).then((compressed) => {
+              setFiles((current) => ({ ...current, intakePhotos: compressed.slice(0, 3) }));
+            }).catch((err) => {
+              setError(err instanceof Error ? err.message : "Error al comprimir fotos");
+            });
+          }}
           onDocumentsChange={(documents) => setFiles((current) => ({ ...current, documents }))}
           onSubmit={() => void handleSubmit()}
         />
@@ -345,6 +479,7 @@ export default function OrdenesKanbanPage() {
           open={Boolean(selectedOrderId)}
           loading={detailLoading}
           data={detail}
+          customerPortalUrl={customerPortalUrl}
           onClose={() => setSelectedOrderId(null)}
           onStatusChange={(status) => handleStatusChange(status)}
           onAddNote={() => handleAddNote()}

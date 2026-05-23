@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, type FormEvent } from "react";
-import { useParams } from "next/navigation";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 
 type PortalOrderResponse = {
   success: true;
@@ -48,6 +48,7 @@ function resolveWhatsappHref(phone?: string) {
 
 export default function PortalPage() {
   const params = useParams<{ tenantSlug?: string }>();
+  const searchParams = useSearchParams();
   const tenantSlug = typeof params?.tenantSlug === "string" && params.tenantSlug.trim().length > 0 ? params.tenantSlug : "demo";
   const [folio, setFolio] = useState("");
   const [loading, setLoading] = useState(false);
@@ -57,6 +58,13 @@ export default function PortalPage() {
   const [tenantLabel, setTenantLabel] = useState<string>(tenantSlug);
 
   const apiBaseUrl = resolveApiBaseUrl();
+
+  useEffect(() => {
+    const folioFromUrl = searchParams.get("folio")?.trim();
+    if (folioFromUrl) {
+      setFolio(folioFromUrl);
+    }
+  }, [searchParams]);
 
   const whatsappHref = useMemo(() => {
     const contactPhone = tenant?.contact_phone;

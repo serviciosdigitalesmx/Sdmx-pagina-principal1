@@ -7,6 +7,7 @@ export type OrderDetailData = {
     id?: string;
     folio?: string;
     status?: string;
+    receipt_url?: string | null;
     device_type?: string;
     device_model?: string;
     problem_description?: string;
@@ -41,27 +42,36 @@ type Props = {
   open: boolean;
   loading: boolean;
   data: OrderDetailData | null;
+  customerPortalUrl: string | null;
   onClose: () => void;
   onStatusChange: (status: string) => Promise<void>;
   onAddNote: () => Promise<void>;
 };
 
-function whatsappLink(phone?: string | null, folio?: string | null) {
+function buildPortalUrl(customerPortalUrl?: string | null, folio?: string | null) {
+  if (!customerPortalUrl) return "";
+  const separator = customerPortalUrl.includes("?") ? "&" : "?";
+  return `${customerPortalUrl}${folio ? `${separator}folio=${encodeURIComponent(folio)}` : ""}`;
+}
+
+function whatsappLink(phone?: string | null, folio?: string | null, customerPortalUrl?: string | null) {
   if (!phone) return null;
   const normalized = phone.replace(/\D/g, "");
   if (!normalized) return null;
-  const message = encodeURIComponent(`Hola, te contacto desde Sr. Fix sobre tu orden ${folio ?? ""}.`);
+  const portalUrl = buildPortalUrl(customerPortalUrl, folio);
+  const message = encodeURIComponent(`Bienvenido a Marca Blanca. Aquí puedes consultar el estatus de tu equipo: ${portalUrl}`);
   return `https://wa.me/${normalized}?text=${message}`;
 }
 
-export function OrderDetailDrawer({ open, loading, data, onClose, onStatusChange, onAddNote }: Props) {
+export function OrderDetailDrawer({ open, loading, data, customerPortalUrl, onClose, onStatusChange, onAddNote }: Props) {
   if (!open) {
     return null;
   }
 
   const order = data?.order;
   const phone = (order?.device_info as { customer_phone?: string } | undefined)?.customer_phone ?? null;
-  const waLink = whatsappLink(phone, order?.folio);
+  const waLink = whatsappLink(phone, order?.folio, customerPortalUrl);
+  const pdfUrl = order?.receipt_url ?? null;
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/55 backdrop-blur-sm">
@@ -153,6 +163,20 @@ export function OrderDetailDrawer({ open, loading, data, onClose, onStatusChange
                   >
                     WhatsApp
                   </a>
+                  {pdfUrl ? (
+                    <a
+                      href={pdfUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+                    >
+                      Generar PDF
+                    </a>
+                  ) : (
+                    <span className="rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold text-slate-500">
+                      PDF pendiente
+                    </span>
+                  )}
                 </div>
               </div>
               <div className="grid gap-3 text-sm text-slate-600">

@@ -520,6 +520,29 @@ export const uploadOrderAttachments = async (req: Request, res: Response) => {
         extension,
       });
 
+      const { data: latestDocumentEvidence } = await supabase
+        .from('service_orders')
+        .select('evidence_metadata')
+        .eq('tenant_id', tenantId)
+        .eq('id', orderId)
+        .single();
+
+      await supabase
+        .from('service_orders')
+        .update({
+          evidence_metadata: appendEvidenceEntry(latestDocumentEvidence?.evidence_metadata, {
+            kind: 'document',
+            id: randomUUID(),
+            file_name: file.fileName,
+            file_type: file.fileType,
+            public_url: publicData.publicUrl ?? null,
+            mime_type: file.mimeType,
+            created_at: new Date().toISOString(),
+          }),
+        })
+        .eq('tenant_id', tenantId)
+        .eq('id', orderId);
+
       if (file.fileType === 'intake_photo') {
         uploadedPhoto = {
           buffer: fileBuffer,
@@ -591,30 +614,30 @@ export const uploadOrderAttachments = async (req: Request, res: Response) => {
         created_by: null,
         created_at: new Date().toISOString(),
       });
+
+      const { data: latestReceiptEvidence } = await supabase
+        .from('service_orders')
+        .select('evidence_metadata')
+        .eq('tenant_id', tenantId)
+        .eq('id', orderId)
+        .single();
+
+      await supabase
+        .from('service_orders')
+        .update({
+          evidence_metadata: appendEvidenceEntry(latestReceiptEvidence?.evidence_metadata, {
+            kind: 'document',
+            id: randomUUID(),
+            file_name: 'recepcion.pdf',
+            file_type: 'receipt_pdf',
+            public_url: receiptUpload.publicUrl,
+            mime_type: 'application/pdf',
+            created_at: new Date().toISOString(),
+          }),
+        })
+        .eq('tenant_id', tenantId)
+        .eq('id', orderId);
     }
-
-    const { data: latestEvidence } = await supabase
-      .from('service_orders')
-      .select('evidence_metadata')
-      .eq('tenant_id', tenantId)
-      .eq('id', orderId)
-      .single();
-
-    const updatedEvidence = appendEvidenceEntry(latestEvidence?.evidence_metadata, {
-      kind: 'document',
-      id: randomUUID(),
-      file_name: parsed.files[0]?.fileName ?? 'archivo',
-      file_type: parsed.files[0]?.fileType ?? 'attachment_pdf',
-      public_url: null,
-      mime_type: parsed.files[0]?.mimeType ?? 'application/octet-stream',
-      created_at: new Date().toISOString(),
-    });
-
-    await supabase
-      .from('service_orders')
-      .update({ evidence_metadata: updatedEvidence })
-      .eq('tenant_id', tenantId)
-      .eq('id', orderId);
 
     return res.status(201).json({
       success: true,

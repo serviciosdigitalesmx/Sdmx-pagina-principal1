@@ -9,10 +9,11 @@ export type OrderIntakeFormState = {
   deviceType: string;
   deviceModel: string;
   issue: string;
+  includeIva: boolean;
 };
 
 export type OrderIntakeFiles = {
-  intakePhoto: File | null;
+  intakePhotos: File[];
   documents: File[];
 };
 
@@ -24,19 +25,22 @@ type Props = {
   files: OrderIntakeFiles;
   onClose: () => void;
   onChange: (name: keyof OrderIntakeFormState, value: string) => void;
-  onPhotoChange: (file: File | null) => void;
+  onToggleIva: (value: boolean) => void;
+  onPhotoChange: (files: File[]) => void;
   onDocumentsChange: (files: File[]) => void;
   onSubmit: () => void;
 };
 
-function whatsappLink(phone: string, folioBase = "ORD") {
+function whatsappLink(phone: string) {
   const normalized = phone.replace(/\D/g, "");
   if (!normalized) return null;
-  const message = encodeURIComponent(`Hola, te contacto desde Sr. Fix sobre tu orden ${folioBase}.`);
+  const message = encodeURIComponent(
+    `Bienvenido a Marca Blanca. Aquí puedes consultar el estatus de tu equipo: ${process.env.NEXT_PUBLIC_CUSTOMER_TRACKING_URL || process.env.NEXT_PUBLIC_SAAS_DEMO_URL || ""}`
+  );
   return `https://wa.me/${normalized}?text=${message}`;
 }
 
-export function OrderIntakeModal({ open, saving, error, form, files, onClose, onChange, onPhotoChange, onDocumentsChange, onSubmit }: Props) {
+export function OrderIntakeModal({ open, saving, error, form, files, onClose, onChange, onToggleIva, onPhotoChange, onDocumentsChange, onSubmit }: Props) {
   const waLink = useMemo(() => whatsappLink(form.clientPhone), [form.clientPhone]);
 
   if (!open) {
@@ -70,11 +74,30 @@ export function OrderIntakeModal({ open, saving, error, form, files, onClose, on
           <input name="deviceModel" value={form.deviceModel} onChange={(e) => onChange("deviceModel", e.target.value)} placeholder="Modelo exacto" className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[#2c6e9f] focus:ring-2 focus:ring-[#2c6e9f]/20" />
           <textarea name="issue" value={form.issue} onChange={(e) => onChange("issue", e.target.value)} rows={4} placeholder="Describe el problema" className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[#2c6e9f] focus:ring-2 focus:ring-[#2c6e9f]/20" />
 
+          <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <input
+              type="checkbox"
+              checked={form.includeIva}
+              onChange={(e) => onToggleIva(e.target.checked)}
+              className="h-4 w-4 rounded border-slate-300 text-[#2c6e9f] focus:ring-[#2c6e9f]"
+            />
+            <span className="text-sm font-medium text-slate-700">Aplicar IVA</span>
+          </label>
+
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4">
               <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400">Foto de entrada</label>
-              <input type="file" accept="image/*" onChange={(e) => onPhotoChange(e.target.files?.[0] ?? null)} />
-              {files.intakePhoto ? <p className="mt-2 text-sm text-slate-600">{files.intakePhoto.name}</p> : <p className="mt-2 text-sm text-slate-500">Sin foto seleccionada.</p>}
+              <input type="file" accept="image/*" capture="environment" multiple onChange={(e) => onPhotoChange(Array.from(e.target.files ?? []).slice(0, 3))} />
+              {files.intakePhotos.length > 0 ? (
+                <ul className="mt-2 space-y-1 text-sm text-slate-600">
+                  {files.intakePhotos.map((file) => (
+                    <li key={`${file.name}-${file.size}`}>{file.name}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-2 text-sm text-slate-500">Sin foto seleccionada.</p>
+              )}
+              <p className="mt-2 text-xs text-slate-400">Máximo 3 fotos, capturadas desde cámara o galería.</p>
             </div>
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4">
               <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400">PDFs adjuntos</label>
