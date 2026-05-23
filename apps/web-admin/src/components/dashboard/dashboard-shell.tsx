@@ -7,6 +7,8 @@ import { ProtectedLink } from '@/components/guard/ProtectedLink';
 import { useAuth } from '@/components/guard/use-auth';
 import type { Role } from '@/components/guard/use-auth';
 
+export const ADMIN_BUILD_MARKER = "tenant-session-c323cf60";
+
 type NavItem = {
   href: string;
   label: string;
@@ -150,6 +152,9 @@ function DashboardShellContent({
             </div>
           </div>
         </header>
+        <div className="border-b border-slate-200 bg-slate-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 sm:px-6">
+          BUILD: {ADMIN_BUILD_MARKER}
+        </div>
         <main className="flex-1 overflow-auto bg-transparent p-6">{children}</main>
       </div>
     </div>
