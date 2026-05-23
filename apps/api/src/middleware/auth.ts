@@ -5,6 +5,7 @@ import { z } from 'zod';
 type JwtClaims = {
   sub: string;
   tenant_id: string;
+  tenant_slug?: string;
   role: 'owner' | 'manager' | 'technician';
   email?: string;
   sucursal_id?: string;
@@ -50,6 +51,7 @@ function verifyJwt(token: string): JwtClaims {
   const claimsSchema = z.object({
     sub: z.string().min(1),
     tenant_id: z.string().min(1),
+    tenant_slug: z.string().min(1).optional(),
     role: z.enum(['owner', 'manager', 'technician']),
     email: z.string().email().optional(),
     sucursal_id: z.string().min(1).optional(),
@@ -82,6 +84,7 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
     const claims = verifyJwt(token);
     req.user = {
       tenantId: claims.tenant_id,
+      tenantSlug: claims.tenant_slug ?? null,
       role: claims.role,
       email: claims.email,
       sucursalId: claims.sucursal_id,

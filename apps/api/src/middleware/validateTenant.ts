@@ -1,16 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
 
 export const validateTenant = (req: Request, res: Response, next: NextFunction) => {
-  const urlTenant = req.params.tenantId;
-  const tokenTenant = req.user?.tenantId;
+  const routeTenantSlug = req.params.tenantSlug ?? req.params.tenantId ?? req.params.tenant;
+  const tokenTenantSlug = req.user?.tenantSlug ?? null;
+  const tokenTenantId = req.user?.tenantId;
 
-  // If both are present, they must match
-  if (urlTenant && tokenTenant && urlTenant !== tokenTenant) {
+  if (!tokenTenantSlug) {
+    return res.status(401).json({ error: 'Missing tenant_slug in token' });
+  }
+
+  if (routeTenantSlug && routeTenantSlug !== tokenTenantSlug) {
     return res.status(403).json({ error: 'Tenant mismatch: Route param does not match token' });
   }
 
-  // Use token tenant as primary source of truth if authenticated
-  const finalTenantId = tokenTenant || urlTenant;
+  const finalTenantId = tokenTenantId;
 
   if (!finalTenantId) {
     return res.status(400).json({ error: 'Missing tenant identification in route or token' });

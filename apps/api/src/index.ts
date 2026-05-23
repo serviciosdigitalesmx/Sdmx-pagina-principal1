@@ -75,26 +75,26 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRouter);
-app.use('/api/:tenantId/auth', authRouter); // Support for tenant-prefixed auth
+app.use('/api/:tenantSlug/auth', authRouter); // Support for tenant-prefixed auth
 
-app.use('/api/:tenantId/orders', ordersRouter);
+app.use('/api/:tenantSlug/orders', ordersRouter);
 app.use('/api/orders', ordersRouter);
 
-app.use('/api/:tenantId/finance', financeRouter);
+app.use('/api/:tenantSlug/finance', financeRouter);
 app.use('/api/finance', financeRouter);
 
-app.use('/api/:tenantId/customers', customersRouter);
+app.use('/api/:tenantSlug/customers', customersRouter);
 app.use('/api/customers', customersRouter);
 
-app.use('/api/:tenantId/inventory', inventoryRouter);
+app.use('/api/:tenantSlug/inventory', inventoryRouter);
 app.use('/api/inventory', inventoryRouter);
-app.use('/api/:tenantId/suppliers', suppliersRouter);
+app.use('/api/:tenantSlug/suppliers', suppliersRouter);
 app.use('/api/suppliers', suppliersRouter);
-app.use('/api/:tenantId/security', securityRouter);
+app.use('/api/:tenantSlug/security', securityRouter);
 app.use('/api/security', securityRouter);
-app.use('/api/:tenantId/procurement', procurementRouter);
+app.use('/api/:tenantSlug/procurement', procurementRouter);
 app.use('/api/procurement', procurementRouter);
-app.use('/api/:tenantId/reports', reportsRouter);
+app.use('/api/:tenantSlug/reports', reportsRouter);
 app.use('/api/reports', reportsRouter);
 app.use('/api/public', publicRouter);
 
