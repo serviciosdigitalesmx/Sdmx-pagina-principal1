@@ -1,38 +1,46 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
 import { saveAuthToken } from "@/lib/auth-storage";
 
 function resolveDashboardUrl() {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  return new URL("/", window.location.origin).toString();
+  return "/dashboard";
 }
 
 export default function AuthBridgePage() {
   const token = typeof window === "undefined" ? null : new URL(window.location.href).searchParams.get("token");
   const dashboardUrl = resolveDashboardUrl();
+  const adminUrl = process.env.NEXT_PUBLIC_WEB_ADMIN_URL;
+  const isCanonicalAdminUrl = (() => {
+    if (!adminUrl || typeof window === "undefined") {
+      return false;
+    }
+
+    try {
+      const normalized = new URL(adminUrl);
+      return normalized.protocol === "https:" && normalized.origin === window.location.origin;
+    } catch {
+      return false;
+    }
+  })();
   const message = !token
     ? "No llegó el token de sesión."
-    : !dashboardUrl
+    : !adminUrl
       ? "Falta configurar NEXT_PUBLIC_WEB_ADMIN_URL."
+      : !isCanonicalAdminUrl
+        ? "El origin canónico del admin no coincide con NEXT_PUBLIC_WEB_ADMIN_URL."
       : "Sesión sincronizada. Redirigiendo al panel...";
 
   useEffect(() => {
-    if (!token) {
+    if (!token || !dashboardUrl || !isCanonicalAdminUrl) {
       return;
     }
 
     saveAuthToken(token);
 
-    if (!dashboardUrl) {
-      return;
-    }
-
     window.location.replace(dashboardUrl);
-  }, [dashboardUrl, token]);
+  }, [dashboardUrl, isCanonicalAdminUrl, token]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(44,110,159,0.12),_transparent_28%),linear-gradient(180deg,#f4f6f9_0%,#eef2f6_100%)] px-6 text-slate-950">
@@ -40,6 +48,25 @@ export default function AuthBridgePage() {
         <p className="text-xs uppercase tracking-[0.35em] text-[#245a82]">Sesión autenticada</p>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight">Preparando el panel</h1>
         <p className="mt-4 text-sm leading-7 text-slate-600">{message}</p>
+        {!adminUrl || !isCanonicalAdminUrl ? (
+          <div className="mt-6 text-left text-sm text-rose-700">
+            <p className="font-semibold">Bloqueado por configuración de origen</p>
+            <p className="mt-2 leading-6">
+              El bridge no puede continuar hasta que `NEXT_PUBLIC_WEB_ADMIN_URL` apunte al origen canónico de admin.
+            </p>
+          </div>
+        ) : null}
+        {token ? (
+          <div className="mt-6 rounded-2xl bg-slate-50 px-4 py-3 text-left text-xs leading-5 text-slate-600">
+            <p className="font-semibold text-slate-800">Token recibido</p>
+            <p className="mt-1 break-all">Guardado y listo para ir a <code>/dashboard</code>.</p>
+          </div>
+        ) : null}
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Link href="/dashboard" className="rounded-full bg-[#2c6e9f] px-5 py-3 font-semibold text-white transition hover:bg-[#245a82]">
+            Ir al dashboard
+          </Link>
+        </div>
       </div>
     </main>
   );

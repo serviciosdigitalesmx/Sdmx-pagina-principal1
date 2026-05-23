@@ -5,34 +5,32 @@ import { saveAuthToken } from "@/lib/auth-storage";
 
 function resolveAdminBridgeUrl(token?: string) {
   if (!token) {
-    return new URL("/dashboard", window.location.origin).toString();
+    return null;
   }
 
   const adminUrl = process.env.NEXT_PUBLIC_WEB_ADMIN_URL;
 
   if (!adminUrl) {
-    return new URL("/dashboard", window.location.origin).toString();
+    return null;
   }
 
-  if (typeof window !== "undefined") {
-    try {
-      if (new URL(adminUrl).origin === window.location.origin) {
-        return new URL("/dashboard", window.location.origin).toString();
-      }
-    } catch {
-      return new URL("/dashboard", window.location.origin).toString();
+  try {
+    const normalizedAdminUrl = new URL(adminUrl);
+
+    if (normalizedAdminUrl.protocol !== "https:") {
+      return null;
     }
-  }
 
-  const bridgeUrl = new URL("/auth/bridge", adminUrl);
-  bridgeUrl.searchParams.set("token", token);
-  return bridgeUrl.toString();
+    return new URL(`/auth/bridge?token=${encodeURIComponent(token)}`, normalizedAdminUrl).toString();
+  } catch {
+    return null;
+  }
 }
 
 export function AutoRedirectToAdmin({ token }: { token?: string }) {
   useEffect(() => {
     if (!token) {
-      window.location.replace("/dashboard");
+      window.location.replace("/onboarding");
       return;
     }
 
@@ -42,9 +40,10 @@ export function AutoRedirectToAdmin({ token }: { token?: string }) {
 
     if (bridgeUrl) {
       window.location.replace(bridgeUrl);
-    } else {
-      window.location.replace("/dashboard");
+      return;
     }
+
+    window.location.replace("/onboarding");
   }, [token]);
 
   return null;
