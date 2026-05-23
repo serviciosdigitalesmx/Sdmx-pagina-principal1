@@ -59,13 +59,22 @@ export const listInventory = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
+    const branchId = typeof req.query.branchId === 'string' ? req.query.branchId.trim() : '';
     const supabase = getTenantClient(tenantId);
-    const { data, error } = await supabase
+    let query = supabase
       .from('inventory')
       .select('*')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(100);
+
+    if (branchId) {
+      query = query.eq('branch_id', branchId);
+    } else if (req.user?.role === 'manager' && req.user.sucursalId) {
+      query = query.eq('branch_id', req.user.sucursalId);
+    }
+
+    const { data, error } = await query;
     if (error) return res.status(502).json({ error: 'Failed to fetch inventory', details: error.message });
     return res.json({ success: true, data });
   } catch (error) {

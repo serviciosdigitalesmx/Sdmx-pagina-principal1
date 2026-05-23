@@ -7,6 +7,7 @@ import requestsRouter from './routes/requests';
 import financeRouter from './routes/finance';
 import customersRouter from './routes/customers';
 import inventoryRouter from './routes/inventory';
+import branchesRouter from './routes/branches';
 import suppliersRouter from './routes/suppliers';
 import securityRouter from './routes/security';
 import publicRouter from './routes/public';
@@ -91,6 +92,8 @@ app.use('/api/customers', customersRouter);
 
 app.use('/api/:tenantSlug/inventory', inventoryRouter);
 app.use('/api/inventory', inventoryRouter);
+app.use('/api/:tenantSlug/branches', branchesRouter);
+app.use('/api/branches', branchesRouter);
 app.use('/api/:tenantSlug/suppliers', suppliersRouter);
 app.use('/api/suppliers', suppliersRouter);
 app.use('/api/:tenantSlug/security', securityRouter);

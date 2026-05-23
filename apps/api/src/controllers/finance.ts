@@ -18,11 +18,18 @@ export const getBalance = async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'Only owner can access global balance' });
     }
 
+    const branchId = typeof req.query.branchId === 'string' ? req.query.branchId.trim() : '';
     const supabase = getTenantClient(tenantId);
-    const { data, error } = await supabase
+    let query = supabase
       .from('finances')
       .select('id, tenant_id, balance, income, expense, created_at')
       .eq('tenant_id', tenantId);
+
+    if (branchId) {
+      query = query.eq('sucursal_id', branchId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       return res.status(502).json({ error: 'Failed to fetch balance', details: error.message });

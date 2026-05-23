@@ -96,6 +96,7 @@ const createOrderSchema = z.object({
     notes: '',
   }),
   receiptUrl: z.string().optional().or(z.literal('')),
+  branchId: z.string().min(1).optional(),
 });
 
 function normalizeOrderStatus(status?: string | null) {
@@ -282,6 +283,12 @@ export const createOrder = async (req: Request, res: Response) => {
 
     const validatedData = createOrderSchema.parse(req.body);
     const supabase = getTenantClient(tenantId);
+    const requestedBranchId = validatedData.branchId ?? req.user?.sucursalId ?? null;
+
+    if (req.user?.role === 'manager' && req.user.sucursalId && requestedBranchId && requestedBranchId !== req.user.sucursalId) {
+      return res.status(403).json({ error: 'Sucursal mismatch' });
+    }
+
     const folioPrefix = process.env.ORDER_FOLIO_PREFIX ?? 'ORD';
     const newFolio = `${folioPrefix}-${Date.now().toString(36).toUpperCase()}`;
     const estimatedCost = Number.isFinite(validatedData.estimatedCost) ? validatedData.estimatedCost : 0;
@@ -293,6 +300,7 @@ export const createOrder = async (req: Request, res: Response) => {
       .insert([
         {
           tenant_id: tenantId,
+          branch_id: requestedBranchId,
           folio: newFolio,
           status: 'recibido',
           device_info: {
@@ -376,6 +384,7 @@ export const createOrder = async (req: Request, res: Response) => {
         final_cost: finalCost,
         estimated_cost: estimatedCost,
         receipt_url: validatedData.receiptUrl || null,
+        branch_id: requestedBranchId,
         pdf_attachment: pdfAttachment,
         attachments: pdfAttachment ? [pdfAttachment] : [],
         include_iva: validatedData.includeIva,
@@ -396,18 +405,27 @@ export const createOrder = async (req: Request, res: Response) => {
 export const listOrders = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
+    const branchId = typeof req.query.branchId === 'string' ? req.query.branchId.trim() : '';
 
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context is required' });
     }
 
     const supabase = getTenantClient(tenantId);
-    const { data, error } = await supabase
+    let query = supabase
       .from('service_orders')
       .select('*, service_order_checklists(*)')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(50);
+
+    if (branchId) {
+      query = query.eq('branch_id', branchId);
+    } else if (req.user?.role === 'manager' && req.user.sucursalId) {
+      query = query.eq('branch_id', req.user.sucursalId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       return res.status(502).json({
@@ -430,6 +448,7 @@ export const getOrderById = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
     const orderId = req.params.id;
+    const branchId = typeof req.query.branchId === 'string' ? req.query.branchId.trim() : '';
 
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context is required' });
@@ -440,13 +459,20 @@ export const getOrderById = async (req: Request, res: Response) => {
     }
 
     const supabase = getTenantClient(tenantId);
+    const orderQuery = supabase
+      .from('service_orders')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('id', orderId);
+
+    if (branchId) {
+      orderQuery.eq('branch_id', branchId);
+    } else if (req.user?.role === 'manager' && req.user.sucursalId) {
+      orderQuery.eq('branch_id', req.user.sucursalId);
+    }
+
     const [orderResult, checklistResult] = await Promise.all([
-      supabase
-        .from('service_orders')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .eq('id', orderId)
-        .single(),
+      orderQuery.single(),
       supabase
         .from('service_order_checklists')
         .select('*')
@@ -508,6 +534,7 @@ export const uploadOrderAttachments = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
     const orderId = req.params.id;
+    const branchId = typeof req.query.branchId === 'string' ? req.query.branchId.trim() : '';
 
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context is required' });
@@ -521,6 +548,7 @@ export const uploadOrderAttachments = async (req: Request, res: Response) => {
       .select('id, tenant_id, evidence_metadata')
       .eq('tenant_id', tenantId)
       .eq('id', orderId)
+      .eq(branchId ? 'branch_id' : 'tenant_id', branchId || tenantId)
       .single();
 
     if (orderError || !order) {
@@ -703,6 +731,7 @@ export const addOrderNote = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
     const orderId = req.params.id;
+    const branchId = typeof req.query.branchId === 'string' ? req.query.branchId.trim() : '';
 
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context is required' });
@@ -716,6 +745,7 @@ export const addOrderNote = async (req: Request, res: Response) => {
       .select('id, status, evidence_metadata')
       .eq('tenant_id', tenantId)
       .eq('id', orderId)
+      .eq(branchId ? 'branch_id' : 'tenant_id', branchId || tenantId)
       .single();
 
     if (orderError || !order) {
@@ -757,6 +787,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
     const orderId = req.params.id;
+    const branchId = typeof req.query.branchId === 'string' ? req.query.branchId.trim() : '';
 
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context is required' });
@@ -770,6 +801,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       .select('id, status, evidence_metadata')
       .eq('tenant_id', tenantId)
       .eq('id', orderId)
+      .eq(branchId ? 'branch_id' : 'tenant_id', branchId || tenantId)
       .single();
 
     if (orderError || !order) {

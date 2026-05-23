@@ -131,7 +131,7 @@ async function compressImageFiles(files: File[]) {
 }
 
 export default function OrdenesKanbanPage() {
-  const { role, tenantSlug } = useAuth();
+  const { role, tenantSlug, sucursalId } = useAuth();
   const [mounted, setMounted] = useState(false);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -256,6 +256,7 @@ export default function OrdenesKanbanPage() {
         deviceModel: form.deviceModel.trim(),
         issue: form.issue.trim(),
         includeIva: form.includeIva,
+        branchId: sucursalId || undefined,
       })) as OrderRow;
 
       if (!created.id) {

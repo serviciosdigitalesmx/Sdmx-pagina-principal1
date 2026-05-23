@@ -1,11 +1,12 @@
 "use client";
 
 import React from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { TenantProvider, type TenantConfig, useTenantTheme } from '@/components/tenant/tenant-provider';
 import { ProtectedLink } from '@/components/guard/ProtectedLink';
 import { useAuth } from '@/components/guard/use-auth';
 import type { Role } from '@/components/guard/use-auth';
+import { fixService } from '@/services/fixService';
 
 export const ADMIN_BUILD_MARKER = "tenant-session-c323cf60";
 
@@ -66,8 +67,11 @@ function DashboardShellContent({
   tenant: TenantConfig;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const theme = useTenantTheme();
   const auth = useAuth();
+  const [branches, setBranches] = React.useState<Array<{ id?: string; name?: string; city?: string; code?: string }>>([]);
   const activeTenant = React.useMemo<TenantConfig>(() => {
     const tenantLabel = auth.tenantSlug || tenant.tenantId;
 
@@ -79,6 +83,39 @@ function DashboardShellContent({
       userRole: auth.role || tenant.userRole,
     };
   }, [auth.role, auth.tenantSlug, auth.userEmail, tenant]);
+  const branchId = searchParams.get('branchId') ?? auth.sucursalId ?? '';
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function loadBranches() {
+      try {
+        const data = await fixService.getBranches();
+        if (!cancelled) {
+          setBranches(data as Array<{ id?: string; name?: string; city?: string; code?: string }>);
+        }
+      } catch {
+        if (!cancelled) setBranches([]);
+      }
+    }
+
+    void loadBranches();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  function updateBranch(nextBranchId: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextBranchId) {
+      params.set('branchId', nextBranchId);
+    } else {
+      params.delete('branchId');
+    }
+    const query = params.toString();
+    router.push(query ? `${pathname}?${query}` : pathname);
+  }
 
   return (
     <div key={pathname} className="flex min-h-screen flex-col text-slate-900 bg-[radial-gradient(circle_at_top,_rgba(44,110,159,0.12),_transparent_28%),linear-gradient(180deg,#f4f6f9_0%,#eef2f6_100%)] lg:flex-row">
@@ -153,8 +190,23 @@ function DashboardShellContent({
             </div>
           </div>
         </header>
-        <div className="border-b border-slate-200 bg-slate-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 sm:px-6">
-          BUILD: {ADMIN_BUILD_MARKER}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 sm:px-6">
+          <span>BUILD: {ADMIN_BUILD_MARKER}</span>
+          <div className="flex flex-wrap items-center gap-2 normal-case tracking-normal">
+            <span className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Sucursal</span>
+            <select
+              value={branchId}
+              onChange={(event) => updateBranch(event.target.value)}
+              className="min-w-52 rounded-full border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700"
+            >
+              <option value="">Todas / contexto actual</option>
+              {branches.map((branch) => (
+                <option key={branch.id ?? branch.code ?? branch.name} value={branch.id ?? ''}>
+                  {branch.name ?? 'Sucursal'}{branch.city ? ` · ${branch.city}` : ''}{branch.code ? ` (${branch.code})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <main className="flex-1 overflow-auto bg-transparent p-6">{children}</main>
       </div>
