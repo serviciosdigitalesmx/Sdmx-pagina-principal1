@@ -4,6 +4,7 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 import { TenantProvider, type TenantConfig, useTenantTheme } from '@/components/tenant/tenant-provider';
 import { ProtectedLink } from '@/components/guard/ProtectedLink';
+import { useAuth } from '@/components/guard/use-auth';
 import type { Role } from '@/components/guard/use-auth';
 
 type NavItem = {
@@ -63,6 +64,18 @@ function DashboardShellContent({
 }) {
   const pathname = usePathname();
   const theme = useTenantTheme();
+  const auth = useAuth();
+  const activeTenant = React.useMemo<TenantConfig>(() => {
+    const tenantLabel = auth.tenantSlug || tenant.tenantId;
+
+    return {
+      ...tenant,
+      tenantId: tenantLabel,
+      tenantName: tenantLabel.charAt(0).toUpperCase() + tenantLabel.slice(1),
+      userEmail: auth.userEmail || tenant.userEmail,
+      userRole: auth.role || tenant.userRole,
+    };
+  }, [auth.role, auth.tenantSlug, auth.userEmail, tenant]);
 
   return (
     <div className="flex min-h-screen flex-col text-slate-900 bg-[radial-gradient(circle_at_top,_rgba(44,110,159,0.12),_transparent_28%),linear-gradient(180deg,#f4f6f9_0%,#eef2f6_100%)] lg:flex-row">
@@ -72,13 +85,13 @@ function DashboardShellContent({
             <div
               className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#2c6e9f]/20 bg-[linear-gradient(180deg,rgba(44,110,159,0.18),rgba(255,255,255,0.96))] text-sm font-black text-slate-900"
             >
-              {tenant.brandName.slice(0, 2).toUpperCase()}
+              {activeTenant.brandName.slice(0, 2).toUpperCase()}
             </div>
             <div>
               <div className="text-sm font-semibold tracking-wide text-slate-950">
-                {tenant.brandName}
+                {activeTenant.brandName}
               </div>
-              <div className="text-xs text-slate-500">{tenant.tenantName}</div>
+              <div className="text-xs text-slate-500">{activeTenant.tenantName}</div>
             </div>
           </div>
         </div>
@@ -110,9 +123,9 @@ function DashboardShellContent({
         </nav>
         <div className="border-t border-slate-200 p-4 text-sm text-slate-500">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="text-slate-950">{tenant.userEmail}</div>
-            <div className="mt-1 text-xs text-slate-500">Rol: {tenant.userRole}</div>
-            <div className="text-xs text-slate-500">Sucursal: {tenant.branchName}</div>
+            <div className="text-slate-950">{activeTenant.userEmail}</div>
+            <div className="mt-1 text-xs text-slate-500">Rol: {activeTenant.userRole}</div>
+            <div className="text-xs text-slate-500">Sucursal: {activeTenant.branchName}</div>
           </div>
         </div>
       </aside>
@@ -122,7 +135,7 @@ function DashboardShellContent({
           <div className="min-w-0">
             <div className="text-sm font-semibold text-slate-950 [font-family:var(--font-display)]">Workspace activo</div>
             <div className="text-xs text-slate-500 leading-5">
-              Tenant: {tenant.tenantId} · Rol: {tenant.userRole} · Sucursal: {tenant.branchName}
+              Tenant: {activeTenant.tenantId} · Rol: {activeTenant.userRole} · Sucursal: {activeTenant.branchName}
             </div>
           </div>
           <div className="flex items-center gap-3 sm:gap-4">
@@ -133,7 +146,7 @@ function DashboardShellContent({
               className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-slate-950"
               style={{ backgroundColor: theme.accent }}
             >
-              {tenant.userEmail.slice(0, 1).toUpperCase()}
+              {activeTenant.userEmail.slice(0, 1).toUpperCase()}
             </div>
           </div>
         </header>
