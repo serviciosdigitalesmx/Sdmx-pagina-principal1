@@ -19,9 +19,13 @@ export function RequireRole({
   allowed: Role[];
   children: React.ReactNode;
 }) {
-  const { role } = useAuth();
+  const auth = useAuth();
 
-  if (!allowed.includes(role)) {
+  if (!auth.ready) {
+    return null;
+  }
+
+  if (!allowed.includes(auth.role)) {
     return <Forbidden />;
   }
 

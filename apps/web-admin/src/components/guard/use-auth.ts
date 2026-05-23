@@ -12,6 +12,7 @@ export type AuthState = {
   tenantSlug: string;
   sucursalId: string;
   userEmail: string;
+  ready: boolean;
 };
 
 export function useAuth(): AuthState {
@@ -30,6 +31,7 @@ export function useAuth(): AuthState {
         tenantSlug: session.tenantSlug,
         sucursalId: session.sucursalId || tenant.userSucursalId,
         userEmail: session.email || tenant.userEmail,
+        ready: true,
       } satisfies AuthState;
     }
 
@@ -39,6 +41,7 @@ export function useAuth(): AuthState {
       tenantSlug: tenant.tenantId,
       sucursalId: tenant.userSucursalId,
       userEmail: tenant.userEmail,
+      ready: false,
     } satisfies AuthState;
   }, [session, tenant]);
 }
