@@ -21,10 +21,10 @@ const cormorant = Cormorant_Garamond({
 export const metadata: Metadata = {
   title:
     process.env.NEXT_PUBLIC_SAAS_META_TITLE ??
-    "Plataforma SaaS white-label para talleres de reparación",
+    "FIXIE | Plataforma SaaS para talleres",
   description:
-      process.env.NEXT_PUBLIC_SAAS_META_DESCRIPTION ??
-    "SaaS multi-tenant para talleres de celulares, computadoras y electrónica con automatización y aislamiento por tenant.",
+    process.env.NEXT_PUBLIC_SAAS_META_DESCRIPTION ??
+    "FIXIE: SaaS multitenant para talleres con marca blanca, tracking y control operativo.",
 };
 
 export const viewport = {
