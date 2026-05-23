@@ -35,7 +35,7 @@ function whatsappLink(phone: string) {
   const normalized = phone.replace(/\D/g, "");
   if (!normalized) return null;
   const message = encodeURIComponent(
-    `Bienvenido a Marca Blanca. Aquí puedes consultar el estatus de tu equipo: ${process.env.NEXT_PUBLIC_CUSTOMER_TRACKING_URL || process.env.NEXT_PUBLIC_SAAS_DEMO_URL || ""}`
+    `Bienvenido a Marca Blanca. Aquí puedes consultar el estatus de tu equipo: ${process.env.NEXT_PUBLIC_CUSTOMER_TRACKING_URL || process.env.NEXT_PUBLIC_SAAS_DEMO_URL || "https://clientes.serviciosdigitalesmx.online"}`
   );
   return `https://wa.me/${normalized}?text=${message}`;
 }

@@ -145,7 +145,10 @@ export default function OrdenesKanbanPage() {
   const [files, setFiles] = useState<OrderIntakeFiles>(initialFiles);
   const [creationSummary, setCreationSummary] = useState<{ folio: string; orderId: string; phone: string; portalUrl: string | null } | null>(null);
 
-  const customerPortalBase = process.env.NEXT_PUBLIC_CUSTOMER_TRACKING_URL || process.env.NEXT_PUBLIC_SAAS_DEMO_URL || "";
+  const customerPortalBase =
+    process.env.NEXT_PUBLIC_CUSTOMER_TRACKING_URL ||
+    process.env.NEXT_PUBLIC_SAAS_DEMO_URL ||
+    "https://clientes.serviciosdigitalesmx.online";
   const customerPortalUrl = useMemo(() => {
     const base = customerPortalBase.replace(/\/$/, "");
     if (!base || !tenantSlug) return null;
