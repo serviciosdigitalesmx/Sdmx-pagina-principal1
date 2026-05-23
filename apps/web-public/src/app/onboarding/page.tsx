@@ -51,6 +51,7 @@ export default function OnboardingPage() {
           email: form.email.trim(),
           password: form.password,
           phone: form.phone.trim(),
+          origin: window.location.origin,
         }),
       });
 

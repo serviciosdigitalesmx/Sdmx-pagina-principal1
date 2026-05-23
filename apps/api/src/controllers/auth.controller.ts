@@ -8,6 +8,7 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   phone: z.string().trim().min(7),
+  origin: z.string().url().optional(),
 });
 
 function base64Url(input: Buffer | string) {
@@ -31,7 +32,12 @@ function getAllowedAppOrigins() {
 function isAllowedRedirectUrl(candidate: string) {
   try {
     const parsed = new URL(candidate);
-    return parsed.hostname.endsWith('.vercel.app') || getAllowedAppOrigins().has(parsed.origin);
+    return (
+      parsed.hostname.endsWith('.vercel.app') ||
+      parsed.hostname.endsWith('serviciosdigitalesmx.online') ||
+      parsed.hostname === 'serviciosdigitalesmx.online' ||
+      getAllowedAppOrigins().has(parsed.origin)
+    );
   } catch {
     return false;
   }
@@ -104,8 +110,9 @@ export const register = async (req: Request, res: Response) => {
     });
   }
 
-  const { workshopName, email, password, phone } = parsed.data;
-  const appUrl = resolveAppUrl(typeof req.headers.origin === 'string' ? req.headers.origin : undefined);
+  const { workshopName, email, password, phone, origin } = parsed.data;
+  const requestOrigin = origin ?? (typeof req.headers.origin === 'string' ? req.headers.origin : undefined);
+  const appUrl = resolveAppUrl(requestOrigin);
 
   if (!appUrl) {
     return res.status(500).json({ error: 'APP_URL is required' });
@@ -205,6 +212,7 @@ const googleCompleteSchema = z.object({
   workshopName: z.string().trim().min(2),
   phone: z.string().trim().min(7),
   accessToken: z.string().min(1),
+  origin: z.string().url().optional(),
 });
 
 export const completeGoogleRegistration = async (req: Request, res: Response) => {
@@ -217,8 +225,9 @@ export const completeGoogleRegistration = async (req: Request, res: Response) =>
     });
   }
 
-  const { workshopName, phone, accessToken } = parsed.data;
-  const appUrl = resolveAppUrl(typeof req.headers.origin === 'string' ? req.headers.origin : undefined);
+  const { workshopName, phone, accessToken, origin } = parsed.data;
+  const requestOrigin = origin ?? (typeof req.headers.origin === 'string' ? req.headers.origin : undefined);
+  const appUrl = resolveAppUrl(requestOrigin);
 
   if (!appUrl) {
     return res.status(500).json({ error: 'APP_URL is required' });

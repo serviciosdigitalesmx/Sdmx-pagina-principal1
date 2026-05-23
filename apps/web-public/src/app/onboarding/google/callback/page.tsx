@@ -122,6 +122,7 @@ export default function GoogleCallbackPage() {
           workshopName: form.workshopName,
           phone: form.phone,
           accessToken,
+          origin: window.location.origin,
         }),
       });
 

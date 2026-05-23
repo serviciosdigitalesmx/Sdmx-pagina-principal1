@@ -11,9 +11,9 @@ services:
       - key: PORT
         value: 10000
       - key: CORS_ALLOWED_ORIGINS
-        value: https://app.serviciosdigitalesmx.online,https://clientes.serviciosdigitalesmx.online,https://serviciosdigitalesmx.online
+        value: https://serviciosdigitalesmx.online,https://web-admin-jet.vercel.app,https://web-clientes-psi.vercel.app
       - key: APP_URL
-        value: https://app.serviciosdigitalesmx.online
+        value: https://serviciosdigitalesmx.online
       - key: BACKEND_PUBLIC_URL
         sync: false
       - key: WEBHOOK_BASE_URL
