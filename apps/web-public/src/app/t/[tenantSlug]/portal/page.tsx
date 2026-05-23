@@ -120,30 +120,30 @@ export default function PortalPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(44,110,159,0.16),_transparent_30%),linear-gradient(180deg,#f4f6f9_0%,#eef2f6_48%,#ffffff_100%)] px-4 py-8 text-slate-950">
-      <section className="mx-auto grid w-full max-w-5xl gap-8 rounded-[2rem] border border-slate-200 bg-white p-8 shadow-[0_24px_90px_rgba(15,23,42,0.08)]">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.12),_transparent_30%),linear-gradient(180deg,#09090b_0%,#111113_48%,#18181b_100%)] px-4 py-8 text-zinc-50">
+      <section className="mx-auto grid w-full max-w-5xl gap-8 rounded-[2rem] border border-zinc-800/70 bg-zinc-950/85 p-8 shadow-[0_24px_90px_rgba(0,0,0,0.28)]">
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
           <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-[#245a82]">Portal del cliente</p>
-            <h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-950 [font-family:var(--font-cormorant)]">
+            <p className="text-xs uppercase tracking-[0.35em] text-cyan-300">Portal del cliente</p>
+            <h1 className="mt-3 text-4xl font-bold tracking-tight text-zinc-50 [font-family:var(--font-cormorant)]">
               Consulta real de reparación
             </h1>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
-              Ingresa tu folio para consultar una orden real del tenant <span className="font-semibold text-slate-950">{tenantLabel}</span>.
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-zinc-300">
+              Ingresa tu folio para consultar una orden real del tenant <span className="font-semibold text-zinc-50">{tenantLabel}</span>.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link href={`/${tenantSlug}`} className="rounded-full border border-slate-300 px-5 py-3 font-semibold text-slate-800 transition hover:bg-slate-50">
+              <Link href={`/${tenantSlug}`} className="rounded-full border border-zinc-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-zinc-800">
                 Volver al tenant
               </Link>
-              <Link href={`/${tenantSlug}/cotizar`} className="rounded-full bg-[#2c6e9f] px-5 py-3 font-semibold text-white transition hover:bg-[#245a82]">
+              <Link href={`/${tenantSlug}/cotizar`} className="rounded-full bg-cyan-500 px-5 py-3 font-semibold text-zinc-950 transition hover:bg-cyan-400">
                 Solicitar cotización
               </Link>
             </div>
           </div>
 
-          <aside className="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#245a82]">Qué consulta</p>
-            <ul className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
+          <aside className="rounded-[1.75rem] border border-zinc-800 bg-zinc-900/60 p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Qué consulta</p>
+            <ul className="mt-4 space-y-3 text-sm leading-7 text-zinc-300">
               <li>• Estado real de la orden.</li>
               <li>• Equipo, falla y fecha de ingreso.</li>
               <li>• WhatsApp del taller cuando exista en la orden.</li>
@@ -152,9 +152,9 @@ export default function PortalPage() {
           </aside>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid gap-4 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
+        <form onSubmit={handleSubmit} className="grid gap-4 rounded-[1.5rem] border border-zinc-800 bg-zinc-900/60 p-6">
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Folio de recepción</label>
+            <label className="mb-2 block text-sm font-medium text-zinc-300">Folio de recepción</label>
             <input
               value={folio}
               onChange={(event) => setFolio(event.target.value)}
@@ -164,13 +164,13 @@ export default function PortalPage() {
             />
           </div>
 
-          {error ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
+          {error ? <p className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">{error}</p> : null}
 
           <div className="flex flex-wrap items-center gap-3">
-            <button disabled={loading} className="rounded-full bg-[#2c6e9f] px-6 py-3 font-semibold text-white transition hover:bg-[#245a82] disabled:opacity-60">
+            <button disabled={loading} className="rounded-full bg-cyan-500 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-cyan-400 disabled:opacity-60">
               {loading ? "Consultando..." : "Buscar orden"}
             </button>
-            <p className="text-sm leading-6 text-slate-600">
+            <p className="text-sm leading-6 text-zinc-400">
               La consulta se hace en el backend real y respeta tenant_id por slug.
             </p>
           </div>
@@ -178,73 +178,73 @@ export default function PortalPage() {
 
         {result ? (
           <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-            <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_16px_60px_rgba(15,23,42,0.08)]">
+            <article className="rounded-[1.75rem] border border-zinc-800 bg-zinc-950/85 p-6 shadow-[0_16px_60px_rgba(0,0,0,0.24)]">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#245a82]">Orden encontrada</p>
-                  <h2 className="mt-2 text-3xl font-bold text-slate-950">{result.order.folio}</h2>
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Orden encontrada</p>
+                  <h2 className="mt-2 text-3xl font-bold text-zinc-50">{result.order.folio}</h2>
                 </div>
-                <span className="rounded-full bg-[#1b9e5e]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#1b9e5e]">
+                <span className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
                   {result.orderStatusLabel}
                 </span>
               </div>
 
               <dl className="mt-6 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <dt className="text-xs uppercase tracking-[0.2em] text-slate-500">Cliente</dt>
-                  <dd className="mt-1 text-sm font-semibold text-slate-950">{result.order.device_info?.customer_name ?? "Sin cliente"}</dd>
+                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
+                  <dt className="text-xs uppercase tracking-[0.2em] text-zinc-400">Cliente</dt>
+                  <dd className="mt-1 text-sm font-semibold text-zinc-50">{result.order.device_info?.customer_name ?? "Sin cliente"}</dd>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <dt className="text-xs uppercase tracking-[0.2em] text-slate-500">Equipo</dt>
-                  <dd className="mt-1 text-sm font-semibold text-slate-950">
+                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
+                  <dt className="text-xs uppercase tracking-[0.2em] text-zinc-400">Equipo</dt>
+                  <dd className="mt-1 text-sm font-semibold text-zinc-50">
                     {result.order.device_info?.brand ?? result.order.device_info?.type ?? "Sin dispositivo"}{" "}
                     {result.order.device_info?.model ? `· ${result.order.device_info.model}` : ""}
                   </dd>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <dt className="text-xs uppercase tracking-[0.2em] text-slate-500">Falla reportada</dt>
-                  <dd className="mt-1 text-sm leading-6 text-slate-700">{result.order.problem_description ?? "Sin descripción"}</dd>
+                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
+                  <dt className="text-xs uppercase tracking-[0.2em] text-zinc-400">Falla reportada</dt>
+                  <dd className="mt-1 text-sm leading-6 text-zinc-300">{result.order.problem_description ?? "Sin descripción"}</dd>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <dt className="text-xs uppercase tracking-[0.2em] text-slate-500">Ingreso</dt>
-                  <dd className="mt-1 text-sm font-semibold text-slate-950">
+                <div className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
+                  <dt className="text-xs uppercase tracking-[0.2em] text-zinc-400">Ingreso</dt>
+                  <dd className="mt-1 text-sm font-semibold text-zinc-50">
                     {result.order.created_at ? new Date(result.order.created_at).toLocaleString() : "Sin fecha"}
                   </dd>
                 </div>
               </dl>
 
               <div className="mt-6">
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#245a82]">Timeline</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-300">Timeline</p>
                 <div className="mt-4 space-y-3">
                   {result.timeline.map((step) => (
-                    <div key={step.label} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                    <div key={step.label} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 px-4 py-3">
                       <div className="flex items-center justify-between gap-3">
-                        <span className="font-semibold text-slate-950">{step.label}</span>
-                        <span className="text-xs uppercase tracking-[0.18em] text-slate-500">{step.status}</span>
+                        <span className="font-semibold text-zinc-50">{step.label}</span>
+                        <span className="text-xs uppercase tracking-[0.18em] text-zinc-400">{step.status}</span>
                       </div>
-                      <p className="mt-1 text-sm text-slate-600">{step.note}</p>
+                      <p className="mt-1 text-sm text-zinc-300">{step.note}</p>
                     </div>
                   ))}
                 </div>
               </div>
             </article>
 
-            <aside className="space-y-4 rounded-[1.75rem] border border-slate-200 bg-slate-50 p-6">
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">WhatsApp del taller</p>
-                <p className="mt-1 text-sm text-slate-700">
+            <aside className="space-y-4 rounded-[1.75rem] border border-zinc-800 bg-zinc-900/60 p-6">
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">WhatsApp del taller</p>
+                <p className="mt-1 text-sm text-zinc-300">
                   {tenant?.contact_phone ?? "No hay teléfono de contacto registrado"}
                 </p>
                 {whatsappHref ? (
-                  <a href={whatsappHref} className="mt-3 inline-block font-semibold text-[#245a82]">
+                  <a href={whatsappHref} className="mt-3 inline-block font-semibold text-cyan-300">
                     Abrir WhatsApp
                   </a>
                 ) : null}
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Documentos y fotos</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Documentos y fotos</p>
+                <p className="mt-2 text-sm leading-6 text-zinc-300">
                   {result.attachments.length > 0 ? "Adjuntos disponibles." : "No hay adjuntos registrados para esta orden."}
                 </p>
                 {pdfAttachment ? (
@@ -253,7 +253,7 @@ export default function PortalPage() {
                     target="_blank"
                     rel="noreferrer"
                     download={pdfAttachment.fileName ?? undefined}
-                    className="mt-3 inline-flex rounded-full bg-[#2c6e9f] px-4 py-2 font-semibold text-white"
+                    className="mt-3 inline-flex rounded-full bg-cyan-500 px-4 py-2 font-semibold text-zinc-950"
                   >
                     Ver PDF de la orden
                   </a>

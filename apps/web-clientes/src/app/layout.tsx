@@ -14,10 +14,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title:
-    process.env.NEXT_PUBLIC_CUSTOMER_META_TITLE ?? "Portal del cliente white-label",
+    process.env.NEXT_PUBLIC_CUSTOMER_META_TITLE ?? "FIXIE | Portal del cliente",
   description:
     process.env.NEXT_PUBLIC_CUSTOMER_META_DESCRIPTION ??
-    "Portal para clientes de taller con seguimiento de vehículos, soporte y notificaciones.",
+    "FIXIE: portal para clientes de taller con seguimiento, soporte y notificaciones.",
 };
 
 export default function RootLayout({
@@ -30,7 +30,7 @@ export default function RootLayout({
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.12),_transparent_28%),linear-gradient(180deg,#08111f_0%,#091428_46%,#070b14_100%)] text-zinc-100">{children}</body>
     </html>
   );
 }

@@ -41,21 +41,21 @@ export function ModuleShell({
   children,
 }: ModuleShellProps) {
   return (
-    <div className="space-y-6 text-slate-900">
-      <header className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-6 text-zinc-100">
+      <header className="flex flex-col gap-4 rounded-3xl border border-zinc-800 bg-zinc-950/85 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#2c6e9f] text-lg font-black text-white">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-400 text-lg font-black text-zinc-950">
             <i className={icon} />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold text-slate-950">{title}</h1>
-            <p className="mt-1 text-sm text-slate-600">{subtitle}</p>
+            <h1 className="text-2xl font-semibold text-zinc-50">{title}</h1>
+            <p className="mt-1 text-sm text-zinc-400">{subtitle}</p>
           </div>
         </div>
         <button
           type="button"
           onClick={() => void onAction?.()}
-          className="inline-flex items-center justify-center rounded-xl bg-[#2c6e9f] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#245a82]"
+          className="inline-flex items-center justify-center rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-cyan-300"
         >
           {actionLabel}
         </button>
@@ -63,19 +63,19 @@ export function ModuleShell({
 
       <section className="grid gap-4 md:grid-cols-3">
         {stats.map((stat) => (
-          <div key={stat.label} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">{stat.label}</div>
-            <div className="mt-3 text-2xl font-semibold text-slate-950">{stat.value}</div>
-            <div className="mt-2 text-sm text-slate-600">{stat.helper}</div>
+          <div key={stat.label} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
+            <div className="text-xs uppercase tracking-[0.2em] text-zinc-500">{stat.label}</div>
+            <div className="mt-3 text-2xl font-semibold text-zinc-50">{stat.value}</div>
+            <div className="mt-2 text-sm text-zinc-400">{stat.helper}</div>
           </div>
         ))}
       </section>
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
+      <section className="rounded-3xl border border-zinc-800 bg-zinc-950/85 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)]">
         {rows.length > 0 ? (
-          <div className="overflow-hidden rounded-2xl border border-slate-200">
-            <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-              <thead className="bg-slate-50 text-slate-500">
+          <div className="overflow-hidden rounded-2xl border border-zinc-800">
+            <table className="min-w-full divide-y divide-zinc-800 text-left text-sm">
+              <thead className="bg-zinc-900/70 text-zinc-400">
                 <tr>
                   {columns.map((column) => (
                     <th key={column.key} className="px-4 py-3 font-medium">
@@ -84,11 +84,11 @@ export function ModuleShell({
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-zinc-800">
                 {rows.map((row, index) => (
-                  <tr key={`${title}-${index}`} className="bg-white">
+                  <tr key={`${title}-${index}`} className="bg-zinc-950">
                     {columns.map((column) => (
-                      <td key={column.key} className="px-4 py-3 text-slate-700">
+                      <td key={column.key} className="px-4 py-3 text-zinc-300">
                         {row[column.key]}
                       </td>
                     ))}
@@ -98,12 +98,12 @@ export function ModuleShell({
             </table>
           </div>
         ) : (
-          <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-6 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-xl text-[#2c6e9f]">
+          <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/50 px-6 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-950 text-xl text-cyan-300">
               <i className={icon} />
             </div>
-            <h2 className="mt-4 text-lg font-semibold text-slate-950">{emptyTitle}</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{emptyCopy}</p>
+            <h2 className="mt-4 text-lg font-semibold text-zinc-50">{emptyTitle}</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">{emptyCopy}</p>
           </div>
         )}
         {children ? <div className="mt-6">{children}</div> : null}

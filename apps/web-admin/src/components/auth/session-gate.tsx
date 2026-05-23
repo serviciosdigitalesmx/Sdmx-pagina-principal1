@@ -7,11 +7,11 @@ import { OperationalHub } from "@/components/dashboard/operational-hub";
 
 function SessionPending() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(44,110,159,0.12),_transparent_28%),linear-gradient(180deg,#f4f6f9_0%,#eef2f6_100%)] px-6 text-slate-950">
-      <div className="max-w-lg rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_24px_90px_rgba(15,23,42,0.08)]">
-        <p className="text-xs uppercase tracking-[0.35em] text-[#245a82]">Sesión</p>
+    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.12),_transparent_28%),linear-gradient(180deg,#08111f_0%,#091428_100%)] px-6 text-zinc-100">
+      <div className="max-w-lg rounded-3xl border border-zinc-800 bg-zinc-950/85 p-8 text-center shadow-[0_24px_90px_rgba(0,0,0,0.26)]">
+        <p className="text-xs uppercase tracking-[0.35em] text-cyan-300">Sesión</p>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight">Preparando el panel</h1>
-        <p className="mt-4 text-sm leading-7 text-slate-600">
+        <p className="mt-4 text-sm leading-7 text-zinc-400">
           Esperando a que el token de sesión quede disponible en este navegador.
         </p>
       </div>
@@ -21,18 +21,18 @@ function SessionPending() {
 
 function SessionInvalid() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(44,110,159,0.12),_transparent_28%),linear-gradient(180deg,#f4f6f9_0%,#eef2f6_100%)] px-6 text-slate-950">
-      <div className="max-w-lg rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_24px_90px_rgba(15,23,42,0.08)]">
-        <p className="text-xs uppercase tracking-[0.35em] text-[#245a82]">Sesión inválida</p>
+    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.12),_transparent_28%),linear-gradient(180deg,#08111f_0%,#091428_100%)] px-6 text-zinc-100">
+      <div className="max-w-lg rounded-3xl border border-zinc-800 bg-zinc-950/85 p-8 text-center shadow-[0_24px_90px_rgba(0,0,0,0.26)]">
+        <p className="text-xs uppercase tracking-[0.35em] text-cyan-300">Sesión inválida</p>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight">No encontramos una sesión activa</h1>
-        <p className="mt-4 text-sm leading-7 text-slate-600">
+        <p className="mt-4 text-sm leading-7 text-zinc-400">
           Vuelve a iniciar sesión o crea un tenant nuevo para continuar.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link href="/login" className="rounded-full bg-[#2c6e9f] px-5 py-3 font-semibold text-white transition hover:bg-[#245a82]">
+          <Link href="/login" className="rounded-full bg-cyan-400 px-5 py-3 font-semibold text-zinc-950 transition hover:bg-cyan-300">
             Ir al login
           </Link>
-          <Link href="/onboarding" className="rounded-full border border-slate-300 px-5 py-3 font-semibold text-slate-800 transition hover:bg-slate-50">
+          <Link href="/onboarding" className="rounded-full border border-zinc-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-white/5">
             Crear tenant
           </Link>
         </div>

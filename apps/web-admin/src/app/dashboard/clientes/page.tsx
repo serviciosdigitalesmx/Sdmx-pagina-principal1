@@ -114,9 +114,9 @@ export default function Page() {
         emptyCopy={error || 'La vista conserva el patrón de la plataforma y queda lista para consumir datos reales filtrados por tenant y rol.'}
       >
         {role !== 'technician' ? (
-          <form className="grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 md:grid-cols-3" onSubmit={handleSubmit}>
+          <form className="grid gap-4 rounded-2xl border border-zinc-800 bg-zinc-950/85 p-5 md:grid-cols-3" onSubmit={handleSubmit}>
             <div className="md:col-span-1">
-              <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400" htmlFor="name">
+              <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400" htmlFor="name">
                 Nombre
               </label>
               <input
@@ -127,12 +127,12 @@ export default function Page() {
                 minLength={2}
                 value={form.name}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#2c6e9f] focus:ring-2 focus:ring-[#2c6e9f]/20"
+                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
                 placeholder="Nombre del cliente"
               />
             </div>
             <div className="md:col-span-1">
-              <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400" htmlFor="phone">
+              <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400" htmlFor="phone">
                 Teléfono
               </label>
               <input
@@ -143,12 +143,12 @@ export default function Page() {
                 minLength={10}
                 value={form.phone}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#2c6e9f] focus:ring-2 focus:ring-[#2c6e9f]/20"
+                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
                 placeholder="5551234567"
               />
             </div>
             <div className="md:col-span-1">
-              <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400" htmlFor="email">
+              <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400" htmlFor="email">
                 Correo
               </label>
               <input
@@ -157,7 +157,7 @@ export default function Page() {
                 type="email"
                 value={form.email}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#2c6e9f] focus:ring-2 focus:ring-[#2c6e9f]/20"
+                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20"
                 placeholder="cliente@correo.com"
               />
             </div>
@@ -165,23 +165,23 @@ export default function Page() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-xl bg-[#2c6e9f] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#245a82] disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-xl bg-cyan-400 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {saving ? 'Registrando...' : 'Guardar cliente'}
               </button>
-              <p className="text-sm text-slate-600">Se crea en el tenant actual y queda aislado por `tenant_id`.</p>
+              <p className="text-sm text-zinc-400">Se crea en el tenant actual y queda aislado por `tenant_id`.</p>
             </div>
           </form>
         ) : null}
 
         {success ? (
-          <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <p className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
             {success}
           </p>
         ) : null}
 
         {error ? (
-          <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <p className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
             {error}
           </p>
         ) : null}

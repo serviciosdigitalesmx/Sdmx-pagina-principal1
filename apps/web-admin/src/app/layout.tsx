@@ -20,14 +20,14 @@ const cormorant = Cormorant_Garamond({
 
 export const metadata: Metadata = {
   title:
-    process.env.NEXT_PUBLIC_TENANT_META_TITLE ?? "Portal white-label del taller",
+    process.env.NEXT_PUBLIC_TENANT_META_TITLE ?? "FIXIE | Portal operativo del taller",
   description:
     process.env.NEXT_PUBLIC_TENANT_META_DESCRIPTION ??
-    "Portal operativo white-label para talleres con soporte y experiencia configurable.",
+    "FIXIE: portal operativo white-label para talleres con soporte y experiencia configurable.",
 };
 
 export const viewport = {
-  themeColor: process.env.NEXT_PUBLIC_TENANT_THEME_COLOR ?? "#2c6e9f",
+  themeColor: process.env.NEXT_PUBLIC_TENANT_THEME_COLOR ?? "#0ea5e9",
 };
 
 export default function RootLayout({
@@ -35,9 +35,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const themePrimary = process.env.NEXT_PUBLIC_THEME_PRIMARY ?? '#2c6e9f';
-  const themeSecondary = process.env.NEXT_PUBLIC_THEME_SECONDARY ?? '#1f2937';
-  const themeAccent = process.env.NEXT_PUBLIC_THEME_ACCENT ?? '#5e9dc9';
+  const themePrimary = process.env.NEXT_PUBLIC_THEME_PRIMARY ?? '#0ea5e9';
+  const themeSecondary = process.env.NEXT_PUBLIC_THEME_SECONDARY ?? '#0f172a';
+  const themeAccent = process.env.NEXT_PUBLIC_THEME_ACCENT ?? '#f97316';
 
   return (
     <html
@@ -51,7 +51,7 @@ export default function RootLayout({
         } as React.CSSProperties
       }
     >
-      <body className="min-h-full flex flex-col bg-[#f4f6f9] text-slate-800">{children}</body>
+      <body className="min-h-full flex flex-col bg-[radial-gradient(circle_at_top,_rgba(14,165,233,0.12),_transparent_28%),linear-gradient(180deg,#08111f_0%,#091428_46%,#070b14_100%)] text-zinc-100">{children}</body>
     </html>
   );
 }

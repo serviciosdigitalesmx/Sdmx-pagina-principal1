@@ -325,14 +325,14 @@ export default function OrdenesKanbanPage() {
     return (
       <RequireRole allowed={["owner", "manager", "technician"]}>
         <div className="space-y-6 text-slate-950">
-          <header className="flex flex-col justify-between gap-4 rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)] sm:flex-row sm:items-center">
+          <header className="flex flex-col justify-between gap-4 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)] sm:flex-row sm:items-center">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-950 [font-family:var(--font-display)]">Tablero de Órdenes</h1>
-              <p className="mt-1 text-sm text-slate-600">Gestiona el flujo de trabajo del taller con datos reales del API.</p>
+              <p className="mt-1 text-sm text-zinc-400">Gestiona el flujo de trabajo del taller con datos reales del API.</p>
             </div>
             <div className="h-11 w-36 rounded-full bg-slate-100" aria-busy="true" />
           </header>
-          <div className="rounded-[24px] border border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500 shadow-[0_12px_50px_rgba(15,23,42,0.06)]">Cargando órdenes...</div>
+          <div className="rounded-[24px] border border-zinc-800 bg-zinc-950/85 px-4 py-8 text-center text-sm text-zinc-400 shadow-[0_12px_50px_rgba(0,0,0,0.24)]">Cargando órdenes...</div>
         </div>
       </RequireRole>
     );
@@ -341,12 +341,12 @@ export default function OrdenesKanbanPage() {
   return (
     <RequireRole allowed={["owner", "manager", "technician"]}>
       <div className="space-y-6 text-slate-950">
-        <header className="flex flex-col justify-between gap-4 rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)] sm:flex-row sm:items-center">
+        <header className="flex flex-col justify-between gap-4 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)] sm:flex-row sm:items-center">
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-950 [font-family:var(--font-display)]">Tablero de Órdenes</h1>
-            <p className="mt-1 text-sm text-slate-600">Recepción, adjuntos, timeline y detalle operativo con persistencia real.</p>
+            <p className="mt-1 text-sm text-zinc-400">Recepción, adjuntos, timeline y detalle operativo con persistencia real.</p>
           </div>
-          <button onClick={() => setIsModalOpen(true)} className="rounded-full bg-[#2c6e9f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#245a82]">
+          <button onClick={() => setIsModalOpen(true)} className="rounded-full bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-cyan-300">
             Nueva Orden
           </button>
         </header>
@@ -357,14 +357,14 @@ export default function OrdenesKanbanPage() {
           {columns.map((column) => {
             const columnOrders = mappedRows.filter((order) => normalizeStatus(order.status) === column.id);
             return (
-              <div key={column.id} className="min-w-[260px] rounded-[24px] border border-slate-200 bg-white shadow-[0_12px_50px_rgba(15,23,42,0.06)]">
+              <div key={column.id} className="min-w-[260px] rounded-[24px] border border-zinc-800 bg-zinc-950/85 shadow-[0_12px_50px_rgba(0,0,0,0.24)]">
                 <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
                   <h2 className="text-sm font-semibold uppercase tracking-[0.22em] text-[#245a82]">{column.title}</h2>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{columnOrders.length}</span>
+                  <span className="rounded-full bg-zinc-900 px-2.5 py-1 text-xs font-semibold text-zinc-300">{columnOrders.length}</span>
                 </div>
                 <div className="space-y-3 p-3">
                   {columnOrders.map((order) => (
-                    <article key={order.id} className="cursor-pointer rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[#2c6e9f]/30" onClick={() => order.id && void openOrder(order.id)}>
+                    <article key={order.id} className="cursor-pointer rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-cyan-400/30" onClick={() => order.id && void openOrder(order.id)}>
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#245a82]">{order.folio ?? "ORD-..."}</p>
@@ -372,8 +372,8 @@ export default function OrdenesKanbanPage() {
                         </div>
                         <span className="rounded-full bg-[#1b9e5e]/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#1b9e5e]">Activo</span>
                       </div>
-                      <p className="mt-2 text-sm text-slate-600">{order.device_model ?? order.device_info?.model ?? "Equipo sin detallar"}</p>
-                      <p className="mt-3 text-sm leading-6 text-slate-700">{order.problem_description ?? "Sin descripción"}</p>
+                      <p className="mt-2 text-sm text-zinc-400">{order.device_model ?? order.device_info?.model ?? "Equipo sin detallar"}</p>
+                      <p className="mt-3 text-sm leading-6 text-zinc-300">{order.problem_description ?? "Sin descripción"}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {whatsappLink(getDetailPhone(order), tenantSlug, customerPortalBase, order.folio) ? (
                           <a
@@ -398,10 +398,10 @@ export default function OrdenesKanbanPage() {
         </div>
 
         {creationSummary ? (
-          <section className="rounded-[28px] border border-emerald-200 bg-emerald-50 p-5 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
+          <section className="rounded-[28px] border border-emerald-400/20 bg-emerald-400/10 p-5 shadow-[0_16px_70px_rgba(0,0,0,0.24)]">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-white">✓</div>
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-400 text-zinc-950">✓</div>
                 <div>
                   <p className="text-xs uppercase tracking-[0.22em] text-emerald-700">Orden lista</p>
                   <h2 className="text-lg font-semibold text-emerald-950">{creationSummary.folio}</h2>
@@ -447,7 +447,7 @@ export default function OrdenesKanbanPage() {
           </section>
         ) : null}
 
-        <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
+        <section className="rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)]">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[#245a82]">Tabla real</p>
           <Table<OrderRow>
             columns={[

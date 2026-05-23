@@ -85,37 +85,38 @@ export default async function TenantLandingPage({
 
   return (
     <main
-      className="min-h-screen text-slate-950"
+      className="min-h-screen text-zinc-50"
       style={{
-        background: "radial-gradient(circle_at_top,_rgba(44,110,159,0.16),_transparent_30%),linear-gradient(180deg,#f4f6f9_0%,#eef2f6_48%,#ffffff_100%)",
+        background:
+          "radial-gradient(circle_at_top,_rgba(34,211,238,0.12),_transparent_30%),linear-gradient(180deg,#09090b_0%,#111113_48%,#18181b_100%)",
       }}
     >
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-4 sm:px-6 lg:px-8">
-        <header className="rounded-[2rem] border border-slate-200 bg-white/92 p-6 text-slate-900 shadow-[0_30px_90px_rgba(15,23,42,0.08)] backdrop-blur">
+        <header className="rounded-[2rem] border border-zinc-800/70 bg-zinc-950/85 p-6 text-zinc-50 shadow-[0_30px_90px_rgba(0,0,0,0.32)] backdrop-blur-xl">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-3xl">
-              <p className="text-xs uppercase tracking-[0.35em] text-[#245a82]">Landing pública por tenant</p>
-              <p className="mt-3 inline-flex rounded-full border border-[#2c6e9f]/20 bg-[#2c6e9f]/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#245a82]">
+              <p className="text-xs uppercase tracking-[0.35em] text-cyan-300">Landing pública por tenant</p>
+              <p className="mt-3 inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-cyan-200">
                 {landing.heroSubtitle}
               </p>
               <h1 className="mt-4 text-4xl font-black tracking-tight sm:text-5xl [font-family:var(--font-cormorant)]">
                 {landing.heroTitle}
               </h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:leading-8">{landing.heroDescription}</p>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-300 sm:leading-8">{landing.heroDescription}</p>
             </div>
-            <div className="grid gap-3 rounded-[1.75rem] border border-slate-200 bg-slate-50 p-5 sm:grid-cols-2">
-              <Link href={primaryHref} className="rounded-2xl bg-[#2c6e9f] px-5 py-4 font-semibold text-white transition hover:bg-[#245a82]">
+            <div className="grid gap-3 rounded-[1.75rem] border border-zinc-800 bg-zinc-900/80 p-5 sm:grid-cols-2">
+              <Link href={primaryHref} className="rounded-2xl bg-cyan-500 px-5 py-4 font-semibold text-zinc-950 transition hover:bg-cyan-400">
                 {landing.primaryCtaLabel}
               </Link>
-              <Link href={secondaryHref} className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
+              <Link href={secondaryHref} className="rounded-2xl border border-zinc-700 px-5 py-4 font-semibold text-zinc-100 transition hover:bg-zinc-800">
                 {landing.secondaryCtaLabel}
               </Link>
               {whatsappHref ? (
-                <a href={whatsappHref} className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
+                <a href={whatsappHref} className="rounded-2xl border border-zinc-700 px-5 py-4 font-semibold text-zinc-100 transition hover:bg-zinc-800">
                   {landing.contactLabel}
                 </a>
               ) : null}
-              <Link href={`/t/${tenant}/portal`} className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
+              <Link href={`/t/${tenant}/portal`} className="rounded-2xl border border-zinc-700 px-5 py-4 font-semibold text-zinc-100 transition hover:bg-zinc-800">
                 Portal del cliente
               </Link>
             </div>
@@ -124,60 +125,60 @@ export default async function TenantLandingPage({
 
         <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {landing.services.length > 0 ? landing.services.map((service) => (
-            <article key={`${service.title}-${service.description}`} className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_16px_60px_rgba(15,23,42,0.08)]">
-              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#245a82]">Servicio</p>
-              <h2 className="mt-3 text-2xl font-bold text-slate-950">{service.title}</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{service.description}</p>
+            <article key={`${service.title}-${service.description}`} className="rounded-[1.75rem] border border-zinc-800/70 bg-zinc-950/85 p-6 shadow-[0_16px_60px_rgba(0,0,0,0.24)]">
+              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-300">Servicio</p>
+              <h2 className="mt-3 text-2xl font-bold text-zinc-50">{service.title}</h2>
+              <p className="mt-3 text-sm leading-7 text-zinc-300">{service.description}</p>
             </article>
           )) : null}
         </section>
 
-        <section className="grid gap-6 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)] lg:grid-cols-[1fr_0.95fr] lg:p-10">
+        <section className="grid gap-6 rounded-[2rem] border border-zinc-800/70 bg-zinc-950/85 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)] lg:grid-cols-[1fr_0.95fr] lg:p-10">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#245a82]">Operación pública</p>
-            <h2 className="mt-3 text-3xl font-bold text-slate-950 [font-family:var(--font-cormorant)]">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-300">Operación pública</p>
+            <h2 className="mt-3 text-3xl font-bold text-zinc-50 [font-family:var(--font-cormorant)]">
               {data.tenant.name} vende, atiende y rastrea desde una sola experiencia.
             </h2>
-            <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">{landing.seoDescription}</p>
+            <p className="mt-4 text-base leading-7 text-zinc-300 sm:text-lg sm:leading-8">{landing.seoDescription}</p>
           </div>
-          <div className="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-5">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Contacto</p>
-            <div className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                <span className="font-semibold text-slate-950">Teléfono:</span> {data.tenant.contactPhone ?? "Sin teléfono"}
+          <div className="rounded-[1.75rem] border border-zinc-800 bg-zinc-900/80 p-5">
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-zinc-400">Contacto</p>
+            <div className="mt-4 space-y-3 text-sm leading-7 text-zinc-300">
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3">
+                <span className="font-semibold text-zinc-50">Teléfono:</span> {data.tenant.contactPhone ?? "Sin teléfono"}
               </div>
-              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                <span className="font-semibold text-slate-950">Correo:</span> {data.tenant.contactEmail ?? "Sin correo"}
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3">
+                <span className="font-semibold text-zinc-50">Correo:</span> {data.tenant.contactEmail ?? "Sin correo"}
               </div>
               {data.tenant.branding?.logoUrl ? (
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                  <span className="font-semibold text-slate-950">Logo:</span> activo
+                <div className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-3">
+                  <span className="font-semibold text-zinc-50">Logo:</span> activo
                 </div>
               ) : null}
             </div>
           </div>
         </section>
 
-        <section id="contacto" className="grid gap-6 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)] lg:grid-cols-2 lg:p-10">
+        <section id="contacto" className="grid gap-6 rounded-[2rem] border border-zinc-800/70 bg-zinc-950/85 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)] lg:grid-cols-2 lg:p-10">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#245a82]">Redes y acceso</p>
-            <h2 className="mt-3 text-3xl font-bold text-slate-950 [font-family:var(--font-cormorant)]">
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-cyan-300">Redes y acceso</p>
+            <h2 className="mt-3 text-3xl font-bold text-zinc-50 [font-family:var(--font-cormorant)]">
               {data.tenant.name} mantiene la identidad del taller en todos los puntos de entrada.
             </h2>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
             {landing.socialLinks.map((link) => (
-              <a key={`${link.label}-${link.href}`} href={link.href} className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
+              <a key={`${link.label}-${link.href}`} href={link.href} className="rounded-2xl border border-zinc-700 px-5 py-4 font-semibold text-zinc-100 transition hover:bg-zinc-800">
                 {link.label}
               </a>
             ))}
             {landing.showMap && landing.mapEmbedUrl ? (
-              <a href={landing.mapEmbedUrl} target="_blank" rel="noreferrer" className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
+              <a href={landing.mapEmbedUrl} target="_blank" rel="noreferrer" className="rounded-2xl border border-zinc-700 px-5 py-4 font-semibold text-zinc-100 transition hover:bg-zinc-800">
                 Abrir mapa
               </a>
             ) : null}
             {landing.showVideo && landing.videoUrl ? (
-              <a href={landing.videoUrl} target="_blank" rel="noreferrer" className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
+              <a href={landing.videoUrl} target="_blank" rel="noreferrer" className="rounded-2xl border border-zinc-700 px-5 py-4 font-semibold text-zinc-100 transition hover:bg-zinc-800">
                 Ver video
               </a>
             ) : null}

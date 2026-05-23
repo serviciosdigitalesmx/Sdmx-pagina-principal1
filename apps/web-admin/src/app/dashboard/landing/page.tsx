@@ -215,63 +215,63 @@ export default function LandingSettingsPage() {
         emptyCopy="La landing pública se alimenta desde el backend y refleja branding real del tenant."
       >
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-          <section className="space-y-6 rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
+          <section className="space-y-6 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)]">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400">Hero título</label>
-                <input value={landingContent.heroTitle} onChange={(e) => updateField("heroTitle", e.target.value)} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" />
+                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400">Hero título</label>
+                <input value={landingContent.heroTitle} onChange={(e) => updateField("heroTitle", e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20" />
               </div>
               <div>
-                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400">Hero subtítulo</label>
-                <input value={landingContent.heroSubtitle} onChange={(e) => updateField("heroSubtitle", e.target.value)} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" />
+                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400">Hero subtítulo</label>
+                <input value={landingContent.heroSubtitle} onChange={(e) => updateField("heroSubtitle", e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20" />
               </div>
               <div className="md:col-span-2">
-                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400">Hero descripción</label>
-                <textarea value={landingContent.heroDescription} onChange={(e) => updateField("heroDescription", e.target.value)} className="min-h-28 w-full rounded-xl border border-slate-300 bg-white px-4 py-3" />
+                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400">Hero descripción</label>
+                <textarea value={landingContent.heroDescription} onChange={(e) => updateField("heroDescription", e.target.value)} className="min-h-28 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20" />
               </div>
               <div>
-                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400">CTA principal</label>
-                <input value={landingContent.primaryCtaLabel} onChange={(e) => updateField("primaryCtaLabel", e.target.value)} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" />
+                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400">CTA principal</label>
+                <input value={landingContent.primaryCtaLabel} onChange={(e) => updateField("primaryCtaLabel", e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20" />
               </div>
               <div>
-                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400">Href principal</label>
-                <input value={landingContent.primaryCtaHref} onChange={(e) => updateField("primaryCtaHref", e.target.value)} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" />
+                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400">Href principal</label>
+                <input value={landingContent.primaryCtaHref} onChange={(e) => updateField("primaryCtaHref", e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20" />
               </div>
               <div>
-                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400">CTA secundario</label>
-                <input value={landingContent.secondaryCtaLabel} onChange={(e) => updateField("secondaryCtaLabel", e.target.value)} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" />
+                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400">CTA secundario</label>
+                <input value={landingContent.secondaryCtaLabel} onChange={(e) => updateField("secondaryCtaLabel", e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20" />
               </div>
               <div>
-                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400">Href secundario</label>
-                <input value={landingContent.secondaryCtaHref} onChange={(e) => updateField("secondaryCtaHref", e.target.value)} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" />
+                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400">Href secundario</label>
+                <input value={landingContent.secondaryCtaHref} onChange={(e) => updateField("secondaryCtaHref", e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20" />
               </div>
               <div>
-                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400">Contacto</label>
-                <input value={landingContent.contactLabel} onChange={(e) => updateField("contactLabel", e.target.value)} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" />
+                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400">Contacto</label>
+                <input value={landingContent.contactLabel} onChange={(e) => updateField("contactLabel", e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20" />
               </div>
               <div>
-                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400">Href contacto</label>
-                <input value={landingContent.contactHref} onChange={(e) => updateField("contactHref", e.target.value)} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder={tenantPhone ?? "https://wa.me/..."} />
+                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400">Href contacto</label>
+                <input value={landingContent.contactHref} onChange={(e) => updateField("contactHref", e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20" placeholder={tenantPhone ?? "https://wa.me/..."} />
               </div>
               <div>
-                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400">SEO título</label>
-                <input value={landingContent.seoTitle} onChange={(e) => updateField("seoTitle", e.target.value)} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" />
+                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400">SEO título</label>
+                <input value={landingContent.seoTitle} onChange={(e) => updateField("seoTitle", e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20" />
               </div>
               <div>
-                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400">SEO descripción</label>
-                <input value={landingContent.seoDescription} onChange={(e) => updateField("seoDescription", e.target.value)} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" />
+                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400">SEO descripción</label>
+                <input value={landingContent.seoDescription} onChange={(e) => updateField("seoDescription", e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20" />
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#245a82]">Servicios</h3>
-                <button type="button" onClick={addService} className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Agregar servicio</button>
+                <button type="button" onClick={addService} className="rounded-full border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-100">Agregar servicio</button>
               </div>
               {landingContent.services.map((service, index) => (
                 <div key={`${index}-${service.title}`} className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
-                  <input value={service.title} onChange={(e) => updateService(index, "title", e.target.value)} className="rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Título" />
-                  <input value={service.description} onChange={(e) => updateService(index, "description", e.target.value)} className="rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Descripción" />
+                  <input value={service.title} onChange={(e) => updateService(index, "title", e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100" placeholder="Título" />
+                  <input value={service.description} onChange={(e) => updateService(index, "description", e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100" placeholder="Descripción" />
                 </div>
               ))}
             </div>
@@ -279,32 +279,32 @@ export default function LandingSettingsPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#245a82]">Redes y contacto</h3>
-                <button type="button" onClick={addSocial} className="rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Agregar red</button>
+                <button type="button" onClick={addSocial} className="rounded-full border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-100">Agregar red</button>
               </div>
               {landingContent.socialLinks.map((link, index) => (
                 <div key={`${index}-${link.label}`} className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-2">
-                  <input value={link.label} onChange={(e) => updateSocial(index, "label", e.target.value)} className="rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="Etiqueta" />
-                  <input value={link.href} onChange={(e) => updateSocial(index, "href", e.target.value)} className="rounded-xl border border-slate-300 bg-white px-4 py-3" placeholder="https://..." />
+                  <input value={link.label} onChange={(e) => updateSocial(index, "label", e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100" placeholder="Etiqueta" />
+                  <input value={link.href} onChange={(e) => updateSocial(index, "href", e.target.value)} className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100" placeholder="https://..." />
                 </div>
               ))}
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+              <label className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/70 px-4 py-3 text-sm font-medium text-zinc-100">
                 <input type="checkbox" checked={landingContent.showMap} onChange={(e) => updateField("showMap", e.target.checked)} />
                 Mostrar mapa
               </label>
-              <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
+              <label className="flex items-center gap-3 rounded-2xl border border-zinc-800 bg-zinc-900/70 px-4 py-3 text-sm font-medium text-zinc-100">
                 <input type="checkbox" checked={landingContent.showVideo} onChange={(e) => updateField("showVideo", e.target.checked)} />
                 Mostrar video
               </label>
               <div>
-                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400">Mapa embed URL</label>
-                <input value={landingContent.mapEmbedUrl} onChange={(e) => updateField("mapEmbedUrl", e.target.value)} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" />
+                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400">Mapa embed URL</label>
+                <input value={landingContent.mapEmbedUrl} onChange={(e) => updateField("mapEmbedUrl", e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100" />
               </div>
               <div>
-                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-slate-400">Video URL</label>
-                <input value={landingContent.videoUrl} onChange={(e) => updateField("videoUrl", e.target.value)} className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3" />
+                <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400">Video URL</label>
+                <input value={landingContent.videoUrl} onChange={(e) => updateField("videoUrl", e.target.value)} className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100" />
               </div>
             </div>
 

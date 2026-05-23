@@ -69,8 +69,8 @@ type OrderStatus = "recibido" | "diagnostico" | "reparacion" | "listo" | "entreg
 const statusConfig: Record<OrderStatus, { label: string; tone: string; dot: string; helper: string }> = {
   recibido: {
     label: "Recibido",
-    tone: "border-slate-200 bg-slate-50 text-slate-700",
-    dot: "bg-slate-400",
+    tone: "border-zinc-800 bg-zinc-900/60 text-zinc-300",
+    dot: "bg-zinc-400",
     helper: "Entrada sin diagnóstico",
   },
   diagnostico: {
@@ -87,14 +87,14 @@ const statusConfig: Record<OrderStatus, { label: string; tone: string; dot: stri
   },
   listo: {
     label: "Lista",
-    tone: "border-emerald-200 bg-emerald-50 text-emerald-900",
+    tone: "border-emerald-400/20 bg-emerald-400/10 text-emerald-200",
     dot: "bg-emerald-500",
     helper: "Lista para entrega",
   },
   entregado: {
     label: "Entregada",
-    tone: "border-slate-200 bg-slate-100 text-slate-700",
-    dot: "bg-slate-700",
+    tone: "border-zinc-800 bg-zinc-900/70 text-zinc-300",
+    dot: "bg-zinc-500",
     helper: "Cerrada y firmada",
   },
 };
@@ -319,14 +319,14 @@ export default function TareasPage() {
     return (
       <RequireRole allowed={["owner", "manager", "technician"]}>
         <div className="space-y-6 text-slate-950">
-          <header className="flex flex-col justify-between gap-4 rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)] sm:flex-row sm:items-center">
+          <header className="flex flex-col justify-between gap-4 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)] sm:flex-row sm:items-center">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-950 [font-family:var(--font-display)]">Panel técnico</h1>
-              <p className="mt-1 text-sm text-slate-600">Semáforo operativo, evidencia y seguimiento técnico.</p>
+              <p className="mt-1 text-sm text-zinc-400">Semáforo operativo, evidencia y seguimiento técnico.</p>
             </div>
             <div className="h-11 w-36 rounded-full bg-slate-100" aria-busy="true" />
           </header>
-          <div className="rounded-[24px] border border-slate-200 bg-white px-4 py-8 text-center text-sm text-slate-500 shadow-[0_12px_50px_rgba(15,23,42,0.06)]">Cargando panel...</div>
+          <div className="rounded-[24px] border border-zinc-800 bg-zinc-950/85 px-4 py-8 text-center text-sm text-zinc-400 shadow-[0_12px_50px_rgba(0,0,0,0.24)]">Cargando panel...</div>
         </div>
       </RequireRole>
     );
@@ -335,16 +335,16 @@ export default function TareasPage() {
   return (
     <RequireRole allowed={["owner", "manager", "technician"]}>
       <div className="space-y-6 text-slate-950">
-        <header className="flex flex-col justify-between gap-4 rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)] sm:flex-row sm:items-center">
+        <header className="flex flex-col justify-between gap-4 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)] sm:flex-row sm:items-center">
           <div>
             <p className="text-xs uppercase tracking-[0.28em] text-[#245a82]">Panel técnico</p>
             <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 [font-family:var(--font-display)]">Semáforo y evidencia por orden</h1>
-            <p className="mt-1 text-sm text-slate-600">Operación real con estados, fotos, notas y PDF persistido por tenant.</p>
+            <p className="mt-1 text-sm text-zinc-400">Operación real con estados, fotos, notas y PDF persistido por tenant.</p>
           </div>
           <button
             type="button"
             onClick={() => void refreshAll()}
-            className="rounded-full bg-[#2c6e9f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#245a82]"
+            className="rounded-full bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-cyan-300"
           >
             {refreshing ? "Actualizando..." : "Refrescar"}
           </button>
@@ -354,20 +354,20 @@ export default function TareasPage() {
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           {stats.map((stat) => (
-            <div key={stat.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_12px_50px_rgba(15,23,42,0.06)]">
+            <div key={stat.label} className="rounded-2xl border border-zinc-800 bg-zinc-950/85 p-4 shadow-[0_12px_50px_rgba(0,0,0,0.24)]">
               <div className="text-xs uppercase tracking-[0.2em] text-slate-500">{stat.label}</div>
               <div className="mt-3 text-2xl font-semibold text-slate-950">{stat.value}</div>
-              <div className="mt-2 text-sm text-slate-600">{stat.helper}</div>
+              <div className="mt-2 text-sm text-zinc-400">{stat.helper}</div>
             </div>
           ))}
         </section>
 
         <div className="grid gap-6 xl:grid-cols-[1.2fr_0.9fr]">
-          <section className="space-y-4 rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
+          <section className="space-y-4 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-5 shadow-[0_16px_70px_rgba(0,0,0,0.24)]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <h2 className="text-lg font-semibold text-slate-950">Lista técnica</h2>
-                <p className="mt-1 text-sm text-slate-600">Selecciona una orden para ver estado, evidencia y timeline.</p>
+                <p className="mt-1 text-sm text-zinc-400">Selecciona una orden para ver estado, evidencia y timeline.</p>
               </div>
               <div className="text-xs uppercase tracking-[0.22em] text-slate-500">{role === "technician" ? "Solo lectura parcial" : "Operación completa"}</div>
             </div>
@@ -393,7 +393,7 @@ export default function TareasPage() {
                         return (
                           <article
                             key={orderId}
-                            className={`rounded-2xl border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 ${selected ? "border-[#2c6e9f] ring-2 ring-[#2c6e9f]/15" : "border-slate-200"}`}
+                            className={`rounded-2xl border bg-zinc-950 p-4 shadow-sm transition hover:-translate-y-0.5 ${selected ? "border-cyan-400/30 ring-2 ring-cyan-400/15" : "border-zinc-800"}`}
                           >
                             <button type="button" onClick={() => setSelectedOrderId(orderId)} className="w-full text-left">
                               <div className="flex items-start justify-between gap-3">
@@ -401,16 +401,16 @@ export default function TareasPage() {
                                   <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#245a82]">{order.folio ?? "ORD-..."}</p>
                                   <p className="mt-1 text-sm font-semibold text-slate-950">{order.device_info?.customer_name ?? "Cliente sin nombre"}</p>
                                 </div>
-                                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">{orderScore}%</span>
+                                <span className="rounded-full bg-zinc-900 px-2.5 py-1 text-xs font-semibold text-zinc-300">{orderScore}%</span>
                               </div>
-                              <p className="mt-2 text-sm text-slate-600">{order.device_model ?? order.device_info?.model ?? "Equipo sin especificar"}</p>
-                              <p className="mt-3 line-clamp-2 text-sm leading-6 text-slate-700">{order.problem_description ?? "Sin descripción"}</p>
+                              <p className="mt-2 text-sm text-zinc-400">{order.device_model ?? order.device_info?.model ?? "Equipo sin especificar"}</p>
+                              <p className="mt-3 line-clamp-2 text-sm leading-6 text-zinc-300">{order.problem_description ?? "Sin descripción"}</p>
                             </button>
                             <div className="mt-4 flex flex-wrap gap-2">
                               <button
                                 type="button"
                                 onClick={() => setSelectedOrderId(orderId)}
-                                className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700"
+                                className="rounded-full border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200"
                               >
                                 Abrir
                               </button>
@@ -420,7 +420,7 @@ export default function TareasPage() {
                                   setSelectedOrderId(orderId);
                                   void handleAddNote();
                                 }}
-                                className="rounded-full border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700"
+                                className="rounded-full border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200"
                               >
                                 <span className="mr-1">✎</span>Editar
                               </button>
@@ -439,7 +439,7 @@ export default function TareasPage() {
                         );
                       })
                     ) : (
-                      <div className="rounded-2xl border border-dashed border-current/20 bg-white/70 px-4 py-6 text-sm text-slate-600">
+                      <div className="rounded-2xl border border-dashed border-current/20 bg-zinc-900/50 px-4 py-6 text-sm text-zinc-400">
                         Sin órdenes en esta columna.
                       </div>
                     )}
@@ -449,7 +449,7 @@ export default function TareasPage() {
             </div>
           </section>
 
-          <aside className="space-y-4 rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
+          <aside className="space-y-4 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-5 shadow-[0_16px_70px_rgba(0,0,0,0.24)]">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-xs uppercase tracking-[0.22em] text-[#245a82]">Detalle técnico</p>
@@ -471,21 +471,21 @@ export default function TareasPage() {
                 <section className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Semáforo</div>
+                      <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">Semáforo</div>
                       <div className="mt-2 flex items-center gap-3">
                         <span className={`h-4 w-4 rounded-full ${statusConfig[activeStatus].dot}`} />
                         <div className="text-sm font-semibold text-slate-950">{statusLabel(detail?.order?.status ?? activeOrder?.status)}</div>
                       </div>
                     </div>
                     <div className="rounded-2xl bg-white px-3 py-2 text-right">
-                      <div className="text-xs uppercase tracking-[0.18em] text-slate-400">Progreso</div>
+                      <div className="text-xs uppercase tracking-[0.18em] text-zinc-400">Progreso</div>
                       <div className="text-lg font-semibold text-slate-950">{semaforo}%</div>
                     </div>
                   </div>
 
                   <div className="mt-4 space-y-3">
                     <div>
-                      <div className="mb-1 flex items-center justify-between text-xs uppercase tracking-[0.18em] text-slate-400">
+                      <div className="mb-1 flex items-center justify-between text-xs uppercase tracking-[0.18em] text-zinc-400">
                         <span>Recepción</span>
                         <span>{activeStatus === "recibido" ? "Actual" : "OK"}</span>
                       </div>
@@ -494,7 +494,7 @@ export default function TareasPage() {
                       </div>
                     </div>
                     <div>
-                      <div className="mb-1 flex items-center justify-between text-xs uppercase tracking-[0.18em] text-slate-400">
+                      <div className="mb-1 flex items-center justify-between text-xs uppercase tracking-[0.18em] text-zinc-400">
                         <span>Diagnóstico</span>
                         <span>{["diagnostico", "reparacion", "listo", "entregado"].includes(activeStatus) ? "OK" : "Pendiente"}</span>
                       </div>
@@ -503,7 +503,7 @@ export default function TareasPage() {
                       </div>
                     </div>
                     <div>
-                      <div className="mb-1 flex items-center justify-between text-xs uppercase tracking-[0.18em] text-slate-400">
+                      <div className="mb-1 flex items-center justify-between text-xs uppercase tracking-[0.18em] text-zinc-400">
                         <span>Reparación</span>
                         <span>{["reparacion", "listo", "entregado"].includes(activeStatus) ? "OK" : "Pendiente"}</span>
                       </div>
@@ -514,22 +514,22 @@ export default function TareasPage() {
                   </div>
                 </section>
 
-                <section className="grid gap-3 rounded-3xl border border-slate-200 bg-white p-4 md:grid-cols-2">
+                <section className="grid gap-3 rounded-3xl border border-zinc-800 bg-zinc-950/85 p-4 md:grid-cols-2">
                   <div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Cliente</div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">Cliente</div>
                     <div className="mt-2 text-sm font-semibold text-slate-950">{activeCustomerName ?? "Sin cliente"}</div>
-                    <div className="mt-1 text-sm text-slate-600">{activePhone ?? "Sin teléfono"}</div>
-                    <div className="mt-1 text-sm text-slate-600">{activeEmail ?? "Sin correo"}</div>
+                    <div className="mt-1 text-sm text-zinc-400">{activePhone ?? "Sin teléfono"}</div>
+                    <div className="mt-1 text-sm text-zinc-400">{activeEmail ?? "Sin correo"}</div>
                   </div>
                   <div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Equipo</div>
-                    <div className="mt-2 text-sm text-slate-700">{detail?.order?.device_model ?? activeOrder?.device_model ?? "Sin modelo"}</div>
-                    <div className="mt-1 text-sm text-slate-700">{detail?.order?.problem_description ?? activeOrder?.problem_description ?? "Sin problema"}</div>
-                    <div className="mt-1 text-sm text-slate-600">Portal: {activePortalUrl || "No disponible"}</div>
+                    <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">Equipo</div>
+                    <div className="mt-2 text-sm text-zinc-300">{detail?.order?.device_model ?? activeOrder?.device_model ?? "Sin modelo"}</div>
+                    <div className="mt-1 text-sm text-zinc-300">{detail?.order?.problem_description ?? activeOrder?.problem_description ?? "Sin problema"}</div>
+                    <div className="mt-1 text-sm text-zinc-400">Portal: {activePortalUrl || "No disponible"}</div>
                   </div>
                 </section>
 
-                <section className="rounded-3xl border border-slate-200 bg-white p-4">
+                <section className="rounded-3xl border border-zinc-800 bg-zinc-950/85 p-4">
                   <div className="flex flex-wrap items-center gap-2">
                     {statusOrder.map((status) => (
                       <button
@@ -538,7 +538,7 @@ export default function TareasPage() {
                         disabled={saving}
                         onClick={() => void handleStatusChange(status)}
                         className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
-                          activeStatus === status ? "border-[#2c6e9f] bg-[#2c6e9f] text-white" : "border-slate-300 text-slate-700"
+                          activeStatus === status ? "border-cyan-400 bg-cyan-400 text-zinc-950" : "border-zinc-700 text-zinc-200"
                         }`}
                       >
                         {statusConfig[status].label}
@@ -548,7 +548,7 @@ export default function TareasPage() {
                       type="button"
                       disabled={saving}
                       onClick={() => void handleAddNote()}
-                      className="rounded-full bg-[#2c6e9f] px-4 py-2 text-sm font-semibold text-white"
+                      className="rounded-full bg-cyan-400 px-4 py-2 text-sm font-semibold text-zinc-950"
                     >
                       ✎ Nota
                     </button>
@@ -578,10 +578,10 @@ export default function TareasPage() {
                   />
                 </section>
 
-                <section className="rounded-3xl border border-slate-200 bg-white p-4">
+                <section className="rounded-3xl border border-zinc-800 bg-zinc-950/85 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#245a82]">Archivos y evidencia</h3>
-                    <span className="text-xs uppercase tracking-[0.18em] text-slate-400">{(detail?.documents ?? []).length} archivos</span>
+                    <span className="text-xs uppercase tracking-[0.18em] text-zinc-400">{(detail?.documents ?? []).length} archivos</span>
                   </div>
                   <div className="mt-4 space-y-3">
                     {(detail?.documents ?? []).length > 0 ? (
@@ -591,27 +591,27 @@ export default function TareasPage() {
                           href={document.public_url ?? "#"}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700 transition hover:border-[#2c6e9f]/30 hover:bg-slate-50"
+                          className="flex items-center justify-between rounded-2xl border border-zinc-800 px-4 py-3 text-sm text-zinc-200 transition hover:border-cyan-400/30 hover:bg-white/5"
                         >
                           <span>{document.file_name ?? "Documento"}</span>
-                          <span className="text-xs uppercase tracking-[0.18em] text-slate-400">{document.file_type ?? ""}</span>
+                          <span className="text-xs uppercase tracking-[0.18em] text-zinc-400">{document.file_type ?? ""}</span>
                         </a>
                       ))
                     ) : (
-                      <p className="text-sm text-slate-500">Todavía no hay archivos cargados.</p>
+                      <p className="text-sm text-zinc-400">Todavía no hay archivos cargados.</p>
                     )}
                   </div>
                 </section>
 
-                <section className="rounded-3xl border border-slate-200 bg-white p-4">
-                  <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#245a82]">Timeline técnico</h3>
+                <section className="rounded-3xl border border-zinc-800 bg-zinc-950/85 p-4">
+                  <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-300">Timeline técnico</h3>
                   <div className="mt-4">
                     <OrderTimeline events={detail?.events ?? []} />
                   </div>
                 </section>
 
                 {detail?.order?.received_at || detail?.order?.created_at || detail?.order?.updated_at ? (
-                  <section className="rounded-3xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                  <section className="rounded-3xl border border-zinc-800 bg-zinc-900/60 p-4 text-sm text-zinc-400">
                     <div className="grid gap-2">
                       <div>Creada: {detail?.order?.created_at ? new Date(detail.order.created_at).toLocaleString("es-MX") : "-"}</div>
                       <div>Actualizada: {detail?.order?.updated_at ? new Date(detail.order.updated_at).toLocaleString("es-MX") : "-"}</div>

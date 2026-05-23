@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 const fieldClassName =
-  "w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 outline-none transition placeholder:text-slate-400 focus:border-[#2c6e9f] focus:ring-2 focus:ring-[#2c6e9f]/20";
+  "w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-50 outline-none transition placeholder:text-zinc-500 focus:border-cyan-400/60 focus:ring-2 focus:ring-cyan-400/20";
 
 type QuotePayload = {
   fullName: string;
@@ -112,31 +112,31 @@ export default function TenantQuotePage() {
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(44,110,159,0.12),_transparent_26%),linear-gradient(180deg,#f4f6f9_0%,#eef2f6_50%,#f8fafc_50%,#ffffff_100%)] px-4 py-8 text-slate-950">
-      <section className="mx-auto grid w-full max-w-5xl gap-8 rounded-[2rem] border border-slate-200 bg-white p-8 shadow-[0_20px_80px_rgba(15,23,42,0.08)]">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.12),_transparent_26%),linear-gradient(180deg,#09090b_0%,#111113_50%,#18181b_100%)] px-4 py-8 text-zinc-50">
+      <section className="mx-auto grid w-full max-w-5xl gap-8 rounded-[2rem] border border-zinc-800/70 bg-zinc-950/85 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.28)]">
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
           <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-[#245a82]">Cotizador</p>
-            <h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-950 [font-family:var(--font-cormorant)]">
+              <p className="text-xs uppercase tracking-[0.35em] text-cyan-300">Cotizador</p>
+            <h1 className="mt-3 text-4xl font-bold tracking-tight text-zinc-50 [font-family:var(--font-cormorant)]">
               Solicita tu presupuesto
             </h1>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-zinc-300">
               Cuéntanos qué equipo tienes, qué falla presenta y lo convertimos en una solicitud real para el tenant{" "}
               <span className="font-semibold text-slate-950">{tenant}</span>.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link href={`/${tenant}`} className="rounded-full border border-slate-300 px-5 py-3 font-semibold text-slate-800 transition hover:bg-slate-50">
+              <Link href={`/${tenant}`} className="rounded-full border border-zinc-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-zinc-800">
                 Volver al tenant
               </Link>
-              <Link href={`/${tenant}/tracking`} className="rounded-full border border-slate-300 px-5 py-3 font-semibold text-slate-800 transition hover:bg-slate-50">
+              <Link href={`/${tenant}/tracking`} className="rounded-full border border-zinc-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-zinc-800">
                 Ver estatus
               </Link>
             </div>
           </div>
 
-          <aside className="rounded-[1.75rem] border border-[#2c6e9f]/15 bg-[#2c6e9f]/8 p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#245a82]">Qué ocurre al enviar</p>
-            <ul className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
+          <aside className="rounded-[1.75rem] border border-cyan-400/15 bg-cyan-400/8 p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">Qué ocurre al enviar</p>
+            <ul className="mt-4 space-y-3 text-sm leading-7 text-zinc-300">
               <li>• La solicitud se envía al API real.</li>
               <li>• Se asocia al tenant actual.</li>
               <li>• Recepción puede convertirla en orden con un clic.</li>
@@ -144,7 +144,7 @@ export default function TenantQuotePage() {
           </aside>
         </div>
 
-        <form onSubmit={submit} className="grid gap-4 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
+        <form onSubmit={submit} className="grid gap-4 rounded-[1.5rem] border border-zinc-800 bg-zinc-900/60 p-6">
           {[
             ["Nombre", "fullName", "text", "Tu nombre"],
             ["WhatsApp", "phone", "tel", "81 1234 5678"],
@@ -153,7 +153,7 @@ export default function TenantQuotePage() {
             ["Modelo", "deviceModel", "text", "Modelo exacto"],
           ].map(([label, key, type, placeholder]) => (
             <div key={key as string}>
-              <label className="mb-2 block text-sm font-medium text-slate-700">{label}</label>
+              <label className="mb-2 block text-sm font-medium text-zinc-300">{label}</label>
               <input
                 type={type as string}
                 value={(form as Record<string, string>)[key as string]}
@@ -177,22 +177,22 @@ export default function TenantQuotePage() {
             />
           </div>
 
-          {error ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
-          {message ? <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</p> : null}
+          {error ? <p className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">{error}</p> : null}
+          {message ? <p className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{message}</p> : null}
           {folio ? (
-            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700">
-              <div className="font-semibold text-slate-950">Folio real: {folio}</div>
-              <Link href={buildTrackingHref(tenant, folio)} className="mt-2 inline-flex font-semibold text-[#245a82]">
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4 text-sm text-zinc-300">
+              <div className="font-semibold text-zinc-50">Folio real: {folio}</div>
+              <Link href={buildTrackingHref(tenant, folio)} className="mt-2 inline-flex font-semibold text-cyan-300">
                 Ir al tracking
               </Link>
             </div>
           ) : null}
 
           <div className="flex flex-wrap items-center gap-3">
-            <button disabled={loading} className="rounded-full bg-[#2c6e9f] px-6 py-3 font-semibold text-white transition hover:bg-[#245a82] disabled:opacity-60">
+            <button disabled={loading} className="rounded-full bg-cyan-500 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-cyan-400 disabled:opacity-60">
               {loading ? "Enviando..." : "Enviar solicitud"}
             </button>
-            <p className="text-sm leading-6 text-slate-500">
+            <p className="text-sm leading-6 text-zinc-400">
               La solicitud llega al API real y queda ligada al tenant actual.
             </p>
           </div>
