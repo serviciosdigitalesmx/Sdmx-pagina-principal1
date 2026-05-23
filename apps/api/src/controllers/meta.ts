@@ -97,3 +97,82 @@ export const resolveTenantForSupabaseUser = async (req: Request, res: Response) 
     return res.status(500).json({ error: message });
   }
 };
+
+export const getTenantSettings = async (req: Request, res: Response) => {
+  const tenantSlug = req.params.tenantSlug;
+
+  if (!tenantSlug) {
+    return res.status(400).json({ error: 'Tenant slug is required' });
+  }
+
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('tenants')
+      .select('id, slug, name, contact_name, contact_email, contact_phone, branding, landing_content, updated_at')
+      .eq('slug', tenantSlug)
+      .single();
+
+    if (error || !data) {
+      return res.status(404).json({ error: 'Tenant not found', details: error?.message ?? 'Not found' });
+    }
+
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return res.status(500).json({ error: message });
+  }
+};
+
+export const updateTenantSettings = async (req: Request, res: Response) => {
+  const tenantSlug = req.params.tenantSlug;
+
+  if (!tenantSlug) {
+    return res.status(400).json({ error: 'Tenant slug is required' });
+  }
+
+  try {
+    const { data: tenantRow, error: tenantError } = await supabaseAdmin
+      .from('tenants')
+      .select('id, slug')
+      .eq('slug', tenantSlug)
+      .single();
+
+    if (tenantError || !tenantRow) {
+      return res.status(404).json({ error: 'Tenant not found', details: tenantError?.message ?? 'Not found' });
+    }
+
+    const body = req.body as Record<string, unknown>;
+    const branding = (body.branding && typeof body.branding === 'object') ? body.branding : null;
+    const landingContent = (body.landingContent && typeof body.landingContent === 'object') ? body.landingContent : null;
+
+    const nextUpdate: Record<string, unknown> = {};
+
+    if (branding) {
+      nextUpdate.branding = branding;
+    }
+
+    if (landingContent) {
+      nextUpdate.landing_content = landingContent;
+    }
+
+    if (!Object.keys(nextUpdate).length) {
+      return res.status(400).json({ error: 'No fields to update' });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('tenants')
+      .update(nextUpdate)
+      .eq('id', tenantRow.id)
+      .select('id, slug, name, contact_name, contact_email, contact_phone, branding, landing_content, updated_at')
+      .single();
+
+    if (error || !data) {
+      return res.status(502).json({ error: 'Failed to update tenant settings', details: error?.message ?? 'Unknown error' });
+    }
+
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return res.status(500).json({ error: message });
+  }
+};

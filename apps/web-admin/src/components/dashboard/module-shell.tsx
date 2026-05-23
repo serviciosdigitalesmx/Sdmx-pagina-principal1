@@ -18,6 +18,7 @@ type ModuleShellProps = {
   subtitle: string;
   icon: string;
   actionLabel: string;
+  onAction?: () => void | Promise<void>;
   stats: Stat[];
   columns: Column[];
   rows: Row[];
@@ -31,6 +32,7 @@ export function ModuleShell({
   subtitle,
   icon,
   actionLabel,
+  onAction,
   stats,
   columns,
   rows,
@@ -50,7 +52,11 @@ export function ModuleShell({
             <p className="mt-1 text-sm text-slate-600">{subtitle}</p>
           </div>
         </div>
-        <button className="inline-flex items-center justify-center rounded-xl bg-[#2c6e9f] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#245a82]">
+        <button
+          type="button"
+          onClick={() => void onAction?.()}
+          className="inline-flex items-center justify-center rounded-xl bg-[#2c6e9f] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#245a82]"
+        >
           {actionLabel}
         </button>
       </header>

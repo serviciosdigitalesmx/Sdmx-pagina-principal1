@@ -11,6 +11,36 @@ type PdfAttachment = {
   source: 'stored_url' | 'inline_data_url';
 };
 
+type LandingService = {
+  title: string;
+  description: string;
+};
+
+type LandingSocialLink = {
+  label: string;
+  href: string;
+};
+
+type LandingContent = {
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroDescription?: string;
+  primaryCtaLabel?: string;
+  primaryCtaHref?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
+  contactLabel?: string;
+  contactHref?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  services?: LandingService[];
+  socialLinks?: LandingSocialLink[];
+  showMap?: boolean;
+  mapEmbedUrl?: string;
+  showVideo?: boolean;
+  videoUrl?: string;
+};
+
 const publicQuoteSchema = z.object({
   tenantSlug: z.string().min(1),
   fullName: z.string().min(1),
@@ -35,7 +65,7 @@ const publicPortalSchema = z.object({
 async function resolveTenantIdBySlug(slug: string) {
   const { data, error } = await supabaseAdmin
     .from('tenants')
-    .select('id, slug, name, contact_phone, contact_email')
+    .select('id, slug, name, contact_phone, contact_email, branding, landing_content')
     .eq('slug', slug)
     .single();
 
@@ -44,6 +74,36 @@ async function resolveTenantIdBySlug(slug: string) {
   }
 
   return data;
+}
+
+function normalizeLandingContent(input: unknown, tenantName: string, tenantSlug: string): Required<LandingContent> {
+  const content = input && typeof input === 'object' ? (input as LandingContent) : {};
+  const services = Array.isArray(content.services)
+    ? content.services.filter((item): item is LandingService => Boolean(item && item.title && item.description))
+    : [];
+  const socialLinks = Array.isArray(content.socialLinks)
+    ? content.socialLinks.filter((item): item is LandingSocialLink => Boolean(item && item.label && item.href))
+    : [];
+
+  return {
+    heroTitle: content.heroTitle?.trim() || tenantName,
+    heroSubtitle: content.heroSubtitle?.trim() || 'Landing pública por tenant',
+    heroDescription: content.heroDescription?.trim() || 'Cotización, estado y contacto directo con marca propia.',
+    primaryCtaLabel: content.primaryCtaLabel?.trim() || 'Cotizar ahora',
+    primaryCtaHref: content.primaryCtaHref?.trim() || '/onboarding',
+    secondaryCtaLabel: content.secondaryCtaLabel?.trim() || 'Ver estatus',
+    secondaryCtaHref: content.secondaryCtaHref?.trim() || '/login',
+    contactLabel: content.contactLabel?.trim() || 'WhatsApp / contacto',
+    contactHref: content.contactHref?.trim() || '',
+    seoTitle: content.seoTitle?.trim() || tenantName,
+    seoDescription: content.seoDescription?.trim() || `Landing pública del taller ${tenantSlug}.`,
+    services,
+    socialLinks,
+    showMap: Boolean(content.showMap),
+    mapEmbedUrl: content.mapEmbedUrl?.trim() || '',
+    showVideo: Boolean(content.showVideo),
+    videoUrl: content.videoUrl?.trim() || '',
+  };
 }
 
 function buildPdfAttachment(receiptUrl?: string | null): PdfAttachment | null {
@@ -205,6 +265,37 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
         timeline,
         pdf_attachment: pdfAttachment,
         attachments: pdfAttachment ? [pdfAttachment] : [],
+      },
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return res.status(500).json({ error: message });
+  }
+}
+
+export async function getPublicTenantLanding(req: Request, res: Response) {
+  const tenantSlug = req.params.tenantSlug;
+
+  if (!tenantSlug) {
+    return res.status(400).json({ error: 'Tenant slug is required' });
+  }
+
+  try {
+    const tenant = await resolveTenantIdBySlug(tenantSlug);
+    const landingContent = normalizeLandingContent(tenant.landing_content, tenant.name, tenant.slug);
+
+    return res.json({
+      success: true,
+      data: {
+        tenant: {
+          id: tenant.id,
+          slug: tenant.slug,
+          name: tenant.name,
+          contactPhone: tenant.contact_phone ?? null,
+          contactEmail: tenant.contact_email ?? null,
+          branding: tenant.branding ?? null,
+        },
+        landingContent,
       },
     });
   } catch (error) {

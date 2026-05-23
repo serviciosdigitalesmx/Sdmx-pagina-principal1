@@ -28,6 +28,7 @@ const navGroups: NavGroup[] = [
       { href: '/dashboard/ordenes', label: 'Órdenes', allowedRoles: ['owner', 'manager', 'technician'] },
       { href: '/dashboard/archivo', label: 'Archivo', allowedRoles: ['owner', 'manager', 'technician'] },
       { href: '/dashboard/solicitudes', label: 'Solicitudes', allowedRoles: ['owner', 'manager', 'technician'] },
+      { href: '/dashboard/landing', label: 'Landing', allowedRoles: ['owner', 'manager'] },
     ],
   },
   {

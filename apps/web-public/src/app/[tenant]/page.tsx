@@ -1,22 +1,71 @@
 import Link from "next/link";
 
-const contactPhone = process.env.NEXT_PUBLIC_SAAS_CONTACT_PHONE;
-const whatsappHref = contactPhone ? `https://wa.me/${contactPhone.replace(/\D/g, "")}` : undefined;
+type LandingResponse = {
+  success: true;
+  data: {
+    tenant: {
+      id: string;
+      slug: string;
+      name: string;
+      contactPhone?: string | null;
+      contactEmail?: string | null;
+      branding?: {
+        primaryColor?: string;
+        secondaryColor?: string;
+        logoUrl?: string;
+      } | null;
+    };
+    landingContent: {
+      heroTitle: string;
+      heroSubtitle: string;
+      heroDescription: string;
+      primaryCtaLabel: string;
+      primaryCtaHref: string;
+      secondaryCtaLabel: string;
+      secondaryCtaHref: string;
+      contactLabel: string;
+      contactHref: string;
+      seoTitle: string;
+      seoDescription: string;
+      services: Array<{ title: string; description: string }>;
+      socialLinks: Array<{ label: string; href: string }>;
+      showMap: boolean;
+      mapEmbedUrl: string;
+      showVideo: boolean;
+      videoUrl: string;
+    };
+  };
+};
 
-const experienceCards = [
-  ["Cotización", "Convierte el primer contacto en una solicitud clara y lista para atender."],
-  ["Tracking", "Consulta el avance del equipo sin llamadas repetidas ni fricción."],
-  ["Panel del cliente", "Entrada segura al flujo privado del tenant cuando ya existe sesión."],
-];
+function resolveApiBaseUrl() {
+  return (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/$/, "");
+}
 
-const serviceBlocks = [
-  ["Recepción", "Entrada de equipo, cotización y seguimiento."],
-  ["Estado", "Folio, avance y consulta rápida."],
-  ["Contacto", "WhatsApp y atención directa."],
-  ["Cliente", "Panel privado y seguimiento."],
-  ["Operación", "Clientes, stock, finanzas y seguridad."],
-  ["Multi-tenant", "Experiencia por marca y sucursal."],
-];
+function resolveWhatsappHref(phone?: string | null) {
+  if (!phone) return undefined;
+  const digits = phone.replace(/\D/g, "");
+  return digits.length > 0 ? `https://wa.me/${digits}` : undefined;
+}
+
+async function getTenantLanding(tenant: string): Promise<LandingResponse["data"]> {
+  const apiBaseUrl = resolveApiBaseUrl();
+
+  if (!apiBaseUrl) {
+    throw new Error("NEXT_PUBLIC_API_URL o NEXT_PUBLIC_API_BASE_URL no está configurada");
+  }
+
+  const response = await fetch(`${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenant)}/landing`, {
+    cache: "no-store",
+  });
+
+  const payload = (await response.json().catch(() => null)) as LandingResponse | { error?: string } | null;
+
+  if (!response.ok || !payload || !("success" in payload)) {
+    throw new Error((payload && "error" in payload && payload.error) || "No pudimos cargar la landing del tenant");
+  }
+
+  return payload.data;
+}
 
 export default async function TenantLandingPage({
   params,
@@ -24,36 +73,48 @@ export default async function TenantLandingPage({
   params: Promise<{ tenant: string }>;
 }) {
   const { tenant } = await params;
+  const data = await getTenantLanding(tenant);
+  const landing = data.landingContent;
+  const whatsappHref = resolveWhatsappHref(data.tenant.contactPhone ?? landing.contactHref ?? undefined);
+  const primaryHref = landing.primaryCtaHref.startsWith("http")
+    ? landing.primaryCtaHref
+    : `/${tenant}${landing.primaryCtaHref.startsWith("/") ? landing.primaryCtaHref : `/${landing.primaryCtaHref}`}`;
+  const secondaryHref = landing.secondaryCtaHref.startsWith("http")
+    ? landing.secondaryCtaHref
+    : `/${tenant}${landing.secondaryCtaHref.startsWith("/") ? landing.secondaryCtaHref : `/${landing.secondaryCtaHref}`}`;
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(44,110,159,0.16),_transparent_30%),linear-gradient(180deg,#f4f6f9_0%,#eef2f6_48%,#f8fafc_48%,#ffffff_100%)] text-slate-950">
+    <main
+      className="min-h-screen text-slate-950"
+      style={{
+        background: "radial-gradient(circle_at_top,_rgba(44,110,159,0.16),_transparent_30%),linear-gradient(180deg,#f4f6f9_0%,#eef2f6_48%,#ffffff_100%)",
+      }}
+    >
       <section className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-4 sm:px-6 lg:px-8">
         <header className="rounded-[2rem] border border-slate-200 bg-white/92 p-6 text-slate-900 shadow-[0_30px_90px_rgba(15,23,42,0.08)] backdrop-blur">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div>
+            <div className="max-w-3xl">
               <p className="text-xs uppercase tracking-[0.35em] text-[#245a82]">Landing pública por tenant</p>
               <p className="mt-3 inline-flex rounded-full border border-[#2c6e9f]/20 bg-[#2c6e9f]/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#245a82]">
-                Cotización + Estado + WhatsApp + Panel
+                {landing.heroSubtitle}
               </p>
-              <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl [font-family:var(--font-cormorant)]">{tenant}</h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:leading-8">
-                <span className="sm:hidden">Cotiza, consulta estado y entra al panel.</span>
-                <span className="hidden sm:inline">
-                  La experiencia 3 en 1 del tenant {tenant}: cotizar, consultar el estado y entrar al panel del cliente sin perder la
-                  identidad del taller.
-                </span>
-              </p>
+              <h1 className="mt-4 text-4xl font-black tracking-tight sm:text-5xl [font-family:var(--font-cormorant)]">
+                {landing.heroTitle}
+              </h1>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:leading-8">{landing.heroDescription}</p>
             </div>
             <div className="grid gap-3 rounded-[1.75rem] border border-slate-200 bg-slate-50 p-5 sm:grid-cols-2">
-              <Link href={`/${tenant}/tracking`} className="rounded-2xl bg-[#2c6e9f] px-5 py-4 font-semibold text-white transition hover:bg-[#245a82]">
-                Ver estatus de mi equipo
+              <Link href={primaryHref} className="rounded-2xl bg-[#2c6e9f] px-5 py-4 font-semibold text-white transition hover:bg-[#245a82]">
+                {landing.primaryCtaLabel}
               </Link>
-              <Link href={`/${tenant}/cotizar`} className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
-                Solicitar cotización
+              <Link href={secondaryHref} className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
+                {landing.secondaryCtaLabel}
               </Link>
-              <a href={whatsappHref ?? "#contacto"} className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
-                WhatsApp / contacto
-              </a>
+              {whatsappHref ? (
+                <a href={whatsappHref} className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
+                  {landing.contactLabel}
+                </a>
+              ) : null}
               <Link href={`/t/${tenant}/portal`} className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
                 Portal del cliente
               </Link>
@@ -62,64 +123,88 @@ export default async function TenantLandingPage({
         </header>
 
         <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {experienceCards.map(([title, copy]) => (
-            <article key={title} className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_16px_60px_rgba(15,23,42,0.08)]">
+          {landing.services.length > 0 ? landing.services.map((service) => (
+            <article key={`${service.title}-${service.description}`} className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_16px_60px_rgba(15,23,42,0.08)]">
               <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#245a82]">Servicio</p>
-              <h2 className="mt-3 text-2xl font-bold text-slate-950">{title}</h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{copy}</p>
+              <h2 className="mt-3 text-2xl font-bold text-slate-950">{service.title}</h2>
+              <p className="mt-3 text-sm leading-7 text-slate-600">{service.description}</p>
             </article>
-          ))}
+          )) : null}
         </section>
 
         <section className="grid gap-6 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)] lg:grid-cols-[1fr_0.95fr] lg:p-10">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#245a82]">Operación pública</p>
             <h2 className="mt-3 text-3xl font-bold text-slate-950 [font-family:var(--font-cormorant)]">
-              {tenant} vende, atiende y rastrea desde una sola experiencia.
+              {data.tenant.name} vende, atiende y rastrea desde una sola experiencia.
             </h2>
-            <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
-              La landing del tenant prioriza conversión y contacto directo. El usuario encuentra rápido cotización, tracking y salida
-              elegante hacia el panel privado.
-            </p>
+            <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">{landing.seoDescription}</p>
           </div>
           <div className="rounded-[1.75rem] border border-slate-200 bg-slate-50 p-5">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Flujo visible</p>
-            <ul className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
-              {serviceBlocks.map(([label, copy]) => (
-                <li key={label} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                  <span className="font-semibold text-slate-950">{label}:</span> {copy}
-                </li>
-              ))}
-            </ul>
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Contacto</p>
+            <div className="mt-4 space-y-3 text-sm leading-7 text-slate-700">
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <span className="font-semibold text-slate-950">Teléfono:</span> {data.tenant.contactPhone ?? "Sin teléfono"}
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                <span className="font-semibold text-slate-950">Correo:</span> {data.tenant.contactEmail ?? "Sin correo"}
+              </div>
+              {data.tenant.branding?.logoUrl ? (
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  <span className="font-semibold text-slate-950">Logo:</span> activo
+                </div>
+              ) : null}
+            </div>
           </div>
         </section>
 
         <section id="contacto" className="grid gap-6 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)] lg:grid-cols-2 lg:p-10">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#245a82]">Contacto</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#245a82]">Redes y acceso</p>
             <h2 className="mt-3 text-3xl font-bold text-slate-950 [font-family:var(--font-cormorant)]">
-              Cotización, soporte y panel deben sentirse como una sola historia.
+              {data.tenant.name} mantiene la identidad del taller en todos los puntos de entrada.
             </h2>
-            <p className="mt-4 text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
-              Esta vista mantiene el tenant al frente para que el cliente no dude dónde está, qué puede hacer y cómo volver al taller.
-            </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            <Link href={`/${tenant}/cotizar`} className="rounded-2xl bg-[#2c6e9f] px-5 py-4 font-semibold text-white transition hover:bg-[#245a82]">
-              Cotizar ahora
-            </Link>
-            <Link href={`/${tenant}/tracking`} className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
-              Ver estado
-            </Link>
-            <Link href={`/t/${tenant}/portal`} className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
-              Ingresar al portal
-            </Link>
-            <a href={whatsappHref ?? "#"} className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
-              WhatsApp
-            </a>
+            {landing.socialLinks.map((link) => (
+              <a key={`${link.label}-${link.href}`} href={link.href} className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
+                {link.label}
+              </a>
+            ))}
+            {landing.showMap && landing.mapEmbedUrl ? (
+              <a href={landing.mapEmbedUrl} target="_blank" rel="noreferrer" className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
+                Abrir mapa
+              </a>
+            ) : null}
+            {landing.showVideo && landing.videoUrl ? (
+              <a href={landing.videoUrl} target="_blank" rel="noreferrer" className="rounded-2xl border border-slate-300 px-5 py-4 font-semibold text-slate-800 transition hover:bg-slate-50">
+                Ver video
+              </a>
+            ) : null}
           </div>
         </section>
       </section>
     </main>
   );
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ tenant: string }>;
+}) {
+  const { tenant } = await params;
+
+  try {
+    const data = await getTenantLanding(tenant);
+    return {
+      title: data.landingContent.seoTitle || data.tenant.name,
+      description: data.landingContent.seoDescription || `Landing pública del taller ${data.tenant.name}.`,
+    };
+  } catch {
+    return {
+      title: tenant,
+      description: "Landing pública del tenant.",
+    };
+  }
 }

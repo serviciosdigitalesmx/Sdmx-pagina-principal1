@@ -22,6 +22,30 @@ type EncodedFilePayload = {
   fileType: 'intake_photo' | 'attachment_pdf';
 };
 
+type LandingServicePayload = {
+  title: string;
+  description: string;
+};
+
+type SocialLinkPayload = {
+  label: string;
+  href: string;
+};
+
+type TenantLandingSettings = {
+  tenant: {
+    id: string;
+    slug: string;
+    name: string;
+    contact_name?: string | null;
+    contact_email?: string | null;
+    contact_phone?: string | null;
+    branding?: Record<string, unknown> | null;
+    landing_content?: Record<string, unknown> | null;
+    updated_at?: string;
+  };
+};
+
 import { readAuthToken } from "@/lib/auth-storage";
 import { getCurrentSession } from "@/lib/session";
 
@@ -216,6 +240,40 @@ class FixService {
       { method: 'GET' }
     );
     return result.data;
+  }
+
+  public async getTenantLandingSettings(): Promise<ApiSingleResponse<TenantLandingSettings>> {
+    return this.request<ApiSingleResponse<TenantLandingSettings>>(`/api/auth/tenant/${encodeURIComponent(this.tenantId)}/settings`, {
+      method: 'GET',
+    });
+  }
+
+  public async updateTenantLandingSettings(payload: {
+    branding?: Record<string, unknown>;
+    landingContent?: {
+      heroTitle: string;
+      heroSubtitle: string;
+      heroDescription: string;
+      primaryCtaLabel: string;
+      primaryCtaHref: string;
+      secondaryCtaLabel: string;
+      secondaryCtaHref: string;
+      contactLabel: string;
+      contactHref: string;
+      seoTitle: string;
+      seoDescription: string;
+      services: LandingServicePayload[];
+      socialLinks: SocialLinkPayload[];
+      showMap: boolean;
+      mapEmbedUrl: string;
+      showVideo: boolean;
+      videoUrl: string;
+    };
+  }): Promise<ApiSingleResponse<TenantLandingSettings>> {
+    return this.request<ApiSingleResponse<TenantLandingSettings>>(`/api/auth/tenant/${encodeURIComponent(this.tenantId)}/settings`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
   }
 
   private async fileToBase64(file: File): Promise<string> {
