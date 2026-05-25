@@ -97,7 +97,7 @@ const trustBlocks = [
   },
   {
     title: "Arquitectura de producción",
-    copy: "Frontend en Vercel, backend en Render y Supabase con RLS. Sin atajos de persistencia.",
+    copy: "FIXI corre con Vercel, Render y Supabase con RLS.",
   },
 ];
 
@@ -182,11 +182,10 @@ export default function Home() {
               SaaS multitenant para talleres de reparación y gadgets en México y Latam · {trialDays} días de prueba
             </div>
             <h1 className="mx-auto mt-6 max-w-4xl text-balance text-5xl font-black tracking-[-0.07em] text-white sm:text-6xl lg:text-7xl">
-              Convierte tu taller de reparación en una operación premium con <span className="text-cyan-300">{productName}</span>.
+              Organiza tu taller de reparación con <span className="text-cyan-300">{productName}</span>.
             </h1>
             <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-zinc-300 sm:text-lg">
-              Cotización, tracking, evidencia, inventario y finanzas en una sola experiencia de marca blanca. FIXI se ve y se
-              siente como software serio de producción. Activa tu tenant con {trialDays} días sin tarjeta.
+              Cotización, tracking, evidencia, inventario y finanzas en una sola experiencia de marca blanca. Activa tu tenant con {trialDays} días sin tarjeta.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link
@@ -265,7 +264,7 @@ export default function Home() {
 
         <section className="grid gap-4 rounded-[2.5rem] border border-zinc-800/70 bg-[linear-gradient(180deg,rgba(9,9,11,0.92),rgba(15,17,21,0.98))] px-5 py-8 lg:px-8">
           <div className="max-w-3xl">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-emerald-300">Prueba social</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-emerald-300">Adopción</p>
             <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">Alcance visible de FIXI.</h2>
             <p className="mt-4 text-base leading-8 text-zinc-300">
               Estos indicadores deben venir de datos reales. Si no están confirmados, no se muestran.
@@ -284,7 +283,7 @@ export default function Home() {
             {socialProofTestimonials.map((testimonial) => (
               <article key={`${testimonial.name}-${testimonial.company}`} className="rounded-[1.5rem] border border-zinc-800 bg-white/5 p-5">
                 <p className="text-sm leading-7 text-zinc-300">
-                  “FIXI ya cubre el flujo operativo con claridad. La trazabilidad y el portal del cliente nos ahorran tiempo.”
+                  “Seguimos cada orden y el cliente revisa su estado sin llamadas innecesarias.”
                 </p>
                 <div className="mt-4">
                   <p className="font-semibold text-white">{testimonial.name}</p>

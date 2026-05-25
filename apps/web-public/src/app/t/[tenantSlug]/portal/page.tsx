@@ -195,7 +195,7 @@ export default function PortalPage() {
               {loading ? "Consultando..." : "Buscar orden"}
             </button>
             <p className="text-sm leading-6 text-zinc-400">
-              La consulta se hace en el backend real y respeta tenant_id por slug.
+              La consulta respeta el taller al que pertenece el folio.
             </p>
           </div>
         </form>

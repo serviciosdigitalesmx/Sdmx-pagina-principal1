@@ -207,12 +207,12 @@ export default function LandingSettingsPage() {
         stats={[
           { label: "Tenant", value: tenantSlug, helper: "Contenido aislado por tenant_id." },
           { label: "Servicios", value: String(landingContent.services.length), helper: "Bloques visibles en público." },
-          { label: "Redes", value: String(landingContent.socialLinks.length), helper: "Contactos públicos configurables." },
+          { label: "Redes", value: String(landingContent.socialLinks.length), helper: "Contactos públicos del tenant." },
         ]}
         columns={[]}
         rows={[]}
         emptyTitle={loading ? "Cargando landing…" : "Editor listo"}
-        emptyCopy="La landing pública se alimenta desde el backend y refleja branding real del tenant."
+        emptyCopy="La landing pública refleja el branding real del tenant."
       >
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <section className="space-y-6 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)]">

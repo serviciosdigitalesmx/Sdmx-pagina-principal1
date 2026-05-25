@@ -47,7 +47,7 @@ export default function Page() {
 
   const stats = useMemo(
     () => [
-      { label: "Registros", value: String(rows.length), helper: "Datos reales del backend." },
+      { label: "Registros", value: String(rows.length), helper: "Datos del tenant." },
       { label: "Rol", value: role, helper: "Permisos reales por usuario." },
       { label: "Sucursal", value: sucursalId, helper: "Aislamiento por contexto." },
     ],

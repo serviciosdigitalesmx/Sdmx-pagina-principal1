@@ -49,12 +49,12 @@ export default function Page() {
 
   const stats = useMemo(
     () => [
-      { label: "Órdenes", value: String(summary?.ordersCount ?? 0), helper: "Service orders reales." },
-      { label: "Clientes", value: String(summary?.customersCount ?? 0), helper: "Catálogo real." },
-      { label: "Inventario", value: String(summary?.inventoryCount ?? 0), helper: "Stock real." },
-      { label: "Bajo stock", value: String(summary?.lowStockCount ?? 0), helper: "Alertas derivadas." },
-      { label: "Ingreso", value: String(summary?.totalIncome ?? 0), helper: "Agregado real." },
-      { label: "Egreso", value: String(summary?.totalExpense ?? 0), helper: "Agregado real." },
+      { label: "Órdenes", value: String(summary?.ordersCount ?? 0), helper: "Órdenes del tenant." },
+      { label: "Clientes", value: String(summary?.customersCount ?? 0), helper: "Clientes del tenant." },
+      { label: "Inventario", value: String(summary?.inventoryCount ?? 0), helper: "Stock del tenant." },
+      { label: "Bajo stock", value: String(summary?.lowStockCount ?? 0), helper: "Alertas activas." },
+      { label: "Ingreso", value: String(summary?.totalIncome ?? 0), helper: "Ingreso acumulado." },
+      { label: "Egreso", value: String(summary?.totalExpense ?? 0), helper: "Egreso acumulado." },
     ],
     [summary]
   );
@@ -79,7 +79,7 @@ export default function Page() {
         ]}
         rows={rows}
         emptyTitle={loading ? "Cargando reportes…" : error ? "No pudimos cargar reportes" : "Sin datos agregados todavía"}
-        emptyCopy={error || "Los reportes se construyen desde /api/:tenantId/reports/summary sin inventar KPIs."}
+        emptyCopy={error || "Los reportes se construyen desde los datos del tenant."}
       />
     </RequireRole>
   );

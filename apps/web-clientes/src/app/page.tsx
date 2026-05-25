@@ -46,7 +46,7 @@ export default function Home() {
           </div>
 
           <div className="rounded-[1.5rem] border border-zinc-800 bg-zinc-950/85 p-6 shadow-[0_16px_60px_rgba(0,0,0,0.24)]">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-300">Ruta soportada</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-300">Ruta disponible</p>
             <p className="mt-4 text-sm leading-7 text-zinc-300">
               El portal está disponible por tenant en:
             </p>
@@ -54,8 +54,7 @@ export default function Home() {
               /t/[tenantSlug]/portal
             </div>
             <p className="mt-4 text-sm leading-7 text-zinc-300">
-              El acceso depende de <span className="font-semibold text-zinc-50">tenant_id</span> y responde
-              contra backend real.
+              El acceso depende de <span className="font-semibold text-zinc-50">tenant_id</span> y responde por el portal del tenant.
             </p>
           </div>
         </section>

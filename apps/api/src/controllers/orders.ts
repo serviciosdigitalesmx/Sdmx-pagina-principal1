@@ -278,11 +278,11 @@ async function getTenantBranding(tenantId: string): Promise<{ name: string; bran
     .single();
 
   if (error || !data) {
-    return { name: 'Sr. Fix', branding: null };
+    return { name: 'FIXI', branding: null };
   }
 
   return {
-    name: String(data.name ?? 'Sr. Fix'),
+    name: String(data.name ?? 'FIXI'),
     branding: (data.branding as TenantBranding | null) ?? null,
   };
 }
@@ -341,7 +341,7 @@ async function generateReceiptPdf(options: {
   const logoUrl = options.tenantBranding?.logoUrl?.trim() || '';
 
   doc.rect(40, 40, 515, 70).fill(primaryColor);
-  doc.fillColor('#ffffff').fontSize(20).text(options.tenantName || 'Sr. Fix', 58, 58, { width: 340 });
+  doc.fillColor('#ffffff').fontSize(20).text(options.tenantName || 'FIXI', 58, 58, { width: 340 });
   doc.fillColor('#ffffff').fontSize(10).text('Comprobante de recepción', 58, 82, { width: 340 });
   doc.fillColor('#ffffff').fontSize(9).text('Documento generado automáticamente', 420, 60, { width: 120, align: 'right' });
   doc.moveDown(3.5);
@@ -389,7 +389,7 @@ async function generateReceiptPdf(options: {
   }
 
   doc.moveDown(0.8);
-  doc.fontSize(10).fillColor('#6b7280').text(`Documento generado automáticamente por ${options.tenantName || 'Sr. Fix'}.`);
+  doc.fontSize(10).fillColor('#6b7280').text(`Documento generado automáticamente por ${options.tenantName || 'FIXI'}.`);
   doc.end();
 
   return ended;

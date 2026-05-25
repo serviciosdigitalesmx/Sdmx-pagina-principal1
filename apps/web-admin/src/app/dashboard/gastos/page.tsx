@@ -68,7 +68,7 @@ export default function GastosPage() {
         ]}
         rows={rows}
         emptyTitle={loading ? 'Cargando gastos…' : error ? 'No pudimos cargar gastos' : 'Sin movimientos de gasto todavía'}
-        emptyCopy={error || 'La vista consume cashflow real por sucursal desde el backend.'}
+        emptyCopy={error || 'La vista muestra el cashflow del tenant por sucursal.'}
       />
     </RequireRole>
   );
