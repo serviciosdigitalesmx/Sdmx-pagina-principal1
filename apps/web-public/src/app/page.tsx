@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const productName = process.env.NEXT_PUBLIC_SAAS_BRAND_NAME ?? "FIXI";
+const productName = "FIXI";
 const legalName = process.env.NEXT_PUBLIC_SAAS_LEGAL_NAME ?? "Servicios Digitales MX";
 const demoUrl = process.env.NEXT_PUBLIC_SAAS_DEMO_URL;
 const contactEmail = process.env.NEXT_PUBLIC_SAAS_CONTACT_EMAIL ?? "contacto@serviciosdigitalesmx.com";
