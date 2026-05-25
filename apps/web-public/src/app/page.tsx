@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const productName = process.env.NEXT_PUBLIC_SAAS_BRAND_NAME ?? "FIXIE";
+const productName = process.env.NEXT_PUBLIC_SAAS_BRAND_NAME ?? "FIXI";
 const legalName = process.env.NEXT_PUBLIC_SAAS_LEGAL_NAME ?? "Servicios Digitales MX";
 const demoUrl = process.env.NEXT_PUBLIC_SAAS_DEMO_URL;
 const contactEmail = process.env.NEXT_PUBLIC_SAAS_CONTACT_EMAIL ?? "contacto@serviciosdigitalesmx.com";
@@ -148,7 +148,7 @@ export default function Home() {
                 FX
               </div>
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.42em] text-cyan-300">FIXIE</p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.42em] text-cyan-300">FIXI</p>
                 <p className="mt-1 text-sm text-zinc-400">{legalName}</p>
               </div>
             </div>
@@ -185,7 +185,7 @@ export default function Home() {
               Convierte tu taller de reparación en una operación premium con <span className="text-cyan-300">{productName}</span>.
             </h1>
             <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-zinc-300 sm:text-lg">
-              Cotización, tracking, evidencia, inventario y finanzas en una sola experiencia de marca blanca. FIXIE se ve y se
+              Cotización, tracking, evidencia, inventario y finanzas en una sola experiencia de marca blanca. FIXI se ve y se
               siente como software serio de producción, listo para competir con una imagen internacional. Activa tu tenant con {trialDays} días sin tarjeta.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -245,9 +245,9 @@ export default function Home() {
 
         <section className="grid gap-4 rounded-[2.5rem] border border-zinc-800/70 bg-zinc-950/85 px-5 py-8 lg:px-8">
           <div className="max-w-3xl">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-cyan-300">Lo que sí trae FIXIE</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-cyan-300">Lo que sí trae FIXI</p>
             <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
-              Lo que Samii muestra y FIXIE ya soporta.
+              Lo que Samii muestra y FIXI ya soporta.
             </h2>
             <p className="mt-4 text-base leading-8 text-zinc-300">
               La landing debe vender lo que el producto hace hoy: proveedores, garantías, mensajería, checklist propio e historial de órdenes.
@@ -288,7 +288,7 @@ export default function Home() {
             {socialProofTestimonials.map((testimonial) => (
               <article key={`${testimonial.name}-${testimonial.company}`} className="rounded-[1.5rem] border border-zinc-800 bg-white/5 p-5">
                 <p className="text-sm leading-7 text-zinc-300">
-                  “FIXIE ya cubre el flujo operativo con claridad. La trazabilidad y el portal del cliente nos ahorran tiempo.”
+                  “FIXI ya cubre el flujo operativo con claridad. La trazabilidad y el portal del cliente nos ahorran tiempo.”
                 </p>
                 <div className="mt-4">
                   <p className="font-semibold text-white">{testimonial.name}</p>
@@ -308,7 +308,7 @@ export default function Home() {
               Transparencia que vende seguridad.
             </h2>
             <p className="mt-4 max-w-xl text-base leading-8 text-zinc-300">
-              Para talleres serios, FIXIE no oculta la arquitectura. La muestra con claridad: aislamiento, marca blanca y
+              Para talleres serios, FIXI no oculta la arquitectura. La muestra con claridad: aislamiento, marca blanca y
               despliegue de producción desde el primer vistazo.
             </p>
           </div>
@@ -411,7 +411,7 @@ export default function Home() {
             <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-cyan-300">Contacto</p>
             <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-white">Cierra la venta con un flujo limpio.</h2>
             <p className="mt-4 max-w-2xl text-base leading-8 text-zinc-300">
-              Déjanos tus datos para arrancar una demo o valida el producto con el recorrido público. FIXIE está hecho para
+              Déjanos tus datos para arrancar una demo o valida el producto con el recorrido público. FIXI está hecho para
               verse sólido desde el primer contacto.
             </p>
           </div>

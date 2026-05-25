@@ -19,9 +19,7 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title:
-    process.env.NEXT_PUBLIC_SAAS_META_TITLE ??
-    "FIXIE | Plataforma SaaS para talleres",
+  title: "FIXI | Plataforma SaaS para talleres",
   description:
     process.env.NEXT_PUBLIC_SAAS_META_DESCRIPTION ??
     "FIXIE: SaaS multitenant para talleres con marca blanca, tracking y control operativo.",
