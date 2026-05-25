@@ -1012,6 +1012,8 @@ export const addOrderNote = async (req: Request, res: Response) => {
   }
 };
 
+export const addOrderMessage = addOrderNote;
+
 export const updateOrderStatus = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;

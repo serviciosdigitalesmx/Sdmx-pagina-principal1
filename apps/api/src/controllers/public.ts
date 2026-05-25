@@ -333,7 +333,19 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
       })),
       ...metadataDocuments,
     ];
-    const normalizedEvents = [...(events ?? []), ...metadataEvents];
+    const dedupedEvents = new Map<string, (typeof events)[number] & { note?: string | null; actor_name?: string | null; created_at?: string }>();
+    for (const event of [...(events ?? []), ...metadataEvents]) {
+      dedupedEvents.set(event.id, event);
+    }
+    const normalizedEvents = [...dedupedEvents.values()];
+    const messages = normalizedEvents
+      .filter((event) => String(event.event_type ?? '').toLowerCase() === 'note')
+      .map((event) => ({
+        id: event.id,
+        note: event.note,
+        actor_name: event.actor_name,
+        created_at: event.created_at,
+      }));
 
     const receiptDocument = normalizedDocuments.find((document) => document.file_type === 'receipt_pdf' && document.public_url);
     const pdfAttachment = buildPdfAttachment(data.receipt_url || receiptDocument?.public_url || null);
@@ -384,6 +396,7 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
         attachments: pdfAttachment ? [pdfAttachment] : [],
         documents: normalizedDocuments,
         events: normalizedEvents,
+        messages,
       },
     });
   } catch (error) {

@@ -67,6 +67,12 @@ type PortalOrderResponse = {
       actor_name: string | null;
       created_at: string;
     }>;
+    messages: Array<{
+      id: string;
+      note: string | null;
+      actor_name: string | null;
+      created_at: string;
+    }>;
   };
 };
 
@@ -308,6 +314,25 @@ export default function PortalPage() {
                     ))
                   ) : (
                     <p className="text-sm text-zinc-400">No hay eventos registrados.</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Mensajes</p>
+                <div className="mt-3 space-y-2">
+                  {result.messages.length > 0 ? (
+                    result.messages.map((message) => (
+                      <div key={message.id} className="rounded-xl border border-zinc-800 bg-zinc-900/70 px-3 py-2">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm font-semibold text-zinc-50">{message.actor_name ?? "Sistema"}</span>
+                          <span className="text-[11px] uppercase tracking-[0.18em] text-zinc-400">{new Date(message.created_at).toLocaleString()}</span>
+                        </div>
+                        <p className="mt-1 text-sm text-zinc-300">{message.note ?? "Sin mensaje"}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-zinc-400">No hay mensajes registrados.</p>
                   )}
                 </div>
               </div>
