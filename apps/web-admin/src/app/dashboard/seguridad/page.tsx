@@ -65,9 +65,9 @@ export default function SeguridadPage() {
 
   const stats = useMemo(
     () => [
-      { label: "Rol", value: summary?.role ?? role, helper: "Consumido desde JWT real." },
-      { label: "Usuario", value: summary?.userId ?? "N/D", helper: "Sub del token." },
-      { label: "Sucursal", value: summary?.sucursalId ?? "N/D", helper: "Contexto real del tenant." },
+      { label: "Rol", value: summary?.role ?? role, helper: "Tu rol actual." },
+      { label: "Usuario", value: summary?.userId ?? "N/D", helper: "Tu sesión actual." },
+      { label: "Sucursal", value: summary?.sucursalId ?? "N/D", helper: "Tu sucursal actual." },
       {
         label: "Suscripción",
         value: billing?.subscriptionStatus ?? "trial",
@@ -91,7 +91,7 @@ export default function SeguridadPage() {
     <RequireRole allowed={["owner", "manager", "technician"]}>
       <ModuleShell
         title="Seguridad y roles"
-        subtitle="Resumen real de sesión, tenant, permisos y estado de suscripción derivado del JWT y del tenant."
+        subtitle="Resumen de sesión, tenant, permisos y estado de suscripción."
         icon="fas fa-shield-alt"
         actionLabel="Ver sesión"
         stats={stats}
@@ -101,7 +101,7 @@ export default function SeguridadPage() {
         ]}
         rows={rows}
         emptyTitle={loading ? "Cargando seguridad…" : error ? "No pudimos cargar seguridad" : "Sin información de sesión"}
-        emptyCopy={error || "La seguridad se resuelve desde el token firmado y la sesión autenticada. No hay placeholders."}
+        emptyCopy={error || "La seguridad se muestra desde tu sesión actual."}
       />
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         <article className="rounded-3xl border border-zinc-200 bg-white p-5 text-slate-950 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">

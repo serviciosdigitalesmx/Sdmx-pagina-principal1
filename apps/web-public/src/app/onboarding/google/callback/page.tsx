@@ -157,7 +157,7 @@ export default function GoogleCallbackPage() {
           <p className="text-xs uppercase tracking-[0.35em] text-[#245a82]">Google conectado</p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight">Completa los datos del taller</h1>
           <p className="mt-4 text-lg leading-8 text-slate-600">
-            La cuenta de Google ya fue validada. Falta el nombre del taller y el teléfono para crear el tenant sin inventar información.
+            La cuenta de Google ya fue validada. Falta el nombre del taller y el teléfono para crear tu espacio de trabajo.
           </p>
         </div>
 

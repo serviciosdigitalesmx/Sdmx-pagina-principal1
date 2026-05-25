@@ -152,12 +152,12 @@ export default function LoginPage() {
           <p className="text-xs uppercase tracking-[0.35em] text-[#245a82]">Acceso al taller</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl [font-family:var(--font-display)]">
             <span className="sm:hidden">Entra al sistema.</span>
-            <span className="hidden sm:inline">Entra al entorno operativo de FIXI.</span>
+              <span className="hidden sm:inline">Entra a FIXI.</span>
           </h1>
           <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">
             <span className="sm:hidden">Tu acceso te lleva al workspace del tenant.</span>
             <span className="hidden sm:inline">
-              El acceso mantiene la misma presencia visual de la landing, pero te lleva directo al workspace del tenant.
+              Tu acceso te lleva directo al área de trabajo del taller.
             </span>
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
