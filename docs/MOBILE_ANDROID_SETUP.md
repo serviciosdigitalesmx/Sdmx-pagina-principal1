@@ -40,10 +40,25 @@ Desde la raíz del monorepo:
 ## Validación de login real
 
 1. Abre la app Android.
-2. Verifica que cargue el frontend real del admin.
-3. Haz login con una cuenta real del sistema.
-4. Confirma que la sesión persiste al cerrar y reabrir la app.
-5. Verifica que los requests al API de Render sigan usando el token real.
+2. Verifica que cargue el frontend real del admin en la URL configurada.
+3. Entra por la pantalla `/login` del panel y autentícate con una cuenta real.
+4. Confirma que el callback `/auth/bridge` guarda el token real en `localStorage`.
+5. Cierra la app Android y vuelve a abrirla.
+6. Verifica que el panel recuerde la sesión y vuelva a mostrar `/dashboard` sin pedir login si el token sigue vigente.
+7. Verifica que los requests al API de Render sigan usando el token real.
+
+## Flujo móvil de autenticación
+
+El wrapper Android no implementa un login paralelo.
+
+Usa el mismo flujo real del panel:
+
+1. `/login` autentica contra Supabase.
+2. `/api/auth/exchange` convierte la sesión de Supabase en un token del API.
+3. `/auth/bridge` guarda ese token en `localStorage`.
+4. `SessionGate` en el panel lee `localStorage` y presenta el dashboard real.
+
+Eso hace que la sesión persista dentro de la app Android mientras el WebView conserve almacenamiento.
 
 ## Validación de órdenes
 
