@@ -27,8 +27,8 @@ async function loadFinanceFacts(tenantId: string) {
       .eq('tenant_id', tenantId)
       .limit(1000),
     supabase
-      .from('expenses')
-      .select('id, tenant_id, sucursal_id, amount, expense_date, created_at, category, description')
+      .from('finances')
+      .select('id, tenant_id, sucursal_id, balance, income, expense, created_at')
       .eq('tenant_id', tenantId)
       .limit(1000),
   ]);
@@ -64,7 +64,7 @@ export const getBalance = async (req: Request, res: Response) => {
       : expenses;
 
     const totalIncome = filteredOrders.reduce((sum, order) => sum + resolveOrderIncome(order as { total_cost?: number | null; final_cost?: number | null }), 0);
-    const totalExpense = filteredExpenses.reduce((sum, item) => sum + Number((item as { amount?: number }).amount ?? 0), 0);
+    const totalExpense = filteredExpenses.reduce((sum, item) => sum + Number((item as { expense?: number }).expense ?? 0), 0);
     const totalBalance = Number((totalIncome - totalExpense).toFixed(2));
 
     const rows = [
@@ -89,10 +89,10 @@ export const getBalance = async (req: Request, res: Response) => {
       ...filteredExpenses.slice(0, 25).map((expense) => ({
         id: String((expense as { id?: string }).id ?? `${tenantId}-expense`),
         tenant_id: tenantId,
-        balance: -Number((expense as { amount?: number }).amount ?? 0),
+        balance: Number((expense as { balance?: number; expense?: number }).balance ?? 0),
         income: 0,
-        expense: Number((expense as { amount?: number }).amount ?? 0),
-        created_at: String((expense as { created_at?: string; expense_date?: string }).created_at ?? (expense as { expense_date?: string }).expense_date ?? new Date().toISOString()),
+        expense: Number((expense as { expense?: number }).expense ?? 0),
+        created_at: String((expense as { created_at?: string }).created_at ?? new Date().toISOString()),
         type: 'expense',
       })),
     ].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
@@ -130,7 +130,7 @@ export const getCashflow = async (req: Request, res: Response) => {
     for (const expense of branchExpenses) {
       const day = toDayKey((expense as { expense_date?: string; created_at?: string }).expense_date ?? (expense as { created_at?: string }).created_at ?? null);
       const current = grouped.get(day) ?? { id: `${sucursalId}-${day}`, tenant_id: tenantId, sucursal_id: sucursalId, balance: 0, income: 0, expense: 0, created_at: day };
-      const amount = Number((expense as { amount?: number }).amount ?? 0);
+      const amount = Number((expense as { expense?: number }).expense ?? 0);
       current.expense += amount;
       current.balance -= amount;
       grouped.set(day, current);
@@ -158,16 +158,14 @@ export const createExpense = async (req: Request, res: Response) => {
 
     const supabase = getTenantClient(tenantId);
     const { data, error } = await supabase
-      .from('expenses')
+      .from('finances')
       .insert([
         {
           tenant_id: tenantId,
           sucursal_id: body.sucursalId,
-          amount: body.amount,
-          description: body.description,
-          category: body.category,
-          expense_date: body.date ? body.date.slice(0, 10) : new Date().toISOString().slice(0, 10),
-          created_by: req.user?.sub,
+          balance: Number((-body.amount).toFixed(2)),
+          income: 0,
+          expense: body.amount,
         },
       ])
       .select()
@@ -196,7 +194,7 @@ export const getExpense = async (req: Request, res: Response) => {
 
     const supabase = getTenantClient(tenantId);
     const { data, error } = await supabase
-      .from('expenses')
+      .from('finances')
       .select('*')
       .eq('tenant_id', tenantId)
       .eq('id', expenseId)
@@ -226,7 +224,7 @@ export const deleteExpense = async (req: Request, res: Response) => {
 
     const supabase = getTenantClient(tenantId);
     const lookup = await supabase
-      .from('expenses')
+      .from('finances')
       .select('id, sucursal_id')
       .eq('tenant_id', tenantId)
       .eq('id', expenseId)
@@ -241,7 +239,7 @@ export const deleteExpense = async (req: Request, res: Response) => {
     }
 
     const { error } = await supabase
-      .from('expenses')
+      .from('finances')
       .delete()
       .eq('tenant_id', tenantId)
       .eq('id', expenseId);
