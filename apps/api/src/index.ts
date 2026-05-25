@@ -15,6 +15,7 @@ import securityRouter from './routes/security';
 import publicRouter from './routes/public';
 import procurementRouter from './routes/procurement';
 import reportsRouter from './routes/reports';
+import stockAlertsRouter from './routes/stock-alerts';
 import { getApiRoot, getHealth } from './controllers/meta';
 
 dotenv.config();
@@ -108,6 +109,8 @@ app.use('/api/:tenantSlug/procurement', procurementRouter);
 app.use('/api/procurement', procurementRouter);
 app.use('/api/:tenantSlug/reports', reportsRouter);
 app.use('/api/reports', reportsRouter);
+app.use('/api/:tenantSlug/stock-alerts', stockAlertsRouter);
+app.use('/api/stock-alerts', stockAlertsRouter);
 app.use('/api/public', publicRouter);
 
 app.get('/', (req, res) => {

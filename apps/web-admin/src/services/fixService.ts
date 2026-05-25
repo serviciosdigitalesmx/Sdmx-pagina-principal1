@@ -353,6 +353,25 @@ class FixService {
     return result.data;
   }
 
+  public async getStockAlerts(): Promise<JsonRecord[]> {
+    const result = await this.request<ApiListResponse<JsonRecord[]>>(
+      `/api/${this.tenantId}/stock-alerts`,
+      { method: 'GET' }
+    );
+    return result.data;
+  }
+
+  public async acknowledgeStockAlert(id: string, note?: string): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      `/api/${this.tenantId}/stock-alerts/${encodeURIComponent(id)}/acknowledge`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ note }),
+      }
+    );
+    return result.data;
+  }
+
   public async getReportsSummary(): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
       `/api/${this.tenantId}/reports/summary`,

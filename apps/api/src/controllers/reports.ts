@@ -11,14 +11,15 @@ export const getReportsSummary = async (req: Request, res: Response) => {
 
     const supabase = getTenantClient(tenantId);
 
-    const [ordersResult, customersResult, inventoryResult, financeResult] = await Promise.all([
-      supabase.from('service_orders').select('id, status, created_at, total_cost').eq('tenant_id', tenantId).limit(500),
+    const [ordersResult, customersResult, inventoryResult, financeResult, expenseResult] = await Promise.all([
+      supabase.from('service_orders').select('id, status, created_at, total_cost, final_cost').eq('tenant_id', tenantId).limit(500),
       supabase.from('customers').select('id').eq('tenant_id', tenantId).limit(500),
       supabase.from('inventory').select('id, stock').eq('tenant_id', tenantId).limit(500),
       supabase.from('finances').select('id, balance, income, expense, created_at').eq('tenant_id', tenantId).limit(500),
+      supabase.from('expenses').select('id, amount, expense_date, created_at').eq('tenant_id', tenantId).limit(500),
     ]);
 
-    const errors = [ordersResult.error, customersResult.error, inventoryResult.error, financeResult.error].filter(Boolean);
+    const errors = [ordersResult.error, customersResult.error, inventoryResult.error, financeResult.error, expenseResult.error].filter(Boolean);
     if (errors.length > 0) {
       return res.status(502).json({
         error: 'Failed to build reports summary',
@@ -30,6 +31,7 @@ export const getReportsSummary = async (req: Request, res: Response) => {
     const customers = customersResult.data ?? [];
     const inventory = inventoryResult.data ?? [];
     const finances = financeResult.data ?? [];
+    const expenses = expenseResult.data ?? [];
 
     const statusCounts = orders.reduce<Record<string, number>>((acc, order) => {
       const status = String((order as { status?: string }).status ?? 'unknown').toLowerCase();
@@ -37,9 +39,12 @@ export const getReportsSummary = async (req: Request, res: Response) => {
       return acc;
     }, {});
 
-    const totalIncome = finances.reduce((sum, item) => sum + Number((item as { income?: number }).income ?? 0), 0);
-    const totalExpense = finances.reduce((sum, item) => sum + Number((item as { expense?: number }).expense ?? 0), 0);
-    const totalBalance = finances.reduce((sum, item) => sum + Number((item as { balance?: number }).balance ?? 0), 0);
+    const totalIncome = orders.reduce(
+      (sum, order) => sum + Number((order as { total_cost?: number | null; final_cost?: number | null }).total_cost ?? (order as { total_cost?: number | null; final_cost?: number | null }).final_cost ?? 0),
+      0,
+    );
+    const totalExpense = expenses.reduce((sum, item) => sum + Number((item as { amount?: number }).amount ?? 0), 0);
+    const totalBalance = Number((totalIncome - totalExpense).toFixed(2));
     const lowStockCount = inventory.filter((item) => Number((item as { stock?: number }).stock ?? 0) <= Number(process.env.LOW_STOCK_THRESHOLD ?? 5)).length;
 
     return res.json({
@@ -53,7 +58,7 @@ export const getReportsSummary = async (req: Request, res: Response) => {
         totalExpense,
         totalBalance,
         statusCounts,
-        lastUpdatedAt: finances[0]?.created_at ?? orders[0]?.created_at ?? null,
+        lastUpdatedAt: expenses[0]?.created_at ?? finances[0]?.created_at ?? orders[0]?.created_at ?? null,
       },
     });
   } catch (error) {

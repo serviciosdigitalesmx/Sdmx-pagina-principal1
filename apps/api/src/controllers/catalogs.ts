@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { getTenantClient } from '@white-label/database';
+import { refreshInventoryAlert } from './stock-alerts';
 
 const createCustomerSchema = z.object({
   name: z.string().min(1),
@@ -205,6 +206,7 @@ export const createInventoryItem = async (req: Request, res: Response) => {
         .select()
         .single();
       if (error) return res.status(502).json({ error: 'Failed to update inventory item', details: error.message });
+      await refreshInventoryAlert(tenantId, productRow.id, body.branchId ?? null, Number(body.stock));
       return res.status(200).json({ success: true, data });
     }
 
@@ -217,6 +219,7 @@ export const createInventoryItem = async (req: Request, res: Response) => {
       branch_id: body.branchId ?? null,
     }]).select().single();
     if (error) return res.status(502).json({ error: 'Failed to create inventory item', details: error.message });
+    await refreshInventoryAlert(tenantId, productRow.id, body.branchId ?? null, Number(body.stock));
     return res.status(201).json({ success: true, data });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: 'Invalid payload', details: error.errors });
@@ -292,6 +295,7 @@ export const updateInventoryItem = async (req: Request, res: Response) => {
       if (movementError) {
         return res.status(502).json({ error: 'Failed to persist inventory movement', details: movementError.message });
       }
+      await refreshInventoryAlert(tenantId, productRow.id, nextBranchId, nextStock);
     }
 
     return res.json({ success: true, data: updatedRow });

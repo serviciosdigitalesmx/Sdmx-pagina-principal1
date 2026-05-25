@@ -15,11 +15,54 @@ const taskBaseSchema = z.object({
   serviceRequestId: z.string().optional().or(z.literal('')),
   assignedUserId: z.string().optional().or(z.literal('')),
   dueDate: z.string().datetime().optional().or(z.literal('')),
+}).superRefine((value, ctx) => {
+  const hasOrder = typeof value.serviceOrderId === 'string' && value.serviceOrderId.trim().length > 0;
+  const hasRequest = typeof value.serviceRequestId === 'string' && value.serviceRequestId.trim().length > 0;
+
+  if (!hasOrder && !hasRequest) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['serviceOrderId'],
+      message: 'serviceOrderId or serviceRequestId is required',
+    });
+  }
 });
 
 const taskStatusSchema = z.object({
   status: z.string().min(1),
   note: z.string().optional().or(z.literal('')),
+});
+
+const taskUpdateSchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().optional().or(z.literal('')),
+  status: z.string().optional().or(z.literal('')),
+  priority: z.string().optional().or(z.literal('')),
+  branchId: z.string().optional().or(z.literal('')),
+  serviceOrderId: z.string().optional().or(z.literal('')),
+  serviceRequestId: z.string().optional().or(z.literal('')),
+  assignedUserId: z.string().optional().or(z.literal('')),
+  dueDate: z.string().datetime().optional().or(z.literal('')),
+}).superRefine((value, ctx) => {
+  if (value.serviceOrderId === '' || value.serviceRequestId === '') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['serviceOrderId'],
+      message: 'Empty relation values are not allowed',
+    });
+  }
+
+  const hasOrder = typeof value.serviceOrderId === 'string' && value.serviceOrderId.trim().length > 0;
+  const hasRequest = typeof value.serviceRequestId === 'string' && value.serviceRequestId.trim().length > 0;
+  if (Object.prototype.hasOwnProperty.call(value, 'serviceOrderId') || Object.prototype.hasOwnProperty.call(value, 'serviceRequestId')) {
+    if (!hasOrder && !hasRequest) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['serviceOrderId'],
+        message: 'Task must remain linked to serviceOrderId or serviceRequestId',
+      });
+    }
+  }
 });
 
 const taskHistorySchema = z.object({
@@ -187,7 +230,7 @@ export const updateTask = async (req: Request, res: Response) => {
     const tenantId = req.tenantId;
     const taskId = req.params.id;
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
-    const body = taskBaseSchema.partial().parse(req.body);
+    const body = taskUpdateSchema.parse(req.body);
     const supabase = getTenantClient(tenantId);
     if (!(await ensureTaskOwnership(supabase, tenantId, taskId))) {
       return res.status(404).json({ error: 'Task not found' });

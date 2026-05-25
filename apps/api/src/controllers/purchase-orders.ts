@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { getTenantClient } from '@white-label/database';
+import { refreshInventoryAlert } from './stock-alerts';
 
 const purchaseOrderStatusSchema = z.enum(['borrador', 'enviada', 'parcial', 'recibida', 'cancelada']);
 
@@ -450,6 +451,7 @@ export const receivePurchaseOrder = async (req: Request, res: Response) => {
         .eq('tenant_id', tenantId)
         .eq('id', nextInventory.id);
       if (updateInventoryError) return res.status(502).json({ error: 'Failed to update inventory stock', details: updateInventoryError.message });
+      await refreshInventoryAlert(tenantId, productCatalog.id, order.branch_id ?? nextInventory.branch_id ?? null, nextStock);
 
       inventorySnapshots.push({ id: nextInventory.id, sku, stock: nextStock });
       movementRows.push({

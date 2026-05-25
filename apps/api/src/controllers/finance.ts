@@ -10,6 +10,40 @@ const createExpenseSchema = z.object({
   date: z.string().optional(),
 });
 
+function toDayKey(value?: string | null) {
+  return value ? value.slice(0, 10) : new Date().toISOString().slice(0, 10);
+}
+
+function resolveOrderIncome(order: { total_cost?: number | null; final_cost?: number | null }) {
+  return Number(order.total_cost ?? order.final_cost ?? 0);
+}
+
+async function loadFinanceFacts(tenantId: string) {
+  const supabase = getTenantClient(tenantId);
+  const [ordersResult, expensesResult] = await Promise.all([
+    supabase
+      .from('service_orders')
+      .select('id, tenant_id, branch_id, total_cost, final_cost, created_at, status')
+      .eq('tenant_id', tenantId)
+      .limit(1000),
+    supabase
+      .from('expenses')
+      .select('id, tenant_id, sucursal_id, amount, expense_date, created_at, category, description')
+      .eq('tenant_id', tenantId)
+      .limit(1000),
+  ]);
+
+  const errors = [ordersResult.error, expensesResult.error].filter(Boolean);
+  if (errors.length > 0) {
+    throw new Error(errors.map((item) => (item as Error).message ?? String(item)).join(', '));
+  }
+
+  return {
+    orders: ordersResult.data ?? [],
+    expenses: expensesResult.data ?? [],
+  };
+}
+
 export const getBalance = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
@@ -20,22 +54,50 @@ export const getBalance = async (req: Request, res: Response) => {
 
     const branchId = typeof req.query.branchId === 'string' ? req.query.branchId.trim() : '';
     const supabase = getTenantClient(tenantId);
-    let query = supabase
-      .from('finances')
-      .select('id, tenant_id, balance, income, expense, created_at')
-      .eq('tenant_id', tenantId);
+    const { orders, expenses } = await loadFinanceFacts(tenantId);
 
-    if (branchId) {
-      query = query.eq('sucursal_id', branchId);
-    }
+    const filteredOrders = branchId
+      ? orders.filter((order) => String((order as { branch_id?: string | null }).branch_id ?? '') === branchId)
+      : orders;
+    const filteredExpenses = branchId
+      ? expenses.filter((expense) => String((expense as { sucursal_id?: string | null }).sucursal_id ?? '') === branchId)
+      : expenses;
 
-    const { data, error } = await query;
+    const totalIncome = filteredOrders.reduce((sum, order) => sum + resolveOrderIncome(order as { total_cost?: number | null; final_cost?: number | null }), 0);
+    const totalExpense = filteredExpenses.reduce((sum, item) => sum + Number((item as { amount?: number }).amount ?? 0), 0);
+    const totalBalance = Number((totalIncome - totalExpense).toFixed(2));
 
-    if (error) {
-      return res.status(502).json({ error: 'Failed to fetch balance', details: error.message });
-    }
+    const rows = [
+      {
+        id: `income-${tenantId}`,
+        tenant_id: tenantId,
+        balance: totalBalance,
+        income: totalIncome,
+        expense: totalExpense,
+        created_at: new Date().toISOString(),
+        type: 'summary',
+      },
+      ...filteredOrders.slice(0, 25).map((order) => ({
+        id: String((order as { id?: string }).id ?? `${tenantId}-order`),
+        tenant_id: tenantId,
+        balance: resolveOrderIncome(order as { total_cost?: number | null; final_cost?: number | null }),
+        income: resolveOrderIncome(order as { total_cost?: number | null; final_cost?: number | null }),
+        expense: 0,
+        created_at: String((order as { created_at?: string }).created_at ?? new Date().toISOString()),
+        type: 'order',
+      })),
+      ...filteredExpenses.slice(0, 25).map((expense) => ({
+        id: String((expense as { id?: string }).id ?? `${tenantId}-expense`),
+        tenant_id: tenantId,
+        balance: -Number((expense as { amount?: number }).amount ?? 0),
+        income: 0,
+        expense: Number((expense as { amount?: number }).amount ?? 0),
+        created_at: String((expense as { created_at?: string; expense_date?: string }).created_at ?? (expense as { expense_date?: string }).expense_date ?? new Date().toISOString()),
+        type: 'expense',
+      })),
+    ].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)));
 
-    return res.json({ success: true, data });
+    return res.json({ success: true, data: rows });
   } catch (error) {
     console.error('Error getting balance:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
@@ -50,18 +112,31 @@ export const getCashflow = async (req: Request, res: Response) => {
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
     if (!sucursalId) return res.status(400).json({ error: 'Missing sucursalId' });
 
-    const supabase = getTenantClient(tenantId);
-    const { data, error } = await supabase
-      .from('finances')
-      .select('id, tenant_id, sucursal_id, balance, income, expense, created_at')
-      .eq('tenant_id', tenantId)
-      .eq('sucursal_id', sucursalId)
-      .order('created_at', { ascending: false });
+    const { orders, expenses } = await loadFinanceFacts(tenantId);
+    const branchOrders = orders.filter((order) => String((order as { branch_id?: string | null }).branch_id ?? '') === sucursalId);
+    const branchExpenses = expenses.filter((expense) => String((expense as { sucursal_id?: string | null }).sucursal_id ?? '') === sucursalId);
 
-    if (error) {
-      return res.status(502).json({ error: 'Failed to fetch cashflow', details: error.message });
+    const grouped = new Map<string, { id: string; tenant_id: string; sucursal_id: string; balance: number; income: number; expense: number; created_at: string }>();
+
+    for (const order of branchOrders) {
+      const day = toDayKey((order as { created_at?: string }).created_at ?? null);
+      const current = grouped.get(day) ?? { id: `${sucursalId}-${day}`, tenant_id: tenantId, sucursal_id: sucursalId, balance: 0, income: 0, expense: 0, created_at: day };
+      const income = resolveOrderIncome(order as { total_cost?: number | null; final_cost?: number | null });
+      current.income += income;
+      current.balance += income;
+      grouped.set(day, current);
     }
 
+    for (const expense of branchExpenses) {
+      const day = toDayKey((expense as { expense_date?: string; created_at?: string }).expense_date ?? (expense as { created_at?: string }).created_at ?? null);
+      const current = grouped.get(day) ?? { id: `${sucursalId}-${day}`, tenant_id: tenantId, sucursal_id: sucursalId, balance: 0, income: 0, expense: 0, created_at: day };
+      const amount = Number((expense as { amount?: number }).amount ?? 0);
+      current.expense += amount;
+      current.balance -= amount;
+      grouped.set(day, current);
+    }
+
+    const data = [...grouped.values()].sort((a, b) => b.created_at.localeCompare(a.created_at));
     return res.json({ success: true, data });
   } catch (error) {
     console.error('Error getting cashflow:', error);
@@ -91,7 +166,7 @@ export const createExpense = async (req: Request, res: Response) => {
           amount: body.amount,
           description: body.description,
           category: body.category,
-          date: body.date ?? new Date().toISOString(),
+          expense_date: body.date ? body.date.slice(0, 10) : new Date().toISOString().slice(0, 10),
           created_by: req.user?.sub,
         },
       ])
