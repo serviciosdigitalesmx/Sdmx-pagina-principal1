@@ -35,8 +35,8 @@ const metrics = [
 const coreCards = [
   {
     eyebrow: "Cotizador",
-    title: "Entrada comercial rápida",
-    copy: "Equipo, diagnóstico preliminar y presupuesto sin fricción. Un flujo que convierte visitas en órdenes claras.",
+    title: "Cotización guiada",
+    copy: "Equipo, diagnóstico preliminar y presupuesto en un flujo que convierte visitas en órdenes claras.",
     bullets: ["Equipo y falla", "Cotización guiada", "Botón de WhatsApp"],
   },
   {
@@ -83,6 +83,24 @@ const productProofCards = [
   {
     title: "Portal cliente",
     copy: "Estado, timeline, PDF y evidencia en una experiencia blanca del taller.",
+  },
+];
+
+const howItWorks = [
+  {
+    step: "01",
+    title: "Configura tu taller",
+    copy: "Activa tu espacio, ajusta tu marca y deja listo el entorno para operar.",
+  },
+  {
+    step: "02",
+    title: "Recibe y da seguimiento",
+    copy: "Registra el ingreso, comparte avances y conserva evidencia en cada orden.",
+  },
+  {
+    step: "03",
+    title: "Comparte el portal",
+    copy: "Tu cliente consulta su folio, su timeline y su PDF sin llamadas innecesarias.",
   },
 ];
 
@@ -179,13 +197,13 @@ export default function Home() {
         <section className="rounded-[2.5rem] border border-cyan-400/15 bg-[linear-gradient(180deg,rgba(8,17,31,0.94),rgba(7,11,20,0.98))] px-5 py-8 shadow-[0_30px_120px_rgba(0,0,0,0.45)] lg:px-8 lg:py-12">
           <div className="mx-auto max-w-5xl text-center">
             <div className="mx-auto inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-cyan-200">
-              SaaS multitenant para talleres de reparación y gadgets en México y Latam · {trialDays} días de prueba
+              Plataforma premium para talleres de reparación y gadgets · {trialDays} días de prueba
             </div>
             <h1 className="mx-auto mt-6 max-w-4xl text-balance text-5xl font-black tracking-[-0.07em] text-white sm:text-6xl lg:text-7xl">
-              Organiza tu taller de reparación con <span className="text-cyan-300">{productName}</span>.
+              Convierte tu taller en una operación premium con <span className="text-cyan-300">{productName}</span>.
             </h1>
             <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-zinc-300 sm:text-lg">
-              Cotización, tracking, evidencia, inventario y finanzas en una sola experiencia de marca blanca. Activa tu tenant con {trialDays} días sin tarjeta.
+              Cotización, tracking, evidencia, inventario y finanzas en una sola experiencia de marca blanca. Activa tu espacio con {trialDays} días sin tarjeta.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link
@@ -212,7 +230,7 @@ export default function Home() {
             </div>
 
             <div className="mt-8 flex flex-wrap justify-center gap-2">
-              {["Recepción", "Tracking", "Inventario", "WhatsApp", "Portal cliente", "PDF", "Seguridad", "Aislamiento"].map((tag) => (
+              {["Recepción", "Tracking", "Inventario", "WhatsApp", "Portal cliente", "PDF", "Privacidad", "Marca blanca"].map((tag) => (
                 <span
                   key={tag}
                   className="rounded-full border border-zinc-700 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-zinc-200"
@@ -244,11 +262,10 @@ export default function Home() {
 
         <section className="grid gap-4 rounded-[2.5rem] border border-zinc-800/70 bg-zinc-950/85 px-5 py-8 lg:px-8">
           <div className="max-w-3xl">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-cyan-300">Lo que sí trae FIXI</p>
-            <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">Capacidades reales de FIXI.</h2>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-cyan-300">Capacidades</p>
+            <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">Todo lo que tu taller usa en un solo lugar.</h2>
             <p className="mt-4 text-base leading-8 text-zinc-300">
-              La landing debe mostrar lo que el producto hace hoy: proveedores, garantías, mensajería, checklist propio e historial de órdenes.
-              Sólo capacidades reales.
+              FIXI reúne operación, seguimiento y presentación en una experiencia diseñada para verse seria desde el primer vistazo.
             </p>
           </div>
 
@@ -257,6 +274,26 @@ export default function Home() {
               <article key={card.title} className="rounded-[1.5rem] border border-zinc-800 bg-white/5 p-5">
                 <h3 className="text-lg font-semibold text-white">{card.title}</h3>
                 <p className="mt-2 text-sm leading-7 text-zinc-400">{card.copy}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="grid gap-4 rounded-[2.5rem] border border-zinc-800/70 bg-[linear-gradient(180deg,rgba(9,9,11,0.94),rgba(15,17,21,0.98))] px-5 py-8 lg:px-8">
+          <div className="max-w-3xl">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-emerald-300">Cómo funciona</p>
+            <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">Tres pasos para empezar sin fricción.</h2>
+            <p className="mt-4 text-base leading-8 text-zinc-300">
+              La experiencia debe sentirse simple para el taller y clara para el cliente.
+            </p>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-3">
+            {howItWorks.map((item) => (
+              <article key={item.step} className="rounded-[1.5rem] border border-zinc-800 bg-white/5 p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-cyan-300">{item.step}</p>
+                <h3 className="mt-3 text-xl font-semibold text-white">{item.title}</h3>
+                <p className="mt-2 text-sm leading-7 text-zinc-400">{item.copy}</p>
               </article>
             ))}
           </div>
@@ -348,9 +385,9 @@ export default function Home() {
                 <p className="mt-3 text-4xl font-black tracking-tight text-white">{plan.price}</p>
                 <p className="mt-2 text-sm leading-6 text-zinc-400">
                   {plan.highlight
-                    ? "Ideal para talleres que quieren control real sin complejidad."
+                    ? "Ideal para talleres que quieren verse más serios y responder mejor."
                     : plan.name === "Starter"
-                      ? "Para empezar con recepción, seguimiento y presencia clara."
+                      ? "Para empezar con recepción, seguimiento y presencia profesional."
                       : "Para operaciones que ya requieren control y escala."}
                 </p>
                 <ul className="mt-5 space-y-3">
