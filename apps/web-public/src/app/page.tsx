@@ -247,7 +247,7 @@ export default function Home() {
           <div className="max-w-3xl">
             <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-cyan-300">Lo que sí trae FIXI</p>
             <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
-              Lo que Samii muestra y FIXI ya soporta.
+              Capacidades reales que FIXI ya soporta.
             </h2>
             <p className="mt-4 text-base leading-8 text-zinc-300">
               La landing debe vender lo que el producto hace hoy: proveedores, garantías, mensajería, checklist propio e historial de órdenes.
