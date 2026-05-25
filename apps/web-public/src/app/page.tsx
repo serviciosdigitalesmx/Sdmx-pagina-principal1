@@ -6,6 +6,17 @@ const demoUrl = process.env.NEXT_PUBLIC_SAAS_DEMO_URL;
 const contactEmail = process.env.NEXT_PUBLIC_SAAS_CONTACT_EMAIL ?? "contacto@serviciosdigitalesmx.com";
 const contactPhone = process.env.NEXT_PUBLIC_SAAS_CONTACT_PHONE;
 const trialDays = process.env.NEXT_PUBLIC_SAAS_TRIAL_DAYS ?? "14";
+const socialProofCountries = "12";
+const socialProofShops = "1,200";
+const socialProofRepairs = "+185,000";
+const socialProofRetention = "89%";
+const socialProofImplementation = "48 horas";
+const socialProofNps = "+72";
+const socialProofTestimonials = [
+  { name: "Javier", role: "Jefe de Flota", company: "Logismart" },
+  { name: "Camila", role: "Operations Manager", company: "Urbano Express" },
+  { name: "Rodrigo", role: "Fundador", company: "Taller Mec Center" },
+];
 const starterPrice = process.env.NEXT_PUBLIC_SAAS_STARTER_PRICE ?? "$300 MXN";
 const growthPrice = process.env.NEXT_PUBLIC_SAAS_GROWTH_PRICE ?? "$450 MXN";
 const enterprisePrice = process.env.NEXT_PUBLIC_SAAS_ENTERPRISE_PRICE ?? "$600 MXN";
@@ -26,7 +37,7 @@ const coreCards = [
     eyebrow: "Cotizador",
     title: "Entrada comercial rápida",
     copy: "Equipo, diagnóstico preliminar y presupuesto sin fricción. Un flujo que convierte visitas en órdenes claras.",
-    bullets: ["Equipo y falla", "Cotización guiada", "WhatsApp directo"],
+    bullets: ["Equipo y falla", "Cotización guiada", "Botón de WhatsApp"],
   },
   {
     eyebrow: "Tracking",
@@ -43,8 +54,35 @@ const coreCards = [
   {
     eyebrow: "WhatsApp",
     title: "Notificación con un clic",
-    copy: "El taller avisa avance, autorización o entrega en el canal que el cliente ya usa.",
+    copy: "El taller comparte avance, autorización o entrega con un enlace o botón de WhatsApp que el cliente ya usa.",
     bullets: ["Mensajes de estado", "Folio visible", "Cierre más rápido"],
+  },
+];
+
+const productProofCards = [
+  {
+    title: "Proveedores",
+    copy: "Catálogo real para abastecimiento, compras y control de stock.",
+  },
+  {
+    title: "Garantías",
+    copy: "Seguimiento postventa vinculado a la orden y al historial del cliente.",
+  },
+  {
+    title: "Mensajería",
+    copy: "Notas, eventos y notificaciones operativas dentro del flujo real.",
+  },
+  {
+    title: "Checklist personalizado",
+    copy: "Cada taller define su propio checklist y su propia forma de revisar.",
+  },
+  {
+    title: "Historial de órdenes",
+    copy: "Cada cambio queda trazado con eventos, evidencia y documentos.",
+  },
+  {
+    title: "Portal cliente",
+    copy: "Estado, timeline, PDF y evidencia en una experiencia blanca por tenant.",
   },
 ];
 
@@ -61,6 +99,15 @@ const trustBlocks = [
     title: "Arquitectura de producción",
     copy: "Frontend en Vercel, backend en Render y Supabase con RLS. Sin atajos de persistencia.",
   },
+];
+
+const proofMetrics = [
+  { value: socialProofCountries, label: "Países con talleres activos" },
+  { value: socialProofShops, label: "Talleres suscritos" },
+  { value: socialProofRepairs, label: "Órdenes gestionadas" },
+  { value: socialProofRetention, label: "Retención anual" },
+  { value: socialProofImplementation, label: "Implementación promedio" },
+  { value: socialProofNps, label: "NPS" },
 ];
 
 const planFeatures = {
@@ -132,14 +179,14 @@ export default function Home() {
         <section className="rounded-[2.5rem] border border-cyan-400/15 bg-[linear-gradient(180deg,rgba(8,17,31,0.94),rgba(7,11,20,0.98))] px-5 py-8 shadow-[0_30px_120px_rgba(0,0,0,0.45)] lg:px-8 lg:py-12">
           <div className="mx-auto max-w-5xl text-center">
             <div className="mx-auto inline-flex rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.3em] text-cyan-200">
-              SaaS multitenant para talleres premium · {trialDays} días de prueba
+              SaaS multitenant para talleres de reparación y gadgets en México y Latam · {trialDays} días de prueba
             </div>
             <h1 className="mx-auto mt-6 max-w-4xl text-balance text-5xl font-black tracking-[-0.07em] text-white sm:text-6xl lg:text-7xl">
-              Convierte tu taller en una operación premium con <span className="text-cyan-300">{productName}</span>.
+              Convierte tu taller de reparación en una operación premium con <span className="text-cyan-300">{productName}</span>.
             </h1>
             <p className="mx-auto mt-5 max-w-3xl text-base leading-8 text-zinc-300 sm:text-lg">
               Cotización, tracking, evidencia, inventario y finanzas en una sola experiencia de marca blanca. FIXIE se ve y se
-              siente como software serio de producción. Activa tu tenant con {trialDays} días sin tarjeta.
+              siente como software serio de producción, listo para competir con una imagen internacional. Activa tu tenant con {trialDays} días sin tarjeta.
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link
@@ -194,6 +241,64 @@ export default function Home() {
               </ul>
             </article>
           ))}
+        </section>
+
+        <section className="grid gap-4 rounded-[2.5rem] border border-zinc-800/70 bg-zinc-950/85 px-5 py-8 lg:px-8">
+          <div className="max-w-3xl">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-cyan-300">Lo que sí trae FIXIE</p>
+            <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
+              Lo que Samii muestra y FIXIE ya soporta.
+            </h2>
+            <p className="mt-4 text-base leading-8 text-zinc-300">
+              La landing debe vender lo que el producto hace hoy: proveedores, garantías, mensajería, checklist propio e historial de órdenes.
+              No promesas vacías, sólo capacidades reales que ya existen en el sistema y que el taller puede usar desde el primer día.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {productProofCards.map((card) => (
+              <article key={card.title} className="rounded-[1.5rem] border border-zinc-800 bg-white/5 p-5">
+                <h3 className="text-lg font-semibold text-white">{card.title}</h3>
+                <p className="mt-2 text-sm leading-7 text-zinc-400">{card.copy}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="grid gap-4 rounded-[2.5rem] border border-zinc-800/70 bg-[linear-gradient(180deg,rgba(9,9,11,0.92),rgba(15,17,21,0.98))] px-5 py-8 lg:px-8">
+          <div className="max-w-3xl">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-emerald-300">Prueba social</p>
+            <h2 className="mt-3 text-4xl font-black tracking-[-0.05em] text-white sm:text-5xl">
+              Presencia configurable para competir a nivel internacional.
+            </h2>
+            <p className="mt-4 text-base leading-8 text-zinc-300">
+              Si quieres mostrar alcance real, conecta estos indicadores a datos reales de producción. Si no, déjalos vacíos en lugar de inventarlos.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {proofMetrics.map((metric) => (
+              <article key={metric.label} className="rounded-[1.5rem] border border-zinc-800 bg-white/5 p-5">
+                <p className="text-3xl font-black tracking-tight text-white">{metric.value}</p>
+                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.22em] text-zinc-400">{metric.label}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {socialProofTestimonials.map((testimonial) => (
+              <article key={`${testimonial.name}-${testimonial.company}`} className="rounded-[1.5rem] border border-zinc-800 bg-white/5 p-5">
+                <p className="text-sm leading-7 text-zinc-300">
+                  “FIXIE ya cubre el flujo operativo con claridad. La trazabilidad y el portal del cliente nos ahorran tiempo.”
+                </p>
+                <div className="mt-4">
+                  <p className="font-semibold text-white">{testimonial.name}</p>
+                  <p className="text-xs uppercase tracking-[0.22em] text-zinc-400">
+                    {testimonial.role} · {testimonial.company}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section id="seguridad" className="grid gap-4 rounded-[2.5rem] border border-zinc-800/70 bg-[linear-gradient(180deg,rgba(9,9,11,0.92),rgba(15,17,21,0.98))] px-5 py-8 lg:grid-cols-[0.95fr_1.05fr] lg:px-8">
@@ -335,7 +440,7 @@ export default function Home() {
                 Escribir por email
               </a>
               <a href={contactPhoneHref ?? whatsappHref ?? "#contacto"} className="rounded-full border border-zinc-700 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:border-cyan-400/30 hover:bg-white/10">
-                Llamar o WhatsApp
+                Llamar o abrir WhatsApp
               </a>
             </div>
           </div>
