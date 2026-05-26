@@ -3,7 +3,7 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { saveAuthToken } from "@/lib/auth-storage";
-import { ShellBadge, srFixTheme } from "@white-label/ui/components/srfix-theme";
+import { ShellBadge, srFixTheme } from "@/components/srfix-theme";
 
 type GoogleSessionState = {
   email: string;

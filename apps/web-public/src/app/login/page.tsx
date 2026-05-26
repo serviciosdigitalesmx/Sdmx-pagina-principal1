@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
-import { ShellBadge, StatCard, srFixTheme } from "@white-label/ui/components/srfix-theme";
+import { ShellBadge, StatCard, srFixTheme } from "@/components/srfix-theme";
 import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { readAuthToken, saveAuthToken } from "@/lib/auth-storage";
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { HeroButton, ShellBadge, StatCard, srFixTheme } from "@white-label/ui/components/srfix-theme";
+import { HeroButton, ShellBadge, StatCard, srFixTheme } from "@/components/srfix-theme";
 
 const productName = process.env.NEXT_PUBLIC_SAAS_BRAND_NAME ?? "FIXI";
 const legalName = process.env.NEXT_PUBLIC_SAAS_LEGAL_NAME ?? "Servicios Digitales MX";

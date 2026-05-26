@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { HeroButton, ShellBadge, srFixTheme } from "@white-label/ui/components/srfix-theme";
+import { HeroButton, ShellBadge, srFixTheme } from "@/components/srfix-theme";
 
 type LandingResponse = {
   success: true;

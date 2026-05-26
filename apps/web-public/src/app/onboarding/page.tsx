@@ -3,7 +3,7 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { saveAuthToken } from "@/lib/auth-storage";
 import Link from "next/link";
-import { ShellBadge, StatCard, srFixTheme } from "@white-label/ui/components/srfix-theme";
+import { ShellBadge, StatCard, srFixTheme } from "@/components/srfix-theme";
 
 type RegisterState = {
   workshopName: string;
