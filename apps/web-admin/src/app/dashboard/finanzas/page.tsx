@@ -70,7 +70,7 @@ export default function Page() {
         ]}
         rows={rows}
         emptyTitle={loading ? "Cargando finanzas…" : error ? "No pudimos cargar las finanzas" : "Sin movimientos financieros todavía"}
-        emptyCopy={error || "Aquí verás balances, ingresos y egresos cuando el taller registre movimientos."}
+        emptyCopy={error || "Aquí verás balances, ingresos y egresos cuando el taller registre movimientos reales."}
       />
     </RequireRole>
   );

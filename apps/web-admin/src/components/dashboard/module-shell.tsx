@@ -42,9 +42,9 @@ export function ModuleShell({
 }: ModuleShellProps) {
   return (
     <div className="space-y-6 text-zinc-100">
-      <header className="flex flex-col gap-4 rounded-3xl border border-zinc-800 bg-zinc-950/85 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+      <header className="flex flex-col gap-4 rounded-[2rem] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(14,13,12,0.92))] p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-400 text-lg font-black text-zinc-950">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-700/20 bg-amber-500/10 text-lg font-black text-amber-50">
             <i className={icon} />
           </div>
           <div>
@@ -55,7 +55,7 @@ export function ModuleShell({
         <button
           type="button"
           onClick={() => void onAction?.()}
-          className="inline-flex items-center justify-center rounded-xl bg-slate-400 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-slate-300"
+          className="inline-flex items-center justify-center rounded-full bg-amber-50 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-amber-100"
         >
           {actionLabel}
         </button>
@@ -63,15 +63,15 @@ export function ModuleShell({
 
       <section className="grid gap-4 md:grid-cols-3">
         {stats.map((stat) => (
-          <div key={stat.label} className="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4">
-            <div className="text-xs uppercase tracking-[0.2em] text-zinc-500">{stat.label}</div>
+          <div key={stat.label} className="rounded-[1.5rem] border border-stone-700/70 bg-white/4 p-4">
+            <div className="text-xs uppercase tracking-[0.2em] text-amber-100/60">{stat.label}</div>
             <div className="mt-3 text-2xl font-semibold text-zinc-50">{stat.value}</div>
             <div className="mt-2 text-sm text-zinc-400">{stat.helper}</div>
           </div>
         ))}
       </section>
 
-      <section className="rounded-3xl border border-zinc-800 bg-zinc-950/85 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)]">
+      <section className="rounded-[2rem] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)]">
         {rows.length > 0 ? (
           <div className="overflow-hidden rounded-2xl border border-zinc-800">
             <table className="min-w-full divide-y divide-zinc-800 text-left text-sm">
@@ -86,10 +86,10 @@ export function ModuleShell({
               </thead>
               <tbody className="divide-y divide-zinc-800">
                 {rows.map((row, index) => (
-                  <tr key={`${title}-${index}`} className="bg-zinc-950">
-                    {columns.map((column) => (
-                      <td key={column.key} className="px-4 py-3 text-zinc-300">
-                        {row[column.key]}
+                    <tr key={`${title}-${index}`} className="bg-zinc-950">
+                      {columns.map((column) => (
+                        <td key={column.key} className="px-4 py-3 text-zinc-300">
+                          {row[column.key]}
                       </td>
                     ))}
                   </tr>
@@ -99,7 +99,7 @@ export function ModuleShell({
           </div>
         ) : (
           <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/50 px-6 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-950 text-xl text-slate-300">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-950 text-xl text-amber-100/70">
               <i className={icon} />
             </div>
             <h2 className="mt-4 text-lg font-semibold text-zinc-50">{emptyTitle}</h2>

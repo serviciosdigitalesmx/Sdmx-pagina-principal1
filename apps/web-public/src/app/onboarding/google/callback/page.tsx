@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
-import { getBrowserSupabaseClient } from '@/lib/supabase-browser';
-import { saveAuthToken } from '@/lib/auth-storage';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { saveAuthToken } from "@/lib/auth-storage";
+import { ShellBadge, srFixTheme } from "@white-label/ui/components/srfix-theme";
 
 type GoogleSessionState = {
   email: string;
@@ -12,9 +13,9 @@ type GoogleSessionState = {
 
 export default function GoogleCallbackPage() {
   const [form, setForm] = useState<GoogleSessionState>({
-    email: '',
-    workshopName: '',
-    phone: '',
+    email: "",
+    workshopName: "",
+    phone: "",
   });
   const [loadingSession, setLoadingSession] = useState(true);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
@@ -29,11 +30,10 @@ export default function GoogleCallbackPage() {
     const finishOAuth = async () => {
       try {
         const supabase = getBrowserSupabaseClient();
-        const code = new URL(window.location.href).searchParams.get('code');
+        const code = new URL(window.location.href).searchParams.get("code");
 
         if (code) {
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
           if (exchangeError) {
             throw exchangeError;
           }
@@ -52,19 +52,19 @@ export default function GoogleCallbackPage() {
         const session = data.session;
 
         if (!session?.access_token) {
-          throw new Error('No se pudo recuperar la sesión');
+          throw new Error("No se pudo recuperar la sesión");
         }
 
         setForm((current) => ({
           ...current,
-          email: session.user.email ?? '',
+          email: session.user.email ?? "",
         }));
       } catch (sessionErr) {
         if (!mounted) {
           return;
         }
 
-        const message = sessionErr instanceof Error ? sessionErr.message : 'Error inesperado';
+        const message = sessionErr instanceof Error ? sessionErr.message : "Error inesperado";
         setError(message);
       } finally {
         if (mounted) {
@@ -82,7 +82,6 @@ export default function GoogleCallbackPage() {
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-
     setForm((current) => ({
       ...current,
       [name]: value,
@@ -97,7 +96,7 @@ export default function GoogleCallbackPage() {
 
     try {
       if (!apiUrl) {
-        throw new Error('Falta configurar la URL del API');
+        throw new Error("Falta configurar la URL del API");
       }
 
       const supabase = getBrowserSupabaseClient();
@@ -110,13 +109,13 @@ export default function GoogleCallbackPage() {
       const accessToken = data.session?.access_token;
 
       if (!accessToken) {
-        throw new Error('La sesión no está disponible');
+        throw new Error("La sesión no está disponible");
       }
 
       const response = await fetch(`${apiUrl}/api/auth/google/complete`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           workshopName: form.workshopName,
@@ -129,7 +128,7 @@ export default function GoogleCallbackPage() {
       const payload = await response.json().catch(() => null);
 
       if (!response.ok) {
-        throw new Error(payload?.error ?? 'No se pudo completar el alta');
+        throw new Error(payload?.error ?? "No se pudo completar el alta");
       }
 
       if (payload?.token) {
@@ -141,9 +140,9 @@ export default function GoogleCallbackPage() {
         return;
       }
 
-      setSuccess('Alta completada correctamente.');
+      setSuccess("Alta completada correctamente.");
     } catch (submitError) {
-      const message = submitError instanceof Error ? submitError.message : 'Error inesperado';
+      const message = submitError instanceof Error ? submitError.message : "Error inesperado";
       setError(message);
     } finally {
       setLoadingSubmit(false);
@@ -151,19 +150,19 @@ export default function GoogleCallbackPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(44,110,159,0.12),_transparent_30%),linear-gradient(180deg,#f4f6f9_0%,#eef2f6_38%,#ffffff_100%)] px-6 py-10 text-slate-950">
-      <section className="mx-auto grid w-full max-w-3xl gap-8 rounded-[2rem] border border-slate-200 bg-white p-8 shadow-xl shadow-slate-200/60">
+    <main className="min-h-screen px-6 py-10 text-zinc-100" style={{ background: srFixTheme.background }}>
+      <section className={`${srFixTheme.surface} mx-auto grid w-full max-w-4xl gap-8 p-8`}>
         <div>
-          <p className="text-xs uppercase tracking-[0.35em] text-[#1f2937]">Google conectado</p>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight">Completa los datos del taller</h1>
-          <p className="mt-4 text-lg leading-8 text-slate-600">
+          <ShellBadge>Google conectado</ShellBadge>
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-stone-50">Completa los datos del taller</h1>
+          <p className="mt-4 text-lg leading-8 text-stone-300">
             La cuenta de Google ya fue validada. Falta el nombre del taller y el teléfono para crear tu espacio de trabajo.
           </p>
         </div>
 
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="email">
+            <label className="mb-2 block text-sm font-medium text-stone-300" htmlFor="email">
               Email de Google
             </label>
             <input
@@ -171,12 +170,12 @@ export default function GoogleCallbackPage() {
               name="email"
               value={form.email}
               readOnly
-              className="w-full rounded-2xl border border-slate-300 bg-slate-50 px-4 py-3 text-slate-700 outline-none"
+              className="w-full rounded-2xl border border-stone-700 bg-white/5 px-4 py-3 text-stone-300 outline-none"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="workshopName">
+            <label className="mb-2 block text-sm font-medium text-stone-300" htmlFor="workshopName">
               Nombre del taller
             </label>
             <input
@@ -186,13 +185,13 @@ export default function GoogleCallbackPage() {
               onChange={handleChange}
               required
               disabled={loadingSession}
-              className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[#334155] focus:ring-2 focus:ring-[#334155]/20 disabled:bg-slate-100"
+              className="w-full rounded-2xl border border-stone-700 bg-white/5 px-4 py-3 outline-none transition focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/15 disabled:bg-white/10"
               placeholder="Taller San Juan"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="phone">
+            <label className="mb-2 block text-sm font-medium text-stone-300" htmlFor="phone">
               Teléfono
             </label>
             <input
@@ -202,19 +201,19 @@ export default function GoogleCallbackPage() {
               onChange={handleChange}
               required
               disabled={loadingSession}
-              className="w-full rounded-2xl border border-slate-300 px-4 py-3 outline-none transition focus:border-[#334155] focus:ring-2 focus:ring-[#334155]/20 disabled:bg-slate-100"
+              className="w-full rounded-2xl border border-stone-700 bg-white/5 px-4 py-3 outline-none transition focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/15 disabled:bg-white/10"
               placeholder="+52 81 1234 5678"
             />
           </div>
 
           {error ? (
-            <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            <p className="rounded-2xl border border-rose-900/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
               {error}
             </p>
           ) : null}
 
           {success ? (
-            <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            <p className="rounded-2xl border border-emerald-900/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
               {success}
             </p>
           ) : null}
@@ -222,9 +221,9 @@ export default function GoogleCallbackPage() {
           <button
             type="submit"
             disabled={loadingSession || loadingSubmit}
-            className="w-full rounded-full bg-[#334155] px-6 py-3 font-semibold text-white transition hover:bg-[#1f2937] disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-full bg-amber-50 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loadingSubmit ? 'Creando tenant…' : loadingSession ? 'Validando Google…' : 'Completar registro'}
+            {loadingSubmit ? "Creando tenant…" : loadingSession ? "Validando Google…" : "Completar registro"}
           </button>
         </form>
       </section>

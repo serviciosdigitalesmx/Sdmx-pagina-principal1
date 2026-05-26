@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
+import { ShellBadge, StatCard, srFixTheme } from "@white-label/ui/components/srfix-theme";
 import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { readAuthToken, saveAuthToken } from "@/lib/auth-storage";
 
@@ -155,43 +156,39 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(44,110,159,0.12),_transparent_30%),radial-gradient(circle_at_20%_20%,_rgba(94,157,201,0.08),_transparent_24%),linear-gradient(180deg,#f4f6f9_0%,#eef2f6_54%,#ffffff_100%)] px-6 py-10 text-slate-950">
-      <section className="mx-auto grid w-full max-w-5xl gap-8 lg:grid-cols-[1fr_1.05fr]">
-        <div className="rounded-[2rem] border border-slate-200 bg-white p-8 text-slate-900 shadow-[0_30px_100px_rgba(15,23,42,0.08)] backdrop-blur-xl">
-          <p className="text-xs uppercase tracking-[0.35em] text-[#1f2937]">Acceso al taller</p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl [font-family:var(--font-display)]">
+    <main className="min-h-screen px-6 py-10 text-zinc-100" style={{ background: srFixTheme.background }}>
+      <section className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[1fr_1.05fr]">
+        <div className={`${srFixTheme.surface} p-8`}>
+          <ShellBadge>Acceso al taller</ShellBadge>
+          <h1 className="mt-5 text-4xl font-semibold tracking-tight text-stone-50 sm:text-5xl [font-family:var(--font-display)]">
             <span className="sm:hidden">Entra al sistema.</span>
             <span className="hidden sm:inline">Entra a FIXI.</span>
           </h1>
-          <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">
+          <p className="mt-4 max-w-xl text-base leading-7 text-stone-300">
             Tu acceso te lleva directo al área de trabajo del taller y mantiene tu sesión en este dispositivo hasta que cierres sesión.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/" className="rounded-full border border-slate-300 px-5 py-3 font-semibold text-slate-800 transition hover:bg-slate-50">
+            <Link href="/" className="rounded-full border border-stone-700 bg-white/5 px-5 py-3 font-semibold text-zinc-100 transition hover:border-amber-500/30 hover:bg-white/10">
               Volver al inicio
             </Link>
-            <Link href="/onboarding" className="rounded-full border border-slate-300 px-5 py-3 font-semibold text-slate-800 transition hover:bg-slate-50">
+            <Link href="/onboarding" className="rounded-full border border-stone-700 bg-white/5 px-5 py-3 font-semibold text-zinc-100 transition hover:border-amber-500/30 hover:bg-white/10">
               Crear cuenta
             </Link>
           </div>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
-            {[
-              ["Sesión persistente", "Si marcas recordar dispositivo, el acceso queda guardado."],
-              ["Inicio seguro", "La sesión se valida con Supabase y tu API real."],
-            ].map(([title, desc]) => (
-              <div key={title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <p className="text-sm font-semibold text-slate-900">{title}</p>
-                <p className="mt-1 text-sm text-slate-600">{desc}</p>
-              </div>
-            ))}
+            <StatCard value="24/7" label="sesión persistente" />
+            <StatCard value="Supabase" label="inicio seguro real" />
           </div>
+          <p className="mt-6 text-sm leading-7 text-stone-400">
+            El acceso está conectado al backend real y respeta el tenant del usuario. No hay sesión simulada ni panel falso.
+          </p>
         </div>
 
-        <div className="rounded-[2rem] border border-slate-200 bg-white p-8 text-slate-900 shadow-[0_30px_100px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+        <div className={`${srFixTheme.surface} p-8`}>
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="email">
+              <label className="mb-2 block text-sm font-medium text-stone-300" htmlFor="email">
                 Correo electrónico
               </label>
               <input
@@ -202,13 +199,13 @@ export default function LoginPage() {
                 value={form.email}
                 onChange={handleChange}
                 required
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#334155] focus:ring-2 focus:ring-[#334155]/20"
+                className="w-full rounded-2xl border border-stone-700 bg-white/5 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-stone-500 focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/15"
                 placeholder="dueno@taller.com"
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-600" htmlFor="password">
+              <label className="mb-2 block text-sm font-medium text-stone-300" htmlFor="password">
                 Contraseña
               </label>
               <input
@@ -219,30 +216,30 @@ export default function LoginPage() {
                 value={form.password}
                 onChange={handleChange}
                 required
-                className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[#334155] focus:ring-2 focus:ring-[#334155]/20"
+                className="w-full rounded-2xl border border-stone-700 bg-white/5 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-stone-500 focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/15"
                 placeholder="Tu contraseña"
               />
             </div>
 
-            <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+            <label className="flex items-center gap-3 rounded-2xl border border-stone-700 bg-white/5 px-4 py-3 text-sm text-stone-300">
               <input
                 type="checkbox"
                 name="rememberDevice"
                 checked={form.rememberDevice}
                 onChange={handleChange}
-                className="h-4 w-4 rounded border-slate-300 text-[#334155] focus:ring-[#334155]"
+                className="h-4 w-4 rounded border-stone-500 text-amber-500 focus:ring-amber-500"
               />
               Recordarme en este dispositivo
             </label>
 
             {error ? (
-              <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+              <p className="rounded-2xl border border-rose-900/40 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
                 {error}
               </p>
             ) : null}
 
             {success ? (
-              <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              <p className="rounded-2xl border border-emerald-900/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">
                 {success}
               </p>
             ) : null}
@@ -250,22 +247,22 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-full bg-[#334155] px-6 py-3 font-semibold text-white transition hover:bg-[#1f2937] disabled:cursor-not-allowed disabled:opacity-60"
+              className="w-full rounded-full bg-amber-50 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? "Entrando..." : "Acceder a FIXI"}
+              {loading ? "Ingresando..." : "Entrar al panel"}
             </button>
 
             <button
               type="button"
               onClick={handlePasswordReset}
-              disabled={resetLoading}
-              className="w-full rounded-full border border-slate-300 px-6 py-3 font-semibold text-slate-800 transition hover:border-[#334155]/30 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={resetLoading || loading}
+              className="w-full rounded-full border border-stone-700 bg-white/5 px-6 py-3 font-semibold text-zinc-100 transition hover:border-amber-500/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {resetLoading ? "Enviando correo..." : "Recuperar contraseña por correo"}
+              {resetLoading ? "Enviando..." : "Olvidé mi contraseña"}
             </button>
 
-            <p className="text-center text-xs uppercase tracking-[0.24em] text-slate-500">
-              ¿Aún no tienes acceso? Solicítalo por correo.
+            <p className="text-center text-xs uppercase tracking-[0.24em] text-stone-500">
+              El acceso se valida con Supabase y tu API real
             </p>
           </form>
         </div>

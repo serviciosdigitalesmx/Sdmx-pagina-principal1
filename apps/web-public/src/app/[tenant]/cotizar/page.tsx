@@ -112,30 +112,29 @@ export default function TenantQuotePage() {
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.12),_transparent_26%),linear-gradient(180deg,#09090b_0%,#111113_50%,#18181b_100%)] px-4 py-8 text-zinc-50">
-      <section className="mx-auto grid w-full max-w-5xl gap-8 rounded-[2rem] border border-zinc-800/70 bg-zinc-950/85 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.28)]">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(180,83,9,0.14),_transparent_26%),linear-gradient(180deg,#050505_0%,#0f0f10_50%,#141210_100%)] px-4 py-8 text-zinc-50">
+      <section className="mx-auto grid w-full max-w-5xl gap-8 rounded-[2rem] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-8 shadow-[0_20px_80px_rgba(0,0,0,0.28)]">
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
           <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-300">Cotizador</p>
+            <p className="text-xs uppercase tracking-[0.35em] text-amber-100/70">Cotizador</p>
             <h1 className="mt-3 text-4xl font-bold tracking-tight text-zinc-50 [font-family:var(--font-cormorant)]">
-              Solicita tu presupuesto
+              Cuéntanos la falla y te generamos una solicitud real
             </h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-zinc-300">
-              Cuéntanos qué equipo tienes, qué falla presenta y lo convertimos en una solicitud para el taller{" "}
-              <span className="font-semibold text-slate-950">{tenant}</span>.
+              Captura el caso, liga el equipo al tenant actual y deja lista la entrada para que recepción lo convierta en orden.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link href={`/${tenant}`} className="rounded-full border border-zinc-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-zinc-800">
+              <Link href={`/${tenant}`} className="rounded-full border border-stone-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-white/5">
                 Volver al taller
               </Link>
-              <Link href={`/${tenant}/tracking`} className="rounded-full border border-zinc-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-zinc-800">
+              <Link href={`/${tenant}/tracking`} className="rounded-full border border-stone-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-white/5">
                 Ver estatus
               </Link>
             </div>
           </div>
 
-          <aside className="rounded-[1.75rem] border border-slate-400/15 bg-slate-400/8 p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-300">Qué ocurre al enviar</p>
+          <aside className="rounded-[1.75rem] border border-amber-700/15 bg-black/20 p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/70">Qué ocurre al enviar</p>
             <ul className="mt-4 space-y-3 text-sm leading-7 text-zinc-300">
               <li>• La solicitud se envía para registrarse.</li>
               <li>• Se asocia al taller actual.</li>
@@ -144,7 +143,7 @@ export default function TenantQuotePage() {
           </aside>
         </div>
 
-        <form onSubmit={submit} className="grid gap-4 rounded-[1.5rem] border border-zinc-800 bg-zinc-900/60 p-6">
+        <form onSubmit={submit} className="grid gap-4 rounded-[1.5rem] border border-stone-700/70 bg-white/4 p-6">
           {[
             ["Nombre", "fullName", "text", "Tu nombre"],
             ["WhatsApp", "phone", "tel", "81 1234 5678"],
@@ -166,7 +165,7 @@ export default function TenantQuotePage() {
           ))}
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Problema</label>
+            <label className="mb-2 block text-sm font-medium text-zinc-300">Problema</label>
             <textarea
               value={form.issue}
               onChange={(e) => setForm((current) => ({ ...current, issue: e.target.value }))}
@@ -182,14 +181,14 @@ export default function TenantQuotePage() {
           {folio ? (
             <div className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4 text-sm text-zinc-300">
               <div className="font-semibold text-zinc-50">Folio real: {folio}</div>
-              <Link href={buildTrackingHref(tenant, folio)} className="mt-2 inline-flex font-semibold text-slate-300">
+              <Link href={buildTrackingHref(tenant, folio)} className="mt-2 inline-flex font-semibold text-amber-100">
                 Ir al tracking
               </Link>
             </div>
           ) : null}
 
           <div className="flex flex-wrap items-center gap-3">
-            <button disabled={loading} className="rounded-full bg-slate-500 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-slate-400 disabled:opacity-60">
+            <button disabled={loading} className="rounded-full bg-amber-50 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-amber-100 disabled:opacity-60">
               {loading ? "Enviando..." : "Enviar solicitud"}
             </button>
             <p className="text-sm leading-6 text-zinc-400">

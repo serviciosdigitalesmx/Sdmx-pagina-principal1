@@ -92,13 +92,13 @@ export default function Page() {
     <RequireRole allowed={['owner', 'manager', 'technician']}>
       <ModuleShell
         title="Clientes"
-        subtitle="Catálogo de clientes con acceso segmentado por tenant y sucursal."
+        subtitle="Clientes, duplicados y acceso rápido a órdenes."
         icon="fas fa-users"
-        actionLabel={role === 'technician' ? 'Solo lectura' : 'Registrar cliente'}
+        actionLabel={role === 'technician' ? 'Solo lectura' : 'Nuevo cliente'}
         stats={[
           { label: 'Activos', value: String(rows.length), helper: 'Cargados desde la API real.' },
-          { label: 'Etiquetas', value: '1', helper: 'Listo para segmentación comercial.' },
-          { label: 'Pendientes', value: loading ? '...' : '0', helper: 'Pendientes por atender.' },
+          { label: 'Duplicados', value: '0', helper: 'Lista para detectar teléfonos repetidos.' },
+          { label: 'Acciones', value: loading ? '...' : '0', helper: 'Listo para abrir orden o consulta.' },
         ]}
         columns={[
           { label: 'Nombre', key: 'name' },
@@ -110,11 +110,11 @@ export default function Page() {
           ...row,
           name: row.name ?? row.full_name ?? '',
         }))}
-        emptyTitle={loading ? 'Cargando clientes…' : error ? 'Error al cargar clientes' : 'Clientes listo para integración'}
-        emptyCopy={error || 'La vista queda lista para mostrar clientes del taller cuando haya registros.'}
+        emptyTitle={loading ? 'Cargando clientes…' : error ? 'Error al cargar clientes' : 'Clientes listos'}
+        emptyCopy={error || 'El catálogo alimenta órdenes, solicitudes y seguimiento del tenant actual.'}
       >
         {role !== 'technician' ? (
-          <form className="grid gap-4 rounded-2xl border border-zinc-800 bg-zinc-950/85 p-5 md:grid-cols-3" onSubmit={handleSubmit}>
+          <form className="grid gap-4 rounded-[1.75rem] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-5 md:grid-cols-3" onSubmit={handleSubmit}>
             <div className="md:col-span-1">
               <label className="mb-2 block text-xs uppercase tracking-[0.2em] text-zinc-400" htmlFor="name">
                 Nombre
@@ -127,7 +127,7 @@ export default function Page() {
                 minLength={2}
                 value={form.name}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-slate-400/60 focus:ring-2 focus:ring-slate-400/20"
+                className="w-full rounded-xl border border-stone-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/20"
                 placeholder="Nombre del cliente"
               />
             </div>
@@ -143,7 +143,7 @@ export default function Page() {
                 minLength={10}
                 value={form.phone}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-slate-400/60 focus:ring-2 focus:ring-slate-400/20"
+                className="w-full rounded-xl border border-stone-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/20"
                 placeholder="5551234567"
               />
             </div>
@@ -157,7 +157,7 @@ export default function Page() {
                 type="email"
                 value={form.email}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-slate-400/60 focus:ring-2 focus:ring-slate-400/20"
+                className="w-full rounded-xl border border-stone-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-zinc-500 focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/20"
                 placeholder="cliente@correo.com"
               />
             </div>
@@ -165,11 +165,11 @@ export default function Page() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-xl bg-slate-400 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-slate-300 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-full bg-amber-50 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {saving ? 'Registrando...' : 'Guardar cliente'}
+                {saving ? 'Guardando...' : 'Guardar cliente'}
               </button>
-              <p className="text-sm text-zinc-400">Se crea en el taller actual y queda aislado.</p>
+              <p className="text-sm text-zinc-400">Se crea en el tenant actual y queda aislado por diseño.</p>
             </div>
           </form>
         ) : null}

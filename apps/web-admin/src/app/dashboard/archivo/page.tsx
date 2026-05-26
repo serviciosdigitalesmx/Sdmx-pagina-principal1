@@ -116,7 +116,7 @@ export default function ArchivoPage() {
     <RequireRole allowed={["owner", "manager", "technician"]}>
       <ModuleShell
         title="Archivo"
-        subtitle="Historial de órdenes cerradas y entregadas desde órdenes reales."
+        subtitle="Archivo operativo de órdenes cerradas y entregadas."
         icon="fas fa-archive"
         actionLabel={role === "technician" ? "Solo lectura" : "Buscar archivo"}
         stats={stats}
@@ -128,7 +128,7 @@ export default function ArchivoPage() {
         ]}
         rows={rows}
         emptyTitle={loading ? "Cargando archivo…" : error ? "No pudimos cargar el archivo" : "No hay órdenes cerradas todavía"}
-        emptyCopy={error || "Cuando no hay órdenes cerradas, la pantalla muestra vacío real. El archivo deriva de /api/:tenantId/orders."}
+        emptyCopy={error || "El archivo deriva de órdenes reales del tenant y no de datos simulados."}
       />
     </RequireRole>
   );

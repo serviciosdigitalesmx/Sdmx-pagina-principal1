@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 const fieldClassName =
-  "w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-50 outline-none transition placeholder:text-zinc-500 focus:border-slate-400/60 focus:ring-2 focus:ring-slate-400/20";
+  "w-full rounded-2xl border border-stone-700 bg-zinc-950 px-4 py-3 text-zinc-50 outline-none transition placeholder:text-zinc-500 focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/20";
 
 export default function TenantTrackingPage() {
   const params = useParams<{ tenant: string }>();
@@ -52,30 +52,29 @@ export default function TenantTrackingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.12),_transparent_26%),linear-gradient(180deg,#09090b_0%,#111113_50%,#18181b_100%)] px-4 py-8 text-zinc-50">
-      <section className="mx-auto grid w-full max-w-5xl gap-8 rounded-[2rem] border border-zinc-800/70 bg-zinc-950/85 p-8 shadow-[0_20px_80px_rgba(0,0,0,0.28)]">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(180,83,9,0.14),_transparent_26%),linear-gradient(180deg,#050505_0%,#0f0f10_50%,#141210_100%)] px-4 py-8 text-zinc-50">
+      <section className="mx-auto grid w-full max-w-5xl gap-8 rounded-[2rem] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-8 shadow-[0_20px_80px_rgba(0,0,0,0.28)]">
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
           <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-slate-300">Panel del cliente</p>
+            <p className="text-xs uppercase tracking-[0.35em] text-amber-100/70">Panel del cliente</p>
             <h1 className="mt-3 text-4xl font-bold tracking-tight text-zinc-50 [font-family:var(--font-cormorant)]">
               Ver estatus de tu reparación
             </h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-zinc-300">
-              Consulta el avance de tu equipo con el folio generado en recepción para el taller{" "}
-              <span className="font-semibold text-slate-950">{tenant}</span>.
+              Consulta el avance de tu equipo con el folio generado en recepción para el taller {tenant}.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link href={`/${params.tenant}`} className="rounded-full border border-zinc-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-zinc-800">
+              <Link href={`/${params.tenant}`} className="rounded-full border border-stone-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-white/5">
                 Volver al taller
               </Link>
-              <Link href={`/${params.tenant}/cotizar`} className="rounded-full border border-zinc-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-zinc-800">
+              <Link href={`/${params.tenant}/cotizar`} className="rounded-full border border-stone-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-white/5">
                 Solicitar cotización
               </Link>
             </div>
           </div>
 
-          <aside className="rounded-[1.75rem] border border-slate-400/15 bg-slate-400/8 p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-300">Antes de consultar</p>
+          <aside className="rounded-[1.75rem] border border-amber-700/15 bg-black/20 p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/70">Antes de consultar</p>
             <ul className="mt-4 space-y-3 text-sm leading-7 text-zinc-300">
               <li>• Ten a la mano el folio de recepción.</li>
               <li>• El correo es opcional, pero ayuda a validar la consulta.</li>
@@ -84,7 +83,7 @@ export default function TenantTrackingPage() {
           </aside>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid gap-4 rounded-[1.5rem] border border-zinc-800 bg-zinc-900/60 p-6">
+        <form onSubmit={handleSubmit} className="grid gap-4 rounded-[1.5rem] border border-stone-700/70 bg-white/4 p-6">
           <div>
             <label className="mb-2 block text-sm font-medium text-zinc-300">Folio</label>
             <input
@@ -110,7 +109,7 @@ export default function TenantTrackingPage() {
           {status ? <p className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{status}</p> : null}
 
           <div className="flex flex-wrap items-center gap-3">
-            <button disabled={loading} className="rounded-full bg-slate-500 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-slate-400 disabled:opacity-60">
+            <button disabled={loading} className="rounded-full bg-amber-50 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-amber-100 disabled:opacity-60">
               {loading ? "Consultando..." : "Ver estatus"}
             </button>
             <p className="text-sm leading-6 text-zinc-400">

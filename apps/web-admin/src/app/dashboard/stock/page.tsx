@@ -155,7 +155,7 @@ export default function StockPage() {
     <RequireRole allowed={["owner", "manager", "technician"]}>
       <ModuleShell
         title="Inventarios"
-        subtitle="Productos, existencias y movimientos conectados al runtime real."
+        subtitle="Productos, existencias y movimientos del módulo Stock."
         icon="fas fa-boxes-stacked"
         actionLabel="Nuevo producto"
         onAction={() => {
@@ -176,16 +176,16 @@ export default function StockPage() {
           branch_id: row.branch_id ?? "Global",
         }))}
         emptyTitle={loading ? "Cargando inventario…" : error ? "No pudimos cargar inventario" : "No hay productos todavía"}
-        emptyCopy={error || "La lista sale del inventario del taller."}
+        emptyCopy={error || "La lista sale del inventario del taller y cruza con compras y alertas."}
       >
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <form onSubmit={handleSave} className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+          <form onSubmit={handleSave} className="space-y-4 rounded-[1.75rem] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-5">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-lg font-semibold text-zinc-50">{selected?.id ? "Editar producto" : "Crear producto"}</h2>
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-xl bg-slate-400 px-4 py-2 text-sm font-semibold text-zinc-950 disabled:opacity-60"
+                className="rounded-full bg-amber-50 px-4 py-2 text-sm font-semibold text-zinc-950 disabled:opacity-60"
               >
                 {saving ? "Guardando…" : "Guardar"}
               </button>
@@ -195,7 +195,7 @@ export default function StockPage() {
               <select
                 value={selectedId}
                 onChange={(event) => setSelectedId(event.target.value)}
-                className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-zinc-100 outline-none"
+                className="w-full rounded-xl border border-stone-700 bg-zinc-950 px-3 py-2 text-zinc-100 outline-none"
               >
                 <option value="">Nuevo producto</option>
                 {rows.map((row) => (
@@ -217,7 +217,7 @@ export default function StockPage() {
                   <input
                     value={form[key as keyof typeof form]}
                     onChange={(event) => setForm((current) => ({ ...current, [key]: event.target.value }))}
-                    className="w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 text-zinc-100 outline-none"
+                    className="w-full rounded-xl border border-stone-700 bg-zinc-950 px-3 py-2 text-zinc-100 outline-none"
                   />
                 </label>
               ))}
@@ -226,7 +226,7 @@ export default function StockPage() {
               <button
                 type="button"
                 onClick={() => void handleAdjustStock()}
-                className="rounded-xl border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-100"
+                className="rounded-full border border-stone-700 px-4 py-2 text-sm font-medium text-zinc-100"
               >
                 Ajustar stock
               </button>
@@ -236,7 +236,7 @@ export default function StockPage() {
                   setSelectedId("");
                   setForm(emptyForm);
                 }}
-                className="rounded-xl border border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-100"
+                className="rounded-full border border-stone-700 px-4 py-2 text-sm font-medium text-zinc-100"
               >
                 Limpiar
               </button>
@@ -244,7 +244,7 @@ export default function StockPage() {
             {error ? <p className="text-sm text-red-300">{error}</p> : null}
           </form>
 
-          <div className="space-y-4 rounded-2xl border border-zinc-800 bg-zinc-950 p-5">
+          <div className="space-y-4 rounded-[1.75rem] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-5">
             <h2 className="text-lg font-semibold text-zinc-50">Movimientos del producto</h2>
             <div className="space-y-2">
               {selectedMovements.length > 0 ? selectedMovements.map((movement) => (

@@ -157,14 +157,14 @@ export default function SolicitudesPage() {
     <RequireRole allowed={["owner", "manager", "technician"]}>
       <ModuleShell
         title="Solicitudes"
-        subtitle="Buzón de solicitudes públicas del taller."
+        subtitle="Buzón público de cotizaciones y entrada a órdenes."
         icon="fas fa-envelope-open-text"
         actionLabel={loading ? "Cargando..." : "Refrescar"}
         onAction={refresh}
         stats={[
           { label: "Pendientes", value: String(pendingCount), helper: "Solicitudes sin convertir." },
-          { label: "Convertidas", value: String(convertedCount), helper: "Ya pasaron a órdenes." },
-          { label: "Total", value: String(rows.length), helper: "Solicitudes registradas." },
+          { label: "Convertidas", value: String(convertedCount), helper: "Ya pasaron a órdenes reales." },
+          { label: "Total", value: String(rows.length), helper: "Registro real del tenant." },
         ]}
         columns={[
           { label: "Folio", key: "folio" },
@@ -174,14 +174,14 @@ export default function SolicitudesPage() {
         ]}
         rows={mappedRows}
         emptyTitle={loading ? "Cargando solicitudes…" : "Buzón sin datos"}
-        emptyCopy="Las solicitudes públicas llegarán desde la landing y se podrán convertir a orden sin salir del panel."
+        emptyCopy="Las solicitudes públicas llegan desde la landing y se convierten sin salir del integrador."
       >
         {error ? <p className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
         {success ? <p className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</p> : null}
 
         <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
-          <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#1f2937]">Inbox</h3>
+          <section className="rounded-[28px] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-5 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-100/70">Inbox</h3>
             <div className="mt-4 space-y-3">
               {mappedRows.map((row) => (
                 <button
@@ -189,48 +189,48 @@ export default function SolicitudesPage() {
                   type="button"
                   onClick={() => setSelectedId(row.id ?? null)}
                   className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
-                    selectedId === row.id ? "border-[#334155]/40 bg-[#334155]/10" : "border-slate-200 bg-slate-50 hover:bg-white"
+                    selectedId === row.id ? "border-amber-700/30 bg-amber-500/10" : "border-stone-700/70 bg-zinc-950/60 hover:bg-white/5"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs uppercase tracking-[0.2em] text-[#1f2937]">{row.folio}</p>
-                      <p className="mt-1 font-semibold text-slate-950">{row.customer_name}</p>
+                      <p className="text-xs uppercase tracking-[0.2em] text-amber-100/70">{row.folio}</p>
+                      <p className="mt-1 font-semibold text-zinc-50">{row.customer_name}</p>
                     </div>
-                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600">
+                    <span className="rounded-full border border-stone-700 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-300">
                       {row.statusLabel}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-slate-600">{row.device_model ?? "Sin equipo"}</p>
+                  <p className="mt-2 text-sm text-zinc-300">{row.device_model ?? "Sin equipo"}</p>
                 </button>
               ))}
             </div>
           </section>
 
-          <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
-            <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-[#1f2937]">Detalle</h3>
+          <section className="rounded-[28px] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-5 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
+            <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-100/70">Detalle</h3>
             {!selectedId ? (
-              <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
+              <div className="mt-4 rounded-2xl border border-dashed border-stone-700/70 bg-black/20 p-6 text-sm text-zinc-300">
                 Selecciona una solicitud para ver el detalle y convertirla a orden.
               </div>
             ) : detailLoading ? (
-              <div className="mt-4 text-sm text-slate-500">Cargando detalle...</div>
+              <div className="mt-4 text-sm text-zinc-400">Cargando detalle...</div>
             ) : detail ? (
               <div className="mt-4 space-y-4">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Cliente</div>
-                  <div className="mt-2 text-lg font-semibold text-slate-950">{detail.customer_name}</div>
-                  <div className="mt-1 text-sm text-slate-600">{detail.customer_phone ?? "Sin teléfono"}</div>
-                  <div className="mt-1 text-sm text-slate-600">{detail.customer_email ?? "Sin correo"}</div>
+                <div className="rounded-2xl border border-stone-700/70 bg-zinc-950/60 p-4">
+                  <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">Cliente</div>
+                  <div className="mt-2 text-lg font-semibold text-zinc-50">{detail.customer_name}</div>
+                  <div className="mt-1 text-sm text-zinc-300">{detail.customer_phone ?? "Sin teléfono"}</div>
+                  <div className="mt-1 text-sm text-zinc-300">{detail.customer_email ?? "Sin correo"}</div>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Equipo</div>
-                  <div className="mt-2 text-sm text-slate-700">{detail.device_type ?? "Sin tipo"}</div>
-                  <div className="mt-1 text-sm text-slate-700">{detail.device_model ?? "Sin modelo"}</div>
+                <div className="rounded-2xl border border-stone-700/70 bg-zinc-950/60 p-4">
+                  <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">Equipo</div>
+                  <div className="mt-2 text-sm text-zinc-300">{detail.device_type ?? "Sin tipo"}</div>
+                  <div className="mt-1 text-sm text-zinc-300">{detail.device_model ?? "Sin modelo"}</div>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Problema</div>
-                  <div className="mt-2 text-sm text-slate-700">{detail.issue_description ?? "Sin descripción"}</div>
+                <div className="rounded-2xl border border-stone-700/70 bg-zinc-950/60 p-4">
+                  <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">Problema</div>
+                  <div className="mt-2 text-sm text-zinc-300">{detail.issue_description ?? "Sin descripción"}</div>
                 </div>
                 <div className="grid gap-3 md:grid-cols-2">
                   <label className="block">
@@ -240,10 +240,10 @@ export default function SolicitudesPage() {
                       onChange={(e) => setEstimatedCost(e.target.value)}
                       type="number"
                       min={0}
-                      className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none"
+                    className="w-full rounded-xl border border-stone-700 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none"
                     />
                   </label>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                  <div className="rounded-2xl border border-stone-700/70 bg-zinc-950/60 p-4 text-sm text-zinc-300">
                     <div>Estado: {detail.normalized_status ?? detail.status ?? "pendiente"}</div>
                     <div className="mt-1">Folio: {detail.folio}</div>
                   </div>
@@ -252,7 +252,7 @@ export default function SolicitudesPage() {
                   type="button"
                   onClick={handleConvert}
                   disabled={converting}
-                  className="rounded-full bg-[#334155] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1f2937] disabled:opacity-60"
+                  className="rounded-full bg-amber-50 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-amber-100 disabled:opacity-60"
                 >
                   {converting ? "Convirtiendo..." : "Convertir a orden"}
                 </button>

@@ -24,11 +24,17 @@ export default function AuthBridgePage() {
   }, [nextUrl, token]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(44,110,159,0.12),_transparent_28%),linear-gradient(180deg,#f4f6f9_0%,#eef2f6_100%)] px-6 text-slate-950">
-      <div className="max-w-lg rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_24px_90px_rgba(15,23,42,0.08)]">
-        <p className="text-xs uppercase tracking-[0.35em] text-[#1f2937]">Sesión autenticada</p>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight">Preparando el panel</h1>
-        <p className="mt-4 text-sm leading-7 text-slate-600">
+    <main
+      className="flex min-h-screen items-center justify-center px-6 text-zinc-100"
+      style={{
+        background:
+          "radial-gradient(circle_at_top,_rgba(180,83,9,0.14),_transparent_22%),radial-gradient(circle_at_80%_10%,_rgba(251,191,36,0.08),_transparent_24%),linear-gradient(180deg,#050505_0%,#0f0f10_46%,#141210_100%)",
+      }}
+    >
+      <div className="max-w-lg rounded-[2rem] border border-stone-700 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-8 text-center shadow-[0_30px_120px_rgba(120,53,15,0.16)] backdrop-blur-xl">
+        <p className="text-xs uppercase tracking-[0.35em] text-amber-100">Sesión autenticada</p>
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight text-stone-50">Preparando el panel</h1>
+        <p className="mt-4 text-sm leading-7 text-stone-300">
           {token ? "La sesión quedó guardada. Redirigiendo al panel..." : "No llegó la sesión."}
         </p>
       </div>

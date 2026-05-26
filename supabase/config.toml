@@ -12,5 +12,12 @@ major_version = 17
 
 [auth]
 enabled = true
-site_url = "http://localhost:3000"
-additional_redirect_urls = ["http://localhost:3000"]
+site_url = "https://serviciosdigitalesmx.online"
+additional_redirect_urls = [
+  "https://serviciosdigitalesmx.online",
+  "https://serviciosdigitalesmx.online/login/reset-password",
+  "https://serviciosdigitalesmx.online/onboarding/google/callback",
+  "https://app.serviciosdigitalesmx.online/auth/bridge",
+  "http://localhost:3000",
+  "http://localhost:3001",
+]

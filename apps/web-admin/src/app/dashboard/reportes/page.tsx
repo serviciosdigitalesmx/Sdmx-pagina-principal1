@@ -79,7 +79,7 @@ export default function Page() {
         ]}
         rows={rows}
         emptyTitle={loading ? "Cargando reportes…" : error ? "No pudimos cargar reportes" : "Sin datos agregados todavía"}
-        emptyCopy={error || "Los reportes se construyen desde los datos del taller."}
+        emptyCopy={error || "Los reportes se construyen desde los datos reales del taller."}
       />
     </RequireRole>
   );

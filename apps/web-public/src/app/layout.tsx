@@ -19,7 +19,7 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "FIXI | Plataforma SaaS para talleres",
+  title: process.env.NEXT_PUBLIC_SAAS_BRAND_NAME ?? "FIXI",
   description:
     process.env.NEXT_PUBLIC_SAAS_META_DESCRIPTION ??
     "FIXI: plataforma para talleres con marca blanca, tracking y control.",
@@ -35,11 +35,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-[radial-gradient(circle_at_top,_rgba(17,24,39,0.18),_transparent_28%),linear-gradient(180deg,#09090b_0%,#111113_46%,#18181b_100%)] text-zinc-100">{children}</body>
+    <html lang="es" className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col bg-[radial-gradient(circle_at_top,_rgba(180,83,9,0.14),_transparent_28%),radial-gradient(circle_at_80%_10%,_rgba(251,191,36,0.08),_transparent_24%),linear-gradient(180deg,#050505_0%,#0f0f10_46%,#141210_100%)] text-zinc-100">{children}</body>
     </html>
   );
 }

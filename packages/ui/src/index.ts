@@ -4,3 +4,4 @@ export * from './hooks/usePdfExport';
 export * from './components/WhatsAppButton';
 export * from './components/PdfExportButton';
 export * from './components/Table';
+export * from './components/srfix-theme';

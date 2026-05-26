@@ -19,7 +19,9 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@white-label/ui": ["../../packages/ui/src/index.ts"],
+      "@white-label/ui/*": ["../../packages/ui/src/*"]
     }
   },
   "include": [
