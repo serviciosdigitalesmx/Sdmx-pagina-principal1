@@ -21,7 +21,6 @@ type TenantRow = {
   contact_name?: string | null;
   contact_email?: string | null;
   contact_phone?: string | null;
-  updated_at?: string;
 };
 
 const DEFAULT_LABELS: Record<string, string> = {
@@ -559,7 +558,7 @@ export async function loadTenantRuntimeConfig(tenantId: string): Promise<{
   ] = await Promise.all([
     supabaseAdmin
       .from('tenants')
-      .select('id, slug, name, branding, landing_content, trial_expires_at, billing_exempt, updated_at')
+      .select('id, slug, name, branding, landing_content, trial_expires_at, billing_exempt')
       .eq('id', tenantId)
       .maybeSingle(),
     supabaseAdmin
@@ -594,7 +593,7 @@ export async function loadTenantRuntimeConfig(tenantId: string): Promise<{
       .order('field_key', { ascending: true }),
     supabaseAdmin
       .from('tenant_semaphore_rules')
-      .select('id, tenant_id, industry_key, workflow_key, status_key, metric, green_until_minutes, yellow_until_minutes, red_after_minutes, priority, reason_template, suggested_action_template, action_key, enabled, metadata, created_at, updated_at')
+      .select('id, tenant_id, industry_key, workflow_key, status_key, metric, green_until_minutes, yellow_until_minutes, red_after_minutes, priority, reason_template, suggested_action_template, action_key, enabled, metadata, created_at')
       .eq('tenant_id', tenantId)
       .order('priority', { ascending: false })
       .order('status_key', { ascending: true }),
