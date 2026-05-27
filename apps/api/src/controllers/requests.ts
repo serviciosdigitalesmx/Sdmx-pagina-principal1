@@ -157,6 +157,7 @@ export async function convertServiceRequestToOrder(req: Request, res: Response) 
             model: body.deviceModel || requestRow.device_model || '',
           },
           problem_description: body.issue || requestRow.issue_description || '',
+          metadata: typeof requestRow.metadata === 'object' && requestRow.metadata ? requestRow.metadata : {},
           estimated_cost: estimatedCost,
           final_cost: finalCost,
           receipt_url: null,

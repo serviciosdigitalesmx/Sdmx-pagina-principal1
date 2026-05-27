@@ -15,6 +15,7 @@ type ServiceRequestRow = {
   device_type?: string | null;
   device_model?: string | null;
   issue_description?: string | null;
+  metadata?: Record<string, unknown> | null;
   status?: string;
   quoted_total?: number;
   deposit_amount?: number;
@@ -25,11 +26,21 @@ type ServiceRequestRow = {
   normalized_status?: string;
 };
 
+type TenantLabels = {
+  asset: string;
+  request: string;
+};
+
 const statusLabel: Record<string, string> = {
   pendiente: "Pendiente",
   en_revision: "En revisión",
   convertida: "Convertida",
   rechazada: "Rechazada",
+};
+
+const defaultTenantLabels: TenantLabels = {
+  asset: "Equipo",
+  request: "Solicitud",
 };
 
 export default function SolicitudesPage() {
@@ -44,6 +55,7 @@ export default function SolicitudesPage() {
   const [success, setSuccess] = useState("");
   const [estimatedCost, setEstimatedCost] = useState("0");
   const [copied, setCopied] = useState("");
+  const [tenantLabels, setTenantLabels] = useState<TenantLabels>(defaultTenantLabels);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,6 +81,29 @@ export default function SolicitudesPage() {
 
     void load();
 
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadSettings() {
+      try {
+        const settings = await fixService.getTenantSettings();
+        const runtimeLabels = settings.data.tenant.labels ?? settings.data.config?.labels ?? {};
+        const industry = settings.data.tenant.industry_profile as { asset_label?: string; request_label?: string } | undefined;
+        if (!cancelled) {
+          setTenantLabels({
+            asset: String(runtimeLabels.asset ?? industry?.asset_label ?? defaultTenantLabels.asset),
+            request: String(runtimeLabels.request ?? industry?.request_label ?? defaultTenantLabels.request),
+          });
+        }
+      } catch {
+        if (!cancelled) setTenantLabels(defaultTenantLabels);
+      }
+    }
+    void loadSettings();
     return () => {
       cancelled = true;
     };
@@ -186,7 +221,7 @@ export default function SolicitudesPage() {
         columns={[
           { label: "Folio", key: "folio" },
           { label: "Cliente", key: "customer_name" },
-          { label: "Equipo", key: "device_model" },
+          { label: tenantLabels.asset, key: "device_model" },
           { label: "Estado", key: "statusLabel" },
         ]}
         rows={mappedRows}
@@ -219,7 +254,7 @@ export default function SolicitudesPage() {
                       {row.statusLabel}
                     </span>
                   </div>
-                  <p className="mt-2 text-sm text-zinc-300">{row.device_model ?? "Sin equipo"}</p>
+                  <p className="mt-2 text-sm text-zinc-300">{row.device_model ?? `Sin ${tenantLabels.asset.toLowerCase()}`}</p>
                 </button>
               ))}
             </div>
@@ -242,7 +277,7 @@ export default function SolicitudesPage() {
                   <div className="mt-1 text-sm text-zinc-300">{detail.customer_email ?? "Sin correo"}</div>
                 </div>
                 <div className="rounded-2xl border border-stone-700/70 bg-zinc-950/60 p-4">
-                  <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">Equipo</div>
+                  <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">{tenantLabels.asset}</div>
                   <div className="mt-2 text-sm text-zinc-300">{detail.device_type ?? "Sin tipo"}</div>
                   <div className="mt-1 text-sm text-zinc-300">{detail.device_model ?? "Sin modelo"}</div>
                 </div>
@@ -250,6 +285,12 @@ export default function SolicitudesPage() {
                   <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">Problema</div>
                   <div className="mt-2 text-sm text-zinc-300">{detail.issue_description ?? "Sin descripción"}</div>
                 </div>
+                {detail.metadata && Object.keys(detail.metadata).length > 0 ? (
+                  <div className="rounded-2xl border border-stone-700/70 bg-zinc-950/60 p-4">
+                    <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">Campos dinámicos</div>
+                    <pre className="mt-2 overflow-x-auto text-xs leading-6 text-zinc-300">{JSON.stringify(detail.metadata, null, 2)}</pre>
+                  </div>
+                ) : null}
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"

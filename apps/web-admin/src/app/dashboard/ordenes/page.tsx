@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { RequireRole } from "@/components/guard/RequireRole";
 import { useAuth } from "@/components/guard/use-auth";
-import { ModuleShell } from "@/components/dashboard/module-shell";
 import { OrderDetailDrawer, type OrderDetailData } from "@/components/dashboard/orders/order-detail-drawer";
 import { OrderIntakeModal, type OrderCreationSummary, type OrderIntakeFiles, type OrderIntakeFormState } from "@/components/dashboard/orders/order-intake-modal";
 import { fixService } from "@/services/fixService";
+import { type DynamicFieldDefinition } from "@white-label/ui";
 
 type OrderRow = {
   id?: string;
@@ -31,9 +31,22 @@ type OrderRow = {
   };
   estimated_cost?: number;
   final_cost?: number;
+  operational_risk?: {
+    color?: TrafficLight;
+    reason?: string;
+    suggested_action?: string;
+    elapsed_minutes?: number | null;
+    rule_applied?: string | null;
+    priority?: number;
+  };
 };
 
 type OrderStatusOption = { key: string; label: string };
+type TenantLabels = {
+  asset: string;
+  order: string;
+  request: string;
+};
 
 const defaultStatusOptions: OrderStatusOption[] = [
   { key: "recibido", label: "Recibido" },
@@ -42,6 +55,14 @@ const defaultStatusOptions: OrderStatusOption[] = [
   { key: "listo", label: "Listo" },
   { key: "entregado", label: "Entregado" },
 ];
+
+const defaultTenantLabels: TenantLabels = {
+  asset: "Equipo",
+  order: "Orden",
+  request: "Solicitud",
+};
+
+type TrafficLight = "red" | "yellow" | "green" | "gray";
 
 const initialForm: OrderIntakeFormState = {
   quoteFolio: "",
@@ -65,6 +86,17 @@ const initialFiles: OrderIntakeFiles = {
   intakePhotos: [],
 };
 
+function coerceDynamicValue(definition: DynamicFieldDefinition, value: string | boolean | undefined) {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+  if (definition.field_type === "number" || definition.field_type === "money") {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  }
+  return value;
+}
+
 type OrderChecklist = {
   has_charger?: boolean;
   screen_condition?: string | null;
@@ -72,8 +104,6 @@ type OrderChecklist = {
   backup_required?: boolean;
   notes?: string | null;
 };
-
-type TrafficLight = "red" | "yellow" | "green";
 
 type PrioritizedOrder = OrderRow & {
   urgencyLevel: TrafficLight;
@@ -108,13 +138,13 @@ function isUuid(value: string | null | undefined) {
   return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
-function whatsappLink(phone?: string | null, tenantSlug?: string | null, portalBaseUrl?: string | null, folio?: string | null) {
+function whatsappLink(phone?: string | null, tenantSlug?: string | null, portalBaseUrl?: string | null, folio?: string | null, assetLabel = "equipo") {
   if (!phone) return null;
   const normalized = phone.replace(/\D/g, "");
   if (!normalized) return null;
   const portalUrl = portalBaseUrl && tenantSlug ? buildPortalUrl(portalBaseUrl, tenantSlug, folio) : "";
   const message = encodeURIComponent(
-    `Bienvenido a Marca Blanca. Aquí puedes consultar el estatus de tu equipo: ${portalUrl}`
+    `Bienvenido a Marca Blanca. Aquí puedes consultar el estatus de tu ${assetLabel.toLowerCase()}: ${portalUrl}`
   );
   return `https://wa.me/${normalized}?text=${message}`;
 }
@@ -132,6 +162,23 @@ function resolveDueDate(order: OrderRow) {
 }
 
 function getTrafficLight(order: OrderRow): PrioritizedOrder {
+  const risk = order.operational_risk;
+  if (risk?.color) {
+    const urgencyLevel = risk.color;
+    return {
+      ...order,
+      urgencyLevel,
+      urgencyLabel: risk.reason ?? (urgencyLevel === "red" ? "Urgente" : urgencyLevel === "yellow" ? "Próximo" : urgencyLevel === "gray" ? "Cerrado" : "Con margen"),
+      urgencyScore: typeof risk.priority === "number" ? risk.priority : 0,
+      dueDateText:
+        typeof risk.elapsed_minutes === "number"
+          ? `${risk.elapsed_minutes} min`
+          : "Sin cálculo",
+      dueDateSort: typeof risk.elapsed_minutes === "number" ? risk.elapsed_minutes : Number.MAX_SAFE_INTEGER,
+      pulse: urgencyLevel === "red",
+      isArchived: urgencyLevel === "gray" || normalizeStatus(order.status) === "entregado",
+    };
+  }
   const now = new Date();
   const dueDate = resolveDueDate(order);
   const status = normalizeStatus(order.status);
@@ -146,10 +193,10 @@ function getTrafficLight(order: OrderRow): PrioritizedOrder {
   const isArchived = status === "entregado";
   const isCritical = !isArchived && (status === "listo" || (diffDays !== null && diffDays <= 1));
   const isWarning = !isArchived && !isCritical && (status === "reparacion" || (diffDays !== null && diffDays <= 3));
-  const urgencyLevel: TrafficLight = isArchived ? "green" : isCritical ? "red" : isWarning ? "yellow" : "green";
+  const urgencyLevel: TrafficLight = isArchived ? "gray" : isCritical ? "red" : isWarning ? "yellow" : "green";
 
   const urgencyLabel =
-    urgencyLevel === "red" ? "Urgente" : urgencyLevel === "yellow" ? "Próximo" : "Con margen";
+    urgencyLevel === "red" ? "Urgente" : urgencyLevel === "yellow" ? "Próximo" : urgencyLevel === "gray" ? "Cerrado" : "Con margen";
 
   return {
     ...order,
@@ -168,6 +215,7 @@ function getTrafficLight(order: OrderRow): PrioritizedOrder {
 function getTrafficLightTone(level: TrafficLight) {
   if (level === "red") return "border-rose-500/35 bg-rose-500/10 text-rose-100";
   if (level === "yellow") return "border-amber-500/35 bg-amber-500/10 text-amber-100";
+  if (level === "gray") return "border-zinc-500/35 bg-zinc-500/10 text-zinc-100";
   return "border-emerald-500/35 bg-emerald-500/10 text-emerald-100";
 }
 
@@ -219,8 +267,7 @@ async function compressImageFiles(files: File[]) {
 }
 
 export default function OrdenesKanbanPage() {
-  const { role, tenantSlug, sucursalId } = useAuth();
-  const [mounted, setMounted] = useState(false);
+  const { tenantSlug, sucursalId } = useAuth();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -234,6 +281,9 @@ export default function OrdenesKanbanPage() {
   const [files, setFiles] = useState<OrderIntakeFiles>(initialFiles);
   const [creationSummary, setCreationSummary] = useState<OrderCreationSummary | null>(null);
   const [statusOptions, setStatusOptions] = useState<OrderStatusOption[]>(defaultStatusOptions);
+  const [tenantLabels, setTenantLabels] = useState<TenantLabels>(defaultTenantLabels);
+  const [dynamicFieldDefinitions, setDynamicFieldDefinitions] = useState<DynamicFieldDefinition[]>([]);
+  const [dynamicFieldValues, setDynamicFieldValues] = useState<Record<string, string | boolean>>({});
   const [copiedText, setCopiedText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [trafficFilter, setTrafficFilter] = useState<TrafficFilter>("all");
@@ -249,10 +299,6 @@ export default function OrdenesKanbanPage() {
     if (!base || !tenantSlug) return null;
     return `${base}/t/${encodeURIComponent(tenantSlug)}/portal`;
   }, [customerPortalBase, tenantSlug]);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -282,16 +328,31 @@ export default function OrdenesKanbanPage() {
     async function loadSettings() {
       try {
         const settings = await fixService.getTenantSettings();
-        const operational = (settings.data.tenant.operational_settings as { orderStatuses?: Array<{ key?: string; label?: string }> } | undefined) ?? undefined;
-        const options = operational?.orderStatuses?.filter((item) => typeof item?.key === "string" && item.key.trim().length > 0).map((item) => ({
+        const runtimeLabels = settings.data.tenant.labels ?? settings.data.config?.labels ?? {};
+        const industry = settings.data.tenant.industry_profile as { asset_label?: string; order_label?: string; request_label?: string } | undefined;
+        const fieldDefinitions = (settings.data.tenant.field_definitions ?? settings.data.config?.fieldDefinitions ?? []) as DynamicFieldDefinition[];
+        const options = settings.data.tenant.status_options?.service_orders?.filter((item) => typeof item?.key === "string" && item.key.trim().length > 0).map((item) => ({
           key: String(item.key),
           label: String(item.label ?? item.key),
-        }));
-        if (!cancelled && options && options.length > 0) {
-          setStatusOptions(options);
+        })) ?? [];
+        const operational = (settings.data.tenant.operational_settings as { orderStatuses?: Array<{ key?: string; label?: string }> } | undefined) ?? undefined;
+        const fallbackOptions = operational?.orderStatuses?.filter((item) => typeof item?.key === "string" && item.key.trim().length > 0).map((item) => ({
+          key: String(item.key),
+          label: String(item.label ?? item.key),
+        })) ?? [];
+        if (!cancelled) {
+          setStatusOptions(options.length > 0 ? options : fallbackOptions.length > 0 ? fallbackOptions : defaultStatusOptions);
+          setTenantLabels({
+            asset: String(runtimeLabels.asset ?? industry?.asset_label ?? defaultTenantLabels.asset),
+            order: String(runtimeLabels.order ?? industry?.order_label ?? defaultTenantLabels.order),
+            request: String(runtimeLabels.request ?? industry?.request_label ?? defaultTenantLabels.request),
+          });
+          setDynamicFieldDefinitions(fieldDefinitions.filter((item) => item.entity === "service_orders" && item.visible !== false));
         }
       } catch {
         if (!cancelled) setStatusOptions(defaultStatusOptions);
+        if (!cancelled) setTenantLabels(defaultTenantLabels);
+        if (!cancelled) setDynamicFieldDefinitions([]);
       }
     }
 
@@ -324,9 +385,6 @@ export default function OrdenesKanbanPage() {
 
     if (selectedOrderId) {
       void loadDetail(selectedOrderId);
-    } else {
-      setDetail(null);
-      setDetailChecklist(null);
     }
 
     return () => {
@@ -365,7 +423,7 @@ export default function OrdenesKanbanPage() {
         return haystack.includes(normalizedQuery);
       })
       .sort((a, b) => {
-        const levelWeight = { red: 0, yellow: 1, green: 2 } as const;
+        const levelWeight = { red: 0, yellow: 1, green: 2, gray: 3 } as const;
         const levelDiff = levelWeight[a.urgencyLevel] - levelWeight[b.urgencyLevel];
         if (levelDiff !== 0) return levelDiff;
         if (sortMode === "oldest") {
@@ -379,15 +437,14 @@ export default function OrdenesKanbanPage() {
   const redOrders = prioritizedOrders.filter((order) => order.urgencyLevel === "red");
   const yellowOrders = prioritizedOrders.filter((order) => order.urgencyLevel === "yellow");
   const greenOrders = prioritizedOrders.filter((order) => order.urgencyLevel === "green");
+  const grayOrders = prioritizedOrders.filter((order) => order.urgencyLevel === "gray");
   const totalOpenOrders = prioritizedOrders.filter((order) => !order.isArchived).length;
   const activeRedCount = redOrders.length;
   const activeYellowCount = yellowOrders.length;
   const activeGreenCount = greenOrders.length;
+  const archivedCount = grayOrders.length;
 
   const detailOrder = detail?.order ?? null;
-  const detailPhone = getDetailPhone(detailOrder as OrderRow | null);
-  const detailWaLink = whatsappLink(detailPhone, tenantSlug, customerPortalBase, detailOrder?.folio);
-
   async function handleEditOrderDetails(payload: {
     clientName?: string;
     clientPhone?: string;
@@ -433,6 +490,27 @@ export default function OrdenesKanbanPage() {
       setSaving(true);
       setError("");
       const branchId = isUuid(sucursalId) ? sucursalId : undefined;
+      for (const definition of dynamicFieldDefinitions) {
+        if (!definition.required || definition.visible === false) continue;
+        const value = dynamicFieldValues[definition.field_key];
+        const missing =
+          definition.field_type === "boolean"
+            ? value === undefined || value === null
+            : typeof value === "string"
+              ? value.trim().length === 0
+              : value === undefined || value === null;
+        if (missing) {
+          throw new Error(`Falta completar el campo requerido: ${definition.field_label}`);
+        }
+      }
+
+      const metadata = dynamicFieldDefinitions.reduce<Record<string, string | boolean | number>>((acc, definition) => {
+        const value = coerceDynamicValue(definition, dynamicFieldValues[definition.field_key]);
+        if (value !== undefined) {
+          acc[definition.field_key] = value;
+        }
+        return acc;
+      }, {});
 
       const created = (await fixService.createOrder({
         clientName: form.clientName.trim(),
@@ -452,6 +530,7 @@ export default function OrdenesKanbanPage() {
           backupRequired: form.backupRequired,
           notes: form.intakeNotes.trim(),
         },
+        metadata,
         receiptUrl: "",
         branchId,
       })) as OrderRow;
@@ -472,9 +551,10 @@ export default function OrdenesKanbanPage() {
         null;
       const portalUrl = customerPortalUrl ? `${customerPortalUrl}?folio=${encodeURIComponent(created.folio ?? "ORD")}` : null;
       const whatsappUrl = created.folio
-        ? whatsappLink(form.clientPhone.trim(), tenantSlug, customerPortalBase, created.folio) ?? null
+        ? whatsappLink(form.clientPhone.trim(), tenantSlug, customerPortalBase, created.folio, tenantLabels.asset) ?? null
         : null;
       setFiles(initialFiles);
+      setDynamicFieldValues({});
       if (created.id) {
         setSelectedOrderId(created.id);
         setCreationSummary({
@@ -603,29 +683,12 @@ export default function OrdenesKanbanPage() {
     window.print();
   }
 
-  if (!mounted) {
-    return (
-      <RequireRole allowed={["owner", "manager", "technician"]}>
-        <div className="space-y-6 text-slate-950">
-          <header className="flex flex-col justify-between gap-4 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)] sm:flex-row sm:items-center">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-zinc-50 [font-family:var(--font-display)]">Nueva Orden de Servicio</h1>
-              <p className="mt-1 text-sm text-zinc-400">Recepción profesional · seguimiento técnico · salida directa a WhatsApp.</p>
-            </div>
-            <div className="h-11 w-36 rounded-full bg-zinc-800" aria-busy="true" />
-          </header>
-          <div className="rounded-[24px] border border-zinc-800 bg-zinc-950/85 px-4 py-8 text-center text-sm text-zinc-400 shadow-[0_12px_50px_rgba(0,0,0,0.24)]">Cargando órdenes...</div>
-        </div>
-      </RequireRole>
-    );
-  }
-
   return (
     <RequireRole allowed={["owner", "manager", "technician"]}>
       <div className="space-y-6 text-slate-950">
         <header className="flex flex-col justify-between gap-4 rounded-[28px] border border-zinc-800 bg-zinc-950/85 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)] sm:flex-row sm:items-center">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-50 [font-family:var(--font-display)]">Nueva Orden de Servicio</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-50 [font-family:var(--font-display)]">Nueva {tenantLabels.order}</h1>
             <p className="mt-1 text-sm text-zinc-400">Panel técnico · semáforo operativo · detalle real.</p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -646,7 +709,7 @@ export default function OrdenesKanbanPage() {
         {copiedText ? <p className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">{copiedText} copiado</p> : null}
 
         <section className="rounded-[28px] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-5 shadow-[0_12px_50px_rgba(0,0,0,0.24)]">
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 md:grid-cols-5">
             <div className="rounded-[22px] border border-rose-500/25 bg-[linear-gradient(180deg,rgba(127,29,29,0.92),rgba(69,10,10,0.95))] p-4 shadow-[0_0_0_1px_rgba(248,113,113,0.12)]">
               <div className="text-xs uppercase tracking-[0.24em] text-rose-100/70">Críticos (&lt;2 días)</div>
               <div className="mt-2 text-3xl font-black text-rose-50">{activeRedCount}</div>
@@ -667,6 +730,11 @@ export default function OrdenesKanbanPage() {
               <div className="mt-2 text-3xl font-black text-sky-50">{totalOpenOrders}</div>
               <div className="mt-2 text-sm text-sky-100/80">Órdenes activas visibles en el semáforo.</div>
             </div>
+            <div className="rounded-[22px] border border-zinc-500/25 bg-[linear-gradient(180deg,rgba(39,39,42,0.92),rgba(24,24,27,0.95))] p-4 shadow-[0_0_0_1px_rgba(161,161,170,0.12)]">
+              <div className="text-xs uppercase tracking-[0.24em] text-zinc-100/70">Cerradas</div>
+              <div className="mt-2 text-3xl font-black text-zinc-50">{archivedCount}</div>
+              <div className="mt-2 text-sm text-zinc-100/80">Órdenes completadas o archivadas.</div>
+            </div>
           </div>
 
           <div className="mt-5 rounded-[24px] border border-sky-500/20 bg-[linear-gradient(180deg,rgba(15,23,42,0.95),rgba(2,6,23,0.98))] p-4 shadow-[0_0_0_1px_rgba(56,189,248,0.09)]">
@@ -676,7 +744,7 @@ export default function OrdenesKanbanPage() {
                 <input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar por folio, cliente o equipo..."
+                  placeholder={`Buscar por folio, cliente o ${tenantLabels.asset.toLowerCase()}...`}
                   className="w-full bg-transparent text-sm outline-none placeholder:text-sky-100/40"
                 />
               </label>
@@ -689,6 +757,7 @@ export default function OrdenesKanbanPage() {
                 <option value="red">Rojo</option>
                 <option value="yellow">Amarillo</option>
                 <option value="green">Verde</option>
+                <option value="gray">Cerrado</option>
               </select>
               <select
                 value={statusFilter}
@@ -729,20 +798,21 @@ export default function OrdenesKanbanPage() {
           </div>
 
           <div className="mt-5 space-y-5">
-            {[
+              {[
               { key: "red", title: "Urgentes", helper: "Entregar o reparar hoy", rows: redOrders },
               { key: "yellow", title: "Próximas", helper: "Ya requieren seguimiento", rows: yellowOrders },
               { key: "green", title: "Con margen", helper: "Todavía tienen tiempo", rows: greenOrders },
+              { key: "gray", title: "Cerradas", helper: "Históricas o ya finalizadas", rows: grayOrders },
             ].map((group) => (
               <div key={group.key} className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className={`text-sm font-semibold uppercase tracking-[0.22em] ${group.key === "red" ? "text-rose-100" : group.key === "yellow" ? "text-amber-100" : "text-emerald-100"}`}>
+                    <h2 className={`text-sm font-semibold uppercase tracking-[0.22em] ${group.key === "red" ? "text-rose-100" : group.key === "yellow" ? "text-amber-100" : group.key === "gray" ? "text-zinc-100" : "text-emerald-100"}`}>
                       {group.title}
                     </h2>
                     <p className="mt-1 text-xs text-zinc-400">{group.helper}</p>
                   </div>
-                  <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${group.key === "red" ? "border-rose-500/30 bg-rose-500/10 text-rose-100" : group.key === "yellow" ? "border-amber-500/30 bg-amber-500/10 text-amber-100" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"}`}>
+                  <span className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${group.key === "red" ? "border-rose-500/30 bg-rose-500/10 text-rose-100" : group.key === "yellow" ? "border-amber-500/30 bg-amber-500/10 text-amber-100" : group.key === "gray" ? "border-zinc-500/30 bg-zinc-500/10 text-zinc-100" : "border-emerald-500/30 bg-emerald-500/10 text-emerald-100"}`}>
                     {group.rows.length}
                   </span>
                 </div>
@@ -750,7 +820,7 @@ export default function OrdenesKanbanPage() {
                 <div className="grid gap-3">
                   {group.rows.map((order) => {
                     const phone = getDetailPhone(order);
-                    const contactLink = whatsappLink(phone, tenantSlug, customerPortalBase, order.folio);
+                    const contactLink = whatsappLink(phone, tenantSlug, customerPortalBase, order.folio, tenantLabels.asset);
                     const tone = getTrafficLightTone(order.urgencyLevel);
                     return (
                       <article
@@ -765,6 +835,7 @@ export default function OrdenesKanbanPage() {
                             <p className="mt-1 text-xs uppercase tracking-[0.18em] opacity-80">
                               {order.status ?? "Sin estado"} · {order.urgencyLabel}
                             </p>
+                            {order.operational_risk?.reason ? <p className="mt-2 text-xs text-zinc-500">{order.operational_risk.reason}</p> : null}
                           </div>
                           <div className="flex flex-col items-end gap-2">
                             <span className="rounded-full bg-black/20 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-100">
@@ -774,11 +845,15 @@ export default function OrdenesKanbanPage() {
                               <span className="rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-white">
                                 ¡Atención ya!
                               </span>
+                            ) : order.urgencyLevel === "gray" ? (
+                              <span className="rounded-full border border-white/20 bg-white/10 px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-white">
+                                Cerrada
+                              </span>
                             ) : null}
                           </div>
                         </div>
 
-                        <p className="mt-3 text-sm text-zinc-50/90">{order.device_model ?? order.device_info?.model ?? "Equipo sin detallar"}</p>
+                        <p className="mt-3 text-sm text-zinc-50/90">{order.device_model ?? order.device_info?.model ?? `${tenantLabels.asset} sin detallar`}</p>
                         <p className="mt-2 text-sm leading-6 text-zinc-50/80">{order.problem_description ?? "Sin descripción"}</p>
                         <div className="mt-3 inline-flex rounded-full border border-black/10 bg-black/20 px-3 py-1 text-xs font-semibold text-zinc-50">
                           Estimado ${Number(order.estimated_cost ?? 0).toFixed(2)} · Final ${Number(order.final_cost ?? 0).toFixed(2)}
@@ -896,6 +971,8 @@ export default function OrdenesKanbanPage() {
           successSummary={creationSummary}
           customerPortalBase={customerPortalBase}
           tenantSlug={tenantSlug}
+          dynamicFieldDefinitions={dynamicFieldDefinitions}
+          dynamicFieldValues={dynamicFieldValues}
           onClose={() => {
             setIsModalOpen(false);
             setCreationSummary(null);
@@ -904,8 +981,10 @@ export default function OrdenesKanbanPage() {
             setCreationSummary(null);
             setForm(initialForm);
             setIsModalOpen(false);
+            setDynamicFieldValues({});
           }}
           onChange={(name, value) => setForm((current) => ({ ...current, [name]: value }))}
+          onDynamicFieldChange={(fieldKey, value) => setDynamicFieldValues((current) => ({ ...current, [fieldKey]: value }))}
           onPhotoChange={(photos) => {
             void compressImageFiles(photos).then((compressed) => {
               setFiles((current) => ({ ...current, intakePhotos: compressed.slice(0, 3) }));

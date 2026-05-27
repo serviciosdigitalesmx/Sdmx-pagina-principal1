@@ -216,6 +216,11 @@ Alcance de esta auditoría:
   - consultar orden por folio
   - navegar a cotizar
 
+#### Verificación actualizada
+
+- El flujo `auth/bridge` de `web-admin` ya no bloquea la sesión por una URL canónica vacía; el token se guarda y el panel continúa al dashboard en el mismo origen.
+- La diferencia restante en este tramo es de configuración canónica, no de bloqueo funcional del flujo post-login.
+
 ### 2.2 Estados
 
 #### Source
@@ -365,6 +370,7 @@ Alcance de esta auditoría:
   - integrador interno
   - panel técnico / recepción
   - panel de seguridad
+- El flujo post-login de `web-admin` ya quedó operativo y no debe seguir contándose como bloqueo abierto.
 
 ## 4. Contrato Visual
 
@@ -489,4 +495,3 @@ Pero el contrato sigue siendo una interpretación, no una réplica exacta del so
 - [apps/web-clientes/src/app/page.tsx](/Users/jesusvilla/Desktop/Sdmx-pagina-principal/apps/web-clientes/src/app/page.tsx)
 - [apps/web-clientes/src/app/t/[tenantSlug]/portal/page.tsx](/Users/jesusvilla/Desktop/Sdmx-pagina-principal/apps/web-clientes/src/app/t/%5BtenantSlug%5D/portal/page.tsx)
 - [packages/ui/src/components/srfix-theme.tsx](/Users/jesusvilla/Desktop/Sdmx-pagina-principal/packages/ui/src/components/srfix-theme.tsx)
-

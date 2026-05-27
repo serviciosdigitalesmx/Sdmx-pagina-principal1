@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { DynamicFields, type DynamicFieldDefinition } from "@white-label/ui";
 
 export type OrderIntakeFormState = {
   quoteFolio: string;
@@ -42,9 +43,12 @@ type Props = {
   successSummary: OrderCreationSummary | null;
   customerPortalBase: string;
   tenantSlug: string | null;
+  dynamicFieldDefinitions?: DynamicFieldDefinition[];
+  dynamicFieldValues?: Record<string, string | boolean>;
   onClose: () => void;
   onResetFlow: () => void;
   onChange: (name: keyof OrderIntakeFormState, value: string | boolean) => void;
+  onDynamicFieldChange?: (fieldKey: string, value: string | boolean) => void;
   onPhotoChange: (files: File[]) => void;
   onSubmit: () => void;
   onCopy: (value: string, label: string) => void;
@@ -72,9 +76,12 @@ export function OrderIntakeModal({
   successSummary,
   customerPortalBase,
   tenantSlug,
+  dynamicFieldDefinitions = [],
+  dynamicFieldValues = {},
   onClose,
   onResetFlow,
   onChange,
+  onDynamicFieldChange,
   onPhotoChange,
   onSubmit,
   onCopy,
@@ -248,6 +255,16 @@ export function OrderIntakeModal({
                       <p className="mt-3 text-sm text-zinc-400">Se comprimirá automáticamente para envío rápido.</p>
                       {files.intakePhotos.length > 0 ? <p className="mt-2 text-sm text-sky-300">{files.intakePhotos[0].name}</p> : null}
                     </div>
+
+                    {dynamicFieldDefinitions.length > 0 && onDynamicFieldChange ? (
+                      <DynamicFields
+                        title="Campos del tenant"
+                        definitions={dynamicFieldDefinitions}
+                        values={dynamicFieldValues}
+                        onChange={onDynamicFieldChange}
+                        className="rounded-[22px] border border-sky-500/10 bg-black/20 p-4"
+                      />
+                    ) : null}
 
                     <div className="flex justify-between">
                       <button type="button" onClick={() => setStep(1)} className="rounded-2xl border border-zinc-700 bg-slate-950 px-8 py-4 text-lg font-semibold text-zinc-100">

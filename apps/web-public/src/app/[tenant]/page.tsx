@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ShellBadge, srFixTheme } from "@/components/srfix-theme";
+import { srFixTheme } from "@/components/srfix-theme";
 
 type LandingResponse = {
   success: true;
@@ -14,6 +14,12 @@ type LandingResponse = {
       contact_phone?: string | null;
       contact_email?: string | null;
       branding?: { primaryColor?: string; secondaryColor?: string; logoUrl?: string } | null;
+      config?: {
+        labels?: Record<string, string>;
+        templates?: {
+          landing?: Record<string, unknown>;
+        };
+      } | null;
     };
     landingContent: {
       heroTitle: string;
@@ -81,6 +87,17 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
   const { tenant } = await params;
   const data = await getTenantLanding(tenant);
   const landing = data.landingContent;
+  const templateLanding = data.tenant.config?.templates?.landing ?? {};
+  const labels = data.tenant.config?.labels ?? {};
+  const services = Array.isArray(templateLanding.services) && templateLanding.services.length > 0 ? templateLanding.services : landing.services;
+  const heroTitle = typeof templateLanding.heroTitle === "string" && templateLanding.heroTitle.trim().length > 0 ? templateLanding.heroTitle : landing.heroTitle;
+  const heroSubtitle = typeof templateLanding.heroSubtitle === "string" && templateLanding.heroSubtitle.trim().length > 0 ? templateLanding.heroSubtitle : landing.heroSubtitle;
+  const heroDescription = typeof templateLanding.heroDescription === "string" && templateLanding.heroDescription.trim().length > 0 ? templateLanding.heroDescription : landing.heroDescription;
+  const primaryCtaLabel = typeof templateLanding.primaryCtaLabel === "string" && templateLanding.primaryCtaLabel.trim().length > 0 ? templateLanding.primaryCtaLabel : landing.primaryCtaLabel;
+  const primaryCtaHref = typeof templateLanding.primaryCtaHref === "string" && templateLanding.primaryCtaHref.trim().length > 0 ? templateLanding.primaryCtaHref : landing.primaryCtaHref;
+  const secondaryCtaLabel = typeof templateLanding.secondaryCtaLabel === "string" && templateLanding.secondaryCtaLabel.trim().length > 0 ? templateLanding.secondaryCtaLabel : landing.secondaryCtaLabel;
+  const secondaryCtaHref = typeof templateLanding.secondaryCtaHref === "string" && templateLanding.secondaryCtaHref.trim().length > 0 ? templateLanding.secondaryCtaHref : landing.secondaryCtaHref;
+  const contactLabel = typeof templateLanding.contactLabel === "string" && templateLanding.contactLabel.trim().length > 0 ? templateLanding.contactLabel : landing.contactLabel;
   const whatsappHref = resolveWhatsappHref(data.tenant.contactPhone ?? data.tenant.contact_phone ?? landing.contactHref ?? undefined);
   const portalHref = `/${tenant}/portal`;
   const quoteHref = `/${tenant}/cotizar`;
@@ -102,7 +119,7 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-sky-100/75">SRFIX OFICIAL</p>
               <h1 className="text-2xl font-black tracking-tight text-zinc-50 sm:text-3xl">{data.tenant.name}</h1>
-              <p className="text-sm text-zinc-400">Reparación profesional de electrónicos</p>
+              <p className="text-sm text-zinc-400">{heroSubtitle}</p>
             </div>
           </div>
 
@@ -128,28 +145,26 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
 
             <div className="space-y-4">
               <h2 className="max-w-xl text-5xl font-black uppercase leading-[0.92] tracking-tight text-zinc-50 sm:text-7xl">
-                <span className="block text-zinc-100">Reparación</span>
-                <span className="block text-orange-400">profesional</span>
-                <span className="block text-zinc-100">de electrónicos</span>
+                <span className="block text-zinc-100">{heroTitle.split(" ").slice(0, 1).join(" ") || heroTitle}</span>
+                <span className="block text-orange-400">{heroTitle.split(" ").slice(1, 2).join(" ") || heroTitle}</span>
+                <span className="block text-zinc-100">{heroTitle.split(" ").slice(2).join(" ") || heroTitle}</span>
               </h2>
-              <p className="max-w-2xl text-lg leading-8 text-zinc-400 sm:text-xl">
-                {landing.heroDescription}
-              </p>
+              <p className="max-w-2xl text-lg leading-8 text-zinc-400 sm:text-xl">{heroDescription}</p>
             </div>
 
             <div className="flex flex-wrap gap-4">
-              <CTA href={quoteHref} variant="secondary">
-                Cotizar
+              <CTA href={primaryCtaHref || quoteHref} variant="secondary">
+                {primaryCtaLabel}
               </CTA>
-              <CTA href={portalHref}>
-                Ver estado
+              <CTA href={secondaryCtaHref || portalHref}>
+                {secondaryCtaLabel}
               </CTA>
               {whatsappHref ? (
                 <a
                   href={whatsappHref}
                   className="inline-flex items-center justify-center rounded-2xl border border-emerald-400/70 bg-emerald-500 px-5 py-4 text-center text-sm font-semibold uppercase tracking-[0.18em] text-white transition hover:-translate-y-0.5 hover:bg-emerald-400"
                 >
-                  Whatsapp
+                  {contactLabel}
                 </a>
               ) : null}
             </div>
@@ -196,25 +211,18 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
         </section>
 
         <section className="grid gap-5 py-8 md:grid-cols-3" aria-label="Servicios">
-          {[
-            ["Laptops & Surface", "Microsoft Surface, MacBooks y laptops de todas las marcas."],
-            ["Tarjetas de video (GPU)", "Reballing, reemplazo de chips y recuperación de tarjetas."],
-            ["Consolas & controles", "Reparación express de controles, consolas y joysticks."],
-            ["Smartphones & tablets", "Cambio de pantallas, baterías y puertos de carga."],
-            ["PCs de escritorio", "Ensamblado, mantenimiento y componentes de alto rendimiento."],
-            ["Diagnóstico gratuito", "Evaluación sin costo ni compromiso con seguimiento real."],
-          ].map(([title, description]) => (
-            <article key={title} className="rounded-[1.5rem] border border-zinc-700/80 bg-white/4 p-6 shadow-[0_14px_55px_rgba(0,0,0,0.18)]">
+          {services.map((service) => (
+            <article key={service.title} className="rounded-[1.5rem] border border-zinc-700/80 bg-white/4 p-6 shadow-[0_14px_55px_rgba(0,0,0,0.18)]">
               <div className="mb-8 text-4xl text-sky-400">▣</div>
-              <h3 className="text-xl font-black uppercase tracking-[0.08em] text-zinc-50">{title}</h3>
-              <p className="mt-4 text-sm leading-7 text-zinc-400">{description}</p>
+              <h3 className="text-xl font-black uppercase tracking-[0.08em] text-zinc-50">{service.title}</h3>
+              <p className="mt-4 text-sm leading-7 text-zinc-400">{service.description}</p>
             </article>
           ))}
         </section>
 
         <section className="grid gap-8 py-10 lg:grid-cols-[1fr_0.95fr] lg:items-start">
           <div className="space-y-5">
-            <h2 className="text-4xl font-black uppercase tracking-tight text-zinc-50 sm:text-5xl">Cotizar</h2>
+            <h2 className="text-4xl font-black uppercase tracking-tight text-zinc-50 sm:text-5xl">{labels.quote ?? "Cotizar"}</h2>
             <p className="max-w-2xl text-lg leading-8 text-zinc-400">
               Sección visible para capturar el problema y disparar el flujo de recepción real.
             </p>

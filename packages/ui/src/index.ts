@@ -5,3 +5,4 @@ export * from './components/WhatsAppButton';
 export * from './components/PdfExportButton';
 export * from './components/Table';
 export * from './components/srfix-theme';
+export * from './components/DynamicFields';

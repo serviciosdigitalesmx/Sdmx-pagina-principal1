@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { DynamicFields, type DynamicFieldDefinition } from "@white-label/ui";
 
 const fieldClassName =
   "w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-50 outline-none transition placeholder:text-zinc-500 focus:border-slate-400/60 focus:ring-2 focus:ring-slate-400/20";
@@ -54,6 +55,17 @@ function buildTrackingHref(tenant: string, folio: string) {
   return `/${encodeURIComponent(tenant)}/tracking?folio=${encodeURIComponent(folio)}`;
 }
 
+function coerceDynamicValue(definition: DynamicFieldDefinition, value: string | boolean | undefined) {
+  if (value === undefined || value === null || value === "") {
+    return undefined;
+  }
+  if (definition.field_type === "number" || definition.field_type === "money") {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  }
+  return value;
+}
+
 export default function TenantQuotePage() {
   const params = useParams<{ tenant: string }>();
   const tenant = params?.tenant ?? "";
@@ -69,7 +81,40 @@ export default function TenantQuotePage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [folio, setFolio] = useState<string | null>(null);
+  const [dynamicFieldDefinitions, setDynamicFieldDefinitions] = useState<DynamicFieldDefinition[]>([]);
+  const [dynamicFieldValues, setDynamicFieldValues] = useState<Record<string, string | boolean>>({});
+  const [tenantLabels, setTenantLabels] = useState<Record<string, string>>({});
   const apiUrl = useMemo(() => resolveApiUrl(), []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadSettings() {
+      try {
+        const response = await fetch(`${apiUrl}/api/public/${encodeURIComponent(tenant)}`);
+        const payload = (await response.json().catch(() => null)) as { success?: boolean; data?: { tenant?: { config?: { fieldDefinitions?: DynamicFieldDefinition[] } } } } | null;
+        if (!response.ok || !payload?.success) {
+          throw new Error("No se pudo cargar la configuración del tenant");
+        }
+        const definitions = payload.data?.tenant?.config?.fieldDefinitions ?? [];
+        const labels = (payload.data?.tenant?.config as { labels?: Record<string, string> } | undefined)?.labels ?? {};
+        if (!cancelled) {
+          setDynamicFieldDefinitions(definitions.filter((item) => item.entity === "service_requests" && item.visible !== false));
+          setTenantLabels(labels);
+        }
+      } catch {
+        if (!cancelled) setDynamicFieldDefinitions([]);
+      }
+    }
+
+    if (tenant) {
+      void loadSettings();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiUrl, tenant]);
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -77,6 +122,30 @@ export default function TenantQuotePage() {
     setError(null);
     setMessage(null);
     setFolio(null);
+
+    for (const definition of dynamicFieldDefinitions) {
+      if (!definition.required || definition.visible === false) continue;
+      const value = dynamicFieldValues[definition.field_key];
+      const missing =
+        definition.field_type === "boolean"
+          ? value === undefined || value === null
+          : typeof value === "string"
+            ? value.trim().length === 0
+            : value === undefined || value === null;
+      if (missing) {
+        setLoading(false);
+        setError(`Falta completar el campo requerido: ${definition.field_label}`);
+        return;
+      }
+    }
+
+    const dynamicMetadata = dynamicFieldDefinitions.reduce<Record<string, string | boolean | number>>((acc, definition) => {
+      const value = coerceDynamicValue(definition, dynamicFieldValues[definition.field_key]);
+      if (value !== undefined) {
+        acc[definition.field_key] = value;
+      }
+      return acc;
+    }, {});
 
     try {
       if (!apiUrl) {
@@ -86,7 +155,7 @@ export default function TenantQuotePage() {
       const response = await fetch(`${apiUrl}/api/public/quotes`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tenantSlug: tenant, ...form }),
+        body: JSON.stringify({ tenantSlug: tenant, ...form, metadata: dynamicMetadata }),
       });
 
       const payload = (await response.json().catch(() => null)) as QuoteResponse | { error?: string; details?: unknown } | null;
@@ -109,6 +178,7 @@ export default function TenantQuotePage() {
         deviceModel: "",
         issue: "",
       });
+      setDynamicFieldValues({});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error inesperado");
     } finally {
@@ -123,10 +193,10 @@ export default function TenantQuotePage() {
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-amber-100/70">Cotizador</p>
             <h1 className="mt-3 text-4xl font-bold tracking-tight text-zinc-50 [font-family:var(--font-cormorant)]">
-              Cuéntanos la falla y te generamos una solicitud real
+              {tenantLabels.request ?? "Cuéntanos la falla y te generamos una solicitud real"}
             </h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-zinc-300">
-              Captura el caso, liga el equipo al tenant actual y deja lista la entrada para que recepción lo convierta en orden.
+              Captura el caso, liga el activo al tenant actual y deja lista la entrada para que recepción lo convierta en servicio.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link href={`/${tenant}`} className="rounded-full border border-stone-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-white/5">
@@ -143,7 +213,7 @@ export default function TenantQuotePage() {
             <ul className="mt-4 space-y-3 text-sm leading-7 text-zinc-300">
               <li>• La solicitud se envía para registrarse.</li>
               <li>• Se asocia al taller actual.</li>
-              <li>• Recepción puede convertirla en orden con un clic.</li>
+              <li>• Recepción puede convertirla en servicio con un clic.</li>
             </ul>
           </aside>
         </div>
@@ -153,7 +223,7 @@ export default function TenantQuotePage() {
             ["Nombre", "fullName", "text", "Tu nombre"],
             ["WhatsApp", "phone", "tel", "81 1234 5678"],
             ["Correo", "email", "email", "cliente@email.com"],
-            ["Marca", "deviceBrand", "text", "Laptop / Surface / iPhone"],
+            ["Marca", "deviceBrand", "text", tenantLabels.asset ? `Ej. ${tenantLabels.asset}` : "Laptop / Surface / iPhone"],
             ["Modelo", "deviceModel", "text", "Modelo exacto"],
           ].map(([label, key, type, placeholder]) => (
             <div key={key as string}>
@@ -170,7 +240,7 @@ export default function TenantQuotePage() {
           ))}
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-zinc-300">Problema</label>
+            <label className="mb-2 block text-sm font-medium text-zinc-300">{tenantLabels.diagnosis ?? "Problema"}</label>
             <textarea
               value={form.issue}
               onChange={(e) => setForm((current) => ({ ...current, issue: e.target.value }))}
@@ -180,6 +250,16 @@ export default function TenantQuotePage() {
               required
             />
           </div>
+
+          {dynamicFieldDefinitions.length > 0 ? (
+            <DynamicFields
+              title={tenantLabels.request ? `Campos de ${tenantLabels.request.toLowerCase()}` : "Campos del tenant"}
+              definitions={dynamicFieldDefinitions}
+              values={dynamicFieldValues}
+              onChange={(fieldKey, value) => setDynamicFieldValues((current) => ({ ...current, [fieldKey]: value }))}
+              className="grid gap-4 rounded-[1.5rem] border border-stone-700/70 bg-white/4 p-6"
+            />
+          ) : null}
 
           {error ? <p className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">{error}</p> : null}
           {message ? <p className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{message}</p> : null}

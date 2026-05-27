@@ -14,8 +14,6 @@ services:
         value: https://serviciosdigitalesmx.online,https://app.serviciosdigitalesmx.online,https://clientes.serviciosdigitalesmx.online,http://localhost:3000,http://localhost:3001
       - key: APP_URL
         value: https://serviciosdigitalesmx.online
-      - key: BACKEND_PUBLIC_URL
-        sync: false
       - key: WEBHOOK_BASE_URL
         sync: false
       - key: BASE_DOMAIN

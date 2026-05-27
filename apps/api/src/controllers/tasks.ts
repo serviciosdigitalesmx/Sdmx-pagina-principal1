@@ -66,31 +66,6 @@ const taskUpdateSchema = z.object({
 });
 
 async function getTaskStatuses(tenantId: string) {
-  const { data, error } = await supabaseAdmin
-    .from('tenants')
-    .select('operational_settings')
-    .eq('id', tenantId)
-    .single();
-
-  if (error || !data) {
-    return [
-      { key: 'pendiente', label: 'Pendiente', tone: 'gray' },
-      { key: 'en_proceso', label: 'En proceso', tone: 'amber' },
-      { key: 'bloqueada', label: 'Bloqueada', tone: 'red' },
-      { key: 'hecha', label: 'Hecha', tone: 'emerald' },
-    ];
-  }
-
-  const settings = data.operational_settings as { taskStatuses?: TaskStatusOption[] } | null;
-  const statuses = settings?.taskStatuses?.filter((item) => typeof item?.key === 'string' && item.key.trim().length > 0) ?? [];
-  if (statuses.length > 0) {
-    return statuses.map((status) => ({
-      key: String(status.key),
-      label: String(status.label ?? status.key),
-      tone: String(status.tone ?? 'gray'),
-    }));
-  }
-
   return [
     { key: 'pendiente', label: 'Pendiente', tone: 'gray' },
     { key: 'en_proceso', label: 'En proceso', tone: 'amber' },

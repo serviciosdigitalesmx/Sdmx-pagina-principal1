@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { getTenantClient, supabaseAdmin } from '@white-label/database';
+import { loadTenantRuntimeConfig } from '../services/tenant-config';
 
 type PdfAttachment = {
   type: 'receipt_pdf';
@@ -56,6 +57,7 @@ const publicQuoteSchema = z.object({
   deviceBrand: z.string().min(1),
   deviceModel: z.string().min(1),
   issue: z.string().min(1),
+  metadata: z.record(z.unknown()).optional(),
 });
 
 const publicTrackingSchema = z.object({
@@ -167,7 +169,9 @@ export async function createPublicQuote(req: Request, res: Response) {
 
   try {
     const { tenantSlug, fullName, phone, email, deviceBrand, deviceModel, issue } = parsed.data;
+    const metadata = parsed.data.metadata ?? {};
     const tenant = await resolveTenantIdBySlug(tenantSlug);
+    const runtimeConfig = await loadTenantRuntimeConfig(tenant.id);
     const supabase = getTenantClient(tenant.id);
 
     const { data, error } = await supabase
@@ -182,6 +186,7 @@ export async function createPublicQuote(req: Request, res: Response) {
           device_type: deviceBrand,
           device_model: deviceModel,
           issue_description: issue,
+          metadata,
           status: 'pendiente',
           quoted_total: 0,
           deposit_amount: 0,
@@ -196,7 +201,14 @@ export async function createPublicQuote(req: Request, res: Response) {
       return res.status(502).json({ error: 'Failed to create quote request', details: error.message });
     }
 
-    return res.status(201).json({ success: true, tenant, data });
+    return res.status(201).json({
+      success: true,
+      tenant: {
+        ...tenant,
+        config: runtimeConfig,
+      },
+      data,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     return res.status(500).json({ error: message });
@@ -213,10 +225,11 @@ export async function trackPublicOrder(req: Request, res: Response) {
   try {
     const { tenantSlug, folio, email } = parsed.data;
     const tenant = await resolveTenantIdBySlug(tenantSlug);
+    const runtimeConfig = await loadTenantRuntimeConfig(tenant.id);
     const supabase = getTenantClient(tenant.id);
     const { data, error } = await supabase
       .from('service_orders')
-      .select('id, tenant_id, folio, status, total_cost, created_at, device_info, problem_description, serial_number, receipt_url, estimated_cost, final_cost')
+      .select('id, tenant_id, folio, status, total_cost, created_at, device_info, problem_description, serial_number, receipt_url, estimated_cost, final_cost, metadata')
       .eq('tenant_id', tenant.id)
       .eq('folio', folio)
       .single();
@@ -237,6 +250,7 @@ export async function trackPublicOrder(req: Request, res: Response) {
         name: tenant.name,
         branding: tenant.branding ?? null,
         ...extractContactInfo(tenant.landing_content),
+        config: runtimeConfig,
       },
       data,
     });
@@ -256,11 +270,12 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
   try {
     const { tenantSlug, folio } = parsed.data;
     const tenant = await resolveTenantIdBySlug(tenantSlug);
+    const runtimeConfig = await loadTenantRuntimeConfig(tenant.id);
     const supabase = getTenantClient(tenant.id);
 
     const { data, error } = await supabase
       .from('service_orders')
-      .select('id, tenant_id, folio, status, total_cost, created_at, device_info, problem_description, serial_number, receipt_url, estimated_cost, final_cost, evidence_metadata')
+      .select('id, tenant_id, folio, status, total_cost, created_at, device_info, problem_description, serial_number, receipt_url, estimated_cost, final_cost, evidence_metadata, metadata')
       .eq('tenant_id', tenant.id)
       .eq('folio', folio)
       .single();
@@ -350,30 +365,33 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
     const receiptDocument = normalizedDocuments.find((document) => document.file_type === 'receipt_pdf' && document.public_url);
     const pdfAttachment = buildPdfAttachment(data.receipt_url || receiptDocument?.public_url || null);
     const statusLabelMap: Record<string, string> = {
-      pending: 'Recibido',
-      pendiente: 'Recibido',
-      diagnostico: 'Diagnóstico',
-      diagnosticado: 'Diagnóstico',
-      reparacion: 'En reparación',
-      reparando: 'En reparación',
-      listo: 'Listo',
-      entregado: 'Entregado',
+      pending: runtimeConfig.statusLabels.pending ?? 'Recibido',
+      pendiente: runtimeConfig.statusLabels.pendiente ?? 'Recibido',
+      diagnostico: runtimeConfig.statusLabels.diagnostico ?? 'Diagnóstico',
+      diagnosticado: runtimeConfig.statusLabels.diagnosticado ?? 'Diagnóstico',
+      reparacion: runtimeConfig.statusLabels.reparacion ?? 'En reparación',
+      reparando: runtimeConfig.statusLabels.reparando ?? 'En reparación',
+      listo: runtimeConfig.statusLabels.listo ?? 'Listo',
+      entregado: runtimeConfig.statusLabels.entregado ?? 'Entregado',
     };
     const statusKey = String(data.status ?? '').toLowerCase();
+    const workflowStatuses = runtimeConfig.statusOptions.service_orders ?? [];
+    const getTimelineStatus = (keys: string[]) => (keys.some((key) => statusKey.includes(key)) ? 'completado' as const : 'actual' as const);
+    const workflowLabel = (key: string, fallback: string) => runtimeConfig.statusLabels[key] ?? fallback;
     const timeline = [
-      { label: 'Recepción', status: 'completado' as const, note: 'Orden registrada en el sistema.' },
+      { label: workflowLabel(workflowStatuses[0]?.key ?? 'recibido', 'Recepción'), status: 'completado' as const, note: 'Orden registrada en el sistema.' },
       {
-        label: 'Diagnóstico',
-        status: ['diagnostico', 'reparacion', 'listo', 'entregado'].includes(statusKey) ? 'completado' as const : 'actual' as const,
-        note: 'Evaluación técnica del equipo.',
+        label: workflowLabel('diagnostico', 'Diagnóstico'),
+        status: getTimelineStatus(['diagnostico', 'reparacion', 'listo', 'entregado']),
+        note: 'Evaluación técnica del activo o elemento atendido.',
       },
       {
-        label: 'Reparación',
-        status: ['reparacion', 'listo', 'entregado'].includes(statusKey) ? 'completado' as const : 'actual' as const,
-        note: 'Trabajo técnico en proceso.',
+        label: workflowLabel('reparacion', 'En reparación'),
+        status: getTimelineStatus(['reparacion', 'listo', 'entregado']),
+        note: 'Trabajo operativo en proceso.',
       },
       {
-        label: 'Entrega',
+        label: workflowLabel('entregado', 'Entrega'),
         status: ['listo', 'entregado'].includes(statusKey) ? 'actual' as const : 'pendiente' as const,
         note: 'Lista para entregar al cliente.',
       },
@@ -387,6 +405,7 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
         name: tenant.name,
         branding: tenant.branding ?? null,
         ...extractContactInfo(tenant.landing_content),
+        config: runtimeConfig,
       },
       data: {
         order: data,
@@ -414,6 +433,7 @@ export async function getPublicTenantLanding(req: Request, res: Response) {
 
   try {
     const tenant = await resolveTenantIdBySlug(tenantSlug);
+    const runtimeConfig = await loadTenantRuntimeConfig(tenant.id);
     const landingContent = normalizeLandingContent(tenant.landing_content, tenant.name, tenant.slug);
 
     return res.json({
@@ -425,6 +445,7 @@ export async function getPublicTenantLanding(req: Request, res: Response) {
           name: tenant.name,
           branding: tenant.branding ?? null,
           ...extractContactInfo(tenant.landing_content),
+          config: runtimeConfig,
         },
         landingContent,
       },

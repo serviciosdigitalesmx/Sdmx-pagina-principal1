@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin } from '@white-label/database';
 import { loadTenantBillingSummary } from '../services/tenant-billing';
+import { getIndustryTemplate, loadTenantRuntimeConfig } from '../services/tenant-config';
+import { resolveTenantCapabilities } from '../services/tenant-capabilities';
 
 export const getApiRoot = (_req: Request, res: Response) => {
   const apiName = process.env.API_NAME ?? 'White-label API';
@@ -110,7 +112,7 @@ export const getTenantSettings = async (req: Request, res: Response) => {
   try {
     const query = supabaseAdmin
       .from('tenants')
-      .select('id, slug, name, branding, landing_content, operational_settings, trial_expires_at, billing_exempt');
+      .select('id, slug, name, branding, landing_content, trial_expires_at, billing_exempt');
 
     const { data, error } = tenantId
       ? await query.eq('id', tenantId).maybeSingle()
@@ -121,12 +123,39 @@ export const getTenantSettings = async (req: Request, res: Response) => {
     }
 
     const billing = await loadTenantBillingSummary(data.id, data.slug);
+    const config = await loadTenantRuntimeConfig(data.id);
+    const capabilities = resolveTenantCapabilities({
+      tenantId: data.id,
+      tenantSlug: data.slug,
+      tenantEmail: req.user?.email ?? null,
+      billing,
+      runtimeConfig: config,
+    });
 
     return res.status(200).json({
       success: true,
       data: {
-        ...data,
+        tenant: {
+          ...data,
+          operational_settings: null,
+          industry_profile: config.industryProfile,
+          enabled_modules: config.enabledModules,
+          label_overrides: config.labelOverrides,
+          workflow_statuses: config.workflowStatuses,
+          field_definitions: config.fieldDefinitions,
+          semaphore_rules: config.semaphoreRules,
+          templates: config.templates,
+          labels: config.labels,
+          status_options: config.statusOptions,
+          status_labels: config.statusLabels,
+          active_modules: config.activeModules,
+          capabilities,
+        },
         billing,
+        config: {
+          ...config,
+          capabilities,
+        },
       },
     });
   } catch (error) {
@@ -159,8 +188,12 @@ export const updateTenantSettings = async (req: Request, res: Response) => {
     const body = req.body as Record<string, unknown>;
     const branding = (body.branding && typeof body.branding === 'object') ? body.branding : null;
     const landingContent = (body.landingContent && typeof body.landingContent === 'object') ? body.landingContent : null;
-
-    const operationalSettings = (body.operationalSettings && typeof body.operationalSettings === 'object') ? body.operationalSettings : null;
+    const industryProfile = (body.industryProfile && typeof body.industryProfile === 'object') ? body.industryProfile : null;
+    const enabledModules = Array.isArray(body.enabledModules) ? body.enabledModules : null;
+    const labelOverrides = Array.isArray(body.labelOverrides) ? body.labelOverrides : null;
+    const workflowStatuses = Array.isArray(body.workflowStatuses) ? body.workflowStatuses : null;
+    const fieldDefinitions = Array.isArray(body.fieldDefinitions) ? body.fieldDefinitions : null;
+    const semaphoreRules = Array.isArray(body.semaphoreRules) ? body.semaphoreRules : null;
     const nextUpdate: Record<string, unknown> = {};
 
     if (branding) {
@@ -171,32 +204,311 @@ export const updateTenantSettings = async (req: Request, res: Response) => {
       nextUpdate.landing_content = landingContent;
     }
 
-    if (operationalSettings) {
-      nextUpdate.operational_settings = operationalSettings;
+    // `operational_settings` is not part of the live production schema yet.
+    // Keep the payload shape accepted by the API, but do not persist it here.
+
+    let data = tenantRow;
+    if (Object.keys(nextUpdate).length > 0) {
+      const { data: updatedTenant, error } = await supabaseAdmin
+        .from('tenants')
+        .update(nextUpdate)
+        .eq('id', tenantRow.id)
+        .select('id, slug, name, branding, landing_content, trial_expires_at, billing_exempt')
+        .single();
+
+      if (error || !updatedTenant) {
+        return res.status(502).json({ error: 'Failed to update tenant settings', details: error?.message ?? 'Unknown error' });
+      }
+
+      data = updatedTenant;
     }
 
-    if (!Object.keys(nextUpdate).length) {
-      return res.status(400).json({ error: 'No fields to update' });
+    if (industryProfile) {
+      const industryRecord = industryProfile as Record<string, unknown>;
+      const industryKey = String(industryRecord.industry_key ?? industryRecord.industryKey ?? 'electronics_repair').trim() || 'electronics_repair';
+      const industryTemplate = getIndustryTemplate(industryKey);
+      const defaultAssetLabel = industryTemplate.labels.asset ?? 'Equipo';
+      const defaultOrderLabel = industryTemplate.labels.order ?? 'Orden';
+      const defaultRequestLabel = industryTemplate.labels.request ?? 'Solicitud';
+      const defaultCustomerLabel = industryTemplate.labels.customer ?? 'Cliente';
+      const defaultPortalLabel = industryTemplate.labels.portal ?? 'Portal del cliente';
+      const defaultQuoteLabel = industryTemplate.labels.quote ?? 'Cotización';
+      const industryPayload = {
+        tenant_id: tenantRow.id,
+        industry_key: industryKey,
+        industry_label: typeof industryRecord.industry_label === 'string' ? industryRecord.industry_label.trim() : typeof industryRecord.industryLabel === 'string' ? industryRecord.industryLabel.trim() : null,
+        asset_label: String(industryRecord.asset_label ?? industryRecord.assetLabel ?? defaultAssetLabel).trim() || defaultAssetLabel,
+        order_label: String(industryRecord.order_label ?? industryRecord.orderLabel ?? defaultOrderLabel).trim() || defaultOrderLabel,
+        request_label: String(industryRecord.request_label ?? industryRecord.requestLabel ?? defaultRequestLabel).trim() || defaultRequestLabel,
+        customer_label: String(industryRecord.customer_label ?? industryRecord.customerLabel ?? defaultCustomerLabel).trim() || defaultCustomerLabel,
+        portal_label: String(industryRecord.portal_label ?? industryRecord.portalLabel ?? defaultPortalLabel).trim() || defaultPortalLabel,
+        quote_label: String(industryRecord.quote_label ?? industryRecord.quoteLabel ?? defaultQuoteLabel).trim() || defaultQuoteLabel,
+        default_workflow_key: String(industryRecord.default_workflow_key ?? industryRecord.defaultWorkflowKey ?? 'service_orders').trim() || 'service_orders',
+        is_active: Boolean(industryRecord.is_active ?? industryRecord.isActive ?? true),
+        metadata: typeof industryRecord.metadata === 'object' && industryRecord.metadata ? industryRecord.metadata : {},
+      };
+
+      const { error: industryError } = await supabaseAdmin
+        .from('tenant_industry_profiles')
+        .upsert(industryPayload, { onConflict: 'tenant_id' });
+
+      if (industryError) {
+        return res.status(502).json({ error: 'Failed to update industry profile', details: industryError.message });
+      }
     }
 
-    const { data, error } = await supabaseAdmin
-      .from('tenants')
-      .update(nextUpdate)
-      .eq('id', tenantRow.id)
-      .select('id, slug, name, branding, landing_content, operational_settings, trial_expires_at, billing_exempt')
-      .single();
+    const currentIndustryKey = typeof industryProfile === 'object' && industryProfile
+      ? String((industryProfile as Record<string, unknown>).industry_key ?? (industryProfile as Record<string, unknown>).industryKey ?? 'electronics_repair').trim() || 'electronics_repair'
+      : 'electronics_repair';
+    const industryTemplate = getIndustryTemplate(currentIndustryKey);
 
-    if (error || !data) {
-      return res.status(502).json({ error: 'Failed to update tenant settings', details: error?.message ?? 'Unknown error' });
+    if (Array.isArray(enabledModules) || industryProfile) {
+      const moduleSource = Array.isArray(enabledModules) ? enabledModules : industryTemplate.enabledModules;
+      const rows = moduleSource
+        .filter((item) => item && typeof item === 'object')
+        .map((item, index) => {
+          const record = item as Record<string, unknown>;
+          return {
+            tenant_id: tenantRow.id,
+            module_key: String(record.module_key ?? record.key ?? '').trim(),
+            module_label: typeof record.module_label === 'string' ? record.module_label : typeof record.label === 'string' ? record.label : null,
+            enabled: Boolean(record.enabled ?? true),
+            sort_order: Number.isFinite(Number(record.sort_order)) ? Number(record.sort_order) : index,
+            metadata: typeof record.metadata === 'object' && record.metadata ? record.metadata : {},
+          };
+        })
+        .filter((item) => item.module_key.length > 0);
+
+      if (Array.isArray(enabledModules) || industryProfile) {
+        const { error: deleteModulesError } = await supabaseAdmin
+          .from('tenant_enabled_modules')
+          .delete()
+          .eq('tenant_id', tenantRow.id);
+
+        if (deleteModulesError) {
+          return res.status(502).json({ error: 'Failed to clear enabled modules', details: deleteModulesError.message });
+        }
+      }
+
+      if (rows.length > 0) {
+        const { error: modulesError } = await supabaseAdmin
+          .from('tenant_enabled_modules')
+          .upsert(rows, { onConflict: 'tenant_id,module_key' });
+
+        if (modulesError) {
+          return res.status(502).json({ error: 'Failed to update enabled modules', details: modulesError.message });
+        }
+      }
+    }
+
+    if (Array.isArray(labelOverrides)) {
+      const rows = labelOverrides
+        .filter((item) => item && typeof item === 'object')
+        .map((item) => {
+          const record = item as Record<string, unknown>;
+          return {
+            tenant_id: tenantRow.id,
+            label_key: String(record.label_key ?? record.key ?? '').trim(),
+            label_value: String(record.label_value ?? record.value ?? '').trim(),
+            context: typeof record.context === 'object' && record.context ? record.context : {},
+          };
+        })
+        .filter((item) => item.label_key.length > 0 && item.label_value.length > 0);
+
+      const { error: deleteLabelsError } = await supabaseAdmin
+        .from('tenant_label_overrides')
+        .delete()
+        .eq('tenant_id', tenantRow.id);
+
+      if (deleteLabelsError) {
+        return res.status(502).json({ error: 'Failed to clear label overrides', details: deleteLabelsError.message });
+      }
+
+      if (rows.length > 0) {
+        const { error: labelsError } = await supabaseAdmin
+          .from('tenant_label_overrides')
+          .insert(rows);
+
+        if (labelsError) {
+          return res.status(502).json({ error: 'Failed to update label overrides', details: labelsError.message });
+        }
+      }
+    }
+
+    if (Array.isArray(workflowStatuses) || industryProfile) {
+      const workflowSource = Array.isArray(workflowStatuses) ? workflowStatuses : industryTemplate.workflowStatuses;
+      const rows = workflowSource
+        .filter((item) => item && typeof item === 'object')
+        .map((item, index) => {
+          const record = item as Record<string, unknown>;
+          return {
+            tenant_id: tenantRow.id,
+            workflow_key: String(record.workflow_key ?? 'service_orders').trim(),
+            status_key: String(record.status_key ?? record.key ?? '').trim(),
+            label: String(record.label ?? record.name ?? '').trim(),
+            tone: typeof record.tone === 'string' ? record.tone : null,
+            sort_order: Number.isFinite(Number(record.sort_order)) ? Number(record.sort_order) : index,
+            is_default: Boolean(record.is_default ?? false),
+            is_terminal: Boolean(record.is_terminal ?? false),
+            metadata: typeof record.metadata === 'object' && record.metadata ? record.metadata : {},
+          };
+        })
+        .filter((item) => item.workflow_key.length > 0 && item.status_key.length > 0 && item.label.length > 0);
+
+      if (Array.isArray(workflowStatuses) || industryProfile) {
+        const { error: deleteWorkflowsError } = await supabaseAdmin
+          .from('tenant_workflow_statuses')
+          .delete()
+          .eq('tenant_id', tenantRow.id);
+
+        if (deleteWorkflowsError) {
+          return res.status(502).json({ error: 'Failed to clear workflow statuses', details: deleteWorkflowsError.message });
+        }
+      }
+
+      if (rows.length > 0) {
+        const { error: workflowsError } = await supabaseAdmin
+          .from('tenant_workflow_statuses')
+          .upsert(rows, { onConflict: 'tenant_id,workflow_key,status_key' });
+
+        if (workflowsError) {
+          return res.status(502).json({ error: 'Failed to update workflow statuses', details: workflowsError.message });
+        }
+      }
+    }
+
+    if (Array.isArray(fieldDefinitions) || industryProfile) {
+      const fieldSource = Array.isArray(fieldDefinitions) ? fieldDefinitions : industryTemplate.fieldDefinitions;
+      const rows = fieldSource
+        .filter((item) => item && typeof item === 'object')
+        .map((item, index) => {
+          const record = item as Record<string, unknown>;
+          const fieldKey = String(record.field_key ?? record.key ?? '').trim();
+          const entity = String(record.entity ?? '').trim();
+          const fieldType = String(record.field_type ?? record.type ?? 'text').trim();
+          return {
+            tenant_id: tenantRow.id,
+            entity,
+            field_key: fieldKey,
+            field_label: String(record.field_label ?? record.label ?? fieldKey).trim() || fieldKey,
+            field_type: fieldType,
+            required: Boolean(record.required ?? false),
+            options: Array.isArray(record.options) ? record.options : [],
+            field_order: Number.isFinite(Number(record.field_order ?? record.order)) ? Number(record.field_order ?? record.order) : index,
+            placeholder: typeof record.placeholder === 'string' ? record.placeholder : null,
+            help_text: typeof record.help_text === 'string' ? record.help_text : null,
+            visible: record.visible === false ? false : true,
+            validation: typeof record.validation === 'object' && record.validation ? record.validation : {},
+            metadata: typeof record.metadata === 'object' && record.metadata ? record.metadata : {},
+          };
+        })
+        .filter((item) => item.entity.length > 0 && item.field_key.length > 0 && item.field_label.length > 0);
+
+      if (Array.isArray(fieldDefinitions) || industryProfile) {
+        const { error: deleteFieldsError } = await supabaseAdmin
+          .from('tenant_field_definitions')
+          .delete()
+          .eq('tenant_id', tenantRow.id);
+
+        if (deleteFieldsError) {
+          return res.status(502).json({ error: 'Failed to clear field definitions', details: deleteFieldsError.message });
+        }
+      }
+
+      if (rows.length > 0) {
+        const { error: fieldsError } = await supabaseAdmin
+          .from('tenant_field_definitions')
+          .upsert(rows, { onConflict: 'tenant_id,entity,field_key' });
+
+        if (fieldsError) {
+          return res.status(502).json({ error: 'Failed to update field definitions', details: fieldsError.message });
+        }
+      }
+    }
+
+    if (Array.isArray(semaphoreRules) || industryProfile) {
+      const semaphoreSource = Array.isArray(semaphoreRules) ? semaphoreRules : industryTemplate.semaphoreRules;
+      const rows = semaphoreSource
+        .filter((item) => item && typeof item === 'object')
+        .map((item, index) => {
+          const record = item as Record<string, unknown>;
+          const statusKey = String(record.status_key ?? record.statusKey ?? '').trim();
+          const metric = String(record.metric ?? '').trim();
+          return {
+            tenant_id: tenantRow.id,
+            industry_key: typeof record.industry_key === 'string' ? record.industry_key : typeof record.industryKey === 'string' ? record.industryKey : null,
+            workflow_key: String(record.workflow_key ?? record.workflowKey ?? 'service_orders').trim() || 'service_orders',
+            status_key: statusKey,
+            metric,
+            green_until_minutes: Number.isFinite(Number(record.green_until_minutes)) ? Number(record.green_until_minutes) : null,
+            yellow_until_minutes: Number.isFinite(Number(record.yellow_until_minutes)) ? Number(record.yellow_until_minutes) : null,
+            red_after_minutes: Number.isFinite(Number(record.red_after_minutes)) ? Number(record.red_after_minutes) : null,
+            priority: Number.isFinite(Number(record.priority)) ? Number(record.priority) : index,
+            reason_template: typeof record.reason_template === 'string' ? record.reason_template : typeof record.reasonTemplate === 'string' ? record.reasonTemplate : null,
+            suggested_action_template: typeof record.suggested_action_template === 'string' ? record.suggested_action_template : typeof record.suggestedActionTemplate === 'string' ? record.suggestedActionTemplate : null,
+            action_key: typeof record.action_key === 'string' ? record.action_key : typeof record.actionKey === 'string' ? record.actionKey : null,
+            enabled: record.enabled === false ? false : true,
+            metadata: typeof record.metadata === 'object' && record.metadata ? record.metadata : {},
+          };
+        })
+        .filter((item) => item.status_key.length > 0 && item.metric.length > 0);
+
+      if (Array.isArray(semaphoreRules) || industryProfile) {
+        const { error: deleteSemaphoreError } = await supabaseAdmin
+          .from('tenant_semaphore_rules')
+          .delete()
+          .eq('tenant_id', tenantRow.id);
+
+        if (deleteSemaphoreError) {
+          return res.status(502).json({ error: 'Failed to clear semaphore rules', details: deleteSemaphoreError.message });
+        }
+      }
+
+      if (rows.length > 0) {
+        const { error: semaphoreError } = await supabaseAdmin
+          .from('tenant_semaphore_rules')
+          .upsert(rows, { onConflict: 'tenant_id,industry_key,workflow_key,status_key,metric' });
+
+        if (semaphoreError) {
+          return res.status(502).json({ error: 'Failed to update semaphore rules', details: semaphoreError.message });
+        }
+      }
     }
 
     const billing = await loadTenantBillingSummary(data.id, data.slug);
+    const config = await loadTenantRuntimeConfig(data.id);
+    const capabilities = resolveTenantCapabilities({
+      tenantId: data.id,
+      tenantSlug: data.slug,
+      tenantEmail: req.user?.email ?? null,
+      billing,
+      runtimeConfig: config,
+    });
 
     return res.status(200).json({
       success: true,
       data: {
-        ...data,
+        tenant: {
+          ...data,
+          operational_settings: null,
+          industry_profile: config.industryProfile,
+          enabled_modules: config.enabledModules,
+          label_overrides: config.labelOverrides,
+          workflow_statuses: config.workflowStatuses,
+          field_definitions: config.fieldDefinitions,
+          semaphore_rules: config.semaphoreRules,
+          templates: config.templates,
+          labels: config.labels,
+          status_options: config.statusOptions,
+          status_labels: config.statusLabels,
+          active_modules: config.activeModules,
+          capabilities,
+        },
         billing,
+        config: {
+          ...config,
+          capabilities,
+        },
       },
     });
   } catch (error) {

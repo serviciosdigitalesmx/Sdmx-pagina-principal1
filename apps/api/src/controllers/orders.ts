@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import PDFDocument from 'pdfkit';
 import { getTenantClient, supabaseAdmin } from '@white-label/database';
+import { loadTenantRuntimeConfig } from '../services/tenant-config';
+import { calculateOperationalRisk } from '../services/operational-risk';
 
 const defaultOrderStatuses = ['recibido', 'diagnostico', 'reparacion', 'listo', 'entregado'] as const;
 const orderStatusSchema = z.string().min(1);
@@ -43,6 +45,7 @@ const orderDetailsUpdateSchema = z.object({
   deviceModel: z.string().min(1).optional(),
   issue: z.string().min(1).optional(),
   promisedDate: z.string().optional().or(z.literal('')),
+  metadata: z.record(z.unknown()).optional(),
 });
 
 type EvidenceEntry =
@@ -152,6 +155,7 @@ const createOrderSchema = z.object({
   }),
   receiptUrl: z.string().optional().or(z.literal('')),
   branchId: z.string().min(1).optional(),
+  metadata: z.record(z.unknown()).optional(),
 });
 
 function normalizeOrderStatus(status?: string | null) {
@@ -305,19 +309,9 @@ async function getTenantBranding(tenantId: string): Promise<{ name: string; bran
 }
 
 async function getTenantOperationalStatuses(tenantId: string) {
-  const { data, error } = await supabaseAdmin
-    .from('tenants')
-    .select('operational_settings')
-    .eq('id', tenantId)
-    .single();
-
-  if (error || !data) {
-    return defaultOrderStatuses.map((status) => ({ key: status, label: status, tone: 'zinc' }));
-  }
-
-  const settings = data.operational_settings as { orderStatuses?: OperationalStatus[] } | null;
-  const statuses = settings?.orderStatuses?.filter((item) => typeof item?.key === 'string' && item.key.trim().length > 0);
-  if (statuses && statuses.length > 0) {
+  const config = await loadTenantRuntimeConfig(tenantId);
+  const statuses = config.statusOptions.service_orders ?? [];
+  if (statuses.length > 0) {
     return statuses.map((status) => ({
       key: String(status.key),
       label: String(status.label ?? status.key),
@@ -497,6 +491,7 @@ export const createOrder = async (req: Request, res: Response) => {
             customer_email: validatedData.clientEmail || null,
           },
           problem_description: validatedData.issue,
+          metadata: validatedData.metadata ?? {},
           estimated_cost: estimatedCost,
           final_cost: finalCost,
           promised_date: validatedData.promisedDate || null,
@@ -631,9 +626,15 @@ export const listOrders = async (req: Request, res: Response) => {
       });
     }
 
+    const runtimeConfig = await loadTenantRuntimeConfig(tenantId);
+    const enrichedData = (data ?? []).map((order) => ({
+      ...order,
+      operational_risk: calculateOperationalRisk({ order, runtimeConfig }),
+    }));
+
     return res.status(200).json({
       success: true,
-      data,
+      data: enrichedData,
     });
   } catch (error) {
     console.error('Error listing orders:', error);
@@ -668,8 +669,8 @@ export const getOrderById = async (req: Request, res: Response) => {
       orderQuery.eq('branch_id', req.user.sucursalId);
     }
 
-    const [orderResult, checklistResult, documentsResult, eventsResult] = await Promise.all([
-      orderQuery.single(),
+    const [orderResult, checklistResult, documentsResult, eventsResult, runtimeConfig] = await Promise.all([
+      orderQuery.select('*, metadata').single(),
       supabase
         .from('service_order_checklists')
         .select('*')
@@ -688,6 +689,7 @@ export const getOrderById = async (req: Request, res: Response) => {
         .eq('tenant_id', tenantId)
         .eq('service_order_id', orderId)
         .order('created_at', { ascending: true }),
+      loadTenantRuntimeConfig(tenantId),
     ]);
 
     if (orderResult.error || !orderResult.data) {
@@ -712,6 +714,16 @@ export const getOrderById = async (req: Request, res: Response) => {
     const evidenceMetadata = readEvidenceMetadata(orderResult.data.evidence_metadata);
     const documents = normalizeOrderDocuments(documentsResult.data ?? [], evidenceMetadata);
     const events = normalizeOrderEvents(eventsResult.data ?? [], evidenceMetadata);
+    const operationalRisk = calculateOperationalRisk({
+      order: orderResult.data,
+      runtimeConfig,
+      statusEvents: events
+        .filter((event) => event.event_type === 'status_changed')
+        .map((event) => ({
+          created_at: event.created_at,
+          new_status: event.new_status,
+        })),
+    });
     const pdfAttachment = buildPdfAttachment(
       orderResult.data.receipt_url || documents.find((document) => document.file_type === 'receipt_pdf' && document.public_url)?.public_url || null
     );
@@ -719,7 +731,11 @@ export const getOrderById = async (req: Request, res: Response) => {
     return res.json({
       success: true,
       data: {
-        order: orderResult.data,
+        order: {
+          ...orderResult.data,
+          operational_risk: operationalRisk,
+        },
+        operational_risk: operationalRisk,
         documents,
         events,
         checklist: checklistResult.data ?? null,
@@ -1256,6 +1272,7 @@ export const updateOrderDetails = async (req: Request, res: Response) => {
         device_model: body.deviceModel ?? undefined,
         problem_description: body.issue ?? undefined,
         promised_date: body.promisedDate === '' ? null : body.promisedDate,
+        metadata: body.metadata ?? undefined,
       })
       .eq('tenant_id', tenantId)
       .eq('id', orderId)

@@ -3,13 +3,20 @@ import { loadTenantBillingSummary } from '../services/tenant-billing';
 
 export async function requireTenantBillingActive(req: Request, res: Response, next: NextFunction) {
   const tenantId = req.tenantId ?? req.user?.tenantId;
+  const tenantSlug = req.user?.tenantSlug ?? req.params.tenantSlug ?? null;
+  const masterTenantSlug = process.env.MASTER_TENANT_SLUG?.trim() ?? '';
+  const masterAccountEmail = process.env.MASTER_ACCOUNT_EMAIL?.trim() ?? '';
 
   if (!tenantId) {
     return res.status(400).json({ error: 'Missing tenant identification' });
   }
 
+  if ((masterTenantSlug && tenantSlug && tenantSlug === masterTenantSlug) || (masterAccountEmail && req.user?.email && req.user.email === masterAccountEmail)) {
+    return next();
+  }
+
   try {
-    const billing = await loadTenantBillingSummary(tenantId, req.user?.tenantSlug ?? req.params.tenantSlug ?? null);
+    const billing = await loadTenantBillingSummary(tenantId, tenantSlug);
 
     if (!billing.isBillingBlocked) {
       return next();

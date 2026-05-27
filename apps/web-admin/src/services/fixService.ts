@@ -32,6 +32,50 @@ type SocialLinkPayload = {
   href: string;
 };
 
+type FieldDefinitionPayload = {
+  id?: string;
+  tenant_id?: string;
+  entity: string;
+  field_key: string;
+  field_label: string;
+  field_type: "text" | "textarea" | "number" | "select" | "boolean" | "date" | "money";
+  required?: boolean;
+  options?: unknown[];
+  field_order?: number;
+  placeholder?: string | null;
+  help_text?: string | null;
+  visible?: boolean;
+  validation?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+};
+
+type SemaphoreRulePayload = {
+  id?: string;
+  tenant_id?: string;
+  industry_key?: string | null;
+  workflow_key?: string | null;
+  status_key: string;
+  metric: string;
+  green_until_minutes?: number | null;
+  yellow_until_minutes?: number | null;
+  red_after_minutes?: number | null;
+  priority?: number | null;
+  reason_template?: string | null;
+  suggested_action_template?: string | null;
+  action_key?: string | null;
+  enabled?: boolean;
+  metadata?: Record<string, unknown>;
+};
+
+type WhatsAppTemplatePayload = {
+  event_key: string;
+  label: string;
+  template: string;
+  enabled: boolean;
+  variables: string[];
+  fallback_template: string;
+};
+
 type ServiceRequestPayload = {
   id?: string;
   tenant_id?: string;
@@ -42,6 +86,7 @@ type ServiceRequestPayload = {
   device_type?: string | null;
   device_model?: string | null;
   issue_description?: string | null;
+  metadata?: Record<string, unknown>;
   status?: string;
   quoted_total?: number;
   deposit_amount?: number;
@@ -63,9 +108,75 @@ type TenantLandingSettings = {
     branding?: Record<string, unknown> | null;
     landing_content?: Record<string, unknown> | null;
     operational_settings?: Record<string, unknown> | null;
+    industry_profile?: Record<string, unknown> | null;
+    enabled_modules?: Array<Record<string, unknown>>;
+    label_overrides?: Array<Record<string, unknown>>;
+    workflow_statuses?: Array<Record<string, unknown>>;
+    field_definitions?: FieldDefinitionPayload[];
+    semaphore_rules?: SemaphoreRulePayload[];
+    templates?: {
+      whatsapp?: WhatsAppTemplatePayload[];
+      landing?: Record<string, unknown>;
+      portal?: Record<string, unknown>;
+      document?: Record<string, unknown>;
+    };
+    labels?: Record<string, string>;
+    status_options?: Record<string, Array<{ key: string; label: string; tone?: string | null; isDefault?: boolean; isTerminal?: boolean }>>;
+    status_labels?: Record<string, string>;
+    active_modules?: string[];
+    capabilities?: {
+      plan_key: 'basic' | 'pro' | 'scale';
+      access_status: 'active' | 'trial' | 'billing_exempt' | 'master' | 'blocked';
+      active_modules: string[];
+      locked_modules: string[];
+      limits: {
+        users: number | null;
+        branches: number | null;
+        monthly_orders: number | null;
+        storage_mb: number | null;
+        public_portal: boolean;
+        whatsapp_templates: number | null;
+        document_templates: number | null;
+      };
+      reasons: string[];
+    };
     trial_expires_at?: string | null;
     billing_exempt?: boolean | null;
     updated_at?: string;
+  };
+  config?: {
+    industryProfile?: Record<string, unknown> | null;
+    enabledModules?: Array<Record<string, unknown>>;
+    labelOverrides?: Array<Record<string, unknown>>;
+    workflowStatuses?: Array<Record<string, unknown>>;
+    fieldDefinitions?: FieldDefinitionPayload[];
+    semaphoreRules?: SemaphoreRulePayload[];
+    templates?: {
+      whatsapp?: WhatsAppTemplatePayload[];
+      landing?: Record<string, unknown>;
+      portal?: Record<string, unknown>;
+      document?: Record<string, unknown>;
+    };
+    labels?: Record<string, string>;
+    statusOptions?: Record<string, Array<{ key: string; label: string; tone?: string | null; isDefault?: boolean; isTerminal?: boolean }>>;
+    statusLabels?: Record<string, string>;
+    activeModules?: string[];
+    capabilities?: {
+      plan_key: 'basic' | 'pro' | 'scale';
+      access_status: 'active' | 'trial' | 'billing_exempt' | 'master' | 'blocked';
+      active_modules: string[];
+      locked_modules: string[];
+      limits: {
+        users: number | null;
+        branches: number | null;
+        monthly_orders: number | null;
+        storage_mb: number | null;
+        public_portal: boolean;
+        whatsapp_templates: number | null;
+        document_templates: number | null;
+      };
+      reasons: string[];
+    };
   };
   billing?: {
     tenantId: string;
@@ -598,6 +709,11 @@ class FixService {
     branding?: Record<string, unknown>;
     landingContent?: Record<string, unknown>;
     operationalSettings?: Record<string, unknown>;
+    industryProfile?: Record<string, unknown> | null;
+    enabledModules?: Array<Record<string, unknown>> | null;
+    labelOverrides?: Array<Record<string, unknown>> | null;
+    workflowStatuses?: Array<Record<string, unknown>> | null;
+    fieldDefinitions?: FieldDefinitionPayload[] | null;
   }): Promise<ApiSingleResponse<TenantLandingSettings>> {
     return this.request<ApiSingleResponse<TenantLandingSettings>>(`/api/auth/tenant/${encodeURIComponent(this.tenantId)}/settings`, {
       method: 'PUT',
@@ -691,6 +807,10 @@ class FixService {
       showVideo: boolean;
       videoUrl: string;
     };
+    industryProfile?: Record<string, unknown>;
+    enabledModules?: Array<Record<string, unknown>>;
+    labelOverrides?: Array<Record<string, unknown>>;
+    workflowStatuses?: Array<Record<string, unknown>>;
   }): Promise<ApiSingleResponse<TenantLandingSettings>> {
     return this.request<ApiSingleResponse<TenantLandingSettings>>(`/api/auth/tenant/${encodeURIComponent(this.tenantId)}/settings`, {
       method: 'PUT',

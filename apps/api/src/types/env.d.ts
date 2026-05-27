@@ -11,5 +11,8 @@ declare namespace NodeJS {
     SUPABASE_ANON_KEY?: string;
     SUPABASE_SERVICE_ROLE_KEY?: string;
     APP_URL?: string;
+    MASTER_TENANT_SLUG?: string;
+    MASTER_ACCOUNT_EMAIL?: string;
+    TRIAL_DAYS?: string;
   }
 }

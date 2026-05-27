@@ -12,6 +12,12 @@ type PortalOrderResponse = {
     name: string;
     contact_phone?: string | null;
     contact_email?: string | null;
+    config?: {
+      labels?: Record<string, string>;
+      templates?: {
+        portal?: Record<string, unknown>;
+      };
+    } | null;
   };
   data: {
     order: {
@@ -94,13 +100,14 @@ function resolveWhatsappHref(phone?: string) {
 export default function PortalPage() {
   const params = useParams<{ tenantSlug?: string }>();
   const searchParams = useSearchParams();
-  const tenantSlug = typeof params?.tenantSlug === "string" && params.tenantSlug.trim().length > 0 ? params.tenantSlug : "demo";
+  const tenantSlug = typeof params?.tenantSlug === "string" && params.tenantSlug.trim().length > 0 ? params.tenantSlug : "";
   const [folio, setFolio] = useState(searchParams.get("folio") ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<PortalOrderResponse["data"] | null>(null);
   const [tenant, setTenant] = useState<PortalOrderResponse["tenant"] | null>(null);
-  const [tenantLabel, setTenantLabel] = useState<string>(tenantSlug);
+  const [tenantLabel, setTenantLabel] = useState<string>(tenantSlug || "Tenant");
+  const [portalTemplate, setPortalTemplate] = useState<Record<string, unknown> | null>(null);
 
   const apiBaseUrl = resolveApiBaseUrl();
 
@@ -125,6 +132,10 @@ export default function PortalPage() {
         throw new Error("NEXT_PUBLIC_API_URL o NEXT_PUBLIC_API_BASE_URL no está configurada");
       }
 
+      if (!tenantSlug) {
+        throw new Error("Tenant slug ausente en la ruta");
+      }
+
       const response = await fetch(
         `${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(folio.trim())}`
       );
@@ -137,6 +148,7 @@ export default function PortalPage() {
       if (payload && "success" in payload) {
         setTenantLabel(payload.tenant.name || tenantSlug);
         setTenant(payload.tenant);
+        setPortalTemplate(payload.tenant.config?.templates?.portal ?? null);
         setResult(payload.data);
       } else {
         throw new Error("Respuesta inválida del servidor");
@@ -154,9 +166,12 @@ export default function PortalPage() {
         <div className="flex flex-col gap-6 rounded-[1.8rem] border border-zinc-800 bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(10,10,12,0.96))] p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
             <p className="text-xs uppercase tracking-[0.35em] text-sky-300/80">SRFIX</p>
-            <h1 className="text-3xl font-black uppercase tracking-tight text-zinc-50 sm:text-4xl">Seguimiento técnico</h1>
+            <h1 className="text-3xl font-black uppercase tracking-tight text-zinc-50 sm:text-4xl">
+              {String(portalTemplate?.heroTitle ?? "Seguimiento de servicio")}
+            </h1>
             <p className="max-w-2xl text-sm leading-7 text-zinc-400 sm:text-base">
-              Ingresa tu folio para ver el estado de tu reparación, abrir el PDF de la cotización y guardarlo o imprimirlo.
+              {String(portalTemplate?.heroDescription ?? "Ingresa tu folio para ver el estado de tu servicio, abrir el PDF y guardarlo o imprimirlo en")}{" "}
+              <span className="font-semibold text-zinc-200">{tenantLabel}</span>.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -171,7 +186,7 @@ export default function PortalPage() {
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
           <form onSubmit={handleSubmit} className="rounded-[1.75rem] border border-zinc-800 bg-zinc-900/60 p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-300">¿Cómo va tu equipo?</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-300">{String(portalTemplate?.statusLabel ?? "¿Cómo va tu servicio?")}</p>
             <p className="mt-2 text-sm leading-7 text-zinc-400">Ingresa tu número de folio para ver el estado actualizado.</p>
             <div className="mt-6 rounded-[1.4rem] border border-sky-400/25 bg-zinc-950 p-4">
               <label className="mb-2 block text-sm font-semibold text-zinc-300">Folio</label>
@@ -203,18 +218,20 @@ export default function PortalPage() {
               <div className="rounded-[1.75rem] border border-zinc-800 bg-zinc-900/60 p-6">
                 <div className="flex min-h-[370px] flex-col items-center justify-center rounded-[1.5rem] border border-zinc-800 bg-zinc-950 px-6 py-10 text-center">
                   <div className="mb-5 rounded-full border border-sky-400/40 bg-sky-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-sky-200">
-                    Portal del cliente
+                    {String(portalTemplate?.documentLabel ?? "Portal del cliente")}
                   </div>
-                  <h2 className="text-3xl font-black uppercase tracking-tight text-sky-300 sm:text-4xl">Ver estado</h2>
+                  <h2 className="text-3xl font-black uppercase tracking-tight text-sky-300 sm:text-4xl">
+                    {String(portalTemplate?.secondaryCtaLabel ?? "Ver estado")}
+                  </h2>
                   <p className="mt-3 max-w-lg text-sm leading-7 text-zinc-400">
-                    Consulta el estatus de tu reparación en tiempo real. Abre el PDF cuando se encuentre disponible.
+                    Consulta el estatus de tu servicio en tiempo real. Abre el PDF cuando se encuentre disponible.
                   </p>
                   <div className="mt-6 flex flex-wrap justify-center gap-3">
                     <Link href={`/${tenantSlug}/tracking`} className="rounded-full border border-zinc-700 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-white/5">
                       Ir al tracking
                     </Link>
                     <Link href={`/${tenantSlug}/cotizar`} className="rounded-full bg-sky-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400">
-                      Cotizar
+                      {String(portalTemplate?.primaryCtaLabel ?? "Cotizar")}
                     </Link>
                   </div>
                 </div>
@@ -233,10 +250,10 @@ export default function PortalPage() {
 
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
                   <section className="rounded-[1.4rem] border border-zinc-800 bg-zinc-950 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-200">Información del equipo</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-200">Información del servicio</p>
                     <div className="mt-3 space-y-3 text-sm">
                       <div className="flex justify-between gap-4 border-b border-zinc-800 pb-2">
-                        <span className="text-zinc-400">Equipo</span>
+                        <span className="text-zinc-400">Servicio</span>
                         <span className="font-semibold text-zinc-50">{result.order.device_info?.type ?? "Sin tipo"}</span>
                       </div>
                       <div className="flex justify-between gap-4 border-b border-zinc-800 pb-2">
@@ -246,7 +263,7 @@ export default function PortalPage() {
                         </span>
                       </div>
                       <div className="flex justify-between gap-4 border-b border-zinc-800 pb-2">
-                        <span className="text-zinc-400">Falla reportada</span>
+                        <span className="text-zinc-400">Revisión</span>
                         <span className="font-semibold text-zinc-50">{result.order.problem_description ?? "Sin descripción"}</span>
                       </div>
                       <div className="flex justify-between gap-4">

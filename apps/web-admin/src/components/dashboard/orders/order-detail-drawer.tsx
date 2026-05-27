@@ -17,9 +17,18 @@ export type OrderDetailData = {
     created_at?: string;
     updated_at?: string;
     device_info?: Record<string, unknown>;
+    metadata?: Record<string, unknown> | null;
     estimated_cost?: number;
     final_cost?: number;
     customer_id?: string | null;
+    operational_risk?: {
+      color?: 'green' | 'yellow' | 'red' | 'gray';
+      reason?: string;
+      suggested_action?: string;
+      elapsed_minutes?: number | null;
+      rule_applied?: string | null;
+      priority?: number;
+    };
   };
   checklist?: {
     has_charger?: boolean;
@@ -88,6 +97,88 @@ function whatsappLink(phone?: string | null, folio?: string | null, customerPort
   return `https://wa.me/${normalized}?text=${message}`;
 }
 
+function InlineEditButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-sky-500/25 bg-slate-950 text-sky-100 transition hover:bg-sky-500/10"
+      aria-label="Editar campo"
+    >
+      <span className="text-xs font-black">✎</span>
+    </button>
+  );
+}
+
+function InlineField({
+  label,
+  value,
+  field,
+  editingField,
+  drafts,
+  onStartEdit,
+  onCancelEdit,
+  onSave,
+  onDraftChange,
+  multiline = false,
+}: {
+  label: string;
+  value: string;
+  field: string;
+  editingField: string | null;
+  drafts: Record<string, string>;
+  onStartEdit: (field: string, value: string) => void;
+  onCancelEdit: (field: string, value: string) => void;
+  onSave: (field: string) => Promise<void>;
+  onDraftChange: (field: string, value: string) => void;
+  multiline?: boolean;
+}) {
+  const editing = editingField === field;
+  const current = drafts[field] ?? value;
+
+  return (
+    <div className="rounded-2xl border border-sky-500/15 bg-black/20 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">{label}</div>
+        {editing ? (
+          <div className="flex gap-2">
+            <button type="button" onClick={() => void onSave(field)} className="rounded-md border border-emerald-500/25 px-3 py-1 text-xs font-semibold text-emerald-100">
+              Guardar
+            </button>
+            <button
+              type="button"
+              onClick={() => onCancelEdit(field, value)}
+              className="rounded-md border border-zinc-700 px-3 py-1 text-xs font-semibold text-zinc-300"
+            >
+              Cancelar
+            </button>
+          </div>
+        ) : (
+          <InlineEditButton onClick={() => onStartEdit(field, value)} />
+        )}
+      </div>
+      {editing ? (
+        multiline ? (
+          <textarea
+            value={current}
+            onChange={(e) => onDraftChange(field, e.target.value)}
+            className="mt-3 w-full rounded-2xl border border-sky-400/30 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none"
+            rows={4}
+          />
+        ) : (
+          <input
+            value={current}
+            onChange={(e) => onDraftChange(field, e.target.value)}
+            className="mt-3 w-full rounded-2xl border border-sky-400/30 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none"
+          />
+        )
+      ) : (
+        <div className={`mt-2 ${multiline ? "rounded-2xl border border-zinc-800 bg-black/30 px-4 py-3" : ""} text-sm text-zinc-200`}>{value || "Sin dato"}</div>
+      )}
+    </div>
+  );
+}
+
 export function OrderDetailDrawer({
   open,
   loading,
@@ -111,11 +202,6 @@ export function OrderDetailDrawer({
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [portalFullscreen, setPortalFullscreen] = useState(false);
   const portalWrapId = `portal-preview-${order?.id ?? "unknown"}`;
-
-  useEffect(() => {
-    setEditingField(null);
-    setDrafts({});
-  }, [order?.id]);
 
   useEffect(() => {
     const onChange = () => {
@@ -143,6 +229,8 @@ export function OrderDetailDrawer({
   const waLink = whatsappLink(phone, order?.folio, customerPortalUrl);
   const pdfUrl = order?.receipt_url ?? data?.documents?.find((document) => document.file_type === "receipt_pdf" && document.public_url)?.public_url ?? null;
   const portalUrl = buildPortalUrl(customerPortalUrl, order?.folio);
+  const metadataEntries = Object.entries((order?.metadata as Record<string, unknown> | undefined) ?? {}).filter(([, value]) => value !== undefined && value !== null && value !== "");
+  const operationalRisk = order?.operational_risk ?? null;
 
   function getDeviceInfoValue(key: "customer_name" | "customer_phone" | "customer_email" | "type" | "brand" | "model") {
     return String((order?.device_info as Record<string, unknown> | undefined)?.[key] ?? "");
@@ -171,19 +259,6 @@ export function OrderDetailDrawer({
     setEditingField(null);
   }
 
-  function InlineEditButton({ onClick }: { onClick: () => void }) {
-    return (
-      <button
-        type="button"
-        onClick={onClick}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-sky-500/25 bg-slate-950 text-sky-100 transition hover:bg-sky-500/10"
-        aria-label="Editar campo"
-      >
-        <span className="text-xs font-black">✎</span>
-      </button>
-    );
-  }
-
   async function togglePortalFullscreen() {
     const element = document.getElementById(portalWrapId);
     if (!element) return;
@@ -192,71 +267,6 @@ export function OrderDetailDrawer({
       return;
     }
     await element.requestFullscreen().catch(() => undefined);
-  }
-
-  function InlineField({
-    label,
-    value,
-    field,
-    multiline = false,
-  }: {
-    label: string;
-    value: string;
-    field: string;
-    multiline?: boolean;
-  }) {
-    const editing = editingField === field;
-    const current = drafts[field] ?? value;
-
-    return (
-      <div className="rounded-2xl border border-sky-500/15 bg-black/20 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">{label}</div>
-          {editing ? (
-            <div className="flex gap-2">
-              <button type="button" onClick={() => void saveField(field)} className="rounded-md border border-emerald-500/25 px-3 py-1 text-xs font-semibold text-emerald-100">
-                Guardar
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingField(null);
-                  setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: value }));
-                }}
-                className="rounded-md border border-zinc-700 px-3 py-1 text-xs font-semibold text-zinc-300"
-              >
-                Cancelar
-              </button>
-            </div>
-          ) : (
-            <InlineEditButton
-              onClick={() => {
-                setEditingField(field);
-                setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: currentDrafts[field] ?? value }));
-              }}
-            />
-          )}
-        </div>
-        {editing ? (
-          multiline ? (
-            <textarea
-              value={current}
-              onChange={(e) => setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: e.target.value }))}
-              className="mt-3 w-full rounded-2xl border border-sky-400/30 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none"
-              rows={4}
-            />
-          ) : (
-            <input
-              value={current}
-              onChange={(e) => setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: e.target.value }))}
-              className="mt-3 w-full rounded-2xl border border-sky-400/30 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none"
-            />
-          )
-        ) : (
-          <div className={`mt-2 ${multiline ? "rounded-2xl border border-zinc-800 bg-black/30 px-4 py-3" : ""} text-sm text-zinc-200`}>{value || "Sin dato"}</div>
-        )}
-      </div>
-    );
   }
 
   return (
@@ -268,6 +278,23 @@ export function OrderDetailDrawer({
             <h3 className="text-xl font-semibold text-zinc-50">{order?.folio ?? "Orden"}</h3>
             <p className="mt-1 text-sm text-zinc-400">Detalles operativos · timeline · archivos · acciones.</p>
           </div>
+          {operationalRisk ? (
+            <div
+              className={`max-w-sm rounded-2xl border px-3 py-2 text-xs font-semibold ${
+                operationalRisk.color === 'red'
+                  ? 'border-rose-500/25 bg-rose-500/10 text-rose-100'
+                  : operationalRisk.color === 'yellow'
+                    ? 'border-amber-500/25 bg-amber-500/10 text-amber-100'
+                    : operationalRisk.color === 'gray'
+                      ? 'border-zinc-500/25 bg-zinc-500/10 text-zinc-100'
+                      : 'border-emerald-500/25 bg-emerald-500/10 text-emerald-100'
+              }`}
+            >
+              <div className="uppercase tracking-[0.2em] opacity-80">Riesgo operativo</div>
+              <div className="mt-1 text-sm font-black">{operationalRisk.reason ?? 'Sin detalle'}</div>
+              <div className="mt-1 opacity-80">{operationalRisk.suggested_action ?? 'Sin acción sugerida'}</div>
+            </div>
+          ) : null}
           <button onClick={onClose} className="rounded-full border border-zinc-700 px-3 py-2 text-sm text-zinc-300">
             Salir
           </button>
@@ -303,12 +330,122 @@ export function OrderDetailDrawer({
                 {activeTab === "details" ? (
                   <section className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-4">
-                      <InlineField label="Cliente" value={getDeviceInfoValue("customer_name")} field="clientName" />
-                      <InlineField label="Teléfono" value={getDeviceInfoValue("customer_phone") || phone || ""} field="clientPhone" />
-                      <InlineField label="Correo" value={getDeviceInfoValue("customer_email")} field="clientEmail" />
-                      <InlineField label="Equipo" value={order?.device_model ?? getDeviceInfoValue("model") ?? ""} field="deviceModel" />
-                      <InlineField label="Tipo de dispositivo" value={order?.device_type ?? getDeviceInfoValue("type") ?? ""} field="deviceType" />
-                      <InlineField label="Problema" value={order?.problem_description ?? ""} field="issue" multiline />
+                      <InlineField
+                        label="Cliente"
+                        value={getDeviceInfoValue("customer_name")}
+                        field="clientName"
+                        editingField={editingField}
+                        drafts={drafts}
+                        onStartEdit={(field, value) => {
+                          setEditingField(field);
+                          setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: currentDrafts[field] ?? value }));
+                        }}
+                        onCancelEdit={(field, value) => {
+                          setEditingField(null);
+                          setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: value }));
+                        }}
+                        onSave={saveField}
+                        onDraftChange={(field, value) => setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: value }))}
+                      />
+                      <InlineField
+                        label="Teléfono"
+                        value={getDeviceInfoValue("customer_phone") || phone || ""}
+                        field="clientPhone"
+                        editingField={editingField}
+                        drafts={drafts}
+                        onStartEdit={(field, value) => {
+                          setEditingField(field);
+                          setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: currentDrafts[field] ?? value }));
+                        }}
+                        onCancelEdit={(field, value) => {
+                          setEditingField(null);
+                          setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: value }));
+                        }}
+                        onSave={saveField}
+                        onDraftChange={(field, value) => setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: value }))}
+                      />
+                      <InlineField
+                        label="Correo"
+                        value={getDeviceInfoValue("customer_email")}
+                        field="clientEmail"
+                        editingField={editingField}
+                        drafts={drafts}
+                        onStartEdit={(field, value) => {
+                          setEditingField(field);
+                          setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: currentDrafts[field] ?? value }));
+                        }}
+                        onCancelEdit={(field, value) => {
+                          setEditingField(null);
+                          setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: value }));
+                        }}
+                        onSave={saveField}
+                        onDraftChange={(field, value) => setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: value }))}
+                      />
+                      <InlineField
+                        label="Equipo"
+                        value={order?.device_model ?? getDeviceInfoValue("model") ?? ""}
+                        field="deviceModel"
+                        editingField={editingField}
+                        drafts={drafts}
+                        onStartEdit={(field, value) => {
+                          setEditingField(field);
+                          setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: currentDrafts[field] ?? value }));
+                        }}
+                        onCancelEdit={(field, value) => {
+                          setEditingField(null);
+                          setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: value }));
+                        }}
+                        onSave={saveField}
+                        onDraftChange={(field, value) => setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: value }))}
+                      />
+                      <InlineField
+                        label="Tipo de dispositivo"
+                        value={order?.device_type ?? getDeviceInfoValue("type") ?? ""}
+                        field="deviceType"
+                        editingField={editingField}
+                        drafts={drafts}
+                        onStartEdit={(field, value) => {
+                          setEditingField(field);
+                          setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: currentDrafts[field] ?? value }));
+                        }}
+                        onCancelEdit={(field, value) => {
+                          setEditingField(null);
+                          setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: value }));
+                        }}
+                        onSave={saveField}
+                        onDraftChange={(field, value) => setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: value }))}
+                      />
+                      <InlineField
+                        label="Problema"
+                        value={order?.problem_description ?? ""}
+                        field="issue"
+                        editingField={editingField}
+                        drafts={drafts}
+                        onStartEdit={(field, value) => {
+                          setEditingField(field);
+                          setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: currentDrafts[field] ?? value }));
+                        }}
+                        onCancelEdit={(field, value) => {
+                          setEditingField(null);
+                          setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: value }));
+                        }}
+                        onSave={saveField}
+                        onDraftChange={(field, value) => setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: value }))}
+                        multiline
+                      />
+                      {metadataEntries.length > 0 ? (
+                        <div className="rounded-2xl border border-sky-500/15 bg-black/20 p-4">
+                          <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">Campos dinámicos</div>
+                          <dl className="mt-3 grid gap-3">
+                            {metadataEntries.map(([key, value]) => (
+                              <div key={key} className="rounded-2xl border border-zinc-800 bg-black/30 px-4 py-3">
+                                <dt className="text-xs uppercase tracking-[0.18em] text-zinc-500">{key}</dt>
+                                <dd className="mt-1 text-sm text-zinc-100">{typeof value === "string" ? value : JSON.stringify(value)}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        </div>
+                      ) : null}
                     </div>
                     <div className="space-y-4">
                       <div className="rounded-2xl border border-sky-500/15 bg-black/20 p-4">
@@ -334,7 +471,23 @@ export function OrderDetailDrawer({
                         </div>
                         <div className="mt-2 text-sm text-zinc-300">{order?.folio ?? "-"}</div>
                       </div>
-                      <InlineField label="Fecha promesa" value={order?.promised_date ? new Date(order.promised_date).toISOString().slice(0, 10) : ""} field="promisedDate" />
+                      <InlineField
+                        label="Fecha promesa"
+                        value={order?.promised_date ? new Date(order.promised_date).toISOString().slice(0, 10) : ""}
+                        field="promisedDate"
+                        editingField={editingField}
+                        drafts={drafts}
+                        onStartEdit={(field, value) => {
+                          setEditingField(field);
+                          setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: currentDrafts[field] ?? value }));
+                        }}
+                        onCancelEdit={(field, value) => {
+                          setEditingField(null);
+                          setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: value }));
+                        }}
+                        onSave={saveField}
+                        onDraftChange={(field, value) => setDrafts((currentDrafts) => ({ ...currentDrafts, [field]: value }))}
+                      />
                       <div className="grid gap-2 rounded-2xl border border-sky-500/15 bg-black/20 p-4 text-sm text-zinc-300">
                         <div>Creada: {order?.created_at ? new Date(order.created_at).toLocaleString("es-MX") : "-"}</div>
                         <div>Actualizada: {order?.updated_at ? new Date(order.updated_at).toLocaleString("es-MX") : "-"}</div>

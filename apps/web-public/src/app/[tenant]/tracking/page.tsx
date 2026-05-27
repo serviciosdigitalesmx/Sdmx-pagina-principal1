@@ -15,6 +15,7 @@ export default function TenantTrackingPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [portalTemplate, setPortalTemplate] = useState<Record<string, unknown> | null>(null);
 
   const apiUrl = (
     process.env.NEXT_PUBLIC_API_URL ||
@@ -48,7 +49,10 @@ export default function TenantTrackingPage() {
         throw new Error(payload?.error ?? "No se pudo consultar el estatus");
       }
 
-      setStatus(`${payload.data.status} · ${payload.data.problem_description}`);
+      const statusKey = String(payload?.data?.status ?? "").toLowerCase();
+      const statusLabel = payload?.tenant?.config?.statusLabels?.[statusKey] ?? payload?.data?.status ?? "Sin estado";
+      setStatus(`${statusLabel} · ${payload.data.problem_description}`);
+      setPortalTemplate(payload?.tenant?.config?.templates?.portal ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error inesperado");
     } finally {
@@ -63,10 +67,10 @@ export default function TenantTrackingPage() {
           <div>
             <p className="text-xs uppercase tracking-[0.35em] text-amber-100/70">Panel del cliente</p>
             <h1 className="mt-3 text-4xl font-bold tracking-tight text-zinc-50 [font-family:var(--font-cormorant)]">
-              Ver estatus de tu reparación
+              {String(portalTemplate?.heroTitle ?? "Ver estatus de tu servicio")}
             </h1>
             <p className="mt-4 max-w-2xl text-lg leading-8 text-zinc-300">
-              Consulta el avance de tu equipo con el folio generado en recepción para el taller {tenant}.
+              {String(portalTemplate?.heroDescription ?? `Consulta el avance de tu servicio con el folio generado en recepción para el taller ${tenant}.`)}
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <Link href={`/${params.tenant}`} className="rounded-full border border-stone-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-white/5">
@@ -81,7 +85,7 @@ export default function TenantTrackingPage() {
           <aside className="rounded-[1.75rem] border border-amber-700/15 bg-black/20 p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/70">Antes de consultar</p>
             <ul className="mt-4 space-y-3 text-sm leading-7 text-zinc-300">
-              <li>• Ten a la mano el folio de recepción.</li>
+              <li>• Ten a la mano el folio de servicio.</li>
               <li>• El correo es opcional, pero ayuda a validar la consulta.</li>
               <li>• Si ya tienes sesión, puedes entrar al panel privado.</li>
             </ul>
@@ -115,10 +119,10 @@ export default function TenantTrackingPage() {
 
           <div className="flex flex-wrap items-center gap-3">
             <button disabled={loading} className="rounded-full bg-amber-50 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-amber-100 disabled:opacity-60">
-              {loading ? "Consultando..." : "Ver estatus"}
+              {loading ? "Consultando..." : String(portalTemplate?.primaryCtaLabel ?? "Ver estatus")}
             </button>
             <p className="text-sm leading-6 text-zinc-400">
-              La consulta se hace sobre el API real y devuelve el avance del equipo.
+              La consulta se hace sobre el API real y devuelve el avance del servicio.
             </p>
           </div>
         </form>

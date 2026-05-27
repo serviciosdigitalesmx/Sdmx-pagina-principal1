@@ -15,6 +15,7 @@ type NavItem = {
   href: string;
   label: string;
   allowedRoles: Role[];
+  moduleKey?: string;
 };
 
 type NavGroup = {
@@ -27,30 +28,30 @@ const navGroups: NavGroup[] = [
     title: "Integrador",
     items: [
       { href: "/dashboard", label: "Resumen", allowedRoles: ["owner", "manager", "technician"] },
-      { href: "/dashboard/ordenes", label: "Órdenes", allowedRoles: ["owner", "manager", "technician"] },
-      { href: "/dashboard/archivo", label: "Archivo", allowedRoles: ["owner", "manager", "technician"] },
-      { href: "/dashboard/solicitudes", label: "Solicitudes", allowedRoles: ["owner", "manager", "technician"] },
-      { href: "/dashboard/landing", label: "Sitio del tenant", allowedRoles: ["owner", "manager"] },
+      { href: "/dashboard/ordenes", label: "Órdenes", allowedRoles: ["owner", "manager", "technician"], moduleKey: "orders" },
+      { href: "/dashboard/archivo", label: "Archivo", allowedRoles: ["owner", "manager", "technician"], moduleKey: "orders" },
+      { href: "/dashboard/solicitudes", label: "Solicitudes", allowedRoles: ["owner", "manager", "technician"], moduleKey: "requests" },
+      { href: "/dashboard/landing", label: "Sitio del tenant", allowedRoles: ["owner", "manager"], moduleKey: "landing" },
     ],
   },
   {
     title: "Paneles",
     items: [
-      { href: "/dashboard/clientes", label: "Clientes", allowedRoles: ["owner", "manager", "technician"] },
-      { href: "/dashboard/proveedores", label: "Proveedores", allowedRoles: ["owner", "manager"] },
-      { href: "/dashboard/stock", label: "Stock", allowedRoles: ["owner", "manager", "technician"] },
-      { href: "/dashboard/tareas", label: "Tareas", allowedRoles: ["owner", "manager", "technician"] },
+      { href: "/dashboard/clientes", label: "Clientes", allowedRoles: ["owner", "manager", "technician"], moduleKey: "customers" },
+      { href: "/dashboard/proveedores", label: "Proveedores", allowedRoles: ["owner", "manager"], moduleKey: "suppliers" },
+      { href: "/dashboard/stock", label: "Stock", allowedRoles: ["owner", "manager", "technician"], moduleKey: "inventory" },
+      { href: "/dashboard/tareas", label: "Tareas", allowedRoles: ["owner", "manager", "technician"], moduleKey: "tasks" },
     ],
   },
   {
     title: "Control",
     items: [
-      { href: "/dashboard/compras", label: "Compras", allowedRoles: ["owner", "manager"] },
-      { href: "/dashboard/gastos", label: "Gastos", allowedRoles: ["owner", "manager"] },
-      { href: "/dashboard/finanzas", label: "Finanzas", allowedRoles: ["owner", "manager"] },
-      { href: "/dashboard/reportes", label: "Reportes", allowedRoles: ["owner", "manager"] },
-      { href: "/dashboard/seguridad", label: "Seguridad", allowedRoles: ["owner", "manager"] },
-      { href: "/dashboard/sucursales", label: "Sucursales", allowedRoles: ["owner", "manager"] },
+      { href: "/dashboard/compras", label: "Compras", allowedRoles: ["owner", "manager"], moduleKey: "purchase-orders" },
+      { href: "/dashboard/gastos", label: "Gastos", allowedRoles: ["owner", "manager"], moduleKey: "expenses" },
+      { href: "/dashboard/finanzas", label: "Finanzas", allowedRoles: ["owner", "manager"], moduleKey: "finance" },
+      { href: "/dashboard/reportes", label: "Reportes", allowedRoles: ["owner", "manager"], moduleKey: "reports" },
+      { href: "/dashboard/seguridad", label: "Seguridad", allowedRoles: ["owner", "manager"], moduleKey: "security" },
+      { href: "/dashboard/sucursales", label: "Sucursales", allowedRoles: ["owner", "manager"], moduleKey: "branches" },
     ],
   },
 ];
@@ -68,6 +69,17 @@ function DashboardShellContent({
   const theme = useTenantTheme();
   const auth = useAuth();
   const [branches, setBranches] = React.useState<Array<{ id?: string; name?: string; city?: string; code?: string }>>([]);
+  const [tenantConfig, setTenantConfig] = React.useState<{
+    active_modules?: string[];
+    labels?: Record<string, string>;
+    status_labels?: Record<string, string>;
+    capabilities?: {
+      active_modules: string[];
+      locked_modules: string[];
+      plan_key: 'basic' | 'pro' | 'scale';
+      access_status: 'active' | 'trial' | 'billing_exempt' | 'master' | 'blocked';
+    };
+  } | null>(null);
   const activeTenant = React.useMemo<TenantConfig>(() => {
     const tenantLabel = auth.tenantSlug || tenant.tenantId;
 
@@ -80,6 +92,26 @@ function DashboardShellContent({
     };
   }, [auth.role, auth.tenantSlug, auth.userEmail, tenant]);
   const branchId = searchParams.get('branchId') ?? auth.sucursalId ?? '';
+  const enabledModules = React.useMemo(() => {
+    const activeModules = tenantConfig?.capabilities?.active_modules ?? tenantConfig?.active_modules;
+    if (Array.isArray(activeModules) && activeModules.length > 0) {
+      return new Set(activeModules);
+    }
+    return null;
+  }, [tenantConfig?.active_modules, tenantConfig?.capabilities?.active_modules]);
+
+  const visibleNavGroups = React.useMemo(() => {
+    if (!enabledModules) {
+      return navGroups;
+    }
+
+    return navGroups
+      .map((group) => ({
+        ...group,
+        items: group.items.filter((item) => !item.moduleKey || item.href === '/dashboard' || enabledModules.has(item.moduleKey)),
+      }))
+      .filter((group) => group.items.length > 0);
+  }, [enabledModules]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -96,6 +128,34 @@ function DashboardShellContent({
     }
 
     void loadBranches();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    async function loadTenantSettings() {
+      try {
+        const settings = await fixService.getTenantSettings();
+        if (!cancelled) {
+          setTenantConfig({
+            active_modules: settings.data.tenant.active_modules ?? settings.data.config?.activeModules ?? [],
+            labels: settings.data.tenant.labels ?? settings.data.config?.labels ?? {},
+            status_labels: settings.data.tenant.status_labels ?? settings.data.config?.statusLabels ?? {},
+            capabilities: settings.data.tenant.capabilities ?? settings.data.config?.capabilities ?? undefined,
+          });
+        }
+      } catch {
+        if (!cancelled) {
+          setTenantConfig(null);
+        }
+      }
+    }
+
+    void loadTenantSettings();
 
     return () => {
       cancelled = true;
@@ -128,7 +188,7 @@ function DashboardShellContent({
           </div>
         </div>
         <nav className="flex-1 space-y-6 overflow-y-auto p-4">
-          {navGroups.map((group) => (
+          {visibleNavGroups.map((group) => (
             <section key={group.title} className="space-y-3">
               <div className="px-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-100/60">
                 {group.title}
