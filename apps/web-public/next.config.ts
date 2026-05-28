@@ -7,7 +7,6 @@ const repoRoot = path.resolve(appRoot, "../..");
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  outputFileTracingRoot: repoRoot,
   turbopack: {
     root: repoRoot,
   },
