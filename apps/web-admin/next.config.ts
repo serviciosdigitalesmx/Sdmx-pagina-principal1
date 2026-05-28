@@ -3,12 +3,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const appRoot = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(appRoot, "../..");
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  outputFileTracingRoot: path.resolve(appRoot, "../.."),
+  outputFileTracingRoot: repoRoot,
   turbopack: {
-    root: appRoot,
+    root: repoRoot,
   },
 };
 

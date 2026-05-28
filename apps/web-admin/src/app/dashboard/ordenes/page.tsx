@@ -487,7 +487,7 @@ export default function OrdenesKanbanPage() {
     try {
       setSaving(true);
       setError("");
-      const sucursalId = isUuid(sucursalId) ? sucursalId : undefined;
+      const selectedSucursalId = isUuid(sucursalId) ? sucursalId : undefined;
       for (const definition of dynamicFieldDefinitions) {
         if (!definition.required || definition.visible === false) continue;
         const value = dynamicFieldValues[definition.field_key];
@@ -530,7 +530,7 @@ export default function OrdenesKanbanPage() {
         },
         metadata,
         receiptUrl: "",
-        sucursalId,
+        sucursalId: selectedSucursalId,
       })) as OrderRow;
 
       if (!created.id) {
