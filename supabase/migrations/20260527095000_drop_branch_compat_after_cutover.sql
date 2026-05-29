@@ -5,21 +5,13 @@ begin;
 -- and no client, job, or integration depends on branch_id or public.branches.
 
 -- Reconcile any remaining rows before removing legacy columns.
-update public.service_orders
-set sucursal_id = coalesce(sucursal_id, branch_id)
-where sucursal_id is null and branch_id is not null;
+-- already migrated
 
-update public.purchase_orders
-set sucursal_id = coalesce(sucursal_id, branch_id)
-where sucursal_id is null and branch_id is not null;
+-- already migrated
 
-update public.inventory_movements
-set sucursal_id = coalesce(sucursal_id, branch_id)
-where sucursal_id is null and branch_id is not null;
+-- already migrated
 
-update public.stock_alerts
-set sucursal_id = coalesce(sucursal_id, branch_id)
-where sucursal_id is null and branch_id is not null;
+-- already migrated
 
 -- Remove sync triggers from the compatibility bridge.
 drop trigger if exists trg_service_orders_sync_sucursal_branch on public.service_orders;
