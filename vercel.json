@@ -1,5 +1,0 @@
-{
-  "buildCommand": "pnpm --filter web-admin build",
-  "outputDirectory": "apps/web-admin/.next",
-  "installCommand": "pnpm install --frozen-lockfile"
-}
