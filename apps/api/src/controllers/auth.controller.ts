@@ -316,7 +316,20 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
   try {
     const { data, error } = await supabaseAdmin.auth.getUser(accessToken);
 
+    console.log("EXCHANGE_DEBUG", {
+      hasError: !!error,
+      errorMessage: error?.message,
+      userId: data?.user?.id,
+      email: data?.user?.email,
+    });
+
+
     if (error || !data.user) {
+      console.error("EXCHANGE_401", {
+        error,
+        data,
+      });
+
       return res.status(401).json({ error: error?.message ?? 'Unable to validate session' });
     }
 
