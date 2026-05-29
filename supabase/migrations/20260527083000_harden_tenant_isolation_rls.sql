@@ -260,8 +260,8 @@ begin
       on public.service_orders
       for update
       to authenticated
-      using (public._is_tenant_member(tenant_id) and public._jwt_role() = ''technician'')
-      with check (public._is_tenant_member(tenant_id) and public._jwt_role() = ''technician'')
+      using (public._is_tenant_member(tenant_id) and public._jwt_role() = 'technician')
+      with check (public._is_tenant_member(tenant_id) and public._jwt_role() = 'technician')
     $policy$;
   end if;
 
@@ -392,8 +392,8 @@ begin
       on public.expenses
       for all
       to authenticated
-      using (public._is_tenant_member(tenant_id) and public._jwt_role() = ''owner'')
-      with check (public._is_tenant_member(tenant_id) and public._jwt_role() = ''owner'')
+      using (public._is_tenant_member(tenant_id) and public._jwt_role() = 'owner')
+      with check (public._is_tenant_member(tenant_id) and public._jwt_role() = 'owner')
     $policy$;
     execute 'drop policy if exists expenses_manager_read_own_sucursal on public.expenses';
     execute $policy$
@@ -403,7 +403,7 @@ begin
       to authenticated
       using (
         public._is_tenant_member(tenant_id)
-        and public._jwt_role() = ''manager''
+        and public._jwt_role() = 'manager'
         and ((public._tenant_jwt_id() = tenant_id) is true)
       )
     $policy$;
@@ -415,7 +415,7 @@ begin
       to authenticated
       with check (
         public._is_tenant_member(tenant_id)
-        and public._jwt_role() = ''manager''
+        and public._jwt_role() = 'manager'
       )
     $policy$;
     execute 'drop policy if exists expenses_manager_update_own_sucursal on public.expenses';
@@ -426,11 +426,11 @@ begin
       to authenticated
       using (
         public._is_tenant_member(tenant_id)
-        and public._jwt_role() = ''manager''
+        and public._jwt_role() = 'manager'
       )
       with check (
         public._is_tenant_member(tenant_id)
-        and public._jwt_role() = ''manager''
+        and public._jwt_role() = 'manager'
       )
     $policy$;
     execute 'drop policy if exists expenses_manager_delete_own_sucursal on public.expenses';
@@ -441,7 +441,7 @@ begin
       to authenticated
       using (
         public._is_tenant_member(tenant_id)
-        and public._jwt_role() = ''manager''
+        and public._jwt_role() = 'manager'
       )
     $policy$;
   end if;
