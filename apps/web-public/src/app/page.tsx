@@ -63,6 +63,9 @@ export default function Home() {
               <HeroButton href={portalHref} secondary>
                 Entrar al panel del cliente
               </HeroButton>
+              <HeroButton href="/billing" secondary>
+                Ver planes
+              </HeroButton>
               <HeroButton href="/onboarding" secondary>
                 Crear mi tenant
               </HeroButton>
@@ -90,19 +93,30 @@ export default function Home() {
             </div>
           </article>
 
-          <article className="rounded-[1.75rem] border border-stone-700/70 bg-white/4 p-6 shadow-[0_16px_60px_rgba(0,0,0,0.24)] backdrop-blur">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-amber-100/70">Panel del cliente</p>
-            <h2 className="mt-3 text-2xl font-bold text-zinc-50">Consultar folio, timeline y evidencia</h2>
-            <p className="mt-3 text-sm leading-7 text-zinc-300">
-              El cliente entra al portal del taller para revisar su orden sin mezclar información con otros tenants.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <HeroButton href={portalHref} secondary>
-                Abrir portal
-              </HeroButton>
-            </div>
-          </article>
-        </section>
+            <article className="rounded-[1.75rem] border border-stone-700/70 bg-white/4 p-6 shadow-[0_16px_60px_rgba(0,0,0,0.24)] backdrop-blur">
+              <p className="text-xs font-semibold uppercase tracking-[0.26em] text-amber-100/70">Panel del cliente</p>
+              <h2 className="mt-3 text-2xl font-bold text-zinc-50">Consultar folio, timeline y evidencia</h2>
+              <p className="mt-3 text-sm leading-7 text-zinc-300">
+                El cliente entra al portal del taller para revisar su orden sin mezclar información con otros tenants.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <HeroButton href={portalHref} secondary>
+                  Abrir portal
+                </HeroButton>
+              </div>
+            </article>
+
+            <article className="rounded-[1.75rem] border border-stone-700/70 bg-white/4 p-6 shadow-[0_16px_60px_rgba(0,0,0,0.24)] backdrop-blur">
+              <p className="text-xs font-semibold uppercase tracking-[0.26em] text-amber-100/70">Billing</p>
+              <h2 className="mt-3 text-2xl font-bold text-zinc-50">Activar plan y confirmar suscripción</h2>
+              <p className="mt-3 text-sm leading-7 text-zinc-300">
+                El checkout real abre la preferencia de Mercado Pago y el webhook actualiza el tenant en Supabase.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <HeroButton href="/billing">Ver planes</HeroButton>
+              </div>
+            </article>
+          </section>
 
         <section id="producto" className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {modules.map((module) => (

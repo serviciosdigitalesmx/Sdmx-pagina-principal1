@@ -120,24 +120,30 @@ export const register = async (req: Request, res: Response) => {
   const appUrl = resolveAppUrl(requestOrigin);
 
   if (!appUrl) {
-    return res.status(500).json({ error: 'APP_URL is required' });
+    console.error('REGISTER_MISSING_APP_URL', { requestOrigin: requestOrigin, configured: process.env.APP_URL });
+    return res.status(400).json({ error: 'APP_URL is required or request origin must be allowed' });
   }
 
-  const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    password,
-    phone,
-    email_confirm: true,
-    user_metadata: {
-      role: 'owner',
-      workshop_name: workshopName,
-    },
-  });
-
-  if (authError || !authUser.user) {
-    return res.status(409).json({
-      error: authError?.message ?? 'Unable to create auth user',
+  let authUser: any = null;
+  try {
+    const created = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      phone,
+      email_confirm: true,
+      user_metadata: {
+        role: 'owner',
+        workshop_name: workshopName,
+      },
     });
+    authUser = created?.data ? created : { data: created?.data, error: created?.error };
+    if (created?.error || !created?.data?.user) {
+      console.error('REGISTER_CREATEUSER_FAILED', { error: created?.error });
+      return res.status(409).json({ error: created?.error?.message ?? 'Unable to create auth user' });
+    }
+  } catch (err) {
+    console.error('REGISTER_CREATEUSER_EXCEPTION', err);
+    return res.status(500).json({ error: (err as Error).message ?? 'Unable to create auth user' });
   }
 
   try {

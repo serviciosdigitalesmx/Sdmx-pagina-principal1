@@ -1,0 +1,24 @@
+import Link from "next/link";
+import { srFixTheme } from "@/components/srfix-theme";
+
+export default function BillingSuccessPage() {
+  return (
+    <main className="min-h-screen px-6 py-10 text-zinc-100" style={{ background: srFixTheme.background }}>
+      <section className="mx-auto flex w-full max-w-3xl flex-col gap-6 rounded-[2rem] border border-emerald-700/30 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-8">
+        <p className="text-xs uppercase tracking-[0.35em] text-emerald-200">Pago aprobado</p>
+        <h1 className="text-4xl font-bold tracking-tight text-stone-50">Tu suscripción fue activada</h1>
+        <p className="text-lg leading-8 text-stone-300">
+          Mercado Pago confirmó el cobro. El webhook actualizará el tenant y el panel quedará habilitado con el plan correspondiente.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/hub" className="rounded-full bg-emerald-400 px-5 py-3 font-semibold text-zinc-950">
+            Ir al hub
+          </Link>
+          <Link href="/billing" className="rounded-full border border-stone-700 px-5 py-3 font-semibold text-stone-100">
+            Ver planes
+          </Link>
+        </div>
+      </section>
+    </main>
+  );
+}

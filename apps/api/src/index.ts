@@ -18,6 +18,7 @@ import procurementRouter from './routes/procurement';
 import reportsRouter from './routes/reports';
 import stockAlertsRouter from './routes/stock-alerts';
 import pwaRouter from './routes/pwa';
+import billingRouter, { webhookRouter } from './routes/billing';
 import { getApiRoot, getHealth } from './controllers/meta';
 import { listAuditLogs } from './controllers/security';
 import { requireAuth } from './middleware/auth';
@@ -123,6 +124,9 @@ app.use('/api/:tenantSlug/stock-alerts', stockAlertsRouter);
 app.use('/api/stock-alerts', stockAlertsRouter);
 app.use('/api/:tenantSlug/pwa', pwaRouter);
 app.use('/api/pwa', pwaRouter);
+app.use('/api/:tenantSlug/billing', billingRouter);
+app.use('/api/billing', billingRouter);
+app.use('/api/webhooks', webhookRouter);
 app.use('/api/public', publicRouter);
 
 app.get('/', (req, res) => {

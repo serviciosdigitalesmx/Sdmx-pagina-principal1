@@ -297,10 +297,14 @@ export async function trackPublicOrder(req: Request, res: Response) {
       .select('id, tenant_id, folio, status, total_cost, created_at, device_info, problem_description, serial_number, receipt_url, estimated_cost, final_cost, metadata')
       .eq('tenant_id', tenant.id)
       .eq('folio', folio)
-      .single();
+      .maybeSingle();
 
     if (error) {
-      return res.status(404).json({ error: 'No encontramos tu reparación', details: error.message });
+      return res.status(502).json({ error: 'Failed to query order', details: error.message });
+    }
+
+    if (!data) {
+      return res.status(404).json({ error: 'No encontramos tu reparación', details: 'Order not found' });
     }
 
     if (email && data.device_info?.customer_email && data.device_info.customer_email !== email) {
