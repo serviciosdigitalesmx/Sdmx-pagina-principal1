@@ -164,7 +164,7 @@ export default function SucursalesPage() {
         stats={[
           { label: "Sucursales", value: String(rows.length), helper: "Cargadas desde la API." },
           { label: "Activas", value: String(activeRows.length), helper: "Filtrado por estado." },
-          { label: "Contexto", value: selectedSucursal?.name ?? sucursalId ?? "N/D", helper: "Sucursal actual." },
+          { label: "Contexto", value: selectedSucursal?.name ?? sucursalId ?? "No disponible", helper: "Sucursal actual." },
         ]}
         loading={loading}
         columns={[

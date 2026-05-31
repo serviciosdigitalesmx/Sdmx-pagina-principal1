@@ -48,9 +48,9 @@ const INITIAL_INVITE: InviteFormState = {
 };
 
 function formatDate(value: string | null | undefined) {
-  if (!value) return "N/D";
+  if (!value) return "No disponible";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "N/D";
+  if (Number.isNaN(date.getTime())) return "No disponible";
   return date.toLocaleString("es-MX");
 }
 
@@ -100,7 +100,7 @@ export default function UsuariosPage() {
     return [
       { label: "Usuarios", value: String(total || users.length), helper: "Total en el tenant." },
       { label: "Activos", value: String(activeUsers), helper: "Usuarios habilitados." },
-      { label: "Último acceso", value: latestLogin ? formatDate(latestLogin) : "N/D", helper: "Último login detectado." },
+      { label: "Último acceso", value: latestLogin ? formatDate(latestLogin) : "No disponible", helper: "Último login detectado." },
     ];
   }, [total, users]);
 
@@ -418,9 +418,9 @@ export default function UsuariosPage() {
                     {historyRows.map((row) => (
                       <tr key={row.id}>
                         <td className="px-4 py-3 text-zinc-100">{row.folio ?? row.reference ?? row.id}</td>
-                        <td className="px-4 py-3 text-zinc-300">{row.status ?? "N/D"}</td>
+                        <td className="px-4 py-3 text-zinc-300">{row.status ?? "No disponible"}</td>
                         <td className="px-4 py-3 text-zinc-300">
-                          {typeof row.total === "number" ? new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(row.total) : "N/D"}
+                          {typeof row.total === "number" ? new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(row.total) : "No disponible"}
                         </td>
                         <td className="px-4 py-3 text-zinc-300">{formatDate(row.created_at ?? row.updated_at ?? null)}</td>
                       </tr>

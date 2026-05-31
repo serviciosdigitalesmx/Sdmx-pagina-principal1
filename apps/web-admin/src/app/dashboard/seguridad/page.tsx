@@ -57,11 +57,11 @@ type SecuritySessionRow = {
   } | null;
 };
 
-function formatDate(value: string | null | undefined) {
-  if (!value) return "N/D";
+function formatDate(value?: string | null) {
+  if (!value) return "No disponible";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "N/D";
-  return date.toLocaleString("es-MX");
+  if (Number.isNaN(date.getTime())) return "No disponible";
+  return new Intl.DateTimeFormat("es-MX", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
 export default function SeguridadPage() {
@@ -229,9 +229,9 @@ export default function SeguridadPage() {
 
   const stats = useMemo(
     () => [
-      { label: "Rol", value: summary?.role ?? role, helper: "Tu rol actual." },
-      { label: "Usuario", value: summary?.userId ?? "N/D", helper: "Tu sesión actual." },
-      { label: "Sucursal", value: summary?.sucursalId ?? "N/D", helper: "Tu sucursal actual." },
+      { label: "Tenant", value: summary?.tenantId ?? "No disponible", helper: "Entorno de datos aislado." },
+      { label: "Usuario", value: summary?.userId ?? "No disponible", helper: "Tu sesión actual." },
+      { label: "Sucursal", value: summary?.sucursalId ?? "No disponible", helper: "Tu sucursal actual." },
       {
         label: "Suscripción",
         value: billing?.subscriptionStatus ?? "trial",
@@ -298,7 +298,7 @@ export default function SeguridadPage() {
                       <tr key={row.id}>
                         <td className="px-4 py-3 text-zinc-100">{row.action}</td>
                         <td className="px-4 py-3 text-zinc-300">{row.user_id ?? "Sistema"}</td>
-                        <td className="px-4 py-3 text-zinc-300">{row.ip_address ?? "N/D"}</td>
+                        <td className="px-4 py-3 text-zinc-300">{row.ip_address ?? "No disponible"}</td>
                         <td className="px-4 py-3 text-zinc-300">{formatDate(row.created_at)}</td>
                       </tr>
                     ))}
@@ -364,9 +364,9 @@ export default function SeguridadPage() {
                       <tr key={session.id}>
                         <td className="px-4 py-3 text-zinc-100">
                           <div>{session.user?.name ?? session.user?.email ?? session.userId}</div>
-                          <div className="text-xs text-zinc-400">{session.user?.role ?? "N/D"}</div>
+                          <div className="text-xs text-zinc-400">{session.user?.role ?? "No disponible"}</div>
                         </td>
-                        <td className="px-4 py-3 text-zinc-300">{session.ipAddress ?? "N/D"}</td>
+                        <td className="px-4 py-3 text-zinc-300">{session.ipAddress ?? "No disponible"}</td>
                         <td className="px-4 py-3 text-zinc-300">{formatDate(session.lastActivityAt)}</td>
                         <td className="px-4 py-3">
                           <button type="button" onClick={() => void revokeSession(session.id)} className="min-h-11 rounded-full border border-red-700/40 px-3 py-3 text-xs font-semibold text-red-200 active:scale-95">
@@ -387,7 +387,7 @@ export default function SeguridadPage() {
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <article className="rounded-3xl border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-5 text-zinc-100 shadow-[0_10px_40px_rgba(15,23,42,0.06)]">
             <p className="text-xs uppercase tracking-[0.28em] text-amber-100/70">Trial</p>
-            <p className="mt-2 text-2xl font-semibold">{billing?.daysLeft ?? "N/D"} días</p>
+            <p className="mt-2 text-2xl font-semibold">{billing?.daysLeft ?? "No disponible"} días</p>
             <p className="mt-2 text-sm text-zinc-300">
               {billing?.trialExpiresAt ? `Expira ${new Date(billing.trialExpiresAt).toLocaleDateString('es-MX')}` : "No hay expiración registrada."}
             </p>
