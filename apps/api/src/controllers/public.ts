@@ -98,10 +98,14 @@ async function resolveTenantIdBySlug(slug: string) {
     .from('tenants')
     .select('id, slug, name, branding, landing_content')
     .eq('slug', slug)
-    .single();
+    .maybeSingle();
 
   if (error || !data) {
-    throw new Error(error?.message ?? 'Tenant not found');
+    const message = error?.message ?? 'Tenant not found';
+    const notFound = !data || /single json object/i.test(message) || /0 rows/i.test(message);
+    const tenantError = new Error(message);
+    tenantError.name = notFound ? 'TenantNotFoundError' : 'TenantLookupError';
+    throw tenantError;
   }
 
   return data;
@@ -317,6 +321,9 @@ export async function trackPublicOrder(req: Request, res: Response) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
+    if (error instanceof Error && error.name === 'TenantNotFoundError') {
+      return res.status(404).json({ error: 'No encontramos un tenant con ese slug', details: message });
+    }
     return res.status(500).json({ error: message });
   }
 }
@@ -333,16 +340,17 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
     const tenant = await resolveTenantIdBySlug(tenantSlug);
     const runtimeConfig = await loadTenantRuntimeConfig(tenant.id);
     const supabase = getTenantClient(tenant.id);
+    const searchValue = folio.trim();
 
     const { data, error } = await supabase
       .from('service_orders')
-      .select('id, tenant_id, folio, status, total_cost, created_at, device_info, problem_description, serial_number, receipt_url, estimated_cost, final_cost, evidence_metadata, metadata')
+      .select('id, tenant_id, folio, status, total_cost, created_at, updated_at, promised_date, device_info, problem_description, serial_number, receipt_url, estimated_cost, final_cost, evidence_metadata, metadata')
       .eq('tenant_id', tenant.id)
-      .eq('folio', folio)
-      .single();
+      .or(`folio.eq.${searchValue},public_token.eq.${searchValue}`)
+      .maybeSingle();
 
     if (error || !data) {
-      return res.status(404).json({ error: 'No encontramos tu reparación', details: error?.message });
+      return res.status(404).json({ error: 'No encontramos una orden con ese folio', details: error?.message });
     }
 
     const { data: documents, error: documentsError } = await supabase
@@ -428,10 +436,14 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
     const statusLabelMap: Record<string, string> = {
       pending: runtimeConfig.statusLabels.pending ?? 'Recibido',
       pendiente: runtimeConfig.statusLabels.pendiente ?? 'Recibido',
+      recibido: runtimeConfig.statusLabels.recibido ?? 'Recibido',
+      en_espera_de_refaccion: runtimeConfig.statusLabels.en_espera_de_refaccion ?? 'En espera de refacción',
       diagnostico: runtimeConfig.statusLabels.diagnostico ?? 'Diagnóstico',
       diagnosticado: runtimeConfig.statusLabels.diagnosticado ?? 'Diagnóstico',
+      cotizado: runtimeConfig.statusLabels.cotizado ?? 'Cotizado',
       reparacion: runtimeConfig.statusLabels.reparacion ?? 'En reparación',
       reparando: runtimeConfig.statusLabels.reparando ?? 'En reparación',
+      listo_para_entrega: runtimeConfig.statusLabels.listo_para_entrega ?? 'Listo para entrega',
       listo: runtimeConfig.statusLabels.listo ?? 'Listo',
       entregado: runtimeConfig.statusLabels.entregado ?? 'Entregado',
     };
@@ -481,6 +493,9 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
+    if (error instanceof Error && error.name === 'TenantNotFoundError') {
+      return res.status(404).json({ error: 'No encontramos un tenant con ese slug', details: message });
+    }
     return res.status(500).json({ error: message });
   }
 }
@@ -513,6 +528,9 @@ export async function getPublicTenantLanding(req: Request, res: Response) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
+    if (error instanceof Error && error.name === 'TenantNotFoundError') {
+      return res.status(404).json({ error: 'No encontramos un tenant con ese slug', details: message });
+    }
     return res.status(500).json({ error: message });
   }
 }
