@@ -74,7 +74,7 @@ const initialForm: OrderIntakeFormState = {
   clientName: "",
   clientPhone: "",
   clientEmail: "",
-  deviceType: "Smartphone",
+  deviceType: "",
   deviceModel: "",
   issue: "",
   hasCharger: false,
@@ -280,6 +280,8 @@ export default function OrdenesKanbanPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteMessage, setQuoteMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -576,6 +578,47 @@ export default function OrdenesKanbanPage() {
       setError(err instanceof Error ? err.message : "Error al crear orden");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleLoadQuoteFolio() {
+    const folio = form.quoteFolio.trim().toUpperCase();
+    if (!folio) {
+      setQuoteMessage("Ingresa un folio de cotización.");
+      return;
+    }
+
+    try {
+      setQuoteLoading(true);
+      setQuoteMessage("Buscando solicitud...");
+      const requests = await fixService.getServiceRequests();
+      const request = requests.find((item) => String(item.folio ?? "").trim().toUpperCase() === folio);
+
+      if (!request) {
+        throw new Error("No se encontró la solicitud");
+      }
+
+      const deviceType = String(request.device_type ?? "").trim();
+      const deviceModel = String(request.device_model ?? "").trim();
+      const issue = String(request.issue_description ?? "").trim();
+
+      setForm((current) => ({
+        ...current,
+        clientName: String(request.customer_name ?? "").trim(),
+        clientPhone: String(request.customer_phone ?? "").trim(),
+        clientEmail: String(request.customer_email ?? "").trim(),
+        deviceType: deviceType || current.deviceType,
+        deviceModel: deviceModel || current.deviceModel,
+        issue: issue || current.issue,
+        quoteFolio: folio,
+        intakeNotes: current.intakeNotes.trim() ? current.intakeNotes : `Origen solicitud: ${folio}`,
+      }));
+
+      setQuoteMessage(`Solicitud ${folio} cargada. Puedes editar todo antes de guardar.`);
+    } catch (err) {
+      setQuoteMessage(err instanceof Error ? err.message : "No se pudo cargar la solicitud");
+    } finally {
+      setQuoteLoading(false);
     }
   }
 
@@ -961,6 +1004,8 @@ export default function OrdenesKanbanPage() {
           open={isModalOpen}
           saving={saving}
           error={error}
+          quoteLoading={quoteLoading}
+          quoteMessage={quoteMessage}
           form={form}
           files={files}
           successSummary={creationSummary}
@@ -987,6 +1032,7 @@ export default function OrdenesKanbanPage() {
               setError(err instanceof Error ? err.message : "Error al comprimir fotos");
             });
           }}
+          onLoadQuoteFolio={() => void handleLoadQuoteFolio()}
           onSubmit={() => void handleSubmit()}
           onCopy={(value, label) => void copyToClipboard(value, label)}
         />

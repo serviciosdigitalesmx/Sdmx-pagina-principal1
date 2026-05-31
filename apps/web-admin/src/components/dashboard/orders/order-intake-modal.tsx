@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { DynamicFields, type DynamicFieldDefinition } from "@white-label/ui";
 
 export type OrderIntakeFormState = {
@@ -38,6 +38,8 @@ type Props = {
   open: boolean;
   saving: boolean;
   error: string;
+  quoteLoading?: boolean;
+  quoteMessage?: string;
   form: OrderIntakeFormState;
   files: OrderIntakeFiles;
   successSummary: OrderCreationSummary | null;
@@ -50,6 +52,7 @@ type Props = {
   onChange: (name: keyof OrderIntakeFormState, value: string | boolean) => void;
   onDynamicFieldChange?: (fieldKey: string, value: string | boolean) => void;
   onPhotoChange: (files: File[]) => void;
+  onLoadQuoteFolio?: () => void;
   onSubmit: () => void;
   onCopy: (value: string, label: string) => void;
 };
@@ -71,6 +74,8 @@ export function OrderIntakeModal({
   open,
   saving,
   error,
+  quoteLoading = false,
+  quoteMessage = "",
   form,
   files,
   successSummary,
@@ -83,10 +88,19 @@ export function OrderIntakeModal({
   onChange,
   onDynamicFieldChange,
   onPhotoChange,
+  onLoadQuoteFolio,
   onSubmit,
   onCopy,
 }: Props) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
+
+  useEffect(() => {
+    if (open) {
+      setStep(successSummary ? 3 : 1);
+      return;
+    }
+    setStep(1);
+  }, [open, successSummary]);
 
   const portalUrl = useMemo(() => {
     if (!successSummary?.folio || !tenantSlug) return "";
@@ -165,13 +179,14 @@ export function OrderIntakeModal({
                           placeholder="EJ: COT-00001"
                           className="rounded-2xl border border-sky-400/30 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none placeholder:text-zinc-500"
                         />
-                        <button type="button" className="rounded-2xl bg-sky-500 px-5 py-3 font-semibold text-white">
-                          Cargar folio
+                        <button type="button" onClick={onLoadQuoteFolio} disabled={quoteLoading} className="rounded-2xl bg-sky-500 px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">
+                          {quoteLoading ? "Cargando..." : "Cargar folio"}
                         </button>
                         <button type="button" onClick={() => setStep(1)} className="rounded-2xl border border-zinc-700 bg-slate-950 px-5 py-3 font-semibold text-zinc-100">
                           Empezar en cero
                         </button>
                       </div>
+                      {quoteMessage ? <p className="mt-3 text-sm text-sky-300">{quoteMessage}</p> : null}
                     </div>
 
                     <div>
@@ -317,7 +332,7 @@ export function OrderIntakeModal({
                         Atrás
                       </button>
                       <button type="button" disabled={!stepThreeComplete || saving} onClick={onSubmit} className="rounded-2xl bg-orange-500 px-8 py-4 text-lg font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">
-                        {saving ? "Guardando..." : "Continuar →"}
+                        {saving ? "Guardando..." : "Guardar Orden"}
                       </button>
                     </div>
                   </section>
