@@ -81,21 +81,10 @@ function formatDate(value?: string) {
 }
 
 export function OperationalHub() {
-  const [mounted, setMounted] = useState(false);
   const [orders, setOrders] = useState<OrderRecord[]>([]);
   const [summary, setSummary] = useState<ReportsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setMounted(true);
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -180,51 +169,32 @@ export function OperationalHub() {
   }
 
   const actionableOrders = useMemo(() => {
-    if (!mounted) {
-      return [];
-    }
-
     return orders
       .filter((order) => {
         const status = normalizeStatus(order.status);
         return status !== "delivered" && status !== "archived";
       })
       .slice(0, 5);
-  }, [mounted, orders]);
+  }, [orders]);
 
   const recentActivity = useMemo(() => {
-    if (!mounted) {
-      return [];
-    }
-
     return orders.slice(0, 5).map((order) => ({
       time: formatDate(order.created_at),
       title: order.folio ?? "Sin folio",
       note: `${statusLabels[normalizeStatus(order.status)] ?? "Pendiente"} · ${order.device_info?.brand ?? order.device_info?.type ?? "Equipo sin tipo"}`,
     }));
-  }, [mounted, orders]);
+  }, [orders]);
 
   const metrics = useMemo(() => {
-    if (!mounted) {
-      return [
-        { label: "Órdenes activas", value: "—", helper: "Trabajo vivo en recepción." },
-        { label: "Pendientes hoy", value: "—", helper: "Requieren atención inmediata." },
-        { label: "En diagnóstico", value: "—", helper: "Equipo en revisión técnica." },
-        { label: "Listos para entregar", value: "—", helper: "Esperando cobro o salida." },
-        { label: "Stock crítico", value: "—", helper: "Revisión de abasto y compras." },
-        { label: "Balance", value: "—", helper: "Lectura financiera del tenant." },
-      ];
-    }
-
     return [
-    { label: "Órdenes activas", value: summary?.ordersCount ?? orders.length, helper: "Trabajo vivo en recepción." },
-    { label: "Pendientes hoy", value: summary?.statusCounts?.pending ?? 0, helper: "Requieren atención inmediata." },
-    { label: "En diagnóstico", value: summary?.statusCounts?.diagnosis ?? 0, helper: "Equipo en revisión técnica." },
-    { label: "Listos para entregar", value: summary?.statusCounts?.ready ?? 0, helper: "Esperando cobro o salida." },
-    { label: "Stock crítico", value: summary?.lowStockCount ?? 0, helper: "Revisión de abasto y compras." },
-    { label: "Balance", value: formatMoney(summary?.totalBalance), helper: "Lectura financiera del tenant." },
+    { label: "Órdenes activas", value: summary ? String(summary.ordersCount ?? orders.length) : "Sin datos", helper: "Trabajo vivo en recepción." },
+    { label: "Pendientes hoy", value: summary ? String(summary.statusCounts?.pending ?? 0) : "Sin datos", helper: "Requieren atención inmediata." },
+    { label: "En diagnóstico", value: summary ? String(summary.statusCounts?.diagnosis ?? 0) : "Sin datos", helper: "Equipo en revisión técnica." },
+    { label: "Listos para entregar", value: summary ? String(summary.statusCounts?.ready ?? 0) : "Sin datos", helper: "Esperando cobro o salida." },
+    { label: "Stock crítico", value: summary ? String(summary.lowStockCount ?? 0) : "Sin datos", helper: "Revisión de abasto y compras." },
+    { label: "Balance", value: summary ? formatMoney(summary.totalBalance) : "Sin datos", helper: "Lectura financiera del tenant." },
     ];
-  }, [mounted, orders.length, summary?.lowStockCount, summary?.ordersCount, summary?.statusCounts?.diagnosis, summary?.statusCounts?.pending, summary?.statusCounts?.ready, summary?.totalBalance]);
+  }, [orders.length, summary]);
 
   const todayStatusRows = useMemo(
     () =>
@@ -266,58 +236,6 @@ export function OperationalHub() {
     { label: "Sucursales", href: "/dashboard/sucursales", role: "manager" },
     { label: "Seguridad", href: "/dashboard/seguridad", role: "manager" },
   ];
-
-  if (!mounted) {
-    return (
-      <div className="space-y-6">
-        <section className="rounded-[28px] border border-slate-200 bg-[radial-gradient(circle_at_top,rgba(44,110,159,0.08),transparent_32%),linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-6 shadow-[0_20px_80px_rgba(15,23,42,0.08)]">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.34em] text-[#1f2937]">Hoy</p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl [font-family:var(--font-display)]">
-                Mesa de control operativa
-              </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-                Lo urgente primero: órdenes activas, pendientes de acción y lectura inmediata de cobro, stock y movimiento del día.
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <div className="h-11 w-32 rounded-full bg-slate-200/70" />
-              <div className="h-11 w-36 rounded-full bg-slate-200/70" />
-              <div className="h-11 w-28 rounded-full bg-slate-200/70" />
-            </div>
-          </div>
-        </section>
-
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <article key={index} className="rounded-[24px] border border-slate-200 bg-white p-5">
-              <div className="h-3 w-24 rounded-full bg-slate-200" />
-              <div className="mt-3 h-8 w-16 rounded-full bg-slate-200" />
-              <div className="mt-2 h-4 w-40 rounded-full bg-slate-100" />
-            </article>
-          ))}
-        </section>
-
-        <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-          <article className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
-            <div className="h-3 w-48 rounded-full bg-slate-200" />
-            <div className="mt-4 space-y-3">
-              <div className="h-24 rounded-2xl bg-slate-100" />
-              <div className="h-24 rounded-2xl bg-slate-100" />
-            </div>
-          </article>
-          <article className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
-            <div className="h-3 w-40 rounded-full bg-slate-200" />
-            <div className="mt-4 space-y-3">
-              <div className="h-20 rounded-2xl bg-slate-100" />
-              <div className="h-20 rounded-2xl bg-slate-100" />
-            </div>
-          </article>
-        </section>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -362,7 +280,7 @@ export function OperationalHub() {
 
       {loading ? (
         <section className="rounded-[24px] border border-amber-700/15 bg-white/4 p-6 text-sm text-zinc-300 shadow-[0_16px_60px_rgba(15,23,42,0.06)]">
-          Cargando operaciones reales del tenant...
+          Conectando con la API del tenant...
         </section>
       ) : null}
 

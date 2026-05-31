@@ -122,6 +122,14 @@ export function OrderIntakeModal({
   const stepThreeComplete = Boolean(form.promisedDate.trim() && form.estimatedCost.trim());
 
   const dateLabel = form.promisedDate ? form.promisedDate.split("-").reverse().join("/") : "";
+  const estimatedCostValue = Number(form.estimatedCost);
+  const estimatedCostValid = Number.isFinite(estimatedCostValue) && estimatedCostValue >= 0;
+  const validationErrors = [
+    !stepOneComplete ? "Cliente incompleto" : null,
+    !stepTwoComplete ? "Información del dispositivo incompleta" : null,
+    !stepThreeComplete ? "Fecha prometida o costo estimado faltante" : null,
+    stepThreeComplete && !estimatedCostValid ? "Costo estimado inválido" : null,
+  ].filter(Boolean) as string[];
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm">
@@ -133,24 +141,11 @@ export function OrderIntakeModal({
           </div>
           <div className="flex gap-3">
             <button type="button" onClick={() => document.documentElement.requestFullscreen().catch(() => undefined)} className="rounded-2xl border border-zinc-700/80 bg-slate-950 px-4 py-3 text-sm font-semibold text-zinc-100">
-    const stepOneComplete = Boolean((form.clientName.trim() && form.clientPhone.trim()));
+              Pantalla completa
             </button>
-    const stepTwoComplete = Boolean(form.deviceType.trim() && form.deviceModel.trim() && form.issue.trim());
+            <button type="button" onClick={onClose} className="rounded-2xl border border-zinc-700/80 bg-slate-950 px-4 py-3 text-sm font-semibold text-zinc-100">
               Cerrar
-    const stepThreeComplete = Boolean(form.promisedDate.trim() && form.estimatedCost.trim());
-
-    // additional validation helpers
-    const isEstimatedCostValid = () => {
-      if (!form.estimatedCost) return false;
-      const v = Number(form.estimatedCost);
-      return !Number.isNaN(v) && v >= 0;
-    };
-
-    const validationErrors = [] as string[];
-    if (!stepOneComplete) validationErrors.push('Cliente incompleto');
-    if (!stepTwoComplete) validationErrors.push('Información del dispositivo incompleta');
-    if (!stepThreeComplete) validationErrors.push('Fecha prometida o costo estimado faltante');
-    if (stepThreeComplete && !isEstimatedCostValid()) validationErrors.push('Costo estimado inválido');
+            </button>
           </div>
         </div>
 
@@ -344,10 +339,20 @@ export function OrderIntakeModal({
                       <button type="button" onClick={() => setStep(2)} className="rounded-2xl border border-zinc-700 bg-slate-950 px-8 py-4 text-lg font-semibold text-zinc-100">
                         Atrás
                       </button>
-                      <button type="button" disabled={!stepThreeComplete || saving} onClick={onSubmit} className="rounded-2xl bg-orange-500 px-8 py-4 text-lg font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">
+                      <button
+                        type="button"
+                        disabled={!stepThreeComplete || !estimatedCostValid || saving}
+                        onClick={onSubmit}
+                        className="rounded-2xl bg-orange-500 px-8 py-4 text-lg font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                      >
                         {saving ? "Guardando..." : "Guardar Orden"}
                       </button>
                     </div>
+                    {validationErrors.length > 0 ? (
+                      <p className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                        {validationErrors.join(" · ")}
+                      </p>
+                    ) : null}
                   </section>
                 ) : null}
               </div>

@@ -1,5 +1,4 @@
 import React from 'react';
-import { LoadingState } from '@white-label/ui';
 
 type Stat = {
   label: string;
@@ -105,8 +104,10 @@ export function ModuleShell({
       </section>
 
       <section className="rounded-[2rem] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)]">
-        {loading ? (
-          <LoadingState title={emptyTitle || "Cargando…"} description={emptyCopy || "Traemos datos reales del tenant."} />
+        {loading && rows.length === 0 ? (
+          <div className="rounded-2xl border border-zinc-800 bg-black/20 p-5 text-sm text-zinc-300">
+            Cargando datos reales del tenant...
+          </div>
         ) : showTable && rows.length > 0 ? (
           <div className="overflow-hidden rounded-2xl border border-zinc-800">
             <table className="min-w-full divide-y divide-zinc-800 text-left text-sm">

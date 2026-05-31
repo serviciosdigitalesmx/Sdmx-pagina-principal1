@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Cormorant_Garamond, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { requireEnv } from "@white-label/config";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 
 const geistSans = Geist({
@@ -21,12 +20,12 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: requireEnv("NEXT_PUBLIC_TENANT_META_TITLE"),
-  description: requireEnv("NEXT_PUBLIC_TENANT_META_DESCRIPTION"),
+  title: process.env.NEXT_PUBLIC_TENANT_META_TITLE ?? "FIXI Admin",
+  description: process.env.NEXT_PUBLIC_TENANT_META_DESCRIPTION ?? "Panel operativo de FIXI",
 };
 
 export const viewport = {
-  themeColor: requireEnv("NEXT_PUBLIC_THEME_PRIMARY"),
+  themeColor: process.env.NEXT_PUBLIC_THEME_PRIMARY ?? "#334155",
 };
 
 export default function RootLayout({
@@ -34,9 +33,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const themePrimary = requireEnv('NEXT_PUBLIC_THEME_PRIMARY');
-  const themeSecondary = requireEnv('NEXT_PUBLIC_THEME_SECONDARY');
-  const themeAccent = requireEnv('NEXT_PUBLIC_THEME_ACCENT');
+  const themePrimary = process.env.NEXT_PUBLIC_THEME_PRIMARY ?? "#334155";
+  const themeSecondary = process.env.NEXT_PUBLIC_THEME_SECONDARY ?? "#0f172a";
+  const themeAccent = process.env.NEXT_PUBLIC_THEME_ACCENT ?? "#38bdf8";
 
   return (
     <html
