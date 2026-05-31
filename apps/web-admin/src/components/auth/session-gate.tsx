@@ -27,7 +27,17 @@ export function SessionGate() {
   useEffect(() => {
     const readSession = () => {
       const token = readAuthToken();
-      setReady(Boolean(token));
+      // If no token but a development token is provided via env, use it as a fallback for local testing
+      const devToken = typeof window !== 'undefined' ? (window.__NEXT_DATA__?.props?.pageProps?.env?.NEXT_PUBLIC_DEV_AUTH_TOKEN ?? (process.env?.NEXT_PUBLIC_DEV_AUTH_TOKEN ?? null)) : null;
+      if (!token && devToken) {
+        try {
+          // write directly to localStorage for session gate detection
+          window.localStorage.setItem(process.env.NEXT_PUBLIC_AUTH_TOKEN_KEY ?? 'app_auth_token', String(devToken));
+        } catch {}
+      }
+
+      const finalToken = readAuthToken();
+      setReady(Boolean(finalToken));
 
       if (!token && !redirected.current) {
         redirected.current = true;

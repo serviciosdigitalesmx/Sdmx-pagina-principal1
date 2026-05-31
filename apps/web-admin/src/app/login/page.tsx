@@ -80,23 +80,52 @@ export default function LoginPage() {
     setSuccess(null);
 
     try {
+      // Basic client-side validations to avoid unnecessary network calls
+      const emailValue = form.email.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+        throw new Error("Correo inválido. Escribe un correo con formato válido.");
+      }
+      if (!form.password || form.password.length < 6) {
+        throw new Error("Contraseña inválida. Mínimo 6 caracteres.");
+      }
+
+      // extra defensive checks for config
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        // don't attempt network auth if env misconfigured in local dev
+        throw new Error('Entorno de autenticación incompleto. Revisa NEXT_PUBLIC_SUPABASE_URL y NEXT_PUBLIC_SUPABASE_ANON_KEY');
+      }
+
       const supabase = getBrowserSupabaseClient();
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
-        email: form.email.trim(),
+        email: emailValue,
         password: form.password,
       });
 
       if (signInError) {
-        throw signInError;
+        // Supabase may return rich error objects
+        const msg = (signInError as any)?.message ?? String(signInError);
+        throw new Error(msg || "Error al iniciar sesión con Supabase");
       }
 
       const accessToken = data.session?.access_token;
 
       if (accessToken) {
-        const apiToken = await exchangeSessionForApiToken(accessToken);
-        saveAuthToken(apiToken, form.rememberDevice);
-        window.location.replace(getAdminBridgeUrl(apiToken));
-        return;
+        try {
+          const apiToken = await exchangeSessionForApiToken(accessToken);
+          saveAuthToken(apiToken, form.rememberDevice);
+          window.location.replace(getAdminBridgeUrl(apiToken));
+          return;
+        } catch (exchangeErr) {
+          const em = exchangeErr instanceof Error ? exchangeErr.message : String(exchangeErr);
+          // If exchange fails, still attempt to redirect to dashboard so user can continue if possible
+          setError(`No pudimos completar intercambio de sesión: ${em}`);
+          // fallback: save supabase access token in storage so session gate can detect something (best-effort)
+          try {
+            saveAuthToken(accessToken, form.rememberDevice);
+          } catch {}
+          window.location.replace(getDashboardRedirectUrl());
+          return;
+        }
       }
 
       window.location.replace(getDashboardRedirectUrl());

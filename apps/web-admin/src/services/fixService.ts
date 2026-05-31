@@ -364,7 +364,9 @@ class FixService {
       throw new Error('Acción guardada sin conexión. Se sincronizará al reconectar.');
     }
 
-    const response = await fetch(`${this.apiUrl}${path}`, {
+    let response: Response;
+    try {
+      response = await fetch(`${this.apiUrl}${path}`, {
       ...init,
       headers: {
         'Content-Type': 'application/json',
@@ -372,14 +374,20 @@ class FixService {
         ...(init.headers || {}),
       },
     });
+    } catch (err) {
+      // network or fetch-level error
+      throw new Error(`Network error: ${(err as Error).message}`);
+    }
 
     if (!response.ok) {
       const payload = await response.json().catch(() => ({} as ApiErrorResponse));
+      // prefer structured payload messages when available
       const message =
-        typeof payload.error === 'string' && payload.error.trim().length > 0
-          ? payload.error
-          : `HTTP ${response.status}`;
-      throw new Error(message);
+        (payload && typeof (payload as any).message === 'string' && (payload as any).message) ||
+        (payload && typeof payload.error === 'string' && payload.error) ||
+        `HTTP ${response.status}`;
+      const details = (payload as ApiErrorResponse).details ? ` - ${JSON.stringify((payload as ApiErrorResponse).details)}` : '';
+      throw new Error(`${message}${details}`);
     }
 
     return response.json() as Promise<T>;

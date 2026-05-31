@@ -116,7 +116,21 @@ export function OperationalHub() {
         setSummary(reportsResult as ReportsSummary);
       } catch (loadError) {
         if (cancelled) return;
-        setError(loadError instanceof Error ? loadError.message : "No pudimos cargar el panel");
+        const message = loadError instanceof Error ? loadError.message : "No pudimos cargar el panel";
+        // If the error looks like an auth error, suggest clearing token
+        const isAuth = /401|sesión|token|auth/i.test(message);
+        setError(message + (isAuth ? ". Comprueba tu sesión o limpia el token." : ""));
+        // Log full error for debugging
+        // eslint-disable-next-line no-console
+        console.error('OperationalHub load error:', loadError);
+        // Attach retry action to error message via window for quick dev testing
+        // @ts-ignore
+        window.__fix_last_load_error = loadError;
+        if (isAuth) {
+          // expose a hint in console for local testing
+          // eslint-disable-next-line no-console
+          console.warn("OperationalHub detected auth issue: call clearAuthToken() and reload to retry.");
+        }
       } finally {
         if (!cancelled) {
           setLoading(false);
@@ -130,6 +144,40 @@ export function OperationalHub() {
       cancelled = true;
     };
   }, []);
+
+  function handleClearSession() {
+    try {
+      // lazy import to avoid circular deps in test env
+      // @ts-ignore
+      const { clearAuthToken } = require("@/lib/auth-storage");
+      clearAuthToken();
+    } catch {
+      try {
+        window.localStorage.removeItem(process.env.NEXT_PUBLIC_AUTH_TOKEN_KEY ?? "app_auth_token");
+      } catch {}
+    }
+    window.location.reload();
+  }
+
+  function handleRetry() {
+    setLoading(true);
+    setError(null);
+    void (async () => {
+      try {
+        const [ordersResult, reportsResult] = await Promise.all([
+          fixService.getOrders(),
+          fixService.getReportsSummary(),
+        ]);
+        setOrders(ordersResult as OrderRecord[]);
+        setSummary(reportsResult as ReportsSummary);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Error al recargar datos';
+        setError(msg);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }
 
   const actionableOrders = useMemo(() => {
     if (!mounted) {

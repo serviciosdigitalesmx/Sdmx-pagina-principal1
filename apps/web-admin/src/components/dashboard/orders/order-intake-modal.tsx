@@ -133,11 +133,24 @@ export function OrderIntakeModal({
           </div>
           <div className="flex gap-3">
             <button type="button" onClick={() => document.documentElement.requestFullscreen().catch(() => undefined)} className="rounded-2xl border border-zinc-700/80 bg-slate-950 px-4 py-3 text-sm font-semibold text-zinc-100">
-              Pantalla completa
+    const stepOneComplete = Boolean((form.clientName.trim() && form.clientPhone.trim()));
             </button>
-            <button type="button" onClick={onClose} className="rounded-2xl border border-zinc-700/80 bg-slate-950 px-4 py-3 text-sm font-semibold text-zinc-100">
+    const stepTwoComplete = Boolean(form.deviceType.trim() && form.deviceModel.trim() && form.issue.trim());
               Cerrar
-            </button>
+    const stepThreeComplete = Boolean(form.promisedDate.trim() && form.estimatedCost.trim());
+
+    // additional validation helpers
+    const isEstimatedCostValid = () => {
+      if (!form.estimatedCost) return false;
+      const v = Number(form.estimatedCost);
+      return !Number.isNaN(v) && v >= 0;
+    };
+
+    const validationErrors = [] as string[];
+    if (!stepOneComplete) validationErrors.push('Cliente incompleto');
+    if (!stepTwoComplete) validationErrors.push('Información del dispositivo incompleta');
+    if (!stepThreeComplete) validationErrors.push('Fecha prometida o costo estimado faltante');
+    if (stepThreeComplete && !isEstimatedCostValid()) validationErrors.push('Costo estimado inválido');
           </div>
         </div>
 
