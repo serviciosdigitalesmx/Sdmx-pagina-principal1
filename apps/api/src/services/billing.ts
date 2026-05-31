@@ -5,6 +5,7 @@ export type BillingPlanCode = 'basic' | 'pro' | 'enterprise';
 
 type CheckoutRequest = {
   plan: BillingPlanCode;
+  tenantSlug?: string;
 };
 
 type CheckoutResponse = {
@@ -118,7 +119,32 @@ async function writeAuditLog(tenantId: string, action: string, payload: Record<s
   }
 }
 
-async function resolveTenantForCheckout(authUserId: string) {
+async function resolveTenantForCheckout(authUserId?: string | null, tenantSlug?: string) {
+  if (tenantSlug) {
+    const { data: tenantRow, error: tenantError } = await supabaseAdmin
+      .from('tenants')
+      .select('id, slug, name, trial_expires_at, billing_exempt')
+      .eq('slug', tenantSlug)
+      .maybeSingle();
+
+    if (tenantError) {
+      throw new Error(tenantError.message);
+    }
+
+    if (!tenantRow) {
+      throw new Error('Tenant not found');
+    }
+
+    return {
+      userRow: null,
+      tenantRow,
+    };
+  }
+
+  if (!authUserId) {
+    throw new Error('No se pudo resolver el tenant de la sesión');
+  }
+
   const { data: userRow, error: userError } = await supabaseAdmin
     .from('users')
     .select('id, tenant_id, role, email')
@@ -187,7 +213,7 @@ async function updateOrganizationSubscription(input: {
   }
 }
 
-export async function createBillingCheckout(authUserId: string, request: CheckoutRequest): Promise<CheckoutResponse> {
+export async function createBillingCheckout(authUserId: string | null, request: CheckoutRequest): Promise<CheckoutResponse> {
   const accessToken = requireMercadoPagoAccessToken();
   const amount = PLAN_PRICES[request.plan];
 
@@ -195,7 +221,7 @@ export async function createBillingCheckout(authUserId: string, request: Checkou
     throw new Error('Plan inválido');
   }
 
-  const { userRow, tenantRow } = await resolveTenantForCheckout(authUserId);
+  const { userRow, tenantRow } = await resolveTenantForCheckout(authUserId, request.tenantSlug);
   const appUrl = resolveBillingBaseUrl();
   const webhookBaseUrl = resolveWebhookBaseUrl();
 
@@ -219,7 +245,7 @@ export async function createBillingCheckout(authUserId: string, request: Checkou
       tenantId: tenantRow.id,
       tenantSlug: tenantRow.slug,
       plan: request.plan,
-      userId: userRow.id,
+      ...(userRow ? { userId: userRow.id } : {}),
     },
   };
 

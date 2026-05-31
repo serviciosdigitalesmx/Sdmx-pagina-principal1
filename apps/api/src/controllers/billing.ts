@@ -42,8 +42,7 @@ export async function createPublicCheckout(req: Request, res: Response) {
 
   try {
     const { tenantSlug, plan } = parsed.data;
-    // In public flow we create a checkout tied to tenant slug; service will resolve tenant internally
-    const result = await createBillingCheckout(null as any, { plan }, tenantSlug);
+    const result = await createBillingCheckout(null, { plan, tenantSlug });
     return res.status(201).json({ success: true, initPoint: result.initPoint, preferenceId: result.preferenceId ?? null });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
