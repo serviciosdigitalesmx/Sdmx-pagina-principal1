@@ -1,7 +1,9 @@
 import { Request, Response } from 'express';
-import { createHmac } from 'crypto';
+import { createHmac, randomUUID } from 'crypto';
 import { z } from 'zod';
 import { supabaseAdmin } from '@white-label/database';
+import { resolveEffectiveUserRole } from '../lib/user-roles';
+import { resolveTenantJwtSecret } from '../services/security-backoffice';
 
 const registerSchema = z.object({
   workshopName: z.string().trim().min(2),
@@ -59,8 +61,8 @@ function resolveAppUrl(requestOrigin: string | undefined) {
   return fallbackOrigin ?? null;
 }
 
-function signJwt(payload: Record<string, unknown>) {
-  const secret = process.env.JWT_SECRET;
+async function signJwt(payload: Record<string, unknown>, tenantId?: string) {
+  const secret = tenantId ? await resolveTenantJwtSecret(tenantId) : process.env.JWT_SECRET;
 
   if (!secret) {
     throw new Error('JWT_SECRET is required');
@@ -79,16 +81,18 @@ function signJwt(payload: Record<string, unknown>) {
   return `${signingInput}.${signature}`;
 }
 
-function buildAuthPayload(user: { id: string; email?: string | null }, tenant: { id: string; slug?: string | null }, role: string, sucursalId?: string | null) {
+async function buildAuthPayload(user: { id: string; email?: string | null }, tenant: { id: string; slug?: string | null }, role: string, sucursalId?: string | null, sessionId?: string) {
+  const token = await signJwt({
+    sub: user.id,
+    email: user.email ?? undefined,
+    role,
+    tenant_id: tenant.id,
+    tenant_slug: tenant.slug ?? undefined,
+    sucursal_id: sucursalId ?? undefined,
+    session_id: sessionId,
+  }, tenant.id);
   return {
-    token: signJwt({
-      sub: user.id,
-      email: user.email ?? undefined,
-      role,
-      tenant_id: tenant.id,
-      tenant_slug: tenant.slug ?? undefined,
-      sucursal_id: sucursalId ?? undefined,
-    }),
+    token,
     user: {
       sub: user.id,
       email: user.email ?? null,
@@ -96,6 +100,7 @@ function buildAuthPayload(user: { id: string; email?: string | null }, tenant: {
       tenantId: tenant.id,
       tenantSlug: tenant.slug ?? null,
       sucursalId: sucursalId ?? null,
+      sessionId: sessionId ?? null,
     },
   };
 }
@@ -154,13 +159,13 @@ export const register = async (req: Request, res: Response) => {
       throw new Error('Tenant transaction returned no data');
     }
 
-    const token = signJwt({
+    const token = await signJwt({
       sub: authUser.user.id,
       email,
       role: 'owner',
       tenant_id: tenant.tenant_id,
       tenant_slug: tenant.tenant_slug,
-    });
+    }, tenant.tenant_id);
 
     return res.status(201).json({
       token,
@@ -271,7 +276,7 @@ export const completeGoogleRegistration = async (req: Request, res: Response) =>
       throw new Error('Tenant transaction returned no data');
     }
 
-    const authPayload = buildAuthPayload(
+    const authPayload = await buildAuthPayload(
       { id: userResult.user.id, email },
       { id: tenant.tenant_id, slug: tenant.tenant_slug },
       'owner'
@@ -335,7 +340,7 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
 
     const { data: userRow, error: userRowError } = await supabaseAdmin
       .from('users')
-      .select('tenant_id, role, sucursal_id')
+      .select('tenant_id, role, sucursal_id, activo, is_active')
       .eq('auth_user_id', data.user.id)
       .maybeSingle();
 
@@ -347,33 +352,79 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Tenant not found for authenticated user' });
     }
 
-    const { data: tenantRow, error: tenantError } = await supabaseAdmin
+    if (!(userRow.activo ?? userRow.is_active ?? true)) {
+      return res.status(403).json({ error: 'User is inactive' });
+    }
+
+    const { data: tenantSecurity, error: tenantSecurityError } = await supabaseAdmin
       .from('tenants')
-      .select('id, slug, name')
+      .select('id, slug, name, require_admin_mfa')
       .eq('id', userRow.tenant_id)
       .maybeSingle();
 
-    if (tenantError) {
-      return res.status(502).json({ error: tenantError.message });
+    if (tenantSecurityError) {
+      return res.status(502).json({ error: tenantSecurityError.message });
     }
 
-    if (!tenantRow) {
+    if (!tenantSecurity) {
       return res.status(404).json({ error: 'Tenant not found' });
     }
 
-    const authPayload = buildAuthPayload(
+    const isAdminRole = resolveEffectiveUserRole(userRow.role) === 'owner';
+    if (tenantSecurity.require_admin_mfa && isAdminRole) {
+      const { data: mfaRow, error: mfaError } = await supabaseAdmin
+        .from('users')
+        .select('mfa_enabled')
+        .eq('auth_user_id', data.user.id)
+        .eq('tenant_id', tenantSecurity.id)
+        .maybeSingle();
+
+      if (mfaError) {
+        return res.status(502).json({ error: mfaError.message });
+      }
+
+      if (!mfaRow?.mfa_enabled) {
+        return res.status(403).json({ error: 'MFA required for admin access' });
+      }
+    }
+
+    const sessionId = randomUUID();
+    const authPayload = await buildAuthPayload(
       { id: data.user.id, email: data.user.email },
-      { id: tenantRow.id, slug: tenantRow.slug },
-      userRow.role,
-      userRow.sucursal_id
+      { id: tenantSecurity.id, slug: tenantSecurity.slug },
+      resolveEffectiveUserRole(userRow.role) ?? userRow.role,
+      userRow.sucursal_id,
+      sessionId
     );
+
+    await supabaseAdmin
+      .from('users')
+      .update({
+        ultimo_acceso: new Date().toISOString(),
+        last_login_at: new Date().toISOString(),
+      })
+      .eq('auth_user_id', data.user.id)
+      .eq('tenant_id', tenantSecurity.id);
+
+    const { error: sessionInsertError } = await supabaseAdmin.from('security_sessions').insert([{
+      tenant_id: tenantSecurity.id,
+      user_id: authPayload.user.sub,
+      session_key: sessionId,
+      ip_address: typeof req.ip === 'string' ? req.ip : null,
+      user_agent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+      last_activity_at: new Date().toISOString(),
+    }]);
+
+    if (sessionInsertError) {
+      return res.status(502).json({ error: sessionInsertError.message });
+    }
 
     return res.status(200).json({
       ...authPayload,
       tenant: {
-        id: tenantRow.id,
-        slug: tenantRow.slug,
-        name: tenantRow.name,
+        id: tenantSecurity.id,
+        slug: tenantSecurity.slug,
+        name: tenantSecurity.name,
       },
     });
   } catch (error) {

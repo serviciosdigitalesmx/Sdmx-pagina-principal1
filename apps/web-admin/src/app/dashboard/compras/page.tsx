@@ -193,6 +193,7 @@ export default function ComprasPage() {
         secondaryActionLabel="Actualizar"
         secondaryOnAction={() => void loadData()}
         stats={stats}
+        loading={loading}
         columns={[
           { label: "Folio", key: "folio" },
           { label: "Estado", key: "status" },

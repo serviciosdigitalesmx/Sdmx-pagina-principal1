@@ -228,8 +228,79 @@ type PurchaseOrderPayload = {
   items: PurchaseOrderItemPayload[];
 };
 
+type SupplierStatus = 'active' | 'inactive';
+
+type SupplierQueryParams = {
+  page?: number;
+  pageSize?: number;
+  q?: string;
+  name?: string;
+  rfc?: string;
+  status?: SupplierStatus | 'all';
+};
+
+type UserRole = 'admin' | 'operador' | 'tecnico' | 'cliente' | 'compras';
+
+type AuditLogRecord = {
+  id: string;
+  tenant_id: string;
+  user_id: string | null;
+  action: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  data_before: JsonRecord | null;
+  data_after: JsonRecord | null;
+  created_at: string;
+};
+
+type SecuritySessionRecord = {
+  id: string;
+  userId: string;
+  sessionKey: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  lastActivityAt: string;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string;
+    full_name?: string;
+    email: string;
+    role: string;
+  } | null;
+};
+
+type UserQueryParams = {
+  page?: number;
+  pageSize?: number;
+  q?: string;
+  role?: string;
+  status?: 'active' | 'inactive' | 'all';
+};
+
+type AdminUserRecord = {
+  id: string;
+  tenantId: string;
+  authUserId: string | null;
+  name: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  role: UserRole | string;
+  displayRole?: string | null;
+  effectiveRole?: string | null;
+  activo: boolean;
+  is_active: boolean;
+  ultimo_acceso: string | null;
+  last_login_at: string | null;
+  sucursalId: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+};
+
 import { readAuthToken } from "@/lib/auth-storage";
 import { getCurrentSession } from "@/lib/session";
+import { enqueueOfflineRequest } from "@/lib/pwa/offline-queue";
 import { resolveApiBaseUrl } from "@white-label/config";
 
 class FixService {
@@ -273,6 +344,24 @@ class FixService {
 
     if (!token) {
       throw new Error('No hay sesión activa. Vuelve a iniciar sesión.');
+    }
+
+    const method = String(init.method ?? 'GET').toUpperCase();
+    const isMutation = !['GET', 'HEAD', 'OPTIONS'].includes(method);
+    const body = typeof init.body === 'string' ? init.body : null;
+
+    if (typeof navigator !== 'undefined' && !navigator.onLine && isMutation) {
+      const session = getCurrentSession();
+      await enqueueOfflineRequest({
+        tenantId: session?.tenantId ?? this.tenantId,
+        url: `${this.apiUrl}${path}`,
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body,
+      });
+      throw new Error('Acción guardada sin conexión. Se sincronizará al reconectar.');
     }
 
     const response = await fetch(`${this.apiUrl}${path}`, {
@@ -592,18 +681,40 @@ class FixService {
 
   public async getReportsSummary(): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/reports/summary`,
+      this.withSucursalQuery(`/api/${this.tenantId}/reports/summary`),
       { method: 'GET' }
     );
     return result.data;
   }
 
-  public async getSuppliers(): Promise<JsonRecord[]> {
-    const result = await this.request<ApiListResponse<JsonRecord[]>>(
-      `/api/${this.tenantId}/suppliers`,
+  public async getSuppliers(params: SupplierQueryParams = {}): Promise<JsonRecord[] & { page: number; pageSize: number; total: number; hasMore: boolean; }> {
+    const searchParams = new URLSearchParams();
+    if (typeof params.page === 'number') searchParams.set('page', String(params.page));
+    if (typeof params.pageSize === 'number') searchParams.set('pageSize', String(params.pageSize));
+    if (params.q) searchParams.set('q', params.q);
+    if (params.name) searchParams.set('name', params.name);
+    if (params.rfc) searchParams.set('rfc', params.rfc);
+    if (params.status) searchParams.set('status', params.status);
+
+    const suffix = searchParams.toString();
+    const result = await this.request<{
+      success: true;
+      data: JsonRecord[];
+      page: number;
+      pageSize: number;
+      total: number;
+      hasMore: boolean;
+    }>(
+      `/api/${this.tenantId}/suppliers${suffix ? `?${suffix}` : ''}`,
       { method: 'GET' }
     );
-    return result.data;
+    const payload = Object.assign(result.data as JsonRecord[], {
+      page: result.page,
+      pageSize: result.pageSize,
+      total: result.total,
+      hasMore: result.hasMore,
+    });
+    return payload;
   }
 
   public async getSupplierById(id: string): Promise<JsonRecord> {
@@ -632,6 +743,25 @@ class FixService {
         method: 'PUT',
         body: JSON.stringify(data),
       }
+    );
+    return result.data;
+  }
+
+  public async updateSupplierStatus(id: string, status: SupplierStatus): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      `/api/${this.tenantId}/suppliers/${encodeURIComponent(id)}/status`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      }
+    );
+    return result.data;
+  }
+
+  public async getSupplierPurchaseOrders(id: string): Promise<JsonRecord[]> {
+    const result = await this.request<ApiListResponse<JsonRecord[]>>(
+      `/api/${this.tenantId}/suppliers/${encodeURIComponent(id)}/purchase-orders`,
+      { method: 'GET' }
     );
     return result.data;
   }
@@ -715,6 +845,149 @@ class FixService {
   public async getSecuritySummary(): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
       `/api/${this.tenantId}/security/summary`,
+      { method: 'GET' }
+    );
+    return result.data;
+  }
+
+  public async getAuditLogs(params: { page?: number; pageSize?: number; action?: string; userId?: string; from?: string; to?: string } = {}): Promise<{ data: AuditLogRecord[]; page: number; pageSize: number; total: number; hasMore: boolean }> {
+    const search = new URLSearchParams();
+    if (typeof params.page === 'number') search.set('page', String(params.page));
+    if (typeof params.pageSize === 'number') search.set('pageSize', String(params.pageSize));
+    if (params.action) search.set('action', params.action);
+    if (params.userId) search.set('userId', params.userId);
+    if (params.from) search.set('from', params.from);
+    if (params.to) search.set('to', params.to);
+
+    const result = await this.request<ApiSingleResponse<{ items: AuditLogRecord[]; page: number; pageSize: number; total: number; hasMore: boolean }>>(
+      `/api/${this.tenantId}/security/audit${search.toString() ? `?${search.toString()}` : ''}`,
+      { method: 'GET' }
+    );
+
+    return {
+      data: result.data.items,
+      page: result.data.page,
+      pageSize: result.data.pageSize,
+      total: result.data.total,
+      hasMore: result.data.hasMore,
+    };
+  }
+
+  public async getSecuritySessions(): Promise<SecuritySessionRecord[]> {
+    const result = await this.request<ApiSingleResponse<SecuritySessionRecord[]>>(
+      `/api/${this.tenantId}/security/sessions`,
+      { method: 'GET' }
+    );
+    return result.data;
+  }
+
+  public async revokeSecuritySession(id: string): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      `/api/${this.tenantId}/security/sessions/${encodeURIComponent(id)}`,
+      { method: 'DELETE' }
+    );
+    return result.data;
+  }
+
+  public async rotateSecurityKeys(confirm = true): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      `/api/${this.tenantId}/security/rotate-keys`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ confirm }),
+      }
+    );
+    return result.data;
+  }
+
+  public async getMfaSetup(): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      `/api/${this.tenantId}/security/mfa/setup`,
+      { method: 'GET' }
+    );
+    return result.data;
+  }
+
+  public async verifyMfaCode(code: string): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      `/api/${this.tenantId}/security/mfa/verify`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ code }),
+      }
+    );
+    return result.data;
+  }
+
+  public async setAdminMfaRequirement(enabled: boolean): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      `/api/${this.tenantId}/security/mfa/require-admins`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ enabled }),
+      }
+    );
+    return result.data;
+  }
+
+  public async getUsers(params: UserQueryParams = {}): Promise<{ data: AdminUserRecord[]; page: number; pageSize: number; total: number; hasMore: boolean }> {
+    const search = new URLSearchParams();
+    if (typeof params.page === 'number') search.set('page', String(params.page));
+    if (typeof params.pageSize === 'number') search.set('pageSize', String(params.pageSize));
+    if (params.q) search.set('q', params.q);
+    if (params.role) search.set('role', params.role);
+    if (params.status) search.set('status', params.status);
+
+    const query = search.toString();
+    const result = await this.request<ApiSingleResponse<{ items: AdminUserRecord[]; page: number; pageSize: number; total: number; hasMore: boolean }>>(
+      `/api/users${query ? `?${query}` : ''}`,
+      { method: 'GET' }
+    );
+
+    return {
+      data: result.data.items,
+      page: result.data.page ?? params.page ?? 1,
+      pageSize: result.data.pageSize ?? params.pageSize ?? 20,
+      total: result.data.total ?? result.data.items.length,
+      hasMore: Boolean(result.data.hasMore),
+    };
+  }
+
+  public async inviteUser(payload: { email: string; name: string; role: string; sucursalId?: string | null }): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      `/api/users/invite`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+    return result.data;
+  }
+
+  public async updateUserRole(id: string, role: string): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      `/api/users/${encodeURIComponent(id)}/role`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({ role }),
+      }
+    );
+    return result.data;
+  }
+
+  public async deactivateUser(id: string): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      `/api/users/${encodeURIComponent(id)}`,
+      {
+        method: 'DELETE',
+      }
+    );
+    return result.data;
+  }
+
+  public async getUserPurchaseOrders(id: string): Promise<JsonRecord[]> {
+    const result = await this.request<ApiSingleResponse<JsonRecord[]>>(
+      `/api/users/${encodeURIComponent(id)}/purchase-orders`,
       { method: 'GET' }
     );
     return result.data;

@@ -225,6 +225,7 @@ export default function SolicitudesPage() {
           { label: "Convertidas", value: String(convertedCount), helper: "Ya pasaron a órdenes reales." },
           { label: "Total", value: String(rows.length), helper: "Registro real del tenant." },
         ]}
+        loading={loading}
         columns={[
           { label: "Folio", key: "folio" },
           { label: "Cliente", key: "customer_name" },

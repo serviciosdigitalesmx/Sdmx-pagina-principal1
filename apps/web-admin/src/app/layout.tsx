@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { requireEnv } from "@white-label/config";
+import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -48,8 +49,11 @@ export default function RootLayout({
           '--tenant-accent': themeAccent,
         } as React.CSSProperties
       }
-    >
-      <body className="min-h-full flex flex-col bg-[radial-gradient(circle_at_top,_rgba(17,24,39,0.16),_transparent_28%),linear-gradient(180deg,#09090b_0%,#111113_46%,#18181b_100%)] text-zinc-100">{children}</body>
+      >
+      <body className="min-h-full flex flex-col bg-[radial-gradient(circle_at_top,_rgba(17,24,39,0.16),_transparent_28%),linear-gradient(180deg,#09090b_0%,#111113_46%,#18181b_100%)] text-zinc-100">
+        <PwaBootstrap />
+        {children}
+      </body>
     </html>
   );
 }

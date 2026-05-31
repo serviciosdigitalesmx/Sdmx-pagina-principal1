@@ -153,6 +153,7 @@ export default function ArchivoPage() {
         secondaryActionLabel="Actualizar"
         secondaryOnAction={() => void refresh()}
         stats={stats}
+        loading={loading}
         columns={[
           { label: "Folio", key: "folio" },
           { label: "Cliente", key: "client" },

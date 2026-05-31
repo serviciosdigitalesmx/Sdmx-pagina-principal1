@@ -5,6 +5,7 @@ import PDFDocument from 'pdfkit';
 import { getTenantClient, supabaseAdmin } from '@white-label/database';
 import { loadTenantRuntimeConfig } from '../services/tenant-config';
 import { calculateOperationalRisk } from '../services/operational-risk';
+import { sendTenantPushNotification } from '../services/pwa-push';
 
 const defaultOrderStatuses = ['recibido', 'diagnostico', 'reparacion', 'listo', 'entregado'] as const;
 const orderStatusSchema = z.string().min(1);
@@ -161,7 +162,10 @@ const createOrderSchema = z.object({
 function normalizeOrderStatus(status?: string | null) {
   const value = String(status ?? '').toLowerCase();
   if (value.includes('diag')) return 'diagnostico';
+  if (value.includes('refaccion')) return 'en_espera_de_refaccion';
+  if (value.includes('cotiz')) return 'cotizado';
   if (value.includes('repar')) return 'reparacion';
+  if (value.includes('listo') && value.includes('entrega')) return 'listo_para_entrega';
   if (value.includes('list')) return 'listo';
   if (value.includes('entreg')) return 'entregado';
   return 'recibido';
@@ -481,6 +485,7 @@ export const createOrder = async (req: Request, res: Response) => {
           tenant_id: tenantId,
           sucursal_id: requestedSucursalId,
           folio: newFolio,
+          public_token: randomUUID(),
           status: 'recibido',
           device_info: {
             brand: validatedData.deviceModel,
@@ -496,6 +501,7 @@ export const createOrder = async (req: Request, res: Response) => {
           final_cost: finalCost,
           promised_date: validatedData.promisedDate || null,
           receipt_url: validatedData.receiptUrl || null,
+          assigned_user_id: req.user?.role === 'technician' ? req.user.userId ?? null : null,
         }
       ])
       .select()
@@ -568,6 +574,20 @@ export const createOrder = async (req: Request, res: Response) => {
 
     const pdfAttachment = buildPdfAttachment(validatedData.receiptUrl || null);
 
+    if (data.assigned_user_id) {
+      void sendTenantPushNotification(tenantId, {
+        type: 'order.assigned',
+        title: 'Nueva orden asignada',
+        body: `Se asignó la orden ${newFolio} para seguimiento.`,
+        data: {
+          orderId: data.id,
+          folio: newFolio,
+          tenantId,
+          assignedUserId: data.assigned_user_id,
+        },
+      });
+    }
+
     return res.status(201).json({
       success: true,
       message: 'Orden creada exitosamente',
@@ -577,6 +597,7 @@ export const createOrder = async (req: Request, res: Response) => {
         estimated_cost: estimatedCost,
         receipt_url: validatedData.receiptUrl || null,
         sucursal_id: requestedSucursalId,
+        public_token: data.public_token,
         pdf_attachment: pdfAttachment,
         attachments: pdfAttachment ? [pdfAttachment] : [],
         include_iva: validatedData.includeIva,
@@ -615,6 +636,10 @@ export const listOrders = async (req: Request, res: Response) => {
       query = query.eq('sucursal_id', sucursalId);
     } else if (req.user?.role === 'manager' && isUuid(req.user.sucursalId)) {
       query = query.eq('sucursal_id', req.user.sucursalId);
+    }
+
+    if (req.user?.role === 'technician' && req.user.userId) {
+      query = query.eq('assigned_user_id', req.user.userId);
     }
 
     const { data, error } = await query;
@@ -667,6 +692,10 @@ export const getOrderById = async (req: Request, res: Response) => {
       orderQuery.eq('sucursal_id', sucursalId);
     } else if (req.user?.role === 'manager' && isUuid(req.user.sucursalId)) {
       orderQuery.eq('sucursal_id', req.user.sucursalId);
+    }
+
+    if (req.user?.role === 'technician' && req.user.userId) {
+      orderQuery.eq('assigned_user_id', req.user.userId);
     }
 
     const [orderResult, checklistResult, documentsResult, eventsResult, runtimeConfig] = await Promise.all([
@@ -1035,6 +1064,17 @@ export const addOrderNote = async (req: Request, res: Response) => {
       actor_name: body.actorName ?? req.user?.email ?? req.user?.role ?? 'system',
     });
 
+    void sendTenantPushNotification(tenantId, {
+      type: 'order.message',
+      title: 'Nuevo mensaje técnico',
+      body: body.note,
+      data: {
+        orderId,
+        tenantId,
+        eventType: 'note',
+      },
+    });
+
     return res.status(201).json({ success: true, data: noteEntry });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -1124,6 +1164,18 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       new_status: nextStatus,
       note: body.note || null,
       actor_name: req.user?.email ?? req.user?.role ?? 'system',
+    });
+
+    void sendTenantPushNotification(tenantId, {
+      type: 'order.status_changed',
+      title: 'Cambio de estado',
+      body: `La orden ${orderId} cambió a ${nextStatus}.`,
+      data: {
+        orderId,
+        tenantId,
+        previousStatus,
+        nextStatus,
+      },
     });
 
     return res.json({ success: true, data });

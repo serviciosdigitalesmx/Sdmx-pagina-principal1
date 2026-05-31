@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 
-type Role = 'owner' | 'manager' | 'technician';
+type Role = 'owner' | 'manager' | 'technician' | 'client';
 
 const roleRank: Record<Role, number> = {
   owner: 3,
   manager: 2,
   technician: 1,
+  client: 0,
 };
 
 export const requireRole = (...allowedRoles: Role[]) => {

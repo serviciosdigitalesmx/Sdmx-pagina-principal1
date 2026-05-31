@@ -11,6 +11,7 @@ type InventoryRow = {
   sku?: string;
   description?: string;
   stock_current?: number | string;
+  minimum_stock?: number | string;
   sucursal_id?: string | null;
   created_at?: string;
 };
@@ -23,6 +24,15 @@ type MovementRow = {
   notes?: string | null;
   created_at?: string;
 };
+
+function resolveStockSeverity(row: InventoryRow) {
+  const current = Number(row.stock_current ?? 0);
+  const minimum = Number(row.minimum_stock ?? 0);
+  if (current <= 0) return "critical";
+  if (current <= minimum) return "critical";
+  if (minimum > 0 && current <= minimum * 1.5) return "warning";
+  return "ok";
+}
 
 const emptyForm = {
   sku: "",
@@ -207,9 +217,37 @@ export default function StockPage() {
           stock_current: String(row.stock_current ?? 0),
           sucursal_id: row.sucursal_id ?? "Global",
         }))}
+        loading={loading}
         emptyTitle={loading ? "Cargando inventario…" : error ? "No pudimos cargar inventario" : "No hay productos todavía"}
         emptyCopy={error || "La lista sale del inventario del taller y cruza con compras y alertas."}
       >
+        <section className="grid gap-4 md:grid-cols-3">
+          {rows.slice(0, 3).map((row) => {
+            const severity = resolveStockSeverity(row);
+            const current = Number(row.stock_current ?? 0);
+            const minimum = Number(row.minimum_stock ?? 0);
+            return (
+              <article
+                key={row.id ?? row.sku}
+                className={[
+                  "rounded-2xl border p-4",
+                  severity === "critical"
+                    ? "border-rose-400/20 bg-rose-400/10 text-rose-100"
+                    : severity === "warning"
+                      ? "border-amber-400/20 bg-amber-400/10 text-amber-100"
+                      : "border-emerald-400/20 bg-emerald-400/10 text-emerald-100",
+                ].join(" ")}
+              >
+                <div className="text-xs uppercase tracking-[0.2em] opacity-70">{severity === "critical" ? "Crítico" : severity === "warning" ? "Reorden" : "OK"}</div>
+                <div className="mt-2 text-sm font-semibold">{row.sku ?? "SKU"}</div>
+                <div className="mt-1 text-sm opacity-80">{row.description ?? "Sin descripción"}</div>
+                <div className="mt-3 text-xs opacity-70">
+                  Stock {current} · mínimo {minimum}
+                </div>
+              </article>
+            );
+          })}
+        </section>
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <form onSubmit={handleSave} className="space-y-4 rounded-[1.75rem] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-5">
             <div className="flex items-center justify-between gap-3">

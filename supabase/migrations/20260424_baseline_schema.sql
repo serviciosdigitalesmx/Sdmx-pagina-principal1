@@ -2,7 +2,6 @@
 -- Generated from docs/esquemas/ESQUEMA_SQL_INICIAL_SDMX.sql
 
 create extension if not exists "pgcrypto";
-
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
@@ -12,7 +11,6 @@ begin
   return new;
 end;
 $$;
-
 create table if not exists public.tenants (
   id uuid primary key default gen_random_uuid(),
   name text not null,
@@ -25,7 +23,6 @@ create table if not exists public.tenants (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create table if not exists public.branches (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -39,11 +36,9 @@ create table if not exists public.branches (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create unique index if not exists branches_tenant_code_uidx
   on public.branches (tenant_id, code)
   where code is not null;
-
 create table if not exists public.users (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -58,10 +53,8 @@ create table if not exists public.users (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create unique index if not exists users_tenant_email_uidx
   on public.users (tenant_id, lower(email));
-
 create table if not exists public.customers (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -74,11 +67,9 @@ create table if not exists public.customers (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create index if not exists customers_tenant_idx on public.customers (tenant_id);
 create index if not exists customers_tenant_phone_idx on public.customers (tenant_id, phone);
 create index if not exists customers_tenant_email_idx on public.customers (tenant_id, lower(email));
-
 create table if not exists public.service_requests (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -99,10 +90,8 @@ create table if not exists public.service_requests (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create unique index if not exists service_requests_tenant_folio_uidx
   on public.service_requests (tenant_id, folio);
-
 create table if not exists public.service_orders (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -131,14 +120,12 @@ create table if not exists public.service_orders (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create unique index if not exists service_orders_tenant_folio_uidx
   on public.service_orders (tenant_id, folio);
 create index if not exists service_orders_tenant_branch_idx
   on public.service_orders (tenant_id, branch_id);
 create index if not exists service_orders_tenant_status_idx
   on public.service_orders (tenant_id, status);
-
 create table if not exists public.service_order_checklists (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -151,10 +138,8 @@ create table if not exists public.service_order_checklists (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create unique index if not exists service_order_checklists_order_uidx
   on public.service_order_checklists (service_order_id);
-
 create table if not exists public.service_order_status_history (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -165,10 +150,8 @@ create table if not exists public.service_order_status_history (
   changed_by uuid references public.users(id) on delete set null,
   created_at timestamptz not null default timezone('utc', now())
 );
-
 create index if not exists service_order_status_history_order_idx
   on public.service_order_status_history (service_order_id, created_at desc);
-
 create table if not exists public.tasks (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -186,11 +169,9 @@ create table if not exists public.tasks (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create index if not exists tasks_tenant_branch_idx on public.tasks (tenant_id, branch_id);
 create index if not exists tasks_tenant_status_idx on public.tasks (tenant_id, status);
 create index if not exists tasks_assigned_idx on public.tasks (assigned_user_id);
-
 create table if not exists public.task_history (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -200,7 +181,6 @@ create table if not exists public.task_history (
   changed_by uuid references public.users(id) on delete set null,
   created_at timestamptz not null default timezone('utc', now())
 );
-
 create table if not exists public.suppliers (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -225,9 +205,7 @@ create table if not exists public.suppliers (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create index if not exists suppliers_tenant_idx on public.suppliers (tenant_id);
-
 create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -247,10 +225,8 @@ create table if not exists public.products (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create unique index if not exists products_tenant_sku_uidx
   on public.products (tenant_id, sku);
-
 create table if not exists public.branch_inventory (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -259,10 +235,8 @@ create table if not exists public.branch_inventory (
   stock_current numeric(12,2) not null default 0,
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create unique index if not exists branch_inventory_uidx
   on public.branch_inventory (tenant_id, branch_id, product_id);
-
 create table if not exists public.purchase_orders (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -283,10 +257,8 @@ create table if not exists public.purchase_orders (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create unique index if not exists purchase_orders_tenant_folio_uidx
   on public.purchase_orders (tenant_id, folio);
-
 create table if not exists public.purchase_order_items (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -301,7 +273,6 @@ create table if not exists public.purchase_order_items (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create table if not exists public.inventory_movements (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -317,10 +288,8 @@ create table if not exists public.inventory_movements (
   created_by uuid references public.users(id) on delete set null,
   created_at timestamptz not null default timezone('utc', now())
 );
-
 create index if not exists inventory_movements_tenant_product_idx
   on public.inventory_movements (tenant_id, product_id, created_at desc);
-
 create table if not exists public.stock_alerts (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -331,7 +300,6 @@ create table if not exists public.stock_alerts (
   acknowledged_at timestamptz,
   created_at timestamptz not null default timezone('utc', now())
 );
-
 create table if not exists public.expenses (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -352,10 +320,8 @@ create table if not exists public.expenses (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create index if not exists expenses_tenant_date_idx
   on public.expenses (tenant_id, expense_date desc);
-
 create table if not exists public.customer_payments (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -372,7 +338,6 @@ create table if not exists public.customer_payments (
   created_by uuid references public.users(id) on delete set null,
   created_at timestamptz not null default timezone('utc', now())
 );
-
 create table if not exists public.file_assets (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -386,7 +351,6 @@ create table if not exists public.file_assets (
   uploaded_by uuid references public.users(id) on delete set null,
   created_at timestamptz not null default timezone('utc', now())
 );
-
 create table if not exists public.notification_events (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -398,72 +362,58 @@ create table if not exists public.notification_events (
   sent_at timestamptz,
   created_at timestamptz not null default timezone('utc', now())
 );
-
 drop trigger if exists trg_tenants_updated_at on public.tenants;
 create trigger trg_tenants_updated_at
 before update on public.tenants
 for each row execute function public.set_updated_at();
-
 drop trigger if exists trg_branches_updated_at on public.branches;
 create trigger trg_branches_updated_at
 before update on public.branches
 for each row execute function public.set_updated_at();
-
 drop trigger if exists trg_users_updated_at on public.users;
 create trigger trg_users_updated_at
 before update on public.users
 for each row execute function public.set_updated_at();
-
 drop trigger if exists trg_customers_updated_at on public.customers;
 create trigger trg_customers_updated_at
 before update on public.customers
 for each row execute function public.set_updated_at();
-
 drop trigger if exists trg_service_requests_updated_at on public.service_requests;
 create trigger trg_service_requests_updated_at
 before update on public.service_requests
 for each row execute function public.set_updated_at();
-
 drop trigger if exists trg_service_orders_updated_at on public.service_orders;
 create trigger trg_service_orders_updated_at
 before update on public.service_orders
 for each row execute function public.set_updated_at();
-
 drop trigger if exists trg_service_order_checklists_updated_at on public.service_order_checklists;
 create trigger trg_service_order_checklists_updated_at
 before update on public.service_order_checklists
 for each row execute function public.set_updated_at();
-
 drop trigger if exists trg_tasks_updated_at on public.tasks;
 create trigger trg_tasks_updated_at
 before update on public.tasks
 for each row execute function public.set_updated_at();
-
 drop trigger if exists trg_suppliers_updated_at on public.suppliers;
 create trigger trg_suppliers_updated_at
 before update on public.suppliers
 for each row execute function public.set_updated_at();
-
 drop trigger if exists trg_products_updated_at on public.products;
 create trigger trg_products_updated_at
 before update on public.products
 for each row execute function public.set_updated_at();
-
 drop trigger if exists trg_branch_inventory_updated_at on public.branch_inventory;
 create trigger trg_branch_inventory_updated_at
 before update on public.branch_inventory
 for each row execute function public.set_updated_at();
-
 drop trigger if exists trg_purchase_orders_updated_at on public.purchase_orders;
 create trigger trg_purchase_orders_updated_at
 before update on public.purchase_orders
 for each row execute function public.set_updated_at();
-
 drop trigger if exists trg_purchase_order_items_updated_at on public.purchase_order_items;
 create trigger trg_purchase_order_items_updated_at
 before update on public.purchase_order_items
 for each row execute function public.set_updated_at();
-
 drop trigger if exists trg_expenses_updated_at on public.expenses;
 create trigger trg_expenses_updated_at
 before update on public.expenses

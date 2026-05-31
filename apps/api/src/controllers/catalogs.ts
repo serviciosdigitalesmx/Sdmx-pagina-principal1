@@ -158,12 +158,18 @@ export const listCustomers = async (req: Request, res: Response) => {
     const tenantId = req.tenantId;
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
     const supabase = getTenantClient(tenantId);
-    const { data, error } = await supabase
+    let query = supabase
       .from('customers')
-      .select('id, tenant_id, name, phone, email, created_at')
+      .select('id, tenant_id, sucursal_id, name, phone, email, created_at')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(100);
+
+    if (req.user?.role === 'manager' && req.user.sucursalId) {
+      query = query.eq('sucursal_id', req.user.sucursalId);
+    }
+
+    const { data, error } = await query;
     if (error) return res.status(502).json({ error: 'Failed to fetch customers', details: error.message });
     return res.json({ success: true, data });
   } catch (error) {
@@ -180,10 +186,11 @@ export const createCustomer = async (req: Request, res: Response) => {
     const supabase = getTenantClient(tenantId);
     const { data, error } = await supabase.from('customers').insert([{
       tenant_id: tenantId,
+      sucursal_id: req.user?.sucursalId ?? null,
       name: body.name,
       phone: body.phone,
       email: body.email || null,
-    }]).select('id, tenant_id, name, phone, email, created_at').single();
+    }]).select('id, tenant_id, sucursal_id, name, phone, email, created_at').single();
     if (error) return res.status(502).json({ error: 'Failed to create customer', details: error.message });
     return res.status(201).json({ success: true, data });
   } catch (error) {
@@ -207,7 +214,7 @@ export const listInventory = async (req: Request, res: Response) => {
 
     let query = supabase
       .from('sucursal_inventory')
-      .select('id, tenant_id, sucursal_id, product_id, stock_current, created_at, updated_at')
+      .select('id, tenant_id, sucursal_id, product_id, stock_current, created_at, updated_at, products:product_id (id, sku, name, minimum_stock)')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(100);
@@ -295,7 +302,7 @@ export const updateInventoryItem = async (req: Request, res: Response) => {
 
     const { data: currentRow, error: currentError } = await supabase
       .from('sucursal_inventory')
-      .select('id, tenant_id, sucursal_id, product_id, stock_current, created_at')
+    .select('id, tenant_id, sucursal_id, product_id, stock_current, created_at, products:product_id (id, sku, name, minimum_stock)')
       .eq('tenant_id', tenantId)
       .eq('id', inventoryId)
       .single();
@@ -337,7 +344,7 @@ export const updateInventoryItem = async (req: Request, res: Response) => {
       })
       .eq('tenant_id', tenantId)
       .eq('id', inventoryId)
-      .select('id, tenant_id, sucursal_id, product_id, stock_current, created_at')
+      .select('id, tenant_id, sucursal_id, product_id, stock_current, created_at, products:product_id (id, sku, name, minimum_stock)')
       .single();
 
     if (updateError) {

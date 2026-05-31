@@ -1,11 +1,34 @@
 import { Request, Response } from 'express';
+import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { supabaseAdmin } from '@white-label/database';
+import { buildOtpAuthUri, generateTotpSecret, verifyTotp, writeAuditLog } from '../services/security-backoffice';
 
 const inviteUserSchema = z.object({
   email: z.string().email(),
   role: z.enum(['owner', 'manager', 'technician']).default('technician'),
   sucursalId: z.string().uuid().nullable().optional(),
+});
+
+const auditQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(100),
+  action: z.string().trim().optional(),
+  userId: z.string().trim().optional(),
+  from: z.string().optional(),
+  to: z.string().optional(),
+});
+
+const rotateKeysSchema = z.object({
+  confirm: z.literal(true),
+});
+
+const mfaVerifySchema = z.object({
+  code: z.string().trim().min(6).max(6),
+});
+
+const mfaRequirementSchema = z.object({
+  enabled: z.boolean(),
 });
 
 async function countTenantUsers(tenantId: string) {
@@ -169,6 +192,379 @@ export const inviteUser = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid payload', details: error.errors });
     }
     console.error('Error inviting user:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const listAuditLogs = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context is required' });
+    }
+
+    if (req.user?.role !== 'owner') {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    const parsed = auditQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Invalid query params', details: parsed.error.flatten() });
+    }
+
+    const { page, pageSize, action, userId, from, to } = parsed.data;
+    const fromIndex = (page - 1) * pageSize;
+    const toIndex = fromIndex + pageSize - 1;
+
+    let query = supabaseAdmin
+      .from('audit_logs')
+      .select('id, tenant_id, user_id, action, ip_address, user_agent, data_before, data_after, created_at', { count: 'exact' })
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+      .range(fromIndex, toIndex);
+
+    if (action) {
+      query = query.ilike('action', `%${action}%`);
+    }
+
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+
+    if (from) {
+      query = query.gte('created_at', from);
+    }
+
+    if (to) {
+      query = query.lte('created_at', to);
+    }
+
+    const { data, error, count } = await query;
+    if (error) {
+      return res.status(502).json({ error: 'Failed to fetch audit logs', details: error.message });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        items: data ?? [],
+        page,
+        pageSize,
+        total: count ?? 0,
+        hasMore: page * pageSize < (count ?? 0),
+      },
+    });
+  } catch (error) {
+    console.error('Error listing audit logs:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const listActiveSessions = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context is required' });
+    }
+
+    if (req.user?.role !== 'owner') {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('security_sessions')
+      .select('id, tenant_id, user_id, session_key, ip_address, user_agent, last_activity_at, revoked_at, created_at, updated_at, users(id, name, full_name, email, role)')
+      .eq('tenant_id', tenantId)
+      .is('revoked_at', null)
+      .order('last_activity_at', { ascending: false })
+      .limit(100);
+
+    if (error) {
+      return res.status(502).json({ error: 'Failed to fetch sessions', details: error.message });
+    }
+
+    return res.json({
+      success: true,
+      data: (data ?? []).map((row) => ({
+        id: row.id,
+        userId: row.user_id,
+        sessionKey: row.session_key,
+        ipAddress: row.ip_address,
+        userAgent: row.user_agent,
+        lastActivityAt: row.last_activity_at,
+        createdAt: row.created_at,
+        user: Array.isArray(row.users) ? row.users[0] ?? null : row.users ?? null,
+      })),
+    });
+  } catch (error) {
+    console.error('Error listing active sessions:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const revokeSession = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context is required' });
+    }
+
+    if (req.user?.role !== 'owner') {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    const sessionId = req.params.id;
+    const { data, error } = await supabaseAdmin
+      .from('security_sessions')
+      .update({ revoked_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq('tenant_id', tenantId)
+      .eq('id', sessionId)
+      .select('id, tenant_id, user_id, revoked_at')
+      .maybeSingle();
+
+    if (error) {
+      return res.status(502).json({ error: 'Failed to revoke session', details: error.message });
+    }
+
+    if (!data) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    await writeAuditLog({
+      tenantId,
+      userId: req.user?.userId ?? null,
+      action: 'security.session.revoked',
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+      dataAfter: { sessionId: data.id, revokedAt: data.revoked_at },
+    });
+
+    return res.json({ success: true, data });
+  } catch (error) {
+    console.error('Error revoking session:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const rotateKeys = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context is required' });
+    }
+
+    if (req.user?.role !== 'owner') {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    const parsed = rotateKeysSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Invalid payload', details: parsed.error.flatten() });
+    }
+
+    const { data: beforeRow, error: fetchError } = await supabaseAdmin
+      .from('tenants')
+      .select('security_jwt_secret')
+      .eq('id', tenantId)
+      .maybeSingle();
+
+    if (fetchError) {
+      return res.status(502).json({ error: 'Failed to load tenant security state', details: fetchError.message });
+    }
+
+    const nextSecret = randomBytes(32).toString('hex');
+    const { error: updateError } = await supabaseAdmin
+      .from('tenants')
+      .update({ security_jwt_secret: nextSecret })
+      .eq('id', tenantId);
+
+    if (updateError) {
+      return res.status(502).json({ error: 'Failed to rotate keys', details: updateError.message });
+    }
+
+    await supabaseAdmin
+      .from('security_sessions')
+      .update({ revoked_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .eq('tenant_id', tenantId)
+      .is('revoked_at', null);
+
+    await writeAuditLog({
+      tenantId,
+      userId: req.user?.userId ?? null,
+      action: 'security.keys.rotated',
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+      dataBefore: beforeRow ?? null,
+      dataAfter: { security_jwt_secret: '[redacted]' },
+    });
+
+    return res.json({ success: true, data: { rotated: true } });
+  } catch (error) {
+    console.error('Error rotating keys:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const setupAdminMfa = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    if (!tenantId || !req.user?.userId) {
+      return res.status(401).json({ error: 'Tenant context is required' });
+    }
+
+    const { data: userRow, error } = await supabaseAdmin
+      .from('users')
+      .select('id, email, role, mfa_secret, mfa_enabled')
+      .eq('id', req.user.userId)
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+
+    if (error) {
+      return res.status(502).json({ error: error.message });
+    }
+
+    if (!userRow) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const secret = userRow.mfa_secret?.trim() || generateTotpSecret();
+    const uri = buildOtpAuthUri(userRow.email ?? req.user.email ?? 'user', secret);
+
+    const { error: updateError } = await supabaseAdmin
+      .from('users')
+      .update({ mfa_secret: secret })
+      .eq('id', userRow.id)
+      .eq('tenant_id', tenantId);
+
+    if (updateError) {
+      return res.status(502).json({ error: updateError.message });
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        secret,
+        uri,
+        mfaEnabled: Boolean(userRow.mfa_enabled),
+      },
+    });
+  } catch (error) {
+    console.error('Error setting up MFA:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const verifyAdminMfa = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    if (!tenantId || !req.user?.userId) {
+      return res.status(401).json({ error: 'Tenant context is required' });
+    }
+
+    const parsed = mfaVerifySchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Invalid payload', details: parsed.error.flatten() });
+    }
+
+    const { data: userRow, error } = await supabaseAdmin
+      .from('users')
+      .select('id, email, mfa_secret')
+      .eq('id', req.user.userId)
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+
+    if (error) {
+      return res.status(502).json({ error: error.message });
+    }
+
+    if (!userRow?.mfa_secret) {
+      return res.status(400).json({ error: 'MFA secret not initialized' });
+    }
+
+    const isValid = verifyTotp(userRow.mfa_secret, parsed.data.code);
+    if (!isValid) {
+      return res.status(400).json({ error: 'Invalid verification code' });
+    }
+
+    const { error: updateError } = await supabaseAdmin
+      .from('users')
+      .update({
+        mfa_enabled: true,
+        mfa_verified_at: new Date().toISOString(),
+      })
+      .eq('id', userRow.id)
+      .eq('tenant_id', tenantId);
+
+    if (updateError) {
+      return res.status(502).json({ error: updateError.message });
+    }
+
+    await writeAuditLog({
+      tenantId,
+      userId: req.user.userId,
+      action: 'security.mfa.enabled',
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+      dataAfter: { userId: userRow.id },
+    });
+
+    return res.json({ success: true, data: { mfaEnabled: true } });
+  } catch (error) {
+    console.error('Error verifying MFA:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const updateAdminMfaRequirement = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context is required' });
+    }
+
+    if (req.user?.role !== 'owner') {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    const parsed = mfaRequirementSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Invalid payload', details: parsed.error.flatten() });
+    }
+
+    const { data: beforeRow, error: fetchError } = await supabaseAdmin
+      .from('tenants')
+      .select('id, require_admin_mfa')
+      .eq('id', tenantId)
+      .maybeSingle();
+
+    if (fetchError) {
+      return res.status(502).json({ error: fetchError.message });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('tenants')
+      .update({ require_admin_mfa: parsed.data.enabled })
+      .eq('id', tenantId)
+      .select('id, require_admin_mfa')
+      .maybeSingle();
+
+    if (error) {
+      return res.status(502).json({ error: error.message });
+    }
+
+    await writeAuditLog({
+      tenantId,
+      userId: req.user?.userId ?? null,
+      action: 'security.mfa.requirement.updated',
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+      dataBefore: beforeRow ?? null,
+      dataAfter: data ?? null,
+    });
+
+    return res.json({ success: true, data });
+  } catch (error) {
+    console.error('Error updating MFA requirement:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };

@@ -17,8 +17,11 @@ type Props = {
 
 const defaultStatusLabels: Record<string, string> = {
   recibido: "Recibida",
+  en_espera_de_refaccion: "En espera de refacción",
   diagnostico: "Diagnóstico",
+  cotizado: "Cotizado",
   reparacion: "En reparación",
+  listo_para_entrega: "Listo para entrega",
   listo: "Lista",
   entregado: "Entregada",
 };

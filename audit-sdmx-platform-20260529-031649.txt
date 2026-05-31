@@ -1,0 +1,1799 @@
+============================================================
+SDMX PLATFORM AUDIT
+Generated: viernes, 29 de mayo de 2026, 03:16:49 CST
+PWD: /Users/jesusvilla/Desktop/Sdmx-pagina-principal
+============================================================
+
+==================== 1) GIT STATE ====================
+main
+?? audit-sdmx-platform-20260529-031649.txt
+?? scripts/reset-vercel-web-admin-env.sh
+5e2e3ac6 chore(vercel): refresh web-admin env vars
+67947e46 fix(vercel): force web-admin Next build settings
+333622a6 chore: remove temporary global vercel config
+ce77c5ad fix: configure web-admin vercel build
+fb4f0dec fix: Vercel environment variables & deploy scripts
+36ebc5c4 Simplify Next root config for Vercel monorepo builds
+f9efe9f7 Trigger redeploy with updated Vercel build settings
+dbf84c85 Use tenant primary color for admin viewport
+ef473f0e Trigger redeploy after Vercel root fix
+907f62ea Fix Vercel turbopack root and admin type error
+
+==================== 2) ROOT FILES ====================
+total 520
+drwxr-xr-x@ 38 jesusvilla  staff    1216 29 may 03:16 .
+drwx------@ 68 jesusvilla  staff    2176 29 may 01:43 ..
+drwxr-xr-x   5 jesusvilla  staff     160 23 may 12:45 .env-backups
+-rw-r--r--@  1 jesusvilla  staff    2266 27 may 08:48 .env.example
+-rw-r--r--@  1 jesusvilla  staff    1915 23 may 13:16 .env.example.bak
+-rw-r--r--@  1 jesusvilla  staff    1740 28 may 23:39 .env.local
+-rw-r--r--@  1 jesusvilla  staff    1785 28 may 19:52 .env.production.local
+drwxr-xr-x@ 16 jesusvilla  staff     512 29 may 03:16 .git
+-rw-r--r--@  1 jesusvilla  staff     730 27 may 22:08 .gitignore
+-rw-r--r--@  1 jesusvilla  staff       3 26 may 05:24 .nvmrc
+drwxr-xr-x@  3 jesusvilla  staff      96 27 may 14:22 .pnpm-store
+drwxr-xr-x@  3 jesusvilla  staff      96 28 may 19:42 .turbo
+drwxr-xr-x@  8 jesusvilla  staff     256 23 may 04:38 .venv-audio
+drwxr-xr-x@  4 jesusvilla  staff     128 20 may 06:50 .venv-audio311
+drwxr-xr-x@  7 jesusvilla  staff     224 25 may 07:19 .venv-image
+drwxr-xr-x@  4 jesusvilla  staff     128 28 may 23:39 .vercel
+-rw-r--r--@  1 jesusvilla  staff     193 27 may 02:02 .vercelignore
+drwxr-xr-x   7 jesusvilla  staff     224 28 may 23:53 apps
+drwxr-xr-x@  3 jesusvilla  staff      96 16 may 01:24 assets
+-rwxr-xr-x   1 jesusvilla  staff    1025 23 may 12:47 audit-env-contract.sh
+-rwxr-xr-x   1 jesusvilla  staff    1224 23 may 12:43 audit-git-env.sh
+-rw-r--r--   1 jesusvilla  staff    1000 29 may 03:16 audit-sdmx-platform-20260529-031649.txt
+-rwxr-xr-x@  1 jesusvilla  staff    2417 23 may 13:18 audit-sdmx.sh
+-rw-r--r--@  1 jesusvilla  staff    2131 20 may 01:47 deploy-checklist.md
+drwxr-xr-x@ 29 jesusvilla  staff     928 27 may 18:24 docs
+drwxr-xr-x@ 20 jesusvilla  staff     640 16 may 01:24 js
+drwxr-xr-x@ 36 jesusvilla  staff    1152 28 may 19:46 node_modules
+-rw-r--r--@  1 jesusvilla  staff     706 26 may 23:33 package.json
+drwxr-xr-x   6 jesusvilla  staff     192 22 may 22:58 packages
+-rw-r--r--@  1 jesusvilla  staff  195270 27 may 17:51 pnpm-lock.yaml
+-rw-r--r--@  1 jesusvilla  staff      72 26 may 11:36 pnpm-workspace.yaml
+-rw-r--r--@  1 jesusvilla  staff     986 27 may 08:48 render.yaml
+-rw-r--r--@  1 jesusvilla  staff       0 21 may 12:48 Run
+drwxr-xr-x@ 11 jesusvilla  staff     352 29 may 03:16 scripts
+drwxr-xr-x@  4 jesusvilla  staff     128 27 may 03:02 supabase
+drwxr-xr-x@  3 jesusvilla  staff      96 20 may 01:44 tmp
+-rw-r--r--@  1 jesusvilla  staff     385 16 may 01:26 tsconfig.json
+-rw-r--r--@  1 jesusvilla  staff     410 16 may 01:42 turbo.json
+
+./pnpm-lock.yaml
+./package.json
+./pnpm-workspace.yaml
+
+==================== 3) WORKSPACE MAP ====================
+{
+  "name": "srfix-monorepo",
+  "private": true,
+  "packageManager": "pnpm@11.3.0",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "mobile:sync": "pnpm --dir apps/mobile run sync",
+    "mobile:android": "pnpm --dir apps/mobile run android",
+    "mobile:open": "pnpm --dir apps/mobile run open"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "next": "16.2.6",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "turbo": "latest",
+    "typescript": "^5.4.5"
+  }
+}
+
+packages:
+  - 'apps/*'
+  - 'packages/*'
+dangerouslyAllowAllBuilds: true
+
+==================== 4) APPS STRUCTURE ====================
+apps/api/package.json
+apps/api/vercel.json
+apps/mobile/package.json
+apps/web-admin/.env.local
+apps/web-admin/.env.production.local-backup
+apps/web-admin/.next/package.json
+apps/web-admin/next.config.ts
+apps/web-admin/package.json
+apps/web-admin/vercel.json
+apps/web-clientes/.env.local
+apps/web-clientes/.env.production.local-backup
+apps/web-clientes/.next/package.json
+apps/web-clientes/next.config.ts
+apps/web-clientes/package.json
+apps/web-clientes/vercel.json
+apps/web-public/.env.local
+apps/web-public/.env.production.local-backup
+apps/web-public/.next/package.json
+apps/web-public/next.config.ts
+apps/web-public/package.json
+apps/web-public/vercel.json
+
+==================== 5) WEB-ADMIN CONFIG ====================
+--- apps/web-admin/package.json
+{
+  "name": "web-admin",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@white-label/ui": "workspace:*",
+    "@white-label/config": "workspace:*",
+    "@tailwindcss/postcss": "^4",
+    "@supabase/supabase-js": "^2.43.4",
+    "next": "16.2.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
+
+--- apps/web-admin/vercel.json
+{
+  "framework": "nextjs",
+  "installCommand": "pnpm install --frozen-lockfile --lockfile-dir ../..",
+  "buildCommand": "pnpm build",
+  "outputDirectory": ".next"
+}
+
+--- apps/web-admin/next.config.ts
+import type { NextConfig } from "next";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const appRoot = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(appRoot, "../..");
+
+const nextConfig: NextConfig = {
+  output: "standalone",
+  turbopack: {
+    root: repoRoot,
+  },
+};
+
+export default nextConfig;
+
+--- web-admin pages/routes
+apps/web-admin/src/app/auth/bridge/page.tsx
+apps/web-admin/src/app/dashboard/archivo/page.tsx
+apps/web-admin/src/app/dashboard/clientes/page.tsx
+apps/web-admin/src/app/dashboard/compras/page.tsx
+apps/web-admin/src/app/dashboard/finanzas/page.tsx
+apps/web-admin/src/app/dashboard/gastos/page.tsx
+apps/web-admin/src/app/dashboard/landing/page.tsx
+apps/web-admin/src/app/dashboard/layout.tsx
+apps/web-admin/src/app/dashboard/ordenes/page.tsx
+apps/web-admin/src/app/dashboard/page.tsx
+apps/web-admin/src/app/dashboard/proveedores/page.tsx
+apps/web-admin/src/app/dashboard/reportes/page.tsx
+apps/web-admin/src/app/dashboard/seguridad/page.tsx
+apps/web-admin/src/app/dashboard/solicitudes/page.tsx
+apps/web-admin/src/app/dashboard/stock/page.tsx
+apps/web-admin/src/app/dashboard/sucursales/page.tsx
+apps/web-admin/src/app/dashboard/tareas/page.tsx
+apps/web-admin/src/app/favicon.ico
+apps/web-admin/src/app/globals.css
+apps/web-admin/src/app/layout.tsx
+apps/web-admin/src/app/login/page.tsx
+apps/web-admin/src/app/not-found.tsx
+apps/web-admin/src/app/page.tsx
+
+==================== 6) WEB-PUBLIC CONFIG ====================
+{
+  "name": "web-public",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.43.4",
+    "@white-label/config": "workspace:*",
+    "@white-label/ui": "workspace:*",
+    "next": "16.2.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
+
+{
+  "framework": "nextjs"
+}
+
+apps/web-public/src/app/[tenant]/cotizar/page.tsx
+apps/web-public/src/app/[tenant]/page.tsx
+apps/web-public/src/app/[tenant]/tracking/page.tsx
+apps/web-public/src/app/auth/bridge/page.tsx
+apps/web-public/src/app/dashboard/page.tsx
+apps/web-public/src/app/favicon.ico
+apps/web-public/src/app/globals.css
+apps/web-public/src/app/hub/page.tsx
+apps/web-public/src/app/layout.tsx
+apps/web-public/src/app/login/page.tsx
+apps/web-public/src/app/login/reset-password/page.tsx
+apps/web-public/src/app/not-found.tsx
+apps/web-public/src/app/onboarding/google/callback/page.tsx
+apps/web-public/src/app/onboarding/page.tsx
+apps/web-public/src/app/onboarding/success/page.tsx
+apps/web-public/src/app/onboarding/success/redirect-to-admin.tsx
+apps/web-public/src/app/onboarding/success/save-onboarding-token.tsx
+apps/web-public/src/app/page.tsx
+apps/web-public/src/app/t/[tenantSlug]/portal/page.tsx
+
+==================== 7) WEB-CLIENTES CONFIG ====================
+{
+  "name": "web-clientes",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@white-label/config": "workspace:*",
+    "@white-label/ui": "workspace:*",
+    "next": "16.2.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
+
+{
+  "framework": "nextjs"
+}
+
+apps/web-clientes/src/app/favicon.ico
+apps/web-clientes/src/app/globals.css
+apps/web-clientes/src/app/layout.tsx
+apps/web-clientes/src/app/not-found.tsx
+apps/web-clientes/src/app/page.tsx
+apps/web-clientes/src/app/t/[tenantSlug]/portal/page.tsx
+
+==================== 8) LOCAL ENV KEYS ONLY ====================
+
+--- apps/web-admin/.env.local
+NEXT_PUBLIC_API_URL
+NEXT_PUBLIC_AUTH_TOKEN_KEY
+NEXT_PUBLIC_CUSTOMER_TRACKING_URL
+NEXT_PUBLIC_DEFAULT_SUCURSAL_NAME
+NEXT_PUBLIC_DEFAULT_TENANT_ID
+NEXT_PUBLIC_DEFAULT_TENANT_NAME
+NEXT_PUBLIC_DEFAULT_USER_EMAIL
+NEXT_PUBLIC_DEFAULT_USER_ROLE
+NEXT_PUBLIC_DEFAULT_USER_SUCURSAL_ID
+NEXT_PUBLIC_TENANT_BRAND_NAME
+NEXT_PUBLIC_TENANT_META_DESCRIPTION
+NEXT_PUBLIC_TENANT_META_TITLE
+NEXT_PUBLIC_THEME_ACCENT
+NEXT_PUBLIC_THEME_PRIMARY
+NEXT_PUBLIC_THEME_SECONDARY
+NEXT_PUBLIC_WEB_PUBLIC_URL
+VERCEL_OIDC_TOKEN
+
+--- apps/web-admin/.env.production.local
+MISSING
+
+--- apps/web-admin/.env.production.local-backup
+NEXT_PUBLIC_API_URL
+NEXT_PUBLIC_AUTH_TOKEN_KEY
+NEXT_PUBLIC_DEFAULT_BRANCH_NAME
+NEXT_PUBLIC_DEFAULT_TENANT_ID
+NEXT_PUBLIC_DEFAULT_TENANT_NAME
+NEXT_PUBLIC_DEFAULT_USER_EMAIL
+NEXT_PUBLIC_DEFAULT_USER_ROLE
+NEXT_PUBLIC_DEFAULT_USER_SUCURSAL_ID
+NEXT_PUBLIC_TENANT_BRAND_NAME
+NEXT_PUBLIC_TENANT_DASHBOARD_MESSAGE
+NEXT_PUBLIC_TENANT_DASHBOARD_TITLE
+NEXT_PUBLIC_TENANT_META_DESCRIPTION
+NEXT_PUBLIC_TENANT_META_TITLE
+NEXT_PUBLIC_TENANT_SUPPORT_EMAIL
+NEXT_PUBLIC_TENANT_SUPPORT_PHONE
+NEXT_PUBLIC_THEME_ACCENT
+NEXT_PUBLIC_THEME_PRIMARY
+NEXT_PUBLIC_THEME_SECONDARY
+NEXT_PUBLIC_WEB_ADMIN_URL
+NX_DAEMON
+TURBO_CACHE
+TURBO_DOWNLOAD_LOCAL_ENABLED
+TURBO_REMOTE_ONLY
+TURBO_RUN_SUMMARY
+VERCEL
+VERCEL_ENV
+VERCEL_GIT_COMMIT_AUTHOR_LOGIN
+VERCEL_GIT_COMMIT_AUTHOR_NAME
+VERCEL_GIT_COMMIT_MESSAGE
+VERCEL_GIT_COMMIT_REF
+VERCEL_GIT_COMMIT_SHA
+VERCEL_GIT_PREVIOUS_SHA
+VERCEL_GIT_PROVIDER
+VERCEL_GIT_PULL_REQUEST_ID
+VERCEL_GIT_REPO_ID
+VERCEL_GIT_REPO_OWNER
+VERCEL_GIT_REPO_SLUG
+VERCEL_OIDC_TOKEN
+VERCEL_TARGET_ENV
+VERCEL_URL
+
+--- apps/web-public/.env.local
+NEXT_PUBLIC_API_BASE_URL
+NEXT_PUBLIC_API_URL
+NEXT_PUBLIC_BASE_DOMAIN
+NEXT_PUBLIC_HUB_NAME
+NEXT_PUBLIC_RENDER_API_URL
+NEXT_PUBLIC_SAAS_BRAND_NAME
+NEXT_PUBLIC_SAAS_BRAND_SHORT
+NEXT_PUBLIC_SAAS_CONTACT_EMAIL
+NEXT_PUBLIC_SAAS_CONTACT_PHONE
+NEXT_PUBLIC_SAAS_DEMO_TENANT_SLUG
+NEXT_PUBLIC_SAAS_DEMO_URL
+NEXT_PUBLIC_SAAS_LEGAL_NAME
+NEXT_PUBLIC_SAAS_META_DESCRIPTION
+NEXT_PUBLIC_SAAS_THEME_COLOR
+NEXT_PUBLIC_SAAS_TRIAL_DAYS
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_TENANT_LANDING_URL_TEMPLATE
+NEXT_PUBLIC_WEB_ADMIN_URL
+NEXT_PUBLIC_WEB_PUBLIC_URL
+VERCEL_OIDC_TOKEN
+
+--- apps/web-clientes/.env.local
+NEXT_PUBLIC_API_BASE_URL
+NEXT_PUBLIC_API_URL
+NEXT_PUBLIC_CUSTOMER_PORTAL_NAME
+NEXT_PUBLIC_CUSTOMER_SUPPORT_EMAIL
+NEXT_PUBLIC_CUSTOMER_TRACKING_URL
+NEXT_PUBLIC_RENDER_API_URL
+NEXT_PUBLIC_WEB_PUBLIC_URL
+NEXT_PUBLIC_WORKSHOP_NAME
+VERCEL_OIDC_TOKEN
+
+--- apps/backend-api/.env
+MISSING
+
+--- apps/backend-api/.env.local
+MISSING
+
+==================== 9) LOCAL ENV VALUES SANITIZED ====================
+
+--- apps/web-admin/.env.local
+NEXT_PUBLIC_API_URL="https://api.serviciosdigitalesmx.online"
+NEXT_PUBLIC_AUTH_TOKEN_KEY="srfix_auth_token"
+NEXT_PUBLIC_DEFAULT_TENANT_ID="demo"
+NEXT_PUBLIC_DEFAULT_TENANT_NAME="Taller Demo"
+NEXT_PUBLIC_TENANT_BRAND_NAME="Sr. Fix Admin"
+NEXT_PUBLIC_THEME_ACCENT="#34d399"
+NEXT_PUBLIC_THEME_PRIMARY="#22d3ee"
+NEXT_PUBLIC_THEME_SECONDARY="#0f172a"
+NEXT_PUBLIC_WEB_PUBLIC_URL="https://serviciosdigitalesmx.online"
+VERCEL_OIDC_TOKEN=***REDACTED***
+NEXT_PUBLIC_TENANT_META_TITLE="Servicios Digitales MX Admin"
+NEXT_PUBLIC_TENANT_META_DESCRIPTION="Panel administrativo de Servicios Digitales MX"
+NEXT_PUBLIC_DEFAULT_SUCURSAL_NAME="Principal"
+NEXT_PUBLIC_DEFAULT_USER_EMAIL="admin@serviciosdigitalesmx.online"
+NEXT_PUBLIC_DEFAULT_USER_SUCURSAL_ID="principal"
+NEXT_PUBLIC_DEFAULT_USER_ROLE="admin"
+NEXT_PUBLIC_CUSTOMER_TRACKING_URL="https://serviciosdigitalesmx.online"
+
+--- apps/web-admin/.env.production.local-backup
+NEXT_PUBLIC_API_URL="https://sdmx-backend-api.onrender.com"
+NEXT_PUBLIC_AUTH_TOKEN_KEY=""
+NEXT_PUBLIC_DEFAULT_BRANCH_NAME=""
+NEXT_PUBLIC_DEFAULT_TENANT_ID=""
+NEXT_PUBLIC_DEFAULT_TENANT_NAME=""
+NEXT_PUBLIC_DEFAULT_USER_EMAIL=""
+NEXT_PUBLIC_DEFAULT_USER_ROLE=""
+NEXT_PUBLIC_DEFAULT_USER_SUCURSAL_ID=""
+NEXT_PUBLIC_TENANT_BRAND_NAME=""
+NEXT_PUBLIC_TENANT_DASHBOARD_MESSAGE=""
+NEXT_PUBLIC_TENANT_DASHBOARD_TITLE=""
+NEXT_PUBLIC_TENANT_META_DESCRIPTION=""
+NEXT_PUBLIC_TENANT_META_TITLE=""
+NEXT_PUBLIC_TENANT_SUPPORT_EMAIL=""
+NEXT_PUBLIC_TENANT_SUPPORT_PHONE=""
+NEXT_PUBLIC_THEME_ACCENT=""
+NEXT_PUBLIC_THEME_PRIMARY=""
+NEXT_PUBLIC_THEME_SECONDARY=""
+NEXT_PUBLIC_WEB_ADMIN_URL=""
+NX_DAEMON="false"
+TURBO_CACHE="remote:rw"
+TURBO_DOWNLOAD_LOCAL_ENABLED="true"
+TURBO_REMOTE_ONLY="true"
+TURBO_RUN_SUMMARY="true"
+VERCEL="1"
+VERCEL_ENV="production"
+VERCEL_GIT_COMMIT_AUTHOR_LOGIN=""
+VERCEL_GIT_COMMIT_AUTHOR_NAME=""
+VERCEL_GIT_COMMIT_MESSAGE=""
+VERCEL_GIT_COMMIT_REF=""
+VERCEL_GIT_COMMIT_SHA=""
+VERCEL_GIT_PREVIOUS_SHA=""
+VERCEL_GIT_PROVIDER=""
+VERCEL_GIT_PULL_REQUEST_ID=""
+VERCEL_GIT_REPO_ID=""
+VERCEL_GIT_REPO_OWNER=""
+VERCEL_GIT_REPO_SLUG=""
+VERCEL_OIDC_TOKEN=***REDACTED***
+VERCEL_TARGET_ENV="production"
+VERCEL_URL=""
+
+==================== 10) VERCEL LOCAL LINK ====================
+--- root .vercel/project.json
+{"projectId":"prj_0foX583e16SoXNvd62nvFQnh9eOa","orgId":"team_PrCvUrjS0WK4HQ3AmYqcpvkI","projectName":"web-admin"}
+--- apps/web-admin .vercel/project.json
+{"projectId":"prj_0foX583e16SoXNvd62nvFQnh9eOa","orgId":"team_PrCvUrjS0WK4HQ3AmYqcpvkI","projectName":"web-admin"}
+--- apps/web-public .vercel/project.json
+{"projectId":"prj_bLGVG6WqGnznxK1KrfbU2UyUO9R0","orgId":"team_PrCvUrjS0WK4HQ3AmYqcpvkI","projectName":"web-public"}
+--- apps/web-clientes .vercel/project.json
+{"projectId":"prj_rayyfrPg0CdCqn6iWMFwlhPGeGfN","orgId":"team_PrCvUrjS0WK4HQ3AmYqcpvkI","projectName":"web-clientes"}
+==================== 11) VERCEL PROJECT SETTINGS VIA API ====================
+
+----- PROJECT prj_0foX583e16SoXNvd62nvFQnh9eOa -----
+{
+  "id": "prj_0foX583e16SoXNvd62nvFQnh9eOa",
+  "name": "web-admin",
+  "framework": "nextjs",
+  "rootDirectory": "apps/web-admin",
+  "nodeVersion": "22.x",
+  "installCommand": "pnpm install --frozen-lockfile --lockfile-dir ../..",
+  "buildCommand": "",
+  "outputDirectory": "",
+  "devCommand": null,
+  "gitRepository": null,
+  "targets": {
+    "production": {
+      "alias": [
+        "web-admin-jet.vercel.app",
+        "web-admin-serviciosdigitalesmxs-projects.vercel.app",
+        "web-admin-git-main-serviciosdigitalesmxs-projects.vercel.app"
+      ],
+      "aliasAssigned": 1780045544595,
+      "aliasError": null,
+      "automaticAliases": [
+        "web-admin-serviciosdigitalesmxs-projects.vercel.app",
+        "web-admin-git-main-serviciosdigitalesmxs-projects.vercel.app"
+      ],
+      "builds": [],
+      "createdAt": 1780045504784,
+      "createdIn": "sfo1",
+      "creator": {
+        "uid": "p84JtreCCqW9P4paq4R1pbjn",
+        "email": "jesusvilla091921@gmail.com",
+        "username": "serviciosdigitalesmx",
+        "githubLogin": "serviciosdigitalesmx"
+      },
+      "deploymentHostname": "web-admin-p07hocynn-serviciosdigitalesmxs-projects",
+      "forced": false,
+      "id": "dpl_69Ch4xXyGwrvf69Arg5kDrqof1tV",
+      "meta": {
+        "githubCommitAuthorName": "serviciosdigitalesmx",
+        "githubCommitAuthorEmail": "jesusvilla091921@gmail.com",
+        "githubCommitMessage": "chore(vercel): refresh web-admin env vars",
+        "githubCommitOrg": "serviciosdigitalesmx",
+        "githubCommitRef": "main",
+        "githubCommitRepo": "Sdmx-pagina-principal",
+        "githubCommitSha": "5e2e3ac60ec7252e76d0f5f77f11b657366e3193",
+        "githubDeployment": "1",
+        "githubOrg": "serviciosdigitalesmx",
+        "githubRepo": "Sdmx-pagina-principal",
+        "githubRepoOwnerType": "User",
+        "githubCommitRepoId": "1200401952",
+        "githubRepoId": "1200401952",
+        "githubRepoVisibility": "public",
+        "githubHost": "github.com",
+        "githubCommitAuthorLogin": "serviciosdigitalesmx",
+        "githubCommitVerification": "unverified",
+        "repoPushedAt": "1780045501000",
+        "branchAlias": "web-admin-git-main-serviciosdigitalesmxs-projects.vercel.app",
+        "lambdaRuntimeStats": "{\"nodejs\":1}",
+        "bundler": "turbopack"
+      },
+      "monorepoManager": "turbo",
+      "name": "web-admin",
+      "plan": "hobby",
+      "private": true,
+      "readyState": "READY",
+      "readySubstate": "PROMOTED",
+      "target": "production",
+      "teamId": "team_PrCvUrjS0WK4HQ3AmYqcpvkI",
+      "type": "LAMBDAS",
+      "url": "web-admin-p07hocynn-serviciosdigitalesmxs-projects.vercel.app",
+      "userId": "p84JtreCCqW9P4paq4R1pbjn",
+      "withCache": false,
+      "buildingAt": 1780045506104,
+      "readyAt": 1780045544286,
+      "previewCommentsEnabled": true,
+      "oidcTokenClaims": {
+        "sub": "owner:serviciosdigitalesmxs-projects:project:web-admin:environment:production",
+        "iss": "https://oidc.vercel.com/serviciosdigitalesmxs-projects",
+        "scope": "owner:serviciosdigitalesmxs-projects:project:web-admin:environment:production",
+        "aud": "https://vercel.com/serviciosdigitalesmxs-projects",
+        "owner": "serviciosdigitalesmxs-projects",
+        "owner_id": "team_PrCvUrjS0WK4HQ3AmYqcpvkI",
+        "project": "web-admin",
+        "project_id": "prj_0foX583e16SoXNvd62nvFQnh9eOa",
+        "environment": "production",
+        "plan": "hobby"
+      }
+    },
+    "preview": {
+      "alias": [
+        "web-admin-git-codex-produ-9da40b-serviciosdigitalesmxs-projects.vercel.app"
+      ],
+      "aliasAssigned": null,
+      "automaticAliases": [
+        "web-admin-git-codex-produ-9da40b-serviciosdigitalesmxs-projects.vercel.app"
+      ],
+      "builds": [],
+      "createdAt": 1779939392836,
+      "createdIn": "sfo1",
+      "creator": {
+        "uid": "p84JtreCCqW9P4paq4R1pbjn",
+        "email": "jesusvilla091921@gmail.com",
+        "username": "serviciosdigitalesmx",
+        "githubLogin": "serviciosdigitalesmx"
+      },
+      "deploymentHostname": "web-admin-ybg5wmodq-serviciosdigitalesmxs-projects",
+      "forced": false,
+      "id": "dpl_6AD3617MfehMcpyuDX3ZjM4G6TeY",
+      "meta": {
+        "githubCommitAuthorName": "serviciosdigitalesmx",
+        "githubCommitAuthorEmail": "jesusvilla091921@gmail.com",
+        "githubCommitMessage": "fix(vercel): set turbopack root for next builds",
+        "githubCommitOrg": "serviciosdigitalesmx",
+        "githubCommitRef": "codex/production-ready-saas",
+        "githubCommitRepo": "Sdmx-pagina-principal",
+        "githubCommitSha": "d8a957a3a60e0e2f3221dfbd3668c0c543bbff37",
+        "githubDeployment": "1",
+        "githubOrg": "serviciosdigitalesmx",
+        "githubRepo": "Sdmx-pagina-principal",
+        "githubRepoOwnerType": "User",
+        "githubCommitRepoId": "1200401952",
+        "githubRepoId": "1200401952",
+        "githubRepoVisibility": "public",
+        "githubHost": "github.com",
+        "githubCommitAuthorLogin": "serviciosdigitalesmx",
+        "githubCommitVerification": "unverified",
+        "repoPushedAt": "1779939389000",
+        "branchAlias": "web-admin-git-codex-produ-9da40b-serviciosdigitalesmxs-projects.vercel.app"
+      },
+      "name": "web-admin",
+      "plan": "hobby",
+      "private": true,
+      "readyState": "ERROR",
+      "target": null,
+      "teamId": "team_PrCvUrjS0WK4HQ3AmYqcpvkI",
+      "type": "LAMBDAS",
+      "url": "web-admin-ybg5wmodq-serviciosdigitalesmxs-projects.vercel.app",
+      "userId": "p84JtreCCqW9P4paq4R1pbjn",
+      "withCache": false,
+      "buildingAt": 1779939394283,
+      "readyAt": 1779939396174,
+      "previewCommentsEnabled": true,
+      "oidcTokenClaims": {
+        "sub": "owner:serviciosdigitalesmxs-projects:project:web-admin:environment:preview",
+        "iss": "https://oidc.vercel.com/serviciosdigitalesmxs-projects",
+        "scope": "owner:serviciosdigitalesmxs-projects:project:web-admin:environment:preview",
+        "aud": "https://vercel.com/serviciosdigitalesmxs-projects",
+        "owner": "serviciosdigitalesmxs-projects",
+        "owner_id": "team_PrCvUrjS0WK4HQ3AmYqcpvkI",
+        "project": "web-admin",
+        "project_id": "prj_0foX583e16SoXNvd62nvFQnh9eOa",
+        "environment": "preview",
+        "plan": "hobby"
+      }
+    }
+  }
+}
+
+----- PROJECT prj_bLGVG6WqGnznxK1KrfbU2UyUO9R0 -----
+{
+  "id": "prj_bLGVG6WqGnznxK1KrfbU2UyUO9R0",
+  "name": "web-public",
+  "framework": "nextjs",
+  "rootDirectory": "apps/web-public",
+  "nodeVersion": "22.x",
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "buildCommand": "pnpm build",
+  "outputDirectory": ".next",
+  "devCommand": null,
+  "gitRepository": null,
+  "targets": {
+    "production": {
+      "alias": [
+        "serviciosdigitalesmx.online",
+        "web-public-three.vercel.app",
+        "*.serviciosdigitalesmx.online",
+        "app.serviciosdigitalesmx.online",
+        "web-public-serviciosdigitalesmxs-projects.vercel.app",
+        "web-public-git-main-serviciosdigitalesmxs-projects.vercel.app"
+      ],
+      "aliasAssigned": 1780045581351,
+      "aliasError": null,
+      "automaticAliases": [
+        "web-public-serviciosdigitalesmxs-projects.vercel.app",
+        "web-public-git-main-serviciosdigitalesmxs-projects.vercel.app"
+      ],
+      "builds": [],
+      "createdAt": 1780045504689,
+      "createdIn": "sfo1",
+      "creator": {
+        "uid": "p84JtreCCqW9P4paq4R1pbjn",
+        "email": "jesusvilla091921@gmail.com",
+        "username": "serviciosdigitalesmx",
+        "githubLogin": "serviciosdigitalesmx"
+      },
+      "deploymentHostname": "web-public-e8l0yyv2f-serviciosdigitalesmxs-projects",
+      "forced": false,
+      "id": "dpl_Ew3mXGiPFsjXBPTA8yQtAuxWKu61",
+      "meta": {
+        "githubCommitAuthorName": "serviciosdigitalesmx",
+        "githubCommitAuthorEmail": "jesusvilla091921@gmail.com",
+        "githubCommitMessage": "chore(vercel): refresh web-admin env vars",
+        "githubCommitOrg": "serviciosdigitalesmx",
+        "githubCommitRef": "main",
+        "githubCommitRepo": "Sdmx-pagina-principal",
+        "githubCommitSha": "5e2e3ac60ec7252e76d0f5f77f11b657366e3193",
+        "githubDeployment": "1",
+        "githubOrg": "serviciosdigitalesmx",
+        "githubRepo": "Sdmx-pagina-principal",
+        "githubRepoOwnerType": "User",
+        "githubCommitRepoId": "1200401952",
+        "githubRepoId": "1200401952",
+        "githubRepoVisibility": "public",
+        "githubHost": "github.com",
+        "githubCommitAuthorLogin": "serviciosdigitalesmx",
+        "githubCommitVerification": "unverified",
+        "repoPushedAt": "1780045501000",
+        "branchAlias": "web-public-git-main-serviciosdigitalesmxs-projects.vercel.app",
+        "lambdaRuntimeStats": "{\"nodejs\":1}",
+        "bundler": "turbopack"
+      },
+      "monorepoManager": "turbo",
+      "name": "web-public",
+      "plan": "hobby",
+      "private": true,
+      "readyState": "READY",
+      "readySubstate": "PROMOTED",
+      "target": "production",
+      "teamId": "team_PrCvUrjS0WK4HQ3AmYqcpvkI",
+      "type": "LAMBDAS",
+      "url": "web-public-e8l0yyv2f-serviciosdigitalesmxs-projects.vercel.app",
+      "userId": "p84JtreCCqW9P4paq4R1pbjn",
+      "withCache": false,
+      "buildingAt": 1780045545745,
+      "readyAt": 1780045580940,
+      "previewCommentsEnabled": true,
+      "oidcTokenClaims": {
+        "sub": "owner:serviciosdigitalesmxs-projects:project:web-public:environment:production",
+        "iss": "https://oidc.vercel.com/serviciosdigitalesmxs-projects",
+        "scope": "owner:serviciosdigitalesmxs-projects:project:web-public:environment:production",
+        "aud": "https://vercel.com/serviciosdigitalesmxs-projects",
+        "owner": "serviciosdigitalesmxs-projects",
+        "owner_id": "team_PrCvUrjS0WK4HQ3AmYqcpvkI",
+        "project": "web-public",
+        "project_id": "prj_bLGVG6WqGnznxK1KrfbU2UyUO9R0",
+        "environment": "production",
+        "plan": "hobby"
+      }
+    },
+    "preview": {
+      "alias": [
+        "web-public-git-codex-prod-2dd8ee-serviciosdigitalesmxs-projects.vercel.app"
+      ],
+      "aliasAssigned": null,
+      "automaticAliases": [
+        "web-public-git-codex-prod-2dd8ee-serviciosdigitalesmxs-projects.vercel.app"
+      ],
+      "builds": [],
+      "createdAt": 1779939392845,
+      "createdIn": "sfo1",
+      "creator": {
+        "uid": "p84JtreCCqW9P4paq4R1pbjn",
+        "email": "jesusvilla091921@gmail.com",
+        "username": "serviciosdigitalesmx",
+        "githubLogin": "serviciosdigitalesmx"
+      },
+      "deploymentHostname": "web-public-mw4ku205v-serviciosdigitalesmxs-projects",
+      "forced": false,
+      "id": "dpl_4tShwdhNxyPiyjz4eXbfteptotTE",
+      "meta": {
+        "githubCommitAuthorName": "serviciosdigitalesmx",
+        "githubCommitAuthorEmail": "jesusvilla091921@gmail.com",
+        "githubCommitMessage": "fix(vercel): set turbopack root for next builds",
+        "githubCommitOrg": "serviciosdigitalesmx",
+        "githubCommitRef": "codex/production-ready-saas",
+        "githubCommitRepo": "Sdmx-pagina-principal",
+        "githubCommitSha": "d8a957a3a60e0e2f3221dfbd3668c0c543bbff37",
+        "githubDeployment": "1",
+        "githubOrg": "serviciosdigitalesmx",
+        "githubRepo": "Sdmx-pagina-principal",
+        "githubRepoOwnerType": "User",
+        "githubCommitRepoId": "1200401952",
+        "githubRepoId": "1200401952",
+        "githubRepoVisibility": "public",
+        "githubHost": "github.com",
+        "githubCommitAuthorLogin": "serviciosdigitalesmx",
+        "githubCommitVerification": "unverified",
+        "repoPushedAt": "1779939389000",
+        "branchAlias": "web-public-git-codex-prod-2dd8ee-serviciosdigitalesmxs-projects.vercel.app"
+      },
+      "name": "web-public",
+      "plan": "hobby",
+      "private": true,
+      "readyState": "ERROR",
+      "target": null,
+      "teamId": "team_PrCvUrjS0WK4HQ3AmYqcpvkI",
+      "type": "LAMBDAS",
+      "url": "web-public-mw4ku205v-serviciosdigitalesmxs-projects.vercel.app",
+      "userId": "p84JtreCCqW9P4paq4R1pbjn",
+      "withCache": false,
+      "buildingAt": 1779939394129,
+      "readyAt": 1779939394507,
+      "previewCommentsEnabled": true,
+      "oidcTokenClaims": {
+        "sub": "owner:serviciosdigitalesmxs-projects:project:web-public:environment:preview",
+        "iss": "https://oidc.vercel.com/serviciosdigitalesmxs-projects",
+        "scope": "owner:serviciosdigitalesmxs-projects:project:web-public:environment:preview",
+        "aud": "https://vercel.com/serviciosdigitalesmxs-projects",
+        "owner": "serviciosdigitalesmxs-projects",
+        "owner_id": "team_PrCvUrjS0WK4HQ3AmYqcpvkI",
+        "project": "web-public",
+        "project_id": "prj_bLGVG6WqGnznxK1KrfbU2UyUO9R0",
+        "environment": "preview",
+        "plan": "hobby"
+      }
+    }
+  }
+}
+
+----- PROJECT prj_rayyfrPg0CdCqn6iWMFwlhPGeGfN -----
+{
+  "id": "prj_rayyfrPg0CdCqn6iWMFwlhPGeGfN",
+  "name": "web-clientes",
+  "framework": "nextjs",
+  "rootDirectory": "apps/web-clientes",
+  "nodeVersion": "22.x",
+  "installCommand": "pnpm install --frozen-lockfile --lockfile-dir ../..",
+  "buildCommand": "pnpm build",
+  "outputDirectory": ".next",
+  "devCommand": null,
+  "gitRepository": null,
+  "targets": {
+    "production": {
+      "alias": [
+        "web-clientes-serviciosdigitalesmxs-projects.vercel.app",
+        "web-clientes-git-main-serviciosdigitalesmxs-projects.vercel.app"
+      ],
+      "aliasAssigned": null,
+      "automaticAliases": [
+        "web-clientes-serviciosdigitalesmxs-projects.vercel.app",
+        "web-clientes-git-main-serviciosdigitalesmxs-projects.vercel.app"
+      ],
+      "builds": [],
+      "createdAt": 1780045504738,
+      "createdIn": "sfo1",
+      "creator": {
+        "uid": "p84JtreCCqW9P4paq4R1pbjn",
+        "email": "jesusvilla091921@gmail.com",
+        "username": "serviciosdigitalesmx",
+        "githubLogin": "serviciosdigitalesmx"
+      },
+      "deploymentHostname": "web-clientes-duredrgkk-serviciosdigitalesmxs-projects",
+      "forced": false,
+      "id": "dpl_A329AXc6Ybm4srDkrpMUnH1guzYZ",
+      "meta": {
+        "githubCommitAuthorName": "serviciosdigitalesmx",
+        "githubCommitAuthorEmail": "jesusvilla091921@gmail.com",
+        "githubCommitMessage": "chore(vercel): refresh web-admin env vars",
+        "githubCommitOrg": "serviciosdigitalesmx",
+        "githubCommitRef": "main",
+        "githubCommitRepo": "Sdmx-pagina-principal",
+        "githubCommitSha": "5e2e3ac60ec7252e76d0f5f77f11b657366e3193",
+        "githubDeployment": "1",
+        "githubOrg": "serviciosdigitalesmx",
+        "githubRepo": "Sdmx-pagina-principal",
+        "githubRepoOwnerType": "User",
+        "githubCommitRepoId": "1200401952",
+        "githubRepoId": "1200401952",
+        "githubRepoVisibility": "public",
+        "githubHost": "github.com",
+        "githubCommitAuthorLogin": "serviciosdigitalesmx",
+        "githubCommitVerification": "unverified",
+        "repoPushedAt": "1780045501000",
+        "branchAlias": "web-clientes-git-main-serviciosdigitalesmxs-projects.vercel.app",
+        "bundler": "turbopack"
+      },
+      "name": "web-clientes",
+      "plan": "hobby",
+      "private": true,
+      "readyState": "ERROR",
+      "target": "production",
+      "teamId": "team_PrCvUrjS0WK4HQ3AmYqcpvkI",
+      "type": "LAMBDAS",
+      "url": "web-clientes-duredrgkk-serviciosdigitalesmxs-projects.vercel.app",
+      "userId": "p84JtreCCqW9P4paq4R1pbjn",
+      "withCache": false,
+      "buildingAt": 1780045581926,
+      "readyAt": 1780045610294,
+      "previewCommentsEnabled": true,
+      "oidcTokenClaims": {
+        "sub": "owner:serviciosdigitalesmxs-projects:project:web-clientes:environment:production",
+        "iss": "https://oidc.vercel.com/serviciosdigitalesmxs-projects",
+        "scope": "owner:serviciosdigitalesmxs-projects:project:web-clientes:environment:production",
+        "aud": "https://vercel.com/serviciosdigitalesmxs-projects",
+        "owner": "serviciosdigitalesmxs-projects",
+        "owner_id": "team_PrCvUrjS0WK4HQ3AmYqcpvkI",
+        "project": "web-clientes",
+        "project_id": "prj_rayyfrPg0CdCqn6iWMFwlhPGeGfN",
+        "environment": "production",
+        "plan": "hobby"
+      }
+    },
+    "preview": {
+      "alias": [
+        "web-clientes-git-codex-pr-6d80bf-serviciosdigitalesmxs-projects.vercel.app"
+      ],
+      "aliasAssigned": null,
+      "automaticAliases": [
+        "web-clientes-git-codex-pr-6d80bf-serviciosdigitalesmxs-projects.vercel.app"
+      ],
+      "builds": [],
+      "createdAt": 1779939392986,
+      "createdIn": "sfo1",
+      "creator": {
+        "uid": "p84JtreCCqW9P4paq4R1pbjn",
+        "email": "jesusvilla091921@gmail.com",
+        "username": "serviciosdigitalesmx",
+        "githubLogin": "serviciosdigitalesmx"
+      },
+      "deploymentHostname": "web-clientes-qrqp7600y-serviciosdigitalesmxs-projects",
+      "forced": false,
+      "id": "dpl_53pXxQiW6kTJjbx3iMSVoVqxh7kh",
+      "meta": {
+        "githubCommitAuthorName": "serviciosdigitalesmx",
+        "githubCommitAuthorEmail": "jesusvilla091921@gmail.com",
+        "githubCommitMessage": "fix(vercel): set turbopack root for next builds",
+        "githubCommitOrg": "serviciosdigitalesmx",
+        "githubCommitRef": "codex/production-ready-saas",
+        "githubCommitRepo": "Sdmx-pagina-principal",
+        "githubCommitSha": "d8a957a3a60e0e2f3221dfbd3668c0c543bbff37",
+        "githubDeployment": "1",
+        "githubOrg": "serviciosdigitalesmx",
+        "githubRepo": "Sdmx-pagina-principal",
+        "githubRepoOwnerType": "User",
+        "githubCommitRepoId": "1200401952",
+        "githubRepoId": "1200401952",
+        "githubRepoVisibility": "public",
+        "githubHost": "github.com",
+        "githubCommitAuthorLogin": "serviciosdigitalesmx",
+        "githubCommitVerification": "unverified",
+        "repoPushedAt": "1779939389000",
+        "branchAlias": "web-clientes-git-codex-pr-6d80bf-serviciosdigitalesmxs-projects.vercel.app"
+      },
+      "name": "web-clientes",
+      "plan": "hobby",
+      "private": true,
+      "readyState": "ERROR",
+      "target": null,
+      "teamId": "team_PrCvUrjS0WK4HQ3AmYqcpvkI",
+      "type": "LAMBDAS",
+      "url": "web-clientes-qrqp7600y-serviciosdigitalesmxs-projects.vercel.app",
+      "userId": "p84JtreCCqW9P4paq4R1pbjn",
+      "withCache": false,
+      "buildingAt": 1779939397368,
+      "readyAt": 1779939397950,
+      "previewCommentsEnabled": true,
+      "oidcTokenClaims": {
+        "sub": "owner:serviciosdigitalesmxs-projects:project:web-clientes:environment:preview",
+        "iss": "https://oidc.vercel.com/serviciosdigitalesmxs-projects",
+        "scope": "owner:serviciosdigitalesmxs-projects:project:web-clientes:environment:preview",
+        "aud": "https://vercel.com/serviciosdigitalesmxs-projects",
+        "owner": "serviciosdigitalesmxs-projects",
+        "owner_id": "team_PrCvUrjS0WK4HQ3AmYqcpvkI",
+        "project": "web-clientes",
+        "project_id": "prj_rayyfrPg0CdCqn6iWMFwlhPGeGfN",
+        "environment": "preview",
+        "plan": "hobby"
+      }
+    }
+  }
+}
+
+==================== 12) VERCEL ENV LIST ====================
+
+ name                                       value               environments        created    
+ NEXT_PUBLIC_WEB_PUBLIC_URL                 Encrypted           Development         12m ago    
+ NEXT_PUBLIC_THEME_SECONDARY                Encrypted           Development         12m ago    
+ NEXT_PUBLIC_THEME_PRIMARY                  Encrypted           Development         12m ago    
+ NEXT_PUBLIC_THEME_ACCENT                   Encrypted           Development         12m ago    
+ NEXT_PUBLIC_TENANT_META_TITLE              Encrypted           Development         12m ago    
+ NEXT_PUBLIC_TENANT_META_DESCRIPTION        Encrypted           Development         12m ago    
+ NEXT_PUBLIC_TENANT_BRAND_NAME              Encrypted           Development         12m ago    
+ NEXT_PUBLIC_DEFAULT_USER_SUCURSAL_ID       Encrypted           Development         12m ago    
+ NEXT_PUBLIC_DEFAULT_USER_ROLE              Encrypted           Development         12m ago    
+ NEXT_PUBLIC_DEFAULT_USER_EMAIL             Encrypted           Development         12m ago    
+ NEXT_PUBLIC_DEFAULT_TENANT_NAME            Encrypted           Development         12m ago    
+ NEXT_PUBLIC_DEFAULT_TENANT_ID              Encrypted           Development         12m ago    
+ NEXT_PUBLIC_DEFAULT_SUCURSAL_NAME          Encrypted           Development         12m ago    
+ NEXT_PUBLIC_CUSTOMER_TRACKING_URL          Encrypted           Development         12m ago    
+ NEXT_PUBLIC_AUTH_TOKEN_KEY                 Encrypted           Development         13m ago    
+ NEXT_PUBLIC_API_URL                        Encrypted           Development         13m ago    
+ NEXT_PUBLIC_WEB_PUBLIC_URL                 Encrypted           Production          13m ago    
+ NEXT_PUBLIC_THEME_SECONDARY                Encrypted           Production          13m ago    
+ NEXT_PUBLIC_THEME_PRIMARY                  Encrypted           Production          13m ago    
+ NEXT_PUBLIC_THEME_ACCENT                   Encrypted           Production          13m ago    
+ NEXT_PUBLIC_TENANT_META_TITLE              Encrypted           Production          13m ago    
+ NEXT_PUBLIC_TENANT_META_DESCRIPTION        Encrypted           Production          13m ago    
+ NEXT_PUBLIC_TENANT_BRAND_NAME              Encrypted           Production          13m ago    
+ NEXT_PUBLIC_DEFAULT_USER_SUCURSAL_ID       Encrypted           Production          14m ago    
+ NEXT_PUBLIC_DEFAULT_USER_ROLE              Encrypted           Production          14m ago    
+ NEXT_PUBLIC_DEFAULT_USER_EMAIL             Encrypted           Production          14m ago    
+ NEXT_PUBLIC_DEFAULT_TENANT_NAME            Encrypted           Production          14m ago    
+ NEXT_PUBLIC_DEFAULT_TENANT_ID              Encrypted           Production          14m ago    
+ NEXT_PUBLIC_DEFAULT_SUCURSAL_NAME          Encrypted           Production          14m ago    
+ NEXT_PUBLIC_CUSTOMER_TRACKING_URL          Encrypted           Production          14m ago    
+ NEXT_PUBLIC_AUTH_TOKEN_KEY                 Encrypted           Production          14m ago    
+ NEXT_PUBLIC_API_URL                        Encrypted           Production          14m ago    
+ NEXT_PUBLIC_SUPABASE_ANON_KEY              Encrypted           Preview             3d ago     
+ NEXT_PUBLIC_SUPABASE_URL                   Encrypted           Preview             3d ago     
+ NEXT_PUBLIC_SUPABASE_ANON_KEY              Encrypted           Production          3d ago     
+ NEXT_PUBLIC_SUPABASE_URL                   Encrypted           Production          3d ago     
+ NEXT_PUBLIC_TENANT_SUPPORT_PHONE           Encrypted           Production          7d ago     
+ NEXT_PUBLIC_TENANT_SUPPORT_EMAIL           Encrypted           Production          7d ago     
+ NEXT_PUBLIC_TENANT_DASHBOARD_MESSAGE       Encrypted           Production          7d ago     
+ NEXT_PUBLIC_TENANT_DASHBOARD_TITLE         Encrypted           Production          7d ago     
+ NEXT_PUBLIC_WEB_ADMIN_URL                  Encrypted           Production          7d ago     
+ NEXT_PUBLIC_DEFAULT_BRANCH_NAME            Encrypted           Production          11d ago    
+
+
+==================== 13) VERCEL DEPLOYMENTS ====================
+https://web-admin-p07hocynn-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-bf36ea3kc-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-kya0tnw24-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-48hh6g45r-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-1knszarld-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-ot4uxg5yd-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-ibcx89fbh-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-2zpol6qwu-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-lwnl712k1-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-q6kn9816o-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-ybg5wmodq-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-5qpbgm2ud-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-9l7gz1msy-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-aqam3naj7-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-6ggj12bwq-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-em75d3rmu-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-i6y4p5dfp-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-rej1xzyol-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-kr1b4bwmb-serviciosdigitalesmxs-projects.vercel.app
+https://web-admin-6009n2fzv-serviciosdigitalesmxs-projects.vercel.app
+
+==================== 14) BUILD TESTS LOCAL ====================
+--- web-admin build
+[WARN] Unsupported engine: wanted: {"node":"22.x"} (current: {"node":"v26.0.0","pnpm":"11.3.0"})
+$ next build
+▲ Next.js 16.2.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+(node:92301) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✓ Compiled successfully in 2.7s
+  Running TypeScript ...
+  Finished TypeScript in 3.5s ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/21) ...
+  Generating static pages using 7 workers (5/21) 
+  Generating static pages using 7 workers (10/21) 
+  Generating static pages using 7 workers (15/21) 
+✓ Generating static pages using 7 workers (21/21) in 327ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /auth/bridge
+├ ƒ /dashboard
+├ ƒ /dashboard/archivo
+├ ƒ /dashboard/clientes
+├ ƒ /dashboard/compras
+├ ƒ /dashboard/finanzas
+├ ƒ /dashboard/gastos
+├ ƒ /dashboard/landing
+├ ƒ /dashboard/ordenes
+├ ƒ /dashboard/proveedores
+├ ƒ /dashboard/reportes
+├ ƒ /dashboard/seguridad
+├ ƒ /dashboard/solicitudes
+├ ƒ /dashboard/stock
+├ ƒ /dashboard/sucursales
+├ ƒ /dashboard/tareas
+└ ○ /login
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+--- web-public build
+[WARN] Unsupported engine: wanted: {"node":"22.x"} (current: {"node":"v26.0.0","pnpm":"11.3.0"})
+$ next build
+▲ Next.js 16.2.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+(node:92499) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✓ Compiled successfully in 3.9s
+  Running TypeScript ...
+  Finished TypeScript in 3.1s ...
+  Collecting page data using 7 workers ...
+  Generating static pages using 7 workers (0/12) ...
+  Generating static pages using 7 workers (3/12) 
+  Generating static pages using 7 workers (6/12) 
+  Generating static pages using 7 workers (9/12) 
+✓ Generating static pages using 7 workers (12/12) in 253ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /[tenant]
+├ ƒ /[tenant]/cotizar
+├ ƒ /[tenant]/tracking
+├ ○ /auth/bridge
+├ ○ /dashboard
+├ ○ /hub
+├ ○ /login
+├ ○ /login/reset-password
+├ ○ /onboarding
+├ ○ /onboarding/google/callback
+├ ○ /onboarding/success
+└ ƒ /t/[tenantSlug]/portal
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+--- web-clientes build
+[WARN] Unsupported engine: wanted: {"node":"22.x"} (current: {"node":"v26.0.0","pnpm":"11.3.0"})
+$ next build
+▲ Next.js 16.2.6 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+(node:92694) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✓ Compiled successfully in 3.0s
+  Running TypeScript ...
+  Finished TypeScript in 2.1s ...
+  Collecting page data using 6 workers ...
+  Generating static pages using 6 workers (0/4) ...
+  Generating static pages using 6 workers (1/4) 
+  Generating static pages using 6 workers (2/4) 
+  Generating static pages using 6 workers (3/4) 
+✓ Generating static pages using 6 workers (4/4) in 387ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+└ ƒ /t/[tenantSlug]/portal
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+
+==================== 15) GENERATED NEXT OUTPUTS ====================
+
+--- apps/web-admin/.next
+apps/web-admin/.next
+apps/web-admin/.next/fallback-build-manifest.json
+apps/web-admin/.next/types
+apps/web-admin/.next/types/cache-life.d.ts
+apps/web-admin/.next/types/routes.d.ts
+apps/web-admin/.next/types/validator.ts
+apps/web-admin/.next/trace
+apps/web-admin/.next/cache
+apps/web-admin/.next/cache/.rscinfo
+apps/web-admin/.next/cache/.tsbuildinfo
+apps/web-admin/.next/cache/.previewinfo
+apps/web-admin/.next/standalone
+apps/web-admin/.next/standalone/node_modules
+apps/web-admin/.next/standalone/apps
+apps/web-admin/.next/images-manifest.json
+apps/web-admin/.next/required-server-files.json
+apps/web-admin/.next/turbopack
+apps/web-admin/.next/trace-build
+apps/web-admin/.next/build-manifest.json
+apps/web-admin/.next/BUILD_ID
+apps/web-admin/.next/server
+apps/web-admin/.next/server/pages-manifest.json
+apps/web-admin/.next/server/next-font-manifest.js
+apps/web-admin/.next/server/interception-route-rewrite-manifest.js
+apps/web-admin/.next/server/server-reference-manifest.js
+apps/web-admin/.next/server/app
+apps/web-admin/.next/server/functions-config-manifest.json
+apps/web-admin/.next/server/middleware-manifest.json
+apps/web-admin/.next/server/chunks
+apps/web-admin/.next/server/app-paths-manifest.json
+apps/web-admin/.next/server/pages
+apps/web-admin/.next/server/middleware-build-manifest.js
+apps/web-admin/.next/server/server-reference-manifest.json
+apps/web-admin/.next/server/next-font-manifest.json
+apps/web-admin/.next/server/prefetch-hints.json
+apps/web-admin/.next/package.json
+apps/web-admin/.next/export-marker.json
+apps/web-admin/.next/static
+apps/web-admin/.next/static/chunks
+apps/web-admin/.next/static/RQdJ-OiFF0626J7rtGjF-
+apps/web-admin/.next/static/media
+apps/web-admin/.next/diagnostics
+apps/web-admin/.next/diagnostics/build-diagnostics.json
+apps/web-admin/.next/diagnostics/framework.json
+apps/web-admin/.next/diagnostics/route-bundle-stats.json
+apps/web-admin/.next/prerender-manifest.json
+apps/web-admin/.next/routes-manifest.json
+apps/web-admin/.next/app-path-routes-manifest.json
+apps/web-admin/.next/required-server-files.js
+apps/web-admin/.next/build
+apps/web-admin/.next/build/postcss.js
+apps/web-admin/.next/build/chunks
+apps/web-admin/.next/build/package.json
+apps/web-admin/.next/build/postcss.js.map
+apps/web-admin/.next/next-server.js.nft.json
+apps/web-admin/.next/next-minimal-server.js.nft.json
+
+--- apps/web-public/.next
+apps/web-public/.next
+apps/web-public/.next/fallback-build-manifest.json
+apps/web-public/.next/types
+apps/web-public/.next/types/cache-life.d.ts
+apps/web-public/.next/types/routes.d.ts
+apps/web-public/.next/types/validator.ts
+apps/web-public/.next/trace
+apps/web-public/.next/cache
+apps/web-public/.next/cache/config.json
+apps/web-public/.next/cache/.rscinfo
+apps/web-public/.next/cache/.tsbuildinfo
+apps/web-public/.next/cache/.previewinfo
+apps/web-public/.next/standalone
+apps/web-public/.next/standalone/node_modules
+apps/web-public/.next/standalone/apps
+apps/web-public/.next/images-manifest.json
+apps/web-public/.next/required-server-files.json
+apps/web-public/.next/turbopack
+apps/web-public/.next/trace-build
+apps/web-public/.next/build-manifest.json
+apps/web-public/.next/BUILD_ID
+apps/web-public/.next/server
+apps/web-public/.next/server/pages-manifest.json
+apps/web-public/.next/server/next-font-manifest.js
+apps/web-public/.next/server/interception-route-rewrite-manifest.js
+apps/web-public/.next/server/server-reference-manifest.js
+apps/web-public/.next/server/app
+apps/web-public/.next/server/functions-config-manifest.json
+apps/web-public/.next/server/middleware-manifest.json
+apps/web-public/.next/server/chunks
+apps/web-public/.next/server/app-paths-manifest.json
+apps/web-public/.next/server/pages
+apps/web-public/.next/server/middleware-build-manifest.js
+apps/web-public/.next/server/server-reference-manifest.json
+apps/web-public/.next/server/next-font-manifest.json
+apps/web-public/.next/server/prefetch-hints.json
+apps/web-public/.next/package.json
+apps/web-public/.next/export-marker.json
+apps/web-public/.next/static
+apps/web-public/.next/static/chunks
+apps/web-public/.next/static/h_qF-M6bDfcG1abURAPzP
+apps/web-public/.next/static/media
+apps/web-public/.next/diagnostics
+apps/web-public/.next/diagnostics/build-diagnostics.json
+apps/web-public/.next/diagnostics/framework.json
+apps/web-public/.next/diagnostics/route-bundle-stats.json
+apps/web-public/.next/prerender-manifest.json
+apps/web-public/.next/routes-manifest.json
+apps/web-public/.next/dev
+apps/web-public/.next/dev/types
+apps/web-public/.next/dev/cache
+apps/web-public/.next/dev/server
+apps/web-public/.next/dev/logs
+apps/web-public/.next/dev/static
+apps/web-public/.next/dev/build
+apps/web-public/.next/app-path-routes-manifest.json
+apps/web-public/.next/required-server-files.js
+apps/web-public/.next/build
+apps/web-public/.next/build/postcss.js
+apps/web-public/.next/build/chunks
+apps/web-public/.next/build/package.json
+apps/web-public/.next/build/postcss.js.map
+apps/web-public/.next/next-server.js.nft.json
+apps/web-public/.next/next-minimal-server.js.nft.json
+
+--- apps/web-clientes/.next
+apps/web-clientes/.next
+apps/web-clientes/.next/fallback-build-manifest.json
+apps/web-clientes/.next/types
+apps/web-clientes/.next/types/cache-life.d.ts
+apps/web-clientes/.next/types/routes.d.ts
+apps/web-clientes/.next/types/validator.ts
+apps/web-clientes/.next/trace
+apps/web-clientes/.next/cache
+apps/web-clientes/.next/cache/.rscinfo
+apps/web-clientes/.next/cache/.tsbuildinfo
+apps/web-clientes/.next/cache/.previewinfo
+apps/web-clientes/.next/standalone
+apps/web-clientes/.next/standalone/node_modules
+apps/web-clientes/.next/standalone/apps
+apps/web-clientes/.next/images-manifest.json
+apps/web-clientes/.next/required-server-files.json
+apps/web-clientes/.next/turbopack
+apps/web-clientes/.next/trace-build
+apps/web-clientes/.next/build-manifest.json
+apps/web-clientes/.next/BUILD_ID
+apps/web-clientes/.next/server
+apps/web-clientes/.next/server/pages-manifest.json
+apps/web-clientes/.next/server/next-font-manifest.js
+apps/web-clientes/.next/server/interception-route-rewrite-manifest.js
+apps/web-clientes/.next/server/server-reference-manifest.js
+apps/web-clientes/.next/server/app
+apps/web-clientes/.next/server/functions-config-manifest.json
+apps/web-clientes/.next/server/middleware-manifest.json
+apps/web-clientes/.next/server/chunks
+apps/web-clientes/.next/server/app-paths-manifest.json
+apps/web-clientes/.next/server/pages
+apps/web-clientes/.next/server/middleware-build-manifest.js
+apps/web-clientes/.next/server/server-reference-manifest.json
+apps/web-clientes/.next/server/next-font-manifest.json
+apps/web-clientes/.next/server/prefetch-hints.json
+apps/web-clientes/.next/package.json
+apps/web-clientes/.next/export-marker.json
+apps/web-clientes/.next/static
+apps/web-clientes/.next/static/chunks
+apps/web-clientes/.next/static/QL68NBQY3D6VxMUEJtCnJ
+apps/web-clientes/.next/static/media
+apps/web-clientes/.next/diagnostics
+apps/web-clientes/.next/diagnostics/build-diagnostics.json
+apps/web-clientes/.next/diagnostics/framework.json
+apps/web-clientes/.next/diagnostics/route-bundle-stats.json
+apps/web-clientes/.next/prerender-manifest.json
+apps/web-clientes/.next/routes-manifest.json
+apps/web-clientes/.next/dev
+apps/web-clientes/.next/dev/types
+apps/web-clientes/.next/dev/cache
+apps/web-clientes/.next/dev/server
+apps/web-clientes/.next/dev/logs
+apps/web-clientes/.next/dev/static
+apps/web-clientes/.next/app-path-routes-manifest.json
+apps/web-clientes/.next/required-server-files.js
+apps/web-clientes/.next/build
+apps/web-clientes/.next/build/postcss.js
+apps/web-clientes/.next/build/chunks
+apps/web-clientes/.next/build/package.json
+apps/web-clientes/.next/build/postcss.js.map
+apps/web-clientes/.next/next-server.js.nft.json
+apps/web-clientes/.next/next-minimal-server.js.nft.json
+
+==================== 16) ROUTE MANIFESTS ====================
+
+--- web-admin app-path-routes-manifest
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/auth/bridge/page": "/auth/bridge",
+  "/dashboard/archivo/page": "/dashboard/archivo",
+  "/dashboard/clientes/page": "/dashboard/clientes",
+  "/dashboard/compras/page": "/dashboard/compras",
+  "/dashboard/finanzas/page": "/dashboard/finanzas",
+  "/dashboard/gastos/page": "/dashboard/gastos",
+  "/dashboard/landing/page": "/dashboard/landing",
+  "/dashboard/ordenes/page": "/dashboard/ordenes",
+  "/dashboard/page": "/dashboard",
+  "/dashboard/proveedores/page": "/dashboard/proveedores",
+  "/dashboard/reportes/page": "/dashboard/reportes",
+  "/dashboard/seguridad/page": "/dashboard/seguridad",
+  "/dashboard/solicitudes/page": "/dashboard/solicitudes",
+  "/dashboard/stock/page": "/dashboard/stock",
+  "/dashboard/sucursales/page": "/dashboard/sucursales",
+  "/dashboard/tareas/page": "/dashboard/tareas",
+  "/favicon.ico/route": "/favicon.ico",
+  "/login/page": "/login",
+  "/page": "/"
+}
+--- web-admin routes-manifest
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "onMatchHeaders": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/auth/bridge",
+      "regex": "^/auth/bridge(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/auth/bridge(?:/)?$"
+    },
+    {
+      "page": "/dashboard",
+      "regex": "^/dashboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard(?:/)?$"
+    },
+    {
+      "page": "/dashboard/archivo",
+      "regex": "^/dashboard/archivo(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/archivo(?:/)?$"
+    },
+    {
+      "page": "/dashboard/clientes",
+      "regex": "^/dashboard/clientes(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/clientes(?:/)?$"
+    },
+    {
+      "page": "/dashboard/compras",
+      "regex": "^/dashboard/compras(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/compras(?:/)?$"
+    },
+    {
+      "page": "/dashboard/finanzas",
+      "regex": "^/dashboard/finanzas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/finanzas(?:/)?$"
+    },
+    {
+      "page": "/dashboard/gastos",
+      "regex": "^/dashboard/gastos(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/gastos(?:/)?$"
+    },
+    {
+      "page": "/dashboard/landing",
+      "regex": "^/dashboard/landing(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/landing(?:/)?$"
+    },
+    {
+      "page": "/dashboard/ordenes",
+      "regex": "^/dashboard/ordenes(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/ordenes(?:/)?$"
+    },
+    {
+      "page": "/dashboard/proveedores",
+      "regex": "^/dashboard/proveedores(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/proveedores(?:/)?$"
+    },
+    {
+      "page": "/dashboard/reportes",
+      "regex": "^/dashboard/reportes(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/reportes(?:/)?$"
+    },
+    {
+      "page": "/dashboard/seguridad",
+      "regex": "^/dashboard/seguridad(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/seguridad(?:/)?$"
+    },
+    {
+      "page": "/dashboard/solicitudes",
+      "regex": "^/dashboard/solicitudes(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/solicitudes(?:/)?$"
+    },
+    {
+      "page": "/dashboard/stock",
+      "regex": "^/dashboard/stock(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/stock(?:/)?$"
+    },
+    {
+      "page": "/dashboard/sucursales",
+      "regex": "^/dashboard/sucursales(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/sucursales(?:/)?$"
+    },
+    {
+      "page": "/dashboard/tareas",
+      "regex": "^/dashboard/tareas(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard/tareas(?:/)?$"
+    },
+    {
+      "page": "/favicon.ico",
+      "regex": "^/favicon\\.ico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favicon\\.ico(?:/)?$"
+    },
+    {
+      "page": "/login",
+      "regex": "^/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}
+--- web-public app-path-routes-manifest
+{
+  "/[tenant]/cotizar/page": "/[tenant]/cotizar",
+  "/[tenant]/page": "/[tenant]",
+  "/[tenant]/tracking/page": "/[tenant]/tracking",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/auth/bridge/page": "/auth/bridge",
+  "/dashboard/page": "/dashboard",
+  "/favicon.ico/route": "/favicon.ico",
+  "/hub/page": "/hub",
+  "/login/page": "/login",
+  "/login/reset-password/page": "/login/reset-password",
+  "/onboarding/google/callback/page": "/onboarding/google/callback",
+  "/onboarding/page": "/onboarding",
+  "/onboarding/success/page": "/onboarding/success",
+  "/page": "/",
+  "/t/[tenantSlug]/portal/page": "/t/[tenantSlug]/portal"
+}
+--- web-public routes-manifest
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "onMatchHeaders": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/t/[tenantSlug]/portal",
+      "regex": "^/t/([^/]+?)/portal(?:/)?$",
+      "routeKeys": {
+        "nxtPtenantSlug": "nxtPtenantSlug"
+      },
+      "namedRegex": "^/t/(?<nxtPtenantSlug>[^/]+?)/portal(?:/)?$"
+    },
+    {
+      "page": "/[tenant]",
+      "regex": "^/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPtenant": "nxtPtenant"
+      },
+      "namedRegex": "^/(?<nxtPtenant>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/[tenant]/cotizar",
+      "regex": "^/([^/]+?)/cotizar(?:/)?$",
+      "routeKeys": {
+        "nxtPtenant": "nxtPtenant"
+      },
+      "namedRegex": "^/(?<nxtPtenant>[^/]+?)/cotizar(?:/)?$"
+    },
+    {
+      "page": "/[tenant]/tracking",
+      "regex": "^/([^/]+?)/tracking(?:/)?$",
+      "routeKeys": {
+        "nxtPtenant": "nxtPtenant"
+      },
+      "namedRegex": "^/(?<nxtPtenant>[^/]+?)/tracking(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/auth/bridge",
+      "regex": "^/auth/bridge(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/auth/bridge(?:/)?$"
+    },
+    {
+      "page": "/dashboard",
+      "regex": "^/dashboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/dashboard(?:/)?$"
+    },
+    {
+      "page": "/favicon.ico",
+      "regex": "^/favicon\\.ico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favicon\\.ico(?:/)?$"
+    },
+    {
+      "page": "/hub",
+      "regex": "^/hub(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/hub(?:/)?$"
+    },
+    {
+      "page": "/login",
+      "regex": "^/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login(?:/)?$"
+    },
+    {
+      "page": "/login/reset-password",
+      "regex": "^/login/reset\\-password(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login/reset\\-password(?:/)?$"
+    },
+    {
+      "page": "/onboarding",
+      "regex": "^/onboarding(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/onboarding(?:/)?$"
+    },
+    {
+      "page": "/onboarding/google/callback",
+      "regex": "^/onboarding/google/callback(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/onboarding/google/callback(?:/)?$"
+    },
+    {
+      "page": "/onboarding/success",
+      "regex": "^/onboarding/success(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/onboarding/success(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}
+--- web-clientes app-path-routes-manifest
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/favicon.ico/route": "/favicon.ico",
+  "/page": "/",
+  "/t/[tenantSlug]/portal/page": "/t/[tenantSlug]/portal"
+}
+--- web-clientes routes-manifest
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "onMatchHeaders": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/t/[tenantSlug]/portal",
+      "regex": "^/t/([^/]+?)/portal(?:/)?$",
+      "routeKeys": {
+        "nxtPtenantSlug": "nxtPtenantSlug"
+      },
+      "namedRegex": "^/t/(?<nxtPtenantSlug>[^/]+?)/portal(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/favicon.ico",
+      "regex": "^/favicon\\.ico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favicon\\.ico(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}
+==================== 17) BACKEND CONFIG ====================
+

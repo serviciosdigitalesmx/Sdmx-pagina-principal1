@@ -5,6 +5,7 @@ import { RequireRole } from "@/components/guard/RequireRole";
 import { useAuth } from "@/components/guard/use-auth";
 import { ModuleShell } from "@/components/dashboard/module-shell";
 import { fixService } from "@/services/fixService";
+import { ConfirmDialog } from "@white-label/ui";
 
 type SucursalRow = {
   id?: string;
@@ -39,6 +40,7 @@ export default function SucursalesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [assigningUserId, setAssigningUserId] = useState("");
   const [form, setForm] = useState(emptyForm);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   async function refresh() {
     try {
@@ -130,18 +132,7 @@ export default function SucursalesPage() {
 
   async function deleteSucursal(id?: string) {
     if (!id) return;
-    try {
-      setSaving(true);
-      setError("");
-      setSuccess("");
-      await fixService.deleteSucursal(id);
-      setSuccess("Sucursal eliminada.");
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al eliminar sucursal");
-    } finally {
-      setSaving(false);
-    }
+    setPendingDeleteId(id);
   }
 
   async function assignUser() {
@@ -175,6 +166,7 @@ export default function SucursalesPage() {
           { label: "Activas", value: String(activeRows.length), helper: "Filtrado por estado." },
           { label: "Contexto", value: selectedSucursal?.name ?? sucursalId ?? "N/D", helper: "Sucursal actual." },
         ]}
+        loading={loading}
         columns={[
           { label: "Nombre", key: "nombre" },
           { label: "Código", key: "code" },
@@ -309,6 +301,30 @@ export default function SucursalesPage() {
         </section>
         {success ? <div className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">{success}</div> : null}
       </ModuleShell>
+      <ConfirmDialog
+        open={Boolean(pendingDeleteId)}
+        title="Eliminar sucursal"
+        description="Esta acción eliminará la sucursal de forma permanente."
+        confirmLabel="Eliminar"
+        danger
+        onConfirm={async () => {
+          if (!pendingDeleteId) return;
+          try {
+            setSaving(true);
+            setError("");
+            setSuccess("");
+            await fixService.deleteSucursal(pendingDeleteId);
+            setSuccess("Sucursal eliminada.");
+            await refresh();
+          } catch (err) {
+            setError(err instanceof Error ? err.message : "Error al eliminar sucursal");
+          } finally {
+            setSaving(false);
+            setPendingDeleteId(null);
+          }
+        }}
+        onCancel={() => setPendingDeleteId(null)}
+      />
     </RequireRole>
   );
 }

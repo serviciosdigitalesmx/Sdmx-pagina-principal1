@@ -255,6 +255,7 @@ export default function LandingSettingsPage() {
           { label: "Servicios", value: String(landingContent.services.length), helper: "Bloques visibles en público." },
           { label: "Redes", value: String(landingContent.socialLinks.length), helper: "Contactos públicos del taller." },
         ]}
+        loading={loading}
         columns={[]}
         rows={[]}
         emptyTitle={loading ? "Cargando sitio…" : "Editor listo"}

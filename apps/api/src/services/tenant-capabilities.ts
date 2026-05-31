@@ -113,19 +113,30 @@ export function resolveTenantCapabilities({
   runtimeConfig: Pick<TenantRuntimeConfig, 'industryProfile' | 'enabledModules' | 'activeModules' | 'labels'>;
 }): TenantCapabilitiesType {
   const planKey = getPlanKeyFromBilling(billing);
-  const plan = PLAN_REGISTRY[planKey];
   const accessStatus = getAccessStatus(billing, tenantSlug, tenantEmail);
+  const isTrialAccess = accessStatus === 'trial';
+  const effectivePlanKey: TenantCapabilities['plan_key'] = isTrialAccess ? 'scale' : planKey;
+  const plan = PLAN_REGISTRY[effectivePlanKey];
 
-  const enabledModules = runtimeConfig.enabledModules.filter((module) => module.enabled).map((module) => canonicalModuleKey(module.module_key));
+  const activeModules = runtimeConfig.activeModules.map((module) => canonicalModuleKey(module));
+  const enabledModules = runtimeConfig.enabledModules
+    .filter((module) => module.enabled)
+    .map((module) => canonicalModuleKey(module.module_key));
   const industryModules = getIndustryDefaultModules(runtimeConfig.industryProfile?.industry_key);
-  const fallbackModules = runtimeConfig.activeModules.map((module) => canonicalModuleKey(module));
-  const baseModules = unique(enabledModules.length > 0 ? enabledModules : industryModules.length > 0 ? industryModules : fallbackModules);
+  const baseModules = unique(
+    isTrialAccess
+      ? MODULE_REGISTRY.map((module) => module.key)
+      : activeModules.length > 0
+        ? activeModules
+        : enabledModules.length > 0
+          ? enabledModules
+          : industryModules,
+  );
 
-  const requestedActive = unique(baseModules.filter((module) => plan.module_allowlist.includes(module) || planKey === 'scale'));
-  const locked = unique([
-    ...baseModules.filter((module) => !requestedActive.includes(module)),
-    ...(planKey === 'basic' ? MODULE_REGISTRY.filter((module) => module.required_plan === 'pro' || module.required_plan === 'scale').map((module) => module.key) : []),
-  ]);
+  const requestedActive = unique(baseModules);
+  const locked = unique(MODULE_REGISTRY
+    .filter((module) => !requestedActive.includes(module.key))
+    .map((module) => module.key));
 
   const reasons: string[] = [];
   if (enabledModules.length === 0) reasons.push('tenant_without_enabled_modules_uses_industry_defaults');

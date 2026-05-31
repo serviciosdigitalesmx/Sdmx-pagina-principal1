@@ -1,14 +1,18 @@
 import { createHmac, timingSafeEqual } from 'crypto';
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
+import { supabaseAdmin } from '@white-label/database';
+import { resolveEffectiveUserRole } from '../lib/user-roles';
+import { resolveTenantJwtSecret } from '../services/security-backoffice';
 
 type JwtClaims = {
   sub: string;
   tenant_id: string;
   tenant_slug?: string;
-  role: 'owner' | 'manager' | 'technician';
+  role: 'owner' | 'manager' | 'technician' | 'client';
   email?: string;
   sucursal_id?: string;
+  session_id?: string;
   exp?: number;
   iat?: number;
 };
@@ -19,19 +23,20 @@ function base64UrlDecode(input: string) {
   return Buffer.from(padded, 'base64').toString('utf8');
 }
 
-function verifyJwt(token: string): JwtClaims {
-  const secret = process.env.JWT_SECRET;
-
-  if (!secret) {
-    throw new Error('JWT_SECRET is required');
-  }
-
+async function verifyJwt(token: string): Promise<JwtClaims> {
   const parts = token.split('.');
   if (parts.length !== 3) {
     throw new Error('Invalid token format');
   }
 
   const [encodedHeader, encodedPayload, encodedSignature] = parts;
+  const payload = JSON.parse(base64UrlDecode(encodedPayload)) as Record<string, unknown>;
+  const tenantId = typeof payload.tenant_id === 'string' ? payload.tenant_id : null;
+  if (!tenantId) {
+    throw new Error('Invalid token payload');
+  }
+
+  const secret = await resolveTenantJwtSecret(tenantId);
   const signingInput = `${encodedHeader}.${encodedPayload}`;
   const expectedSignature = createHmac('sha256', secret)
     .update(signingInput)
@@ -47,14 +52,14 @@ function verifyJwt(token: string): JwtClaims {
     throw new Error('Invalid token signature');
   }
 
-  const payload = JSON.parse(base64UrlDecode(encodedPayload)) as JwtClaims;
   const claimsSchema = z.object({
     sub: z.string().min(1),
     tenant_id: z.string().min(1),
     tenant_slug: z.string().min(1).optional(),
-    role: z.enum(['owner', 'manager', 'technician']),
+    role: z.enum(['owner', 'manager', 'technician', 'client']),
     email: z.string().email().optional(),
     sucursal_id: z.string().min(1).optional(),
+    session_id: z.string().min(1).optional(),
     exp: z.number().optional(),
     iat: z.number().optional(),
   });
@@ -80,19 +85,63 @@ export const requireAuth = (req: Request, res: Response, next: NextFunction) => 
 
   const token = authHeader.slice('Bearer '.length).trim();
 
-  try {
-    const claims = verifyJwt(token);
-    req.user = {
-      tenantId: claims.tenant_id,
-      tenantSlug: claims.tenant_slug ?? null,
-      role: claims.role,
-      email: claims.email,
-      sucursalId: claims.sucursal_id,
-      sub: claims.sub,
-    };
-    next();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unauthorized';
-    return res.status(401).json({ error: message });
-  }
+  void (async () => {
+    try {
+      const claims = await verifyJwt(token);
+      const { data: userRow, error } = await supabaseAdmin
+        .from('users')
+        .select('id, tenant_id, role, sucursal_id, activo, is_active, mfa_enabled')
+        .eq('auth_user_id', claims.sub)
+        .eq('tenant_id', claims.tenant_id)
+        .maybeSingle();
+
+      if (error) {
+        return res.status(502).json({ error: error.message });
+      }
+
+      const isActive = Boolean(userRow?.activo ?? userRow?.is_active ?? true);
+      if (!userRow || !isActive) {
+        return res.status(403).json({ error: 'User is inactive or not linked to tenant' });
+      }
+
+      if (claims.session_id) {
+        const { data: sessionRow, error: sessionError } = await supabaseAdmin
+          .from('security_sessions')
+          .select('id, tenant_id, user_id, revoked_at')
+          .eq('session_key', claims.session_id)
+          .eq('tenant_id', claims.tenant_id)
+          .maybeSingle();
+
+        if (sessionError) {
+          return res.status(502).json({ error: sessionError.message });
+        }
+
+        if (!sessionRow || sessionRow.revoked_at) {
+          return res.status(401).json({ error: 'Session revoked or not found' });
+        }
+
+        await supabaseAdmin
+          .from('security_sessions')
+          .update({
+            last_activity_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', sessionRow.id);
+      }
+
+      req.user = {
+        tenantId: claims.tenant_id,
+        tenantSlug: claims.tenant_slug ?? null,
+        role: resolveEffectiveUserRole(userRow.role) ?? claims.role,
+        email: claims.email,
+        sucursalId: userRow.sucursal_id ?? claims.sucursal_id,
+        sub: claims.sub,
+        userId: userRow.id,
+      };
+      next();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unauthorized';
+      return res.status(401).json({ error: message });
+    }
+  })();
 };

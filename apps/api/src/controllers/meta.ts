@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@white-label/database';
 import { loadTenantBillingSummary } from '../services/tenant-billing';
 import { getIndustryTemplate, listAvailableIndustries, loadTenantRuntimeConfig } from '../services/tenant-config';
 import { resolveTenantCapabilities } from '../services/tenant-capabilities';
+import { resolveEffectiveUserRole } from '../lib/user-roles';
 
 export const getApiRoot = (_req: Request, res: Response) => {
   const apiName = process.env.API_NAME ?? 'White-label API';
@@ -91,7 +92,7 @@ export const resolveTenantForSupabaseUser = async (req: Request, res: Response) 
         email: data.user.email ?? null,
         tenantId: tenantRow.id,
         tenantSlug: tenantRow.slug,
-        role: userRow.role,
+        role: resolveEffectiveUserRole(userRow.role) ?? userRow.role,
         sucursalId: userRow.sucursal_id ?? null,
       },
     });
@@ -112,7 +113,7 @@ export const getTenantSettings = async (req: Request, res: Response) => {
   try {
     const query = supabaseAdmin
       .from('tenants')
-      .select('id, slug, name, branding, landing_content, trial_expires_at, billing_exempt');
+      .select('id, slug, name, branding, landing_content, trial_expires_at, billing_exempt, require_admin_mfa');
 
     const { data, error } = tenantId
       ? await query.eq('id', tenantId).maybeSingle()

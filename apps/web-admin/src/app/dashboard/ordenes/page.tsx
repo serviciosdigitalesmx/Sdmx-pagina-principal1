@@ -8,6 +8,7 @@ import { OrderIntakeModal, type OrderCreationSummary, type OrderIntakeFiles, typ
 import { fixService } from "@/services/fixService";
 import { type DynamicFieldDefinition } from "@white-label/ui";
 import { requireEnv } from "@white-label/config";
+import { ConfirmDialog } from "@white-label/ui";
 
 type OrderRow = {
   id?: string;
@@ -51,8 +52,11 @@ type TenantLabels = {
 
 const defaultStatusOptions: OrderStatusOption[] = [
   { key: "recibido", label: "Recibido" },
+  { key: "en_espera_de_refaccion", label: "En espera de refacción" },
   { key: "diagnostico", label: "Diagnóstico" },
+  { key: "cotizado", label: "Cotizado" },
   { key: "reparacion", label: "En reparación" },
+  { key: "listo_para_entrega", label: "Listo para entrega" },
   { key: "listo", label: "Listo" },
   { key: "entregado", label: "Entregado" },
 ];
@@ -122,7 +126,10 @@ function normalizeStatus(status?: string, allowedStatuses: string[] = defaultSta
   const value = (status ?? "").toLowerCase();
   if (allowedStatuses.includes(value)) return value;
   if (value.includes("diag")) return "diagnostico";
+  if (value.includes("refaccion")) return "en_espera_de_refaccion";
+  if (value.includes("cotiz")) return "cotizado";
   if (value.includes("repar")) return "reparacion";
+  if (value.includes("list") && value.includes("entrega")) return "listo_para_entrega";
   if (value.includes("list")) return "listo";
   if (value.includes("entreg")) return "entregado";
   return "recibido";
@@ -290,6 +297,7 @@ export default function OrdenesKanbanPage() {
   const [trafficFilter, setTrafficFilter] = useState<TrafficFilter>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortMode, setSortMode] = useState<"soonest" | "oldest">("soonest");
+  const [pendingArchiveId, setPendingArchiveId] = useState<string | null>(null);
 
   const customerPortalBase = requireEnv("NEXT_PUBLIC_CUSTOMER_TRACKING_URL");
   const customerPortalUrl = useMemo(() => {
@@ -644,18 +652,7 @@ export default function OrdenesKanbanPage() {
   }
 
   async function handleArchiveOrder(orderId: string) {
-    const confirmArchive = window.confirm("¿Enviar esta orden al archivo? Se marcará como entregada.");
-    if (!confirmArchive) return;
-    try {
-      await fixService.updateOrderStatus(orderId, "entregado", "Movida a archivo desde el panel de órdenes");
-      await refreshOrders();
-      if (selectedOrderId === orderId) {
-        const updated = (await fixService.getOrderById(orderId)) as OrderDetailData;
-        setDetail(updated);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al enviar al archivo");
-    }
+    setPendingArchiveId(orderId);
   }
 
   function openReceiptPdf() {
@@ -693,11 +690,11 @@ export default function OrdenesKanbanPage() {
             <button
               type="button"
               onClick={() => void refreshOrders()}
-              className="rounded-full border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-zinc-100 transition hover:bg-white/5"
+              className="min-h-11 rounded-full border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-white/5 active:scale-95"
             >
               Actualizar
             </button>
-            <button onClick={() => setIsModalOpen(true)} className="rounded-full bg-amber-50 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-amber-100">
+            <button onClick={() => setIsModalOpen(true)} className="min-h-11 rounded-full bg-amber-50 px-4 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-amber-100 active:scale-95">
               Nueva recepción
             </button>
           </div>
@@ -1010,6 +1007,29 @@ export default function OrdenesKanbanPage() {
           onEditDetails={(payload) => handleEditOrderDetails(payload)}
           onEditChecklist={() => void handleUpdateChecklist()}
           onArchive={() => void handleArchiveOrder(detailOrder?.id ?? "")}
+        />
+        <ConfirmDialog
+          open={Boolean(pendingArchiveId)}
+          title="Enviar al archivo"
+          description="Esta acción marcará la orden como entregada y la moverá al archivo."
+          confirmLabel="Enviar"
+          danger
+          onConfirm={async () => {
+            if (!pendingArchiveId) return;
+            try {
+              await fixService.updateOrderStatus(pendingArchiveId, "entregado", "Movida a archivo desde el panel de órdenes");
+              await refreshOrders();
+              if (selectedOrderId === pendingArchiveId) {
+                const updated = (await fixService.getOrderById(pendingArchiveId)) as OrderDetailData;
+                setDetail(updated);
+              }
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Error al enviar al archivo");
+            } finally {
+              setPendingArchiveId(null);
+            }
+          }}
+          onCancel={() => setPendingArchiveId(null)}
         />
       </div>
     </RequireRole>

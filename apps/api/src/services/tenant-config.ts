@@ -39,10 +39,13 @@ const DEFAULT_LABELS: Record<string, string> = {
 
 const DEFAULT_WORKFLOW_STATUSES = [
   { workflow_key: 'service_orders', status_key: 'recibido', label: 'Recibido', tone: 'blue', sort_order: 1, is_default: true, is_terminal: false },
-  { workflow_key: 'service_orders', status_key: 'diagnostico', label: 'Diagnóstico', tone: 'amber', sort_order: 2, is_default: false, is_terminal: false },
-  { workflow_key: 'service_orders', status_key: 'reparacion', label: 'En reparación', tone: 'orange', sort_order: 3, is_default: false, is_terminal: false },
-  { workflow_key: 'service_orders', status_key: 'listo', label: 'Listo', tone: 'emerald', sort_order: 4, is_default: false, is_terminal: false },
-  { workflow_key: 'service_orders', status_key: 'entregado', label: 'Entregado', tone: 'slate', sort_order: 5, is_default: false, is_terminal: true },
+  { workflow_key: 'service_orders', status_key: 'en_espera_de_refaccion', label: 'En espera de refacción', tone: 'amber', sort_order: 2, is_default: false, is_terminal: false },
+  { workflow_key: 'service_orders', status_key: 'diagnostico', label: 'Diagnóstico', tone: 'amber', sort_order: 3, is_default: false, is_terminal: false },
+  { workflow_key: 'service_orders', status_key: 'cotizado', label: 'Cotizado', tone: 'violet', sort_order: 4, is_default: false, is_terminal: false },
+  { workflow_key: 'service_orders', status_key: 'reparacion', label: 'En reparación', tone: 'orange', sort_order: 5, is_default: false, is_terminal: false },
+  { workflow_key: 'service_orders', status_key: 'listo_para_entrega', label: 'Listo para entrega', tone: 'emerald', sort_order: 6, is_default: false, is_terminal: false },
+  { workflow_key: 'service_orders', status_key: 'listo', label: 'Listo', tone: 'emerald', sort_order: 7, is_default: false, is_terminal: false },
+  { workflow_key: 'service_orders', status_key: 'entregado', label: 'Entregado', tone: 'slate', sort_order: 8, is_default: false, is_terminal: true },
   { workflow_key: 'service_requests', status_key: 'pendiente', label: 'Pendiente', tone: 'blue', sort_order: 1, is_default: true, is_terminal: false },
   { workflow_key: 'service_requests', status_key: 'en_revision', label: 'En revisión', tone: 'amber', sort_order: 2, is_default: false, is_terminal: false },
   { workflow_key: 'service_requests', status_key: 'convertida', label: 'Convertida', tone: 'emerald', sort_order: 3, is_default: false, is_terminal: true },

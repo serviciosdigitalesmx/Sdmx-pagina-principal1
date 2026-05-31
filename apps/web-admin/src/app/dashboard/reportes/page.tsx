@@ -14,12 +14,16 @@ type ReportsSummary = {
   totalIncome: number;
   totalExpense: number;
   totalBalance: number;
+  productivity?: number;
+  inventoryValuation?: number;
+  accountsReceivable?: number;
+  ordersByTechnician?: Record<string, number>;
   statusCounts: Record<string, number>;
   lastUpdatedAt: string | null;
 };
 
 export default function Page() {
-  const { role } = useAuth();
+  const { role, sucursalId } = useAuth();
   const [summary, setSummary] = useState<ReportsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -45,7 +49,7 @@ export default function Page() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [sucursalId]);
 
   const stats = useMemo(
     () => [
@@ -54,15 +58,19 @@ export default function Page() {
       { label: "Inventario", value: String(summary?.inventoryCount ?? 0), helper: "Stock del taller." },
       { label: "Bajo stock", value: String(summary?.lowStockCount ?? 0), helper: "Alertas activas." },
       { label: "Ingreso", value: String(summary?.totalIncome ?? 0), helper: "Ingreso acumulado." },
-      { label: "Egreso", value: String(summary?.totalExpense ?? 0), helper: "Egreso acumulado." },
+      { label: "Egreso", value: String(summary?.totalExpense ?? 0), helper: sucursalId ? `Sucursal ${sucursalId}` : "Egreso acumulado." },
     ],
-    [summary]
+    [summary, sucursalId]
   );
 
   const rows = [
     { metric: "Balance total", value: String(summary?.totalBalance ?? 0) },
+    { metric: "Productividad", value: `${summary?.productivity ?? 0}%` },
+    { metric: "Inventario valorizado", value: String(summary?.inventoryValuation ?? 0) },
+    { metric: "Cuentas por cobrar", value: String(summary?.accountsReceivable ?? 0) },
     { metric: "Última actualización", value: summary?.lastUpdatedAt ?? "Sin datos" },
     ...Object.entries(summary?.statusCounts ?? {}).map(([key, value]) => ({ metric: key, value: String(value) })),
+    ...Object.entries(summary?.ordersByTechnician ?? {}).map(([key, value]) => ({ metric: `Téc. ${key.slice(0, 8)}`, value: String(value) })),
   ];
 
   return (
@@ -88,6 +96,7 @@ export default function Page() {
           })();
         }}
         stats={stats}
+        loading={loading}
         columns={[
           { label: "Métrica", key: "metric" },
           { label: "Valor", key: "value" },

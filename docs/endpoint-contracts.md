@@ -13,6 +13,8 @@ This document maps the production screens to the backend routes and Supabase tab
   - Read
 - Tenant isolation:
   - Resolved by `tenantSlug`, converted to tenant id on the server.
+- Lookup key:
+  - accepts folio or `public_token` in the same public route
 - States:
   - `loading`
   - `error`
@@ -146,22 +148,76 @@ This document maps the production screens to the backend routes and Supabase tab
 ## Proveedores
 
 - Frontend route: `/dashboard/proveedores`
-- Backend route:
-  - Pending dedicated endpoint
+- Backend routes:
+  - `GET /api/:tenantId/suppliers`
+  - `POST /api/:tenantId/suppliers`
+  - `GET /api/:tenantId/suppliers/:id`
+  - `PUT /api/:tenantId/suppliers/:id`
+  - `PATCH /api/:tenantId/suppliers/:id/status`
+  - `GET /api/:tenantId/suppliers/:id/purchase-orders`
 - Supabase tables:
-  - Pending supplier catalog table
+  - `suppliers`
+  - `purchase_orders`
 - Operation:
-  - Read / Create / Update / Delete when backend exists
+  - Read / Create / Update / Deactivate / Purchase history
+- Tenant isolation:
+  - Applied by authenticated tenant context and `tenant_id`
 
 ## Seguridad
 
 - Frontend route: `/dashboard/seguridad`
-- Backend route:
-  - Pending dedicated endpoint
+- Backend routes:
+  - `GET /api/:tenantId/security/summary`
+  - `GET /api/:tenantId/security/audit`
+  - `GET /api/:tenantId/security/sessions`
+  - `DELETE /api/:tenantId/security/sessions/:id`
+  - `POST /api/:tenantId/security/rotate-keys`
+  - `GET /api/:tenantId/security/mfa/setup`
+  - `POST /api/:tenantId/security/mfa/verify`
 - Supabase tables:
-  - Auth and role sources to be defined explicitly
+  - `audit_logs`
+  - `security_sessions`
+  - `users`
+  - `tenants`
 - Operation:
-  - Read / Invite / Update when backend exists
+  - Read summary / Audit / Sessions / Rotate keys / MFA
+- Tenant isolation:
+  - Applied by authenticated tenant context and `tenant_id`
+
+## PWA
+
+- Frontend route: `/dashboard/*`
+- Public helper routes:
+  - `GET /api/pwa/manifest?tenant=:tenantSlug`
+  - `GET /api/pwa/sw.js?tenant=:tenantSlug`
+- Admin routes:
+  - `GET /api/:tenantSlug/pwa/push/vapid`
+  - `POST /api/:tenantSlug/pwa/push/subscribe`
+  - `POST /api/:tenantSlug/pwa/push/unsubscribe`
+- Supabase tables:
+  - `pwa_push_subscriptions`
+  - `notification_events`
+- Operation:
+  - Read / Subscribe / Unsubscribe / Cache / Offline queue / Push notification support
+- Tenant isolation:
+  - Applied by authenticated tenant context and `tenant_id`
+
+## Usuarios
+
+- Frontend route: `/dashboard/usuarios`
+- Backend routes:
+  - `GET /api/users`
+  - `POST /api/users/invite`
+  - `PUT /api/users/:id/role`
+  - `DELETE /api/users/:id`
+  - `GET /api/users/:id/purchase-orders`
+- Supabase tables:
+  - `users`
+  - `purchase_orders`
+- Operation:
+  - Read / Invite / Update role / Deactivate / Purchase history
+- Tenant isolation:
+  - Applied by authenticated tenant context and `tenant_id`
 
 ## Notes
 

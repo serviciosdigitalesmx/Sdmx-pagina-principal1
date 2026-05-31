@@ -83,6 +83,7 @@ export default function Page() {
           })();
         }}
         stats={stats}
+        loading={loading}
         columns={[
           { label: "ID", key: "id" },
           { label: "Balance", key: "balance" },

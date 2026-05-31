@@ -1,4 +1,5 @@
 import React from 'react';
+import { LoadingState } from '@white-label/ui';
 
 type Stat = {
   label: string;
@@ -28,6 +29,8 @@ type ModuleShellProps = {
   rows: Row[];
   emptyTitle: string;
   emptyCopy: string;
+  loading?: boolean;
+  showTable?: boolean;
   children?: React.ReactNode;
 };
 
@@ -46,6 +49,8 @@ export function ModuleShell({
   rows,
   emptyTitle,
   emptyCopy,
+  loading = false,
+  showTable = true,
   children,
 }: ModuleShellProps) {
   return (
@@ -65,7 +70,7 @@ export function ModuleShell({
             <button
               type="button"
               onClick={() => void secondaryOnAction?.()}
-              className="inline-flex items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-zinc-100 transition-colors hover:bg-white/5"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:bg-white/5 active:scale-95"
             >
               {secondaryActionLabel}
             </button>
@@ -74,7 +79,7 @@ export function ModuleShell({
             <button
               type="button"
               onClick={() => void tertiaryOnAction?.()}
-              className="inline-flex items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-zinc-100 transition-colors hover:bg-white/5"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:bg-white/5 active:scale-95"
             >
               {tertiaryActionLabel}
             </button>
@@ -82,7 +87,7 @@ export function ModuleShell({
           <button
             type="button"
             onClick={() => void onAction?.()}
-            className="inline-flex items-center justify-center rounded-full bg-amber-50 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition-colors hover:bg-amber-100"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-amber-50 px-4 py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-amber-100 active:scale-95"
           >
             {actionLabel}
           </button>
@@ -100,7 +105,9 @@ export function ModuleShell({
       </section>
 
       <section className="rounded-[2rem] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)]">
-        {rows.length > 0 ? (
+        {loading ? (
+          <LoadingState title={emptyTitle || "Cargando…"} description={emptyCopy || "Traemos datos reales del tenant."} />
+        ) : showTable && rows.length > 0 ? (
           <div className="overflow-hidden rounded-2xl border border-zinc-800">
             <table className="min-w-full divide-y divide-zinc-800 text-left text-sm">
               <thead className="bg-zinc-900/70 text-zinc-400">
@@ -125,7 +132,7 @@ export function ModuleShell({
               </tbody>
             </table>
           </div>
-        ) : (
+        ) : showTable ? (
           <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/50 px-6 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-950 text-xl text-amber-100/70">
               <i className={icon} />
@@ -133,7 +140,7 @@ export function ModuleShell({
             <h2 className="mt-4 text-lg font-semibold text-zinc-50">{emptyTitle}</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">{emptyCopy}</p>
           </div>
-        )}
+        ) : null}
         {children ? <div className="mt-6">{children}</div> : null}
       </section>
     </div>

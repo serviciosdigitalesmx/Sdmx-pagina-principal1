@@ -18,25 +18,6 @@ alter table public.tenants
     'showVideo', false,
     'videoUrl', ''
   );
-
-alter table public.tenants
-  add column if not exists operational_settings jsonb not null default jsonb_build_object(
-    'orderStatuses', jsonb_build_array(
-      jsonb_build_object('key', 'recibido', 'label', 'Recibido', 'tone', 'gray'),
-      jsonb_build_object('key', 'diagnostico', 'label', 'Diagnóstico', 'tone', 'amber'),
-      jsonb_build_object('key', 'reparacion', 'label', 'Reparación', 'tone', 'orange'),
-      jsonb_build_object('key', 'listo', 'label', 'Lista', 'tone', 'emerald'),
-      jsonb_build_object('key', 'entregado', 'label', 'Entregada', 'tone', 'zinc')
-    ),
-    'taskStatuses', jsonb_build_array(
-      jsonb_build_object('key', 'pendiente', 'label', 'Pendiente', 'tone', 'gray'),
-      jsonb_build_object('key', 'en_proceso', 'label', 'En proceso', 'tone', 'amber'),
-      jsonb_build_object('key', 'bloqueada', 'label', 'Bloqueada', 'tone', 'red'),
-      jsonb_build_object('key', 'hecha', 'label', 'Hecha', 'tone', 'emerald')
-    ),
-    'warrantyDays', 90
-  );
-
 update public.tenants
 set landing_content = jsonb_build_object(
   'heroTitle', coalesce(name, ''),
@@ -76,51 +57,8 @@ where landing_content = jsonb_build_object(
   'showVideo', false,
   'videoUrl', ''
 );
-
-update public.tenants
-set operational_settings = jsonb_build_object(
-  'orderStatuses', jsonb_build_array(
-    jsonb_build_object('key', 'recibido', 'label', 'Recibido', 'tone', 'gray'),
-    jsonb_build_object('key', 'diagnostico', 'label', 'Diagnóstico', 'tone', 'amber'),
-    jsonb_build_object('key', 'reparacion', 'label', 'Reparación', 'tone', 'orange'),
-    jsonb_build_object('key', 'listo', 'label', 'Lista', 'tone', 'emerald'),
-    jsonb_build_object('key', 'entregado', 'label', 'Entregada', 'tone', 'zinc')
-  ),
-  'taskStatuses', jsonb_build_array(
-    jsonb_build_object('key', 'pendiente', 'label', 'Pendiente', 'tone', 'gray'),
-    jsonb_build_object('key', 'en_proceso', 'label', 'En proceso', 'tone', 'amber'),
-    jsonb_build_object('key', 'bloqueada', 'label', 'Bloqueada', 'tone', 'red'),
-    jsonb_build_object('key', 'hecha', 'label', 'Hecha', 'tone', 'emerald')
-  ),
-  'warrantyDays', 90
-)
-where operational_settings = jsonb_build_object(
-  'orderStatuses', jsonb_build_array(
-    jsonb_build_object('key', 'recibido', 'label', 'Recibido', 'tone', 'gray'),
-    jsonb_build_object('key', 'diagnostico', 'label', 'Diagnóstico', 'tone', 'amber'),
-    jsonb_build_object('key', 'reparacion', 'label', 'Reparación', 'tone', 'orange'),
-    jsonb_build_object('key', 'listo', 'label', 'Lista', 'tone', 'emerald'),
-    jsonb_build_object('key', 'entregado', 'label', 'Entregada', 'tone', 'zinc')
-  ),
-  'taskStatuses', jsonb_build_array(
-    jsonb_build_object('key', 'pendiente', 'label', 'Pendiente', 'tone', 'gray'),
-    jsonb_build_object('key', 'en_proceso', 'label', 'En proceso', 'tone', 'amber'),
-    jsonb_build_object('key', 'bloqueada', 'label', 'Bloqueada', 'tone', 'red'),
-    jsonb_build_object('key', 'hecha', 'label', 'Hecha', 'tone', 'emerald')
-  ),
-  'warrantyDays', 90
-);
-
 alter table public.tenants
   drop constraint if exists tenants_landing_content_is_object;
-
 alter table public.tenants
   add constraint tenants_landing_content_is_object
   check (jsonb_typeof(landing_content) = 'object');
-
-alter table public.tenants
-  drop constraint if exists tenants_operational_settings_is_object;
-
-alter table public.tenants
-  add constraint tenants_operational_settings_is_object
-  check (jsonb_typeof(operational_settings) = 'object');

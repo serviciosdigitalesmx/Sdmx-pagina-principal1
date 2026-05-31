@@ -8,6 +8,10 @@ import { ProtectedLink } from "@/components/guard/ProtectedLink";
 import { useAuth } from "@/components/guard/use-auth";
 import type { Role } from "@/components/guard/use-auth";
 import { fixService } from "@/services/fixService";
+import { getModuleByRoute, getModuleStatusCounts } from "@/lib/module-catalog";
+import { readAuthToken } from "@/lib/auth-storage";
+import { resolveApiBaseUrl } from "@white-label/config";
+import { useToast } from "@white-label/ui";
 
 export const ADMIN_BUILD_MARKER = "tenant-session-c323cf60";
 
@@ -29,7 +33,7 @@ const navGroups: NavGroup[] = [
     items: [
       { href: "/dashboard", label: "Resumen", allowedRoles: ["owner", "manager", "technician"] },
       { href: "/dashboard/ordenes", label: "Órdenes", allowedRoles: ["owner", "manager", "technician"], moduleKey: "orders" },
-      { href: "/dashboard/archivo", label: "Archivo", allowedRoles: ["owner", "manager", "technician"], moduleKey: "orders" },
+      { href: "/dashboard/archivo", label: "Archivo", allowedRoles: ["owner", "manager", "technician"], moduleKey: "archivo" },
       { href: "/dashboard/solicitudes", label: "Solicitudes", allowedRoles: ["owner", "manager", "technician"], moduleKey: "requests" },
       { href: "/dashboard/landing", label: "Sitio del tenant", allowedRoles: ["owner", "manager"], moduleKey: "landing" },
     ],
@@ -50,6 +54,7 @@ const navGroups: NavGroup[] = [
       { href: "/dashboard/gastos", label: "Gastos", allowedRoles: ["owner", "manager"], moduleKey: "expenses" },
       { href: "/dashboard/finanzas", label: "Finanzas", allowedRoles: ["owner", "manager"], moduleKey: "finance" },
       { href: "/dashboard/reportes", label: "Reportes", allowedRoles: ["owner", "manager"], moduleKey: "reports" },
+      { href: "/dashboard/usuarios", label: "Usuarios", allowedRoles: ["owner", "manager"], moduleKey: "users" },
       { href: "/dashboard/seguridad", label: "Seguridad", allowedRoles: ["owner", "manager"], moduleKey: "security" },
       { href: "/dashboard/sucursales", label: "Sucursales", allowedRoles: ["owner", "manager"], moduleKey: "sucursales" },
     ],
@@ -68,7 +73,9 @@ function DashboardShellContent({
   const searchParams = useSearchParams();
   const theme = useTenantTheme();
   const auth = useAuth();
+  const { pushToast } = useToast();
   const [sucursales, setSucursales] = React.useState<Array<{ id?: string; name?: string; city?: string; code?: string }>>([]);
+  const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
   const [tenantConfig, setTenantConfig] = React.useState<{
     active_modules?: string[];
     labels?: Record<string, string>;
@@ -113,6 +120,8 @@ function DashboardShellContent({
       .filter((group) => group.items.length > 0);
   }, [enabledModules]);
 
+  const moduleStatusCounts = React.useMemo(() => getModuleStatusCounts(), []);
+
   React.useEffect(() => {
     let cancelled = false;
 
@@ -133,6 +142,25 @@ function DashboardShellContent({
       cancelled = true;
     };
   }, []);
+
+  React.useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
+
+  React.useEffect(() => {
+    if (!mobileNavOpen) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMobileNavOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileNavOpen]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -173,10 +201,126 @@ function DashboardShellContent({
     router.push(query ? `${pathname}?${query}` : pathname);
   }
 
+  async function enablePushNotifications() {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+      pushToast({
+        tone: "error",
+        title: "Push no disponible",
+        description: "Este navegador no soporta notificaciones push.",
+      });
+      return;
+    }
+
+    const permission = await window.Notification.requestPermission();
+    if (permission !== "granted") {
+      return;
+    }
+
+    const token = readAuthToken();
+    if (!token) {
+      pushToast({
+        tone: "error",
+        title: "Sin sesión",
+        description: "No hay sesión activa.",
+      });
+      return;
+    }
+
+    const apiBaseUrl = resolveApiBaseUrl();
+    const vapidResponse = await fetch(`${apiBaseUrl}/api/${encodeURIComponent(activeTenant.tenantId)}/pwa/push/vapid`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!vapidResponse.ok) {
+      pushToast({
+        tone: "error",
+        title: "No se pudo activar push",
+        description: "No fue posible cargar la llave pública de notificaciones.",
+      });
+      return;
+    }
+
+    const vapidPayload = (await vapidResponse.json().catch(() => null)) as { success?: boolean; data?: { publicKey?: string } } | null;
+    const publicKey = vapidPayload?.data?.publicKey;
+    if (!publicKey) {
+      pushToast({
+        tone: "error",
+        title: "Llave pública ausente",
+        description: "La llave pública de notificaciones no está disponible.",
+      });
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(publicKey),
+    });
+    const subscriptionJson = subscription.toJSON();
+    if (!subscriptionJson.keys) {
+      pushToast({
+        tone: "error",
+        title: "Suscripción inválida",
+        description: "No se pudo leer la suscripción push.",
+      });
+      return;
+    }
+
+    await fetch(`${apiBaseUrl}/api/${encodeURIComponent(activeTenant.tenantId)}/pwa/push/subscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        endpoint: subscription.endpoint,
+        keys: subscriptionJson.keys,
+        deviceLabel: navigator.userAgent,
+      }),
+    });
+
+    pushToast({
+      tone: "success",
+      title: "Push activado",
+      description: "Notificaciones push activadas.",
+    });
+  }
+
+  function urlBase64ToUint8Array(base64String: string) {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
   return (
     <div key={pathname} className="flex min-h-screen flex-col bg-[linear-gradient(180deg,#050505_0%,#0f0f10_46%,#141210_100%)] text-zinc-100 lg:flex-row">
-      <aside className="flex w-full shrink-0 flex-col border-b border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.98),rgba(14,13,12,0.96))] backdrop-blur-xl lg:w-80 lg:border-b-0 lg:border-r">
-        <div className="border-b border-amber-700/15 p-5">
+      {mobileNavOpen ? (
+        <button
+          type="button"
+          aria-label="Cerrar menú"
+          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      ) : null}
+      <aside
+        id="dashboard-mobile-nav"
+        className={[
+          "fixed inset-y-0 left-0 z-40 flex w-80 max-w-[86vw] shrink-0 flex-col border-b border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.98),rgba(14,13,12,0.96))] backdrop-blur-xl transition-transform duration-200 will-change-transform lg:static lg:z-auto lg:w-80 lg:max-w-none lg:border-b-0 lg:border-r",
+          mobileNavOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
+        ].join(" ")}
+      >
+        <div className="border-b border-amber-700/15 p-4 sm:p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-700/20 bg-[linear-gradient(180deg,rgba(124,45,18,0.26),rgba(15,23,42,0.96))] text-sm font-black text-amber-50 shadow-[0_14px_40px_rgba(0,0,0,0.24)]">
               {activeTenant.brandName.slice(0, 2).toUpperCase()}
@@ -194,21 +338,34 @@ function DashboardShellContent({
                 {group.title}
               </div>
               <div className="space-y-1">
-                {group.items.map((item) => (
-                  <ProtectedLink
-                    key={item.href}
-                    to={item.href}
-                    label={item.label}
-                    allowedRoles={item.allowedRoles}
-                    className={[
-                      "flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm transition-all duration-200",
-                      pathname === item.href ||
-                      (item.href !== '/dashboard' && pathname?.startsWith(item.href))
-                        ? "border border-amber-700/20 bg-amber-500/10 text-zinc-50 shadow-[0_10px_30px_rgba(0,0,0,0.18)]"
-                        : "text-zinc-400 hover:border hover:border-zinc-800 hover:bg-white/5 hover:text-zinc-50",
-                    ].join(' ')}
-                  />
-                ))}
+                {group.items.map((item) => {
+                  const moduleInfo = getModuleByRoute(item.href);
+                  const badge =
+                    moduleInfo?.deliveryStatus === "ready"
+                      ? "Listo"
+                      : moduleInfo?.deliveryStatus === "partial"
+                        ? "Parcial"
+                        : moduleInfo?.deliveryStatus === "pending"
+                          ? "Pendiente"
+                          : undefined;
+
+                  return (
+                    <ProtectedLink
+                      key={item.href}
+                      to={item.href}
+                      label={item.label}
+                      allowedRoles={item.allowedRoles}
+                      badge={badge}
+                      className={[
+                        "flex min-h-11 items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all duration-200 touch-manipulation",
+                        pathname === item.href ||
+                        (item.href !== '/dashboard' && pathname?.startsWith(item.href))
+                          ? "border border-amber-700/20 bg-amber-500/10 text-zinc-50 shadow-[0_10px_30px_rgba(0,0,0,0.18)]"
+                          : "text-zinc-400 hover:border hover:border-zinc-800 hover:bg-white/5 hover:text-zinc-50",
+                      ].join(' ')}
+                    />
+                  );
+                })}
               </div>
             </section>
           ))}
@@ -218,6 +375,20 @@ function DashboardShellContent({
             <div className="text-zinc-50">{activeTenant.userEmail}</div>
             <div className="mt-1 text-xs text-zinc-400">Rol: {activeTenant.userRole}</div>
             <div className="text-xs text-zinc-400">Sucursal: {activeTenant.sucursalName}</div>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-zinc-300">
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-2 py-2 text-center">
+                <div className="font-semibold text-zinc-50">{moduleStatusCounts.ready}</div>
+                <div className="text-zinc-500">Listos</div>
+              </div>
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-2 py-2 text-center">
+                <div className="font-semibold text-zinc-50">{moduleStatusCounts.partial}</div>
+                <div className="text-zinc-500">Parciales</div>
+              </div>
+              <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 px-2 py-2 text-center">
+                <div className="font-semibold text-zinc-50">{moduleStatusCounts.pending}</div>
+                <div className="text-zinc-500">Pendientes</div>
+              </div>
+            </div>
           </div>
         </div>
       </aside>
@@ -231,9 +402,26 @@ function DashboardShellContent({
             </div>
           </div>
           <div className="flex items-center gap-3 sm:gap-4">
-            <Link href="/dashboard/landing" className="rounded-full border border-zinc-700 px-4 py-2 text-sm font-semibold text-zinc-200 transition hover:bg-white/5">
+            <button
+              type="button"
+              onClick={() => setMobileNavOpen((current) => !current)}
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 px-3 py-3 text-sm font-semibold text-zinc-200 transition hover:bg-white/5 active:scale-95 lg:hidden"
+              aria-label="Abrir menú"
+              aria-expanded={mobileNavOpen}
+              aria-controls="dashboard-mobile-nav"
+            >
+              ☰
+            </button>
+            <Link href="/dashboard/landing" className="inline-flex min-h-11 items-center rounded-full border border-zinc-700 px-4 py-3 text-sm font-semibold text-zinc-200 transition hover:bg-white/5 active:scale-95">
               Configurar sitio
             </Link>
+            <button
+              type="button"
+              onClick={() => void enablePushNotifications()}
+              className="inline-flex min-h-11 items-center rounded-full border border-zinc-700 px-4 py-3 text-sm font-semibold text-zinc-200 transition hover:bg-white/5 active:scale-95"
+            >
+              Activar push
+            </button>
             <div className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-zinc-950" style={{ backgroundColor: theme.accent }}>
               {activeTenant.userEmail.slice(0, 1).toUpperCase()}
             </div>
@@ -246,7 +434,7 @@ function DashboardShellContent({
             <select
               value={sucursalId}
               onChange={(event) => updateSucursal(event.target.value)}
-              className="min-w-52 rounded-full border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100"
+              className="min-h-11 min-w-52 rounded-full border border-zinc-700 bg-zinc-950 px-3 py-3 text-sm text-zinc-100 touch-manipulation"
             >
               <option value="">Todas / contexto actual</option>
               {sucursales.map((sucursal) => (
@@ -257,7 +445,7 @@ function DashboardShellContent({
             </select>
           </div>
         </div>
-        <main className="flex-1 overflow-auto bg-transparent p-6">{children}</main>
+        <main className="flex-1 overflow-auto bg-transparent p-4 sm:p-6">{children}</main>
       </div>
     </div>
   );

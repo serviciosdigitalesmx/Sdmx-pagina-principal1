@@ -4,7 +4,15 @@ import { validateTenant } from '../middleware/validateTenant';
 import { requireTenantBillingActive } from '../middleware/tenantBilling';
 import { requireRole } from '../middleware/requireRole';
 import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
-import { createSupplier, deleteSupplier, getSupplierById, listSuppliers, updateSupplier } from '../controllers/suppliers';
+import {
+  createSupplier,
+  deleteSupplier,
+  getSupplierById,
+  listSupplierPurchaseOrders,
+  listSuppliers,
+  updateSupplier,
+  updateSupplierStatus,
+} from '../controllers/suppliers';
 
 const router = Router({ mergeParams: true });
 
@@ -17,6 +25,8 @@ router.get('/', requireTenantModule('suppliers'), requireRole('owner', 'manager'
 router.post('/', requireTenantModule('suppliers'), requireRole('owner', 'manager'), createSupplier);
 router.get('/:id', requireTenantModule('suppliers'), requireRole('owner', 'manager'), getSupplierById);
 router.put('/:id', requireTenantModule('suppliers'), requireRole('owner', 'manager'), updateSupplier);
+router.patch('/:id/status', requireTenantModule('suppliers'), requireRole('owner', 'manager'), updateSupplierStatus);
+router.get('/:id/purchase-orders', requireTenantModule('suppliers'), requireRole('owner', 'manager'), listSupplierPurchaseOrders);
 router.delete('/:id', requireTenantModule('suppliers'), requireRole('owner', 'manager'), deleteSupplier);
 
 export default router;

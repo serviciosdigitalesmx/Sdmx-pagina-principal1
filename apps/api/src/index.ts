@@ -11,12 +11,19 @@ import sucursalesRouter from './routes/sucursales';
 import suppliersRouter from './routes/suppliers';
 import purchaseOrdersRouter from './routes/purchase-orders';
 import tasksRouter from './routes/tasks';
+import usersRouter from './routes/users';
 import securityRouter from './routes/security';
 import publicRouter from './routes/public';
 import procurementRouter from './routes/procurement';
 import reportsRouter from './routes/reports';
 import stockAlertsRouter from './routes/stock-alerts';
+import pwaRouter from './routes/pwa';
 import { getApiRoot, getHealth } from './controllers/meta';
+import { listAuditLogs } from './controllers/security';
+import { requireAuth } from './middleware/auth';
+import { requireTenantBillingActive } from './middleware/tenantBilling';
+import { attachTenantCapabilities, requireTenantModule } from './middleware/tenantCapabilities';
+import { requireRole } from './middleware/requireRole';
 
 dotenv.config();
 
@@ -103,14 +110,19 @@ app.use('/api/:tenantSlug/purchase-orders', purchaseOrdersRouter);
 app.use('/api/purchase-orders', purchaseOrdersRouter);
 app.use('/api/:tenantSlug/tasks', tasksRouter);
 app.use('/api/tasks', tasksRouter);
+app.use('/api/:tenantSlug/users', usersRouter);
+app.use('/api/users', usersRouter);
 app.use('/api/:tenantSlug/security', securityRouter);
 app.use('/api/security', securityRouter);
+app.get('/api/audit', requireAuth, requireTenantBillingActive, attachTenantCapabilities, requireTenantModule('security'), requireRole('owner'), listAuditLogs);
 app.use('/api/:tenantSlug/procurement', procurementRouter);
 app.use('/api/procurement', procurementRouter);
 app.use('/api/:tenantSlug/reports', reportsRouter);
 app.use('/api/reports', reportsRouter);
 app.use('/api/:tenantSlug/stock-alerts', stockAlertsRouter);
 app.use('/api/stock-alerts', stockAlertsRouter);
+app.use('/api/:tenantSlug/pwa', pwaRouter);
+app.use('/api/pwa', pwaRouter);
 app.use('/api/public', publicRouter);
 
 app.get('/', (req, res) => {

@@ -25,10 +25,11 @@ declare global {
       user?: {
         tenantId: string;
         tenantSlug?: string | null;
-        role: 'owner' | 'manager' | 'technician';
+        role: 'owner' | 'manager' | 'technician' | 'client';
         email?: string;
         sucursalId?: string;
         sub?: string;
+        userId?: string;
       };
     }
   }

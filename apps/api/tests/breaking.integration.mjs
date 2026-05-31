@@ -123,20 +123,20 @@ test('public landing resolves for a real tenant and does not expose forbidden fi
   assert.equal(Object.hasOwn(body?.data ?? {}, 'internal_notes'), false);
 });
 
-test('portal lookup returns a real order and keeps the tenant boundary intact', async (t) => {
+test('public tracking returns a real order and keeps the tenant boundary intact', async (t) => {
   if (!tenantSlug || !publicFolio) {
     t.skip('BREAKING_TESTS_TENANT_SLUG and BREAKING_TESTS_PUBLIC_FOLIO are required');
     return;
   }
 
-  const { response, body } = await requestJson(`/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(publicFolio)}`);
+  const { response, body } = await requestJson(`/api/public/tracking?tenantSlug=${encodeURIComponent(tenantSlug)}&folio=${encodeURIComponent(publicFolio)}`);
   assert.equal(response.status, 200);
   assert.equal(body?.success, true);
-  assert.equal(body?.data?.order?.folio, publicFolio);
-  assert.equal(body?.data?.tenant?.slug, tenantSlug);
+  assert.equal(body?.data?.folio, publicFolio);
+  assert.equal(body?.tenant?.slug, tenantSlug);
   assert.equal(Object.hasOwn(body?.data ?? {}, 'internal_notes'), false);
-  assert.ok(Array.isArray(body?.data?.events));
-  assert.ok(Array.isArray(body?.data?.documents));
+  assert.equal(Object.hasOwn(body?.data ?? {}, 'events'), false);
+  assert.equal(Object.hasOwn(body?.data ?? {}, 'documents'), false);
 });
 
 test('wrong tenant slug does not resolve another tenant order', async (t) => {

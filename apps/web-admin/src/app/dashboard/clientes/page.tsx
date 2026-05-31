@@ -137,6 +137,7 @@ export default function Page() {
           ...row,
           name: row.name ?? row.full_name ?? '',
         }))}
+        loading={loading}
         emptyTitle={loading ? 'Cargando clientes…' : error ? 'Error al cargar clientes' : 'Clientes listos'}
         emptyCopy={error || 'El catálogo alimenta órdenes, solicitudes y seguimiento del tenant actual.'}
       >

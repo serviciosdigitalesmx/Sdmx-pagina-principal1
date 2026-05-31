@@ -6,3 +6,4 @@ export * from './components/PdfExportButton';
 export * from './components/Table';
 export * from './components/srfix-theme';
 export * from './components/DynamicFields';
+export * from './components/feedback';

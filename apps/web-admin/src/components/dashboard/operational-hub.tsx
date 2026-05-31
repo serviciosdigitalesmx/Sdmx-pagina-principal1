@@ -28,6 +28,20 @@ type ReportsSummary = {
   totalExpense?: number;
   totalBalance?: number;
   statusCounts?: Record<string, number>;
+  statusCountsToday?: Record<string, number>;
+  statusCountsWeek?: Record<string, number>;
+  topProductsUsed?: Array<{
+    productId: string;
+    name: string;
+    quantity: number;
+  }>;
+  overduePromisedOrders?: Array<{
+    id: string;
+    folio: string | null;
+    status: string | null;
+    promisedDate: string | null;
+    createdAt: string | null;
+  }>;
   lastUpdatedAt?: string | null;
 };
 
@@ -164,6 +178,33 @@ export function OperationalHub() {
     ];
   }, [mounted, orders.length, summary?.lowStockCount, summary?.ordersCount, summary?.statusCounts?.diagnosis, summary?.statusCounts?.pending, summary?.statusCounts?.ready, summary?.totalBalance]);
 
+  const todayStatusRows = useMemo(
+    () =>
+      Object.entries(summary?.statusCountsToday ?? {})
+        .sort((a, b) => b[1] - a[1])
+        .map(([status, count]) => ({
+          status,
+          label: statusLabels[normalizeStatus(status)] ?? status,
+          count,
+        })),
+    [summary?.statusCountsToday]
+  );
+
+  const weekStatusRows = useMemo(
+    () =>
+      Object.entries(summary?.statusCountsWeek ?? {})
+        .sort((a, b) => b[1] - a[1])
+        .map(([status, count]) => ({
+          status,
+          label: statusLabels[normalizeStatus(status)] ?? status,
+          count,
+        })),
+    [summary?.statusCountsWeek]
+  );
+
+  const topProductsUsed = summary?.topProductsUsed ?? [];
+  const overduePromisedOrders = summary?.overduePromisedOrders ?? [];
+
   const shortcuts = [
     { label: "Operativo", href: "/dashboard", role: "owner" },
     { label: "Órdenes", href: "/dashboard/ordenes", role: "owner" },
@@ -291,6 +332,84 @@ export function OperationalHub() {
             <p className="mt-2 text-sm leading-6 text-zinc-300">{metric.helper}</p>
           </article>
         ))}
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-3">
+        <article className="rounded-[28px] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/70">Hoy</p>
+          <h3 className="mt-3 text-2xl font-black tracking-tight text-zinc-50">Órdenes por estado</h3>
+          <div className="mt-5 space-y-3">
+            {todayStatusRows.length === 0 ? (
+              <div className="rounded-2xl border border-stone-700/70 bg-black/20 p-4 text-sm text-zinc-300">Sin movimientos registrados hoy.</div>
+            ) : (
+              todayStatusRows.map((row) => (
+                <div key={`today-${row.status}`} className="flex items-center justify-between rounded-2xl border border-stone-700/70 bg-zinc-950/60 px-4 py-3">
+                  <span className="text-sm font-medium text-zinc-100">{row.label}</span>
+                  <span className="text-lg font-black text-amber-100">{row.count}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </article>
+
+        <article className="rounded-[28px] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/70">Semana</p>
+          <h3 className="mt-3 text-2xl font-black tracking-tight text-zinc-50">Órdenes por estado</h3>
+          <div className="mt-5 space-y-3">
+            {weekStatusRows.length === 0 ? (
+              <div className="rounded-2xl border border-stone-700/70 bg-black/20 p-4 text-sm text-zinc-300">Sin movimientos en esta semana.</div>
+            ) : (
+              weekStatusRows.map((row) => (
+                <div key={`week-${row.status}`} className="flex items-center justify-between rounded-2xl border border-stone-700/70 bg-zinc-950/60 px-4 py-3">
+                  <span className="text-sm font-medium text-zinc-100">{row.label}</span>
+                  <span className="text-lg font-black text-amber-100">{row.count}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </article>
+
+        <article className="rounded-[28px] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/70">Urgente</p>
+          <h3 className="mt-3 text-2xl font-black tracking-tight text-zinc-50">Promesas vencidas</h3>
+          <div className="mt-5 space-y-3">
+            {overduePromisedOrders.length === 0 ? (
+              <div className="rounded-2xl border border-stone-700/70 bg-black/20 p-4 text-sm text-zinc-300">No hay fechas promesa vencidas.</div>
+            ) : (
+              overduePromisedOrders.map((order) => (
+                <div key={order.id} className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4">
+                  <p className="text-xs uppercase tracking-[0.22em] text-rose-200/70">Vencida</p>
+                  <p className="mt-1 text-base font-semibold text-zinc-50">{order.folio ?? order.id}</p>
+                  <p className="mt-1 text-sm text-rose-100/80">
+                    {order.promisedDate ? `Promesa: ${formatDate(order.promisedDate)}` : 'Sin fecha promesa'}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </article>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
+        <article className="rounded-[28px] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/70">Reparaciones</p>
+          <h3 className="mt-3 text-2xl font-black tracking-tight text-zinc-50">Top 5 productos más usados</h3>
+          <div className="mt-5 space-y-3">
+            {topProductsUsed.length === 0 ? (
+              <div className="rounded-2xl border border-stone-700/70 bg-black/20 p-4 text-sm text-zinc-300">Aún no hay consumos suficientes para calcular el top.</div>
+            ) : (
+              topProductsUsed.map((item, index) => (
+                <div key={`${item.productId}-${item.name}`} className="flex items-center justify-between rounded-2xl border border-stone-700/70 bg-zinc-950/60 px-4 py-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">#{index + 1}</p>
+                    <p className="text-sm font-medium text-zinc-100">{item.name}</p>
+                  </div>
+                  <span className="text-lg font-black text-amber-100">{item.quantity}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </article>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">

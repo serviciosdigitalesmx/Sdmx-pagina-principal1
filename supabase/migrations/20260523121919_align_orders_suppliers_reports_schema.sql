@@ -12,8 +12,9 @@ $$;
 
 create table if not exists public.suppliers (
   id uuid primary key default gen_random_uuid(),
-  tenant_id uuid not null references public.tenants(id) on delete cascade,
+  tenant_id uuid not null references public.organizations(id) on delete cascade,
   business_name text not null,
+  rfc text,
   legal_name text,
   contact_name text,
   phone text,
@@ -38,9 +39,15 @@ create table if not exists public.suppliers (
 create index if not exists suppliers_tenant_idx
   on public.suppliers (tenant_id);
 
+create index if not exists suppliers_tenant_business_name_idx
+  on public.suppliers (tenant_id, business_name);
+
+create index if not exists suppliers_tenant_rfc_idx
+  on public.suppliers (tenant_id, rfc);
+
 create table if not exists public.inventory (
   id uuid primary key default gen_random_uuid(),
-  tenant_id uuid not null references public.tenants(id) on delete cascade,
+  tenant_id uuid not null references public.organizations(id) on delete cascade,
   branch_id uuid,
   sku text not null,
   description text not null,
@@ -60,7 +67,7 @@ create unique index if not exists inventory_tenant_sku_uidx
 
 create table if not exists public.finances (
   id uuid primary key default gen_random_uuid(),
-  tenant_id uuid not null references public.tenants(id) on delete cascade,
+  tenant_id uuid not null references public.organizations(id) on delete cascade,
   sucursal_id uuid,
   balance numeric(12,2) not null default 0,
   income numeric(12,2) not null default 0,
@@ -77,7 +84,7 @@ create index if not exists finances_tenant_sucursal_idx
 
 create table if not exists public.service_order_checklists (
   id uuid primary key default gen_random_uuid(),
-  tenant_id uuid not null references public.tenants(id) on delete cascade,
+  tenant_id uuid not null references public.organizations(id) on delete cascade,
   service_order_id uuid not null references public.service_orders(id) on delete cascade,
   has_charger boolean not null default false,
   screen_condition text,
@@ -261,4 +268,4 @@ grant select, insert, update, delete on table public.service_order_checklists to
 
 select pg_notify('pgrst', 'reload schema');
 
-commit;
+commit;;

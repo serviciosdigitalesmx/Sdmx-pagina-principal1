@@ -77,6 +77,7 @@ export default function GastosPage() {
           { label: 'Egreso', key: 'expense' },
         ]}
         rows={rows}
+        loading={loading}
         emptyTitle={loading ? 'Cargando gastos…' : error ? 'No pudimos cargar gastos' : 'Sin movimientos de gasto todavía'}
         emptyCopy={error || 'Aquí verás los egresos del taller por sucursal.'}
       />
