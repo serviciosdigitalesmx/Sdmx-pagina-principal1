@@ -13,12 +13,12 @@ export const getReportsSummary = async (req: Request, res: Response) => {
 
     const supabase = getTenantClient(tenantId);
 
-    let ordersQuery = supabase.from('service_orders').select('id, status, created_at, total_cost, final_cost, sucursal_id, assigned_user_id').eq('tenant_id', tenantId).limit(500);
-    let customersQuery = supabase.from('customers').select('id, sucursal_id').eq('tenant_id', tenantId).limit(500);
+    let ordersQuery = supabase.from('service_orders').select('id, status, created_at, total_cost, final_cost, sucursal_id, promised_date, folio').eq('tenant_id', tenantId).limit(500);
+    let customersQuery = supabase.from('customers').select('id').eq('tenant_id', tenantId).limit(500);
     let inventoryQuery = supabase.from('sucursal_inventory').select('id, stock_current, product_id, sucursal_id, products:product_id (id, cost)').eq('tenant_id', tenantId).limit(500);
     let financeQuery = supabase.from('finances').select('id, balance, income, expense, created_at, sucursal_id').eq('tenant_id', tenantId).limit(500);
-    let requestsQuery = supabase.from('service_requests').select('id, balance_amount, status, created_at, sucursal_id').eq('tenant_id', tenantId).limit(500);
-    let usersQuery = supabase.from('users').select('id, full_name, name, role, sucursal_id').eq('tenant_id', tenantId).limit(500);
+    let requestsQuery = supabase.from('service_requests').select('id, balance_amount, status, created_at').eq('tenant_id', tenantId).limit(500);
+    let usersQuery = supabase.from('users').select('id, full_name, role, sucursal_id').eq('tenant_id', tenantId).limit(500);
     let movementsQuery = supabase
       .from('inventory_movements')
       .select('id, tenant_id, sucursal_id, product_id, service_order_id, movement_type, quantity, created_at, products:product_id (id, sku, name)')
@@ -27,10 +27,8 @@ export const getReportsSummary = async (req: Request, res: Response) => {
 
     if (effectiveSucursalId) {
       ordersQuery = ordersQuery.eq('sucursal_id', effectiveSucursalId);
-      customersQuery = customersQuery.eq('sucursal_id', effectiveSucursalId);
       inventoryQuery = inventoryQuery.eq('sucursal_id', effectiveSucursalId);
       financeQuery = financeQuery.eq('sucursal_id', effectiveSucursalId);
-      requestsQuery = requestsQuery.eq('sucursal_id', effectiveSucursalId);
       usersQuery = usersQuery.eq('sucursal_id', effectiveSucursalId);
       movementsQuery = movementsQuery.eq('sucursal_id', effectiveSucursalId);
     }
@@ -116,8 +114,9 @@ export const getReportsSummary = async (req: Request, res: Response) => {
     const accountsReceivable = requests.reduce((sum, item) => sum + Number((item as { balance_amount?: number }).balance_amount ?? 0), 0);
     const ordersByTechnician = users.reduce<Record<string, number>>((acc, user) => {
       const userId = String((user as { id?: string }).id ?? '');
-      if (!userId) return acc;
-      acc[userId] = orders.filter((order) => String((order as { assigned_user_id?: string | null }).assigned_user_id ?? '') === userId).length;
+      const displayName = String((user as { full_name?: string | null }).full_name ?? '').trim() || userId || 'sin_tecnico';
+      if (!displayName) return acc;
+      acc[displayName] = orders.filter((order) => String((order as { assigned_user_id?: string | null }).assigned_user_id ?? '') === userId).length;
       return acc;
     }, {});
 
