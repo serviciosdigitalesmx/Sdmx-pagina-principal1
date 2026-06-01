@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
+import { ToastProvider } from "@white-label/ui";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -51,7 +52,7 @@ export default function RootLayout({
       >
       <body className="min-h-full flex flex-col bg-[radial-gradient(circle_at_top,_rgba(17,24,39,0.16),_transparent_28%),linear-gradient(180deg,#09090b_0%,#111113_46%,#18181b_100%)] text-zinc-100">
         <PwaBootstrap />
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );
