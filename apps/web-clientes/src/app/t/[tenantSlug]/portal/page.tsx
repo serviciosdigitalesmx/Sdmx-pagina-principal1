@@ -1,3 +1,5 @@
+"use client";
+
 import { useMemo, useState, useEffect, type FormEvent } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
