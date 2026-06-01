@@ -2,6 +2,5 @@
   "framework": "nextjs",
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
   "buildCommand": "cd ../.. && pnpm --filter web-admin build",
-  "outputDirectory": ".next",
-  "turbo": false
+  "outputDirectory": ".next"
 }
