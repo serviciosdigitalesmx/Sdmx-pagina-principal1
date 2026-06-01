@@ -11,7 +11,7 @@ import { fixService } from "@/services/fixService";
 import { getModuleByRoute, getModuleStatusCounts } from "@/lib/module-catalog";
 import { readAuthToken } from "@/lib/auth-storage";
 import { resolveApiBaseUrl } from "@white-label/config";
-import { useToast } from "@white-label/ui";
+import { useToast, Badge } from "@white-label/ui";
 
 export const ADMIN_BUILD_MARKER = "tenant-session-c323cf60";
 
@@ -304,7 +304,7 @@ function DashboardShellContent({
   }
 
   return (
-    <div key={pathname} className="flex min-h-screen flex-col bg-[radial-gradient(circle_at_top,_rgba(124,58,237,0.14),_transparent_20%),linear-gradient(180deg,#05060a_0%,#0a0d16_42%,#05060a_100%)] text-zinc-100 lg:flex-row">
+    <div key={pathname} className="flex min-h-screen flex-col bg-bg-dark text-text-primary-dark lg:flex-row">
       {mobileNavOpen ? (
         <button
           type="button"
@@ -316,25 +316,25 @@ function DashboardShellContent({
       <aside
         id="dashboard-mobile-nav"
         className={[
-          "fixed inset-y-0 left-0 z-40 flex w-[18rem] max-w-[86vw] shrink-0 flex-col border-b border-white/8 bg-[linear-gradient(180deg,rgba(9,12,20,0.98),rgba(6,8,15,0.96))] backdrop-blur-xl transition-transform duration-200 will-change-transform lg:static lg:z-auto lg:w-[18rem] lg:max-w-none lg:border-b-0 lg:border-r lg:border-white/10",
+          "fixed inset-y-0 left-0 z-40 flex w-[260px] max-w-[86vw] shrink-0 flex-col border-b border-border-dark bg-bg-dark transition-transform duration-200 will-change-transform lg:static lg:z-auto lg:w-[260px] lg:max-w-none lg:border-b-0 lg:border-r",
           mobileNavOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         ].join(" ")}
       >
-        <div className="border-b border-white/10 p-4 sm:p-5">
+        <div className="border-b border-border-dark p-4 sm:p-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-violet-400/20 bg-[linear-gradient(135deg,rgba(124,58,237,0.3),rgba(79,70,229,0.85))] text-sm font-black text-white shadow-[0_14px_40px_rgba(0,0,0,0.24)]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-sm font-bold text-white">
               {activeTenant.brandName.slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <div className="text-sm font-semibold tracking-wide text-zinc-50">{activeTenant.brandName}</div>
-              <div className="text-xs text-zinc-400">{activeTenant.tenantName}</div>
+              <div className="text-sm font-semibold tracking-wide text-text-primary-dark">{activeTenant.brandName}</div>
+              <div className="text-xs text-text-secondary-dark">{activeTenant.tenantName}</div>
             </div>
           </div>
         </div>
         <nav className="flex-1 space-y-6 overflow-y-auto p-4">
           {visibleNavGroups.map((group) => (
             <section key={group.title} className="space-y-3">
-              <div className="px-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-200/55">
+              <div className="px-3 text-xs font-semibold uppercase tracking-wider text-text-secondary-dark">
                 {group.title}
               </div>
               <div className="space-y-1">
@@ -357,11 +357,11 @@ function DashboardShellContent({
                       allowedRoles={item.allowedRoles}
                       badge={badge}
                       className={[
-                        "flex min-h-11 items-center gap-3 rounded-xl px-4 py-3 text-sm transition-all duration-200 touch-manipulation",
+                        "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all duration-200 touch-manipulation",
                         pathname === item.href ||
                         (item.href !== '/dashboard' && pathname?.startsWith(item.href))
-                          ? "border border-violet-400/25 bg-[linear-gradient(135deg,rgba(124,58,237,0.26),rgba(79,70,229,0.14))] text-zinc-50 shadow-[0_10px_30px_rgba(0,0,0,0.22)]"
-                          : "text-zinc-400 hover:border hover:border-white/10 hover:bg-white/5 hover:text-zinc-50",
+                          ? "bg-active/10 text-active font-medium"
+                          : "text-text-secondary-dark hover:bg-white/5 hover:text-text-primary-dark",
                       ].join(' ')}
                     />
                   );
@@ -370,71 +370,62 @@ function DashboardShellContent({
             </section>
           ))}
         </nav>
-        <div className="border-t border-white/10 p-4 text-sm text-zinc-400">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-            <div className="text-zinc-50">{activeTenant.userEmail}</div>
-            <div className="mt-1 text-xs text-zinc-400">Rol: {activeTenant.userRole}</div>
-            <div className="text-xs text-zinc-400">Sucursal: {activeTenant.sucursalName}</div>
-            <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-zinc-300">
-              <div className="rounded-xl border border-white/10 bg-black/25 px-2 py-2 text-center">
-                <div className="font-semibold text-zinc-50">{moduleStatusCounts.ready}</div>
-                <div className="text-zinc-500">Listos</div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-black/25 px-2 py-2 text-center">
-                <div className="font-semibold text-zinc-50">{moduleStatusCounts.partial}</div>
-                <div className="text-zinc-500">Parciales</div>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-black/25 px-2 py-2 text-center">
-                <div className="font-semibold text-zinc-50">{moduleStatusCounts.pending}</div>
-                <div className="text-zinc-500">Pendientes</div>
-              </div>
+        <div className="border-t border-border-dark p-4 text-sm">
+          <div className="rounded-xl border border-border-dark bg-bg-dark p-4">
+            <div className="font-medium text-text-primary-dark">{activeTenant.userEmail}</div>
+            <div className="mt-1 text-xs text-text-secondary-dark">Rol: {activeTenant.userRole}</div>
+            <div className="text-xs text-text-secondary-dark">Sucursal: {activeTenant.sucursalName}</div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Badge variant="success" className="flex-1 justify-center">{moduleStatusCounts.ready} Listos</Badge>
+              <Badge variant="warning" className="flex-1 justify-center">{moduleStatusCounts.partial} Parc.</Badge>
+              <Badge variant="info" className="flex-1 justify-center">{moduleStatusCounts.pending} Pend.</Badge>
             </div>
           </div>
         </div>
       </aside>
 
-      <div className="flex flex-1 flex-col">
-        <header className="flex items-start justify-between gap-4 border-b border-white/10 bg-[linear-gradient(180deg,rgba(9,12,20,0.98),rgba(7,10,18,0.92))] px-4 py-4 backdrop-blur-xl sm:items-center sm:px-6 sm:py-0 sm:h-16">
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <header className="flex items-center justify-between gap-4 border-b border-border-dark bg-bg-dark px-4 py-3 sm:px-6">
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-zinc-50 [font-family:var(--font-display)]">FIXI · Tablero interno</div>
-            <div className="text-xs leading-5 text-zinc-400">
+            <div className="text-base font-semibold text-text-primary-dark">SR FIX · Integrador Interno</div>
+            <div className="text-xs text-text-secondary-dark mt-0.5">
               Tenant: {activeTenant.tenantId} · Rol: {activeTenant.userRole} · Sucursal: {activeTenant.sucursalName}
             </div>
           </div>
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setMobileNavOpen((current) => !current)}
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-white/10 bg-black/30 px-3 py-3 text-sm font-semibold text-zinc-200 transition hover:bg-white/5 active:scale-95 lg:hidden"
+              className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg border border-border-dark bg-transparent text-text-primary-dark transition hover:bg-white/5 active:scale-95 lg:hidden"
               aria-label="Abrir menú"
               aria-expanded={mobileNavOpen}
               aria-controls="dashboard-mobile-nav"
             >
               ☰
             </button>
-            <Link href="/dashboard/landing" className="inline-flex min-h-11 items-center rounded-full border border-white/10 px-4 py-3 text-sm font-semibold text-zinc-200 transition hover:bg-white/5 active:scale-95">
+            <Link href="/dashboard/landing" className="hidden sm:inline-flex min-h-10 items-center rounded-lg border border-border-dark px-4 py-2 text-sm font-medium text-text-primary-dark transition hover:bg-white/5 active:scale-95">
               Configurar sitio
             </Link>
             <button
               type="button"
               onClick={() => void enablePushNotifications()}
-              className="inline-flex min-h-11 items-center rounded-full border border-white/10 px-4 py-3 text-sm font-semibold text-zinc-200 transition hover:bg-white/5 active:scale-95"
+              className="hidden sm:inline-flex min-h-10 items-center rounded-lg border border-border-dark px-4 py-2 text-sm font-medium text-text-primary-dark transition hover:bg-white/5 active:scale-95"
             >
               Activar push
             </button>
-            <div className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold text-zinc-950" style={{ backgroundColor: theme.accent }}>
+            <div className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white" style={{ backgroundColor: theme.accent }}>
               {activeTenant.userEmail.slice(0, 1).toUpperCase()}
             </div>
           </div>
         </header>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 bg-black/25 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-zinc-400 sm:px-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-dark bg-bg-dark px-4 py-2 text-xs font-medium text-text-secondary-dark sm:px-6">
           <span>BUILD: {ADMIN_BUILD_MARKER}</span>
           <div className="flex flex-wrap items-center gap-2 normal-case tracking-normal">
-            <span className="text-[11px] uppercase tracking-[0.18em] text-zinc-400">Todas las sucursales</span>
+            <span className="text-xs text-text-secondary-dark">Todas las sucursales</span>
             <select
               value={sucursalId}
               onChange={(event) => updateSucursal(event.target.value)}
-              className="min-h-11 min-w-52 rounded-full border border-zinc-700 bg-zinc-950 px-3 py-3 text-sm text-zinc-100 touch-manipulation"
+              className="min-h-10 min-w-48 rounded-lg border border-border-dark bg-bg-dark px-3 py-2 text-sm text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-active touch-manipulation"
             >
               <option value="">Todas / contexto actual</option>
               {sucursales.map((sucursal) => (

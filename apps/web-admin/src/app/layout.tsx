@@ -1,23 +1,19 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Geist, Geist_Mono } from "next/font/google";
+import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { ToastProvider } from "@white-label/ui";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const robotoMono = Roboto_Mono({
   subsets: ["latin"],
-});
-
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  variable: "--font-roboto-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -41,7 +37,7 @@ export default function RootLayout({
   return (
     <html
       lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} h-full antialiased`}
+      className={`h-full antialiased ${inter.variable} ${robotoMono.variable}`}
       style={
         {
           '--tenant-primary': themePrimary,
@@ -49,11 +45,12 @@ export default function RootLayout({
           '--tenant-accent': themeAccent,
         } as React.CSSProperties
       }
-      >
-      <body className="min-h-full flex flex-col bg-[radial-gradient(circle_at_top,_rgba(17,24,39,0.16),_transparent_28%),linear-gradient(180deg,#09090b_0%,#111113_46%,#18181b_100%)] text-zinc-100">
+    >
+      <body className="min-h-full flex flex-col font-sans">
         <PwaBootstrap />
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );
 }
+
