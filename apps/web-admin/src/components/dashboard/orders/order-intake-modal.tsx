@@ -93,6 +93,7 @@ export function OrderIntakeModal({
   onCopy,
 }: Props) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [fileInputKey, setFileInputKey] = useState(0);
 
   useEffect(() => {
     if (open) {
@@ -274,9 +275,34 @@ export function OrderIntakeModal({
 
                     <div className="rounded-[22px] border border-sky-500/10 bg-black/20 p-4">
                       <div className="mb-3 text-lg font-semibold text-slate-200">Foto del estado en recepción</div>
-                      <input type="file" accept="image/*" capture="environment" multiple onChange={(e) => onPhotoChange(Array.from(e.target.files ?? []))} className="text-sm text-zinc-300" />
+                      <label className="flex cursor-pointer flex-col gap-3 rounded-2xl border border-dashed border-sky-400/40 bg-slate-950/60 px-4 py-5 transition hover:border-sky-300/70 hover:bg-slate-950">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-zinc-100">Subir foto de ingreso</p>
+                            <p className="mt-1 text-sm text-zinc-400">Toma una o varias fotos del equipo al recibirlo. Se comprimirán automáticamente.</p>
+                          </div>
+                          <span className="rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-white">Elegir foto</span>
+                        </div>
+                        <input
+                          key={fileInputKey}
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          multiple
+                          onChange={(e) => {
+                            onPhotoChange(Array.from(e.target.files ?? []));
+                            setFileInputKey((current) => current + 1);
+                          }}
+                          className="hidden"
+                        />
+                      </label>
                       <p className="mt-3 text-sm text-zinc-400">Se comprimirá automáticamente para envío rápido.</p>
-                      {files.intakePhotos.length > 0 ? <p className="mt-2 text-sm text-sky-300">{files.intakePhotos[0].name}</p> : null}
+                      {files.intakePhotos.length > 0 ? (
+                        <div className="mt-3 rounded-2xl border border-sky-500/20 bg-sky-500/10 px-4 py-3 text-sm text-sky-200">
+                          <p className="font-semibold">Fotos cargadas: {files.intakePhotos.length}</p>
+                          <p className="mt-1">{files.intakePhotos[0].name}</p>
+                        </div>
+                      ) : null}
                     </div>
 
                     {dynamicFieldDefinitions.length > 0 && onDynamicFieldChange ? (
@@ -367,7 +393,7 @@ export function OrderIntakeModal({
                 <button type="button" onClick={() => onCopy(successSummary.folio, "Folio")} className="rounded-2xl bg-sky-500 px-5 py-3 font-semibold text-white">Copiar folio</button>
                 {whatsappUrl ? (
                   <a href={whatsappUrl} target="_blank" rel="noreferrer" className="rounded-2xl bg-emerald-500 px-5 py-3 font-semibold text-white">
-                    Enviar por WhatsApp
+                    Enviar enlace por WhatsApp
                   </a>
                 ) : null}
                 {successSummary.pdfUrl ? (
