@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 type Stat = {
   label: string;
@@ -54,9 +54,9 @@ export function ModuleShell({
 }: ModuleShellProps) {
   return (
     <div className="space-y-6 text-zinc-100">
-      <header className="flex flex-col gap-4 rounded-[2rem] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(14,13,12,0.92))] p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+      <header className="flex flex-col gap-4 rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(9,12,20,0.98),rgba(7,10,18,0.92))] p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-amber-700/20 bg-amber-500/10 text-lg font-black text-amber-50 shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-violet-400/20 bg-[linear-gradient(135deg,rgba(124,58,237,0.3),rgba(79,70,229,0.85))] text-lg font-black text-white shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
             <i className={icon} />
           </div>
           <div>
@@ -69,7 +69,7 @@ export function ModuleShell({
             <button
               type="button"
               onClick={() => void secondaryOnAction?.()}
-              className="inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:bg-white/5 active:scale-95"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/10 bg-black/30 px-4 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:bg-white/5 active:scale-95"
             >
               {secondaryActionLabel}
             </button>
@@ -78,7 +78,7 @@ export function ModuleShell({
             <button
               type="button"
               onClick={() => void tertiaryOnAction?.()}
-              className="inline-flex min-h-11 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:bg-white/5 active:scale-95"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/10 bg-black/30 px-4 py-3 text-sm font-semibold text-zinc-100 transition-colors hover:bg-white/5 active:scale-95"
             >
               {tertiaryActionLabel}
             </button>
@@ -86,7 +86,7 @@ export function ModuleShell({
           <button
             type="button"
             onClick={() => void onAction?.()}
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-amber-50 px-4 py-3 text-sm font-semibold text-zinc-950 transition-colors hover:bg-amber-100 active:scale-95"
+            className="inline-flex min-h-11 items-center justify-center rounded-full bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_100%)] px-4 py-3 text-sm font-semibold text-white transition-colors hover:brightness-110 active:scale-95"
           >
             {actionLabel}
           </button>
@@ -95,23 +95,21 @@ export function ModuleShell({
 
       <section className="grid gap-4 md:grid-cols-3">
         {stats.map((stat) => (
-          <div key={stat.label} className="rounded-[1.5rem] border border-stone-700/70 bg-white/4 p-4 shadow-[0_12px_40px_rgba(0,0,0,0.18)]">
-            <div className="text-[11px] uppercase tracking-[0.22em] text-amber-100/60">{stat.label}</div>
+          <div key={stat.label} className="rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-4 shadow-[0_12px_40px_rgba(0,0,0,0.18)]">
+            <div className="text-[11px] uppercase tracking-[0.22em] text-violet-200/60">{stat.label}</div>
             <div className="mt-3 text-2xl font-semibold text-zinc-50">{stat.value}</div>
             <div className="mt-2 text-sm text-zinc-400">{stat.helper}</div>
           </div>
         ))}
       </section>
 
-      <section className="rounded-[2rem] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)]">
+      <section className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(9,12,20,0.98),rgba(7,10,18,0.96))] p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)]">
         {loading && rows.length === 0 ? (
-          <div className="rounded-2xl border border-zinc-800 bg-black/20 p-5 text-sm text-zinc-300">
-            Cargando datos reales del tenant...
-          </div>
+          <div className="rounded-2xl border border-white/10 bg-black/20 p-5 text-sm text-zinc-300">Cargando datos reales del tenant...</div>
         ) : showTable && rows.length > 0 ? (
-          <div className="overflow-hidden rounded-2xl border border-zinc-800">
-            <table className="min-w-full divide-y divide-zinc-800 text-left text-sm">
-              <thead className="bg-zinc-900/70 text-zinc-400">
+          <div className="overflow-hidden rounded-2xl border border-white/10">
+            <table className="min-w-full divide-y divide-white/10 text-left text-sm">
+              <thead className="bg-white/[0.04] text-zinc-300">
                 <tr>
                   {columns.map((column) => (
                     <th key={column.key} className="px-4 py-3 font-medium">
@@ -120,9 +118,9 @@ export function ModuleShell({
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-800">
+              <tbody className="divide-y divide-white/10">
                 {rows.map((row, index) => (
-                  <tr key={`${title}-${index}`} className="bg-zinc-950">
+                  <tr key={`${title}-${index}`} className="bg-black/20">
                     {columns.map((column) => (
                       <td key={column.key} className="px-4 py-3 text-zinc-300">
                         {row[column.key]}
@@ -134,8 +132,8 @@ export function ModuleShell({
             </table>
           </div>
         ) : showTable ? (
-          <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-800 bg-zinc-900/50 px-6 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-950 text-xl text-amber-100/70">
+          <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.03] px-6 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-black/30 text-xl text-violet-200/80">
               <i className={icon} />
             </div>
             <h2 className="mt-4 text-lg font-semibold text-zinc-50">{emptyTitle}</h2>

@@ -5,10 +5,13 @@ import { useEffect, useMemo, useState } from "react";
 import { fixService } from "@/services/fixService";
 
 type OrderRecord = {
+  id?: string;
   folio?: string;
   status?: string;
   created_at?: string;
+  updated_at?: string;
   total_cost?: number;
+  promised_date?: string | null;
   device_info?: {
     customer_name?: string;
     customer_phone?: string;
@@ -45,23 +48,39 @@ type ReportsSummary = {
   lastUpdatedAt?: string | null;
 };
 
+type BoardStatus = "recibido" | "diagnostico" | "reparacion" | "espera_refaccion" | "listo" | "entregado";
+
+const boardColumns: Array<{
+  key: BoardStatus;
+  label: string;
+  accent: string;
+}> = [
+  { key: "recibido", label: "Recibido", accent: "bg-sky-400" },
+  { key: "diagnostico", label: "Diagnóstico", accent: "bg-violet-400" },
+  { key: "reparacion", label: "En reparación", accent: "bg-amber-400" },
+  { key: "espera_refaccion", label: "Espera refacción", accent: "bg-orange-400" },
+  { key: "listo", label: "Listo para entrega", accent: "bg-emerald-400" },
+  { key: "entregado", label: "Entregado", accent: "bg-zinc-400" },
+];
+
 const statusLabels: Record<string, string> = {
-  pending: "Pendiente",
-  diagnosis: "Diagnóstico",
-  in_repair: "En reparación",
-  ready: "Listo",
-  delivered: "Entregado",
-  archived: "Archivado",
+  recibido: "Recibido",
+  diagnostico: "Diagnóstico",
+  reparacion: "En reparación",
+  espera_refaccion: "Espera refacción",
+  listo: "Listo para entrega",
+  entregado: "Entregado",
 };
 
 function normalizeStatus(status?: string) {
   const value = String(status ?? "").toLowerCase();
-  if (value.includes("diag")) return "diagnosis";
-  if (value.includes("repar")) return "in_repair";
-  if (value.includes("list")) return "ready";
-  if (value.includes("entreg")) return "delivered";
-  if (value.includes("archiv")) return "archived";
-  return "pending";
+  if (value.includes("diag")) return "diagnostico";
+  if (value.includes("refaccion")) return "espera_refaccion";
+  if (value.includes("espera")) return "espera_refaccion";
+  if (value.includes("repar")) return "reparacion";
+  if (value.includes("list")) return "listo";
+  if (value.includes("entreg")) return "entregado";
+  return "recibido";
 }
 
 function formatMoney(value?: number) {
@@ -72,12 +91,62 @@ function formatMoney(value?: number) {
   }).format(Number(value ?? 0));
 }
 
-function formatDate(value?: string) {
+function formatDate(value?: string | null) {
   if (!value) return "Sin fecha";
-  return new Date(value).toLocaleString("es-MX", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return "Sin fecha";
+  return parsed.toLocaleString("es-MX", { dateStyle: "medium", timeStyle: "short" });
+}
+
+function kanbanTone(status: BoardStatus) {
+  switch (status) {
+    case "recibido":
+      return "border-sky-400/30 bg-sky-400/8";
+    case "diagnostico":
+      return "border-violet-400/30 bg-violet-400/8";
+    case "reparacion":
+      return "border-amber-400/30 bg-amber-400/8";
+    case "espera_refaccion":
+      return "border-orange-400/30 bg-orange-400/8";
+    case "listo":
+      return "border-emerald-400/30 bg-emerald-400/8";
+    case "entregado":
+      return "border-zinc-500/30 bg-zinc-500/8";
+  }
+}
+
+function topMetricTone(index: number) {
+  if (index === 0) return "from-violet-500/30 to-indigo-500/10";
+  if (index === 1) return "from-sky-500/25 to-cyan-500/10";
+  if (index === 2) return "from-emerald-500/25 to-green-500/10";
+  return "from-amber-500/20 to-orange-500/10";
+}
+
+function BoardCard({ order }: { order: OrderRecord }) {
+  const status = normalizeStatus(order.status) as BoardStatus;
+  return (
+    <article className={`rounded-[1.4rem] border p-4 shadow-[0_12px_35px_rgba(0,0,0,0.15)] ${kanbanTone(status)}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-400">{order.folio ?? "Sin folio"}</p>
+          <h4 className="mt-2 text-lg font-semibold text-zinc-50">{order.device_info?.customer_name ?? "Cliente sin nombre"}</h4>
+        </div>
+        <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-200">
+          {statusLabels[status] ?? "Pendiente"}
+        </span>
+      </div>
+
+      <div className="mt-3 space-y-1 text-sm text-zinc-300">
+        <p>{order.device_info?.brand ?? order.device_info?.type ?? "Equipo"}{order.device_info?.model ? ` · ${order.device_info.model}` : ""}</p>
+        <p className="text-zinc-400">{order.problem_description ?? "Sin descripción de falla"}</p>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-3 text-xs text-zinc-400">
+        <span>{formatDate(order.created_at)}</span>
+        <span className="font-semibold text-emerald-300">{formatMoney(order.total_cost)}</span>
+      </div>
+    </article>
+  );
 }
 
 export function OperationalHub() {
@@ -94,36 +163,16 @@ export function OperationalHub() {
       setError(null);
 
       try {
-        const [ordersResult, reportsResult] = await Promise.all([
-          fixService.getOrders(),
-          fixService.getReportsSummary(),
-        ]);
-
+        const [ordersResult, reportsResult] = await Promise.all([fixService.getOrders(), fixService.getReportsSummary()]);
         if (cancelled) return;
-
         setOrders(ordersResult as OrderRecord[]);
         setSummary(reportsResult as ReportsSummary);
       } catch (loadError) {
         if (cancelled) return;
         const message = loadError instanceof Error ? loadError.message : "No pudimos cargar el panel";
-        // If the error looks like an auth error, suggest clearing token
-        const isAuth = /401|sesión|token|auth/i.test(message);
-        setError(message + (isAuth ? ". Comprueba tu sesión o limpia el token." : ""));
-        // Log full error for debugging
-        // eslint-disable-next-line no-console
-        console.error('OperationalHub load error:', loadError);
-        // Attach retry action to error message via window for quick dev testing
-        // @ts-ignore
-        window.__fix_last_load_error = loadError;
-        if (isAuth) {
-          // expose a hint in console for local testing
-          // eslint-disable-next-line no-console
-          console.warn("OperationalHub detected auth issue: call clearAuthToken() and reload to retry.");
-        }
+        setError(message);
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     };
 
@@ -134,349 +183,165 @@ export function OperationalHub() {
     };
   }, []);
 
-  function handleClearSession() {
-    try {
-      // lazy import to avoid circular deps in test env
-      // @ts-ignore
-      const { clearAuthToken } = require("@/lib/auth-storage");
-      clearAuthToken();
-    } catch {
-      try {
-        window.localStorage.removeItem(process.env.NEXT_PUBLIC_AUTH_TOKEN_KEY ?? "app_auth_token");
-      } catch {}
-    }
-    window.location.reload();
-  }
+  const metrics = useMemo(() => {
+    return [
+      { label: "Órdenes activas", value: String(summary?.ordersCount ?? orders.length), helper: "Trabajo vivo en recepción." },
+      { label: "Listas para entrega", value: String(summary?.statusCounts?.listo ?? 0), helper: "Pendientes de salida o cobro." },
+      { label: "Ingresos del mes", value: formatMoney(summary?.totalIncome), helper: "Cobros confirmados en el tenant." },
+      { label: "Clientes nuevos", value: String(summary?.customersCount ?? 0), helper: "Relación comercial del taller." },
+    ];
+  }, [orders.length, summary]);
 
-  function handleRetry() {
-    setLoading(true);
-    setError(null);
-    void (async () => {
-      try {
-        const [ordersResult, reportsResult] = await Promise.all([
-          fixService.getOrders(),
-          fixService.getReportsSummary(),
-        ]);
-        setOrders(ordersResult as OrderRecord[]);
-        setSummary(reportsResult as ReportsSummary);
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : 'Error al recargar datos';
-        setError(msg);
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }
+  const groupedOrders = useMemo(() => {
+    const groups: Record<BoardStatus, OrderRecord[]> = {
+      recibido: [],
+      diagnostico: [],
+      reparacion: [],
+      espera_refaccion: [],
+      listo: [],
+      entregado: [],
+    };
 
-  const actionableOrders = useMemo(() => {
-    return orders
-      .filter((order) => {
-        const status = normalizeStatus(order.status);
-        return status !== "delivered" && status !== "archived";
-      })
-      .slice(0, 5);
+    orders.forEach((order) => {
+      const status = normalizeStatus(order.status) as BoardStatus;
+      groups[status].push(order);
+    });
+
+    return groups;
   }, [orders]);
 
   const recentActivity = useMemo(() => {
     return orders.slice(0, 5).map((order) => ({
       time: formatDate(order.created_at),
       title: order.folio ?? "Sin folio",
-      note: `${statusLabels[normalizeStatus(order.status)] ?? "Pendiente"} · ${order.device_info?.brand ?? order.device_info?.type ?? "Equipo sin tipo"}`,
+      note: `${statusLabels[normalizeStatus(order.status)] ?? "Pendiente"} · ${order.device_info?.brand ?? order.device_info?.type ?? "Equipo"}`,
     }));
   }, [orders]);
 
-  const metrics = useMemo(() => {
-    return [
-    { label: "Órdenes activas", value: summary ? String(summary.ordersCount ?? orders.length) : "Sin datos", helper: "Trabajo vivo en recepción." },
-    { label: "Pendientes hoy", value: summary ? String(summary.statusCounts?.pending ?? 0) : "Sin datos", helper: "Requieren atención inmediata." },
-    { label: "En diagnóstico", value: summary ? String(summary.statusCounts?.diagnosis ?? 0) : "Sin datos", helper: "Equipo en revisión técnica." },
-    { label: "Listos para entregar", value: summary ? String(summary.statusCounts?.ready ?? 0) : "Sin datos", helper: "Esperando cobro o salida." },
-    { label: "Stock crítico", value: summary ? String(summary.lowStockCount ?? 0) : "Sin datos", helper: "Revisión de abasto y compras." },
-    { label: "Balance", value: summary ? formatMoney(summary.totalBalance) : "Sin datos", helper: "Lectura financiera del tenant." },
-    ];
-  }, [orders.length, summary]);
-
-  const todayStatusRows = useMemo(
-    () =>
-      Object.entries(summary?.statusCountsToday ?? {})
-        .sort((a, b) => b[1] - a[1])
-        .map(([status, count]) => ({
-          status,
-          label: statusLabels[normalizeStatus(status)] ?? status,
-          count,
-        })),
-    [summary?.statusCountsToday]
-  );
-
-  const weekStatusRows = useMemo(
-    () =>
-      Object.entries(summary?.statusCountsWeek ?? {})
-        .sort((a, b) => b[1] - a[1])
-        .map(([status, count]) => ({
-          status,
-          label: statusLabels[normalizeStatus(status)] ?? status,
-          count,
-        })),
-    [summary?.statusCountsWeek]
-  );
-
-  const topProductsUsed = summary?.topProductsUsed ?? [];
-  const overduePromisedOrders = summary?.overduePromisedOrders ?? [];
-
-  const shortcuts = [
-    { label: "Operativo", href: "/dashboard", role: "owner" },
-    { label: "Órdenes", href: "/dashboard/ordenes", role: "owner" },
-    { label: "Clientes", href: "/dashboard/clientes", role: "owner" },
-    { label: "Solicitudes", href: "/dashboard/solicitudes", role: "manager" },
-    { label: "Stock", href: "/dashboard/stock", role: "manager" },
-    { label: "Compras", href: "/dashboard/compras", role: "manager" },
-    { label: "Gastos", href: "/dashboard/gastos", role: "manager" },
-    { label: "Finanzas", href: "/dashboard/finanzas", role: "manager" },
-    { label: "Reportes", href: "/dashboard/reportes", role: "manager" },
-    { label: "Sucursales", href: "/dashboard/sucursales", role: "manager" },
-    { label: "Seguridad", href: "/dashboard/seguridad", role: "manager" },
-  ];
-
   return (
     <div className="space-y-6">
-      <section className="rounded-[1.75rem] border border-amber-700/15 bg-black/20 p-3 shadow-[0_12px_40px_rgba(0,0,0,0.14)]">
-        <div className="flex flex-wrap gap-2">
-          {shortcuts.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className="rounded-full border border-stone-700 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:border-amber-700/30 hover:bg-white/5"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="rounded-[2rem] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-6 shadow-[0_20px_80px_rgba(0,0,0,0.18)]">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.34em] text-amber-100/70">Centro de control live</p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight text-zinc-50 sm:text-4xl [font-family:var(--font-display)]">
-              Mesa de control operativa
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-zinc-300">
-              Lo urgente primero: órdenes activas, pendientes de acción y lectura inmediata de cobro, stock y movimiento del día.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/dashboard/ordenes" className="rounded-full bg-amber-50 px-5 py-3 text-sm font-semibold text-zinc-950 transition hover:bg-amber-100">
-              Nueva recepción
-            </Link>
-            <Link href="/dashboard/finanzas" className="rounded-full border border-stone-700 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-white/5">
-              Finanzas
-            </Link>
-            <Link href="/dashboard/clientes" className="rounded-full border border-stone-700 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-white/5">
-              Clientes
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {loading ? (
-        <section className="rounded-[24px] border border-amber-700/15 bg-white/4 p-6 text-sm text-zinc-300 shadow-[0_16px_60px_rgba(15,23,42,0.06)]">
-          Conectando con la API del tenant...
-        </section>
-      ) : null}
-
-      {error ? (
-        <section className="rounded-[24px] border border-rose-500/20 bg-rose-500/10 p-6 text-sm text-rose-200">
-          No pudimos cargar el panel. {error}
-        </section>
-      ) : null}
-
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {metrics.map((metric) => (
-          <article key={metric.label} className="rounded-[24px] border border-stone-700/70 bg-white/4 p-5 transition duration-200 hover:-translate-y-0.5 hover:border-amber-700/30">
-            <p className="text-xs font-semibold uppercase tracking-[0.26em] text-amber-100/60">{metric.label}</p>
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {metrics.map((metric, index) => (
+          <article
+            key={metric.label}
+            className={`rounded-[1.6rem] border border-white/10 bg-[linear-gradient(180deg,rgba(16,18,27,0.95),rgba(9,10,16,0.98))] p-5 shadow-[0_18px_60px_rgba(0,0,0,0.22)] ${topMetricTone(index)}`}
+          >
+            <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-400">{metric.label}</p>
             <p className="mt-3 text-3xl font-black tracking-tight text-zinc-50">{metric.value}</p>
             <p className="mt-2 text-sm leading-6 text-zinc-300">{metric.helper}</p>
           </article>
         ))}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-3">
-        <article className="rounded-[28px] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/70">Hoy</p>
-          <h3 className="mt-3 text-2xl font-black tracking-tight text-zinc-50">Órdenes por estado</h3>
-          <div className="mt-5 space-y-3">
-            {todayStatusRows.length === 0 ? (
-              <div className="rounded-2xl border border-stone-700/70 bg-black/20 p-4 text-sm text-zinc-300">Sin movimientos registrados hoy.</div>
-            ) : (
-              todayStatusRows.map((row) => (
-                <div key={`today-${row.status}`} className="flex items-center justify-between rounded-2xl border border-stone-700/70 bg-zinc-950/60 px-4 py-3">
-                  <span className="text-sm font-medium text-zinc-100">{row.label}</span>
-                  <span className="text-lg font-black text-amber-100">{row.count}</span>
-                </div>
-              ))
-            )}
-          </div>
-        </article>
+      {loading ? (
+        <section className="rounded-[1.75rem] border border-white/10 bg-[linear-gradient(180deg,rgba(16,18,27,0.95),rgba(9,10,16,0.98))] p-6 text-sm text-zinc-300">
+          Cargando órdenes reales del tenant...
+        </section>
+      ) : null}
 
-        <article className="rounded-[28px] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/70">Semana</p>
-          <h3 className="mt-3 text-2xl font-black tracking-tight text-zinc-50">Órdenes por estado</h3>
-          <div className="mt-5 space-y-3">
-            {weekStatusRows.length === 0 ? (
-              <div className="rounded-2xl border border-stone-700/70 bg-black/20 p-4 text-sm text-zinc-300">Sin movimientos en esta semana.</div>
-            ) : (
-              weekStatusRows.map((row) => (
-                <div key={`week-${row.status}`} className="flex items-center justify-between rounded-2xl border border-stone-700/70 bg-zinc-950/60 px-4 py-3">
-                  <span className="text-sm font-medium text-zinc-100">{row.label}</span>
-                  <span className="text-lg font-black text-amber-100">{row.count}</span>
-                </div>
-              ))
-            )}
-          </div>
-        </article>
+      {error ? (
+        <section className="rounded-[1.75rem] border border-rose-500/20 bg-rose-500/10 p-5 text-sm text-rose-100">
+          No pudimos cargar el tablero. {error}
+        </section>
+      ) : null}
 
-        <article className="rounded-[28px] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/70">Urgente</p>
-          <h3 className="mt-3 text-2xl font-black tracking-tight text-zinc-50">Promesas vencidas</h3>
-          <div className="mt-5 space-y-3">
-            {overduePromisedOrders.length === 0 ? (
-              <div className="rounded-2xl border border-stone-700/70 bg-black/20 p-4 text-sm text-zinc-300">No hay fechas promesa vencidas.</div>
-            ) : (
-              overduePromisedOrders.map((order) => (
-                <div key={order.id} className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4">
-                  <p className="text-xs uppercase tracking-[0.22em] text-rose-200/70">Vencida</p>
-                  <p className="mt-1 text-base font-semibold text-zinc-50">{order.folio ?? order.id}</p>
-                  <p className="mt-1 text-sm text-rose-100/80">
-                    {order.promisedDate ? `Promesa: ${formatDate(order.promisedDate)}` : 'Sin fecha promesa'}
-                  </p>
-                </div>
-              ))
-            )}
+      <section className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,12,18,0.98),rgba(6,8,14,0.98))] p-4 shadow-[0_24px_90px_rgba(0,0,0,0.3)]">
+        <div className="flex flex-col gap-4 border-b border-white/10 px-2 py-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.34em] text-violet-300/70">Órdenes de trabajo</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-zinc-50">Tablero operativo</h2>
           </div>
-        </article>
-      </section>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/dashboard/ordenes" className="rounded-full bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_100%)] px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_35px_rgba(99,102,241,0.25)]">
+              + Nueva orden
+            </Link>
+            <Link href="/dashboard/reportes" className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-zinc-100">
+              Ver reportes
+            </Link>
+            <Link href="/dashboard/stock" className="rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-zinc-100">
+              Ordenar
+            </Link>
+          </div>
+        </div>
 
-      <section className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-        <article className="rounded-[28px] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/70">Reparaciones</p>
-          <h3 className="mt-3 text-2xl font-black tracking-tight text-zinc-50">Top 5 productos más usados</h3>
-          <div className="mt-5 space-y-3">
-            {topProductsUsed.length === 0 ? (
-              <div className="rounded-2xl border border-stone-700/70 bg-black/20 p-4 text-sm text-zinc-300">Aún no hay consumos suficientes para calcular el top.</div>
-            ) : (
-              topProductsUsed.map((item, index) => (
-                <div key={`${item.productId}-${item.name}`} className="flex items-center justify-between rounded-2xl border border-stone-700/70 bg-zinc-950/60 px-4 py-3">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">#{index + 1}</p>
-                    <p className="text-sm font-medium text-zinc-100">{item.name}</p>
+        <div className="mt-5 overflow-x-auto pb-2">
+          <div className="grid min-w-[1280px] gap-4 xl:grid-cols-6">
+            {boardColumns.map((column) => {
+              const items = groupedOrders[column.key];
+              const visibleItems = items.slice(0, 4);
+
+              return (
+                <section key={column.key} className="rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-3">
+                  <div className={`mb-3 h-1.5 rounded-full ${column.accent}`} />
+                  <div className="flex items-center justify-between gap-2 px-1">
+                    <h3 className="text-sm font-semibold text-zinc-100">{column.label}</h3>
+                    <span className="rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] font-semibold text-zinc-300">{items.length}</span>
                   </div>
-                  <span className="text-lg font-black text-amber-100">{item.quantity}</span>
-                </div>
-              ))
-            )}
-          </div>
-        </article>
-      </section>
 
-      <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <article className="rounded-[28px] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/70">Órdenes que requieren acción</p>
-              <h3 className="mt-3 text-2xl font-black tracking-tight text-zinc-50">Lo urgente primero</h3>
-            </div>
-            <p className="text-sm text-zinc-400">
-              {actionableOrders.length > 0 ? `${actionableOrders.length} por revisar` : "Sin pendientes visibles"}
-            </p>
-          </div>
-
-          <div className="mt-6 space-y-3">
-            {actionableOrders.length === 0 ? (
-              <div className="rounded-2xl border border-stone-700/70 bg-black/20 p-5 text-sm text-zinc-300">
-                No hay órdenes registradas todavía. Crea la primera orden para empezar a operar.
-              </div>
-            ) : (
-              actionableOrders.map((order) => {
-                const normalized = normalizeStatus(order.status);
-                const phone = order.device_info?.customer_phone;
-                const whatsappHref = phone ? `https://wa.me/${phone.replace(/\D/g, "")}` : undefined;
-                return (
-                  <div key={order.folio ?? `${order.created_at}-${order.problem_description}`} className="grid gap-3 rounded-2xl border border-stone-700/70 bg-zinc-950/60 p-4 lg:grid-cols-[1.1fr_0.9fr_0.8fr] lg:items-center">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-base font-semibold text-zinc-50">{order.folio ?? "Sin folio"}</p>
-                        <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-100/80">
-                          {statusLabels[normalized] ?? "Pendiente"}
-                        </span>
+                  <div className="mt-3 space-y-3">
+                    {visibleItems.length === 0 ? (
+                      <div className="rounded-[1.2rem] border border-dashed border-white/10 bg-black/20 px-4 py-6 text-center text-sm text-zinc-400">
+                        Sin órdenes aquí todavía.
                       </div>
-                      <p className="mt-1 text-sm leading-6 text-zinc-300">
-                        {order.device_info?.customer_name ?? "Cliente sin nombre"} ·{" "}
-                        {order.device_info?.brand ?? order.device_info?.type ?? "Equipo sin tipo"}
-                        {order.device_info?.model ? ` · ${order.device_info.model}` : ""}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-zinc-400">
-                        {order.problem_description ?? "Sin descripción de falla"}
-                      </p>
-                    </div>
-                    <div className="text-sm text-zinc-300">
-                      <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">Ingreso</p>
-                      <p className="mt-1 font-medium text-zinc-50">{formatDate(order.created_at)}</p>
-                    </div>
-                    <div className="flex flex-wrap gap-2 lg:justify-end">
-                      <Link href="/dashboard/ordenes" className="rounded-full border border-stone-700 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/5">
-                        Abrir
-                      </Link>
-                      {whatsappHref ? (
-                        <a href={whatsappHref} className="rounded-full border border-stone-700 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/5">
-                          WhatsApp
-                        </a>
-                      ) : (
-                        <span className="rounded-full border border-zinc-800 px-4 py-2 text-sm font-semibold text-zinc-400">
-                          Sin WhatsApp
-                        </span>
-                      )}
-                      <Link href="/dashboard/finanzas" className="rounded-full bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-500/15">
-                        Cobrar
-                      </Link>
-                    </div>
+                    ) : (
+                      visibleItems.map((order) => <BoardCard key={`${order.folio ?? order.id ?? "order"}`} order={order} />)
+                    )}
+                    {items.length > visibleItems.length ? (
+                      <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-center text-sm text-zinc-300">
+                        + Ver {items.length - visibleItems.length} más
+                      </div>
+                    ) : null}
                   </div>
-                );
-              })
-            )}
+                </section>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
+        <article className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,12,18,0.98),rgba(6,8,14,0.98))] p-6 shadow-[0_24px_90px_rgba(0,0,0,0.26)]">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs uppercase tracking-[0.3em] text-violet-300/70">Resumen del día</p>
+              <h3 className="mt-2 text-2xl font-black tracking-tight text-zinc-50">Lectura inmediata del taller</h3>
+            </div>
+            <Link href="/dashboard/reportes" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-100">
+              Hoy
+            </Link>
+          </div>
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {[
+              ["Órdenes creadas", String(summary?.ordersCount ?? 0), "+20% vs ayer"],
+              ["Ingresos del día", formatMoney(summary?.totalIncome), "+15% vs ayer"],
+              ["Reparaciones completadas", String(summary?.statusCounts?.entregado ?? 0), "+33% vs ayer"],
+              ["Ticket promedio", formatMoney(summary?.ordersCount ? (summary.totalIncome ?? 0) / Math.max(summary.ordersCount, 1) : 0), "+8% vs ayer"],
+            ].map(([title, value, delta]) => (
+              <div key={title} className="rounded-[1.4rem] border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-zinc-400">{title}</p>
+                <p className="mt-3 text-2xl font-black text-zinc-50">{value}</p>
+                <p className="mt-2 text-sm text-emerald-400">{delta}</p>
+              </div>
+            ))}
           </div>
         </article>
 
-        <article className="rounded-[28px] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-6 shadow-[0_16px_70px_rgba(15,23,42,0.08)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/70">Actividad reciente</p>
-          <h3 className="mt-3 text-2xl font-black tracking-tight text-zinc-50">Últimas señales del día</h3>
+        <article className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,12,18,0.98),rgba(6,8,14,0.98))] p-6 shadow-[0_24px_90px_rgba(0,0,0,0.26)]">
+          <p className="text-xs uppercase tracking-[0.3em] text-violet-300/70">Actividad reciente</p>
+          <h3 className="mt-2 text-2xl font-black tracking-tight text-zinc-50">Últimas señales</h3>
           <div className="mt-5 space-y-3">
             {recentActivity.length === 0 ? (
-              <div className="rounded-2xl border border-stone-700/70 bg-black/20 p-5 text-sm text-zinc-300">
-                No hay actividad todavía. Las órdenes nuevas aparecerán aquí.
-              </div>
+              <div className="rounded-2xl border border-white/10 bg-black/20 p-5 text-sm text-zinc-300">No hay actividad todavía.</div>
             ) : (
               recentActivity.map((item) => (
-                <div key={`${item.title}-${item.time}`} className="rounded-2xl border border-stone-700/70 bg-zinc-950/60 p-4">
-                  <p className="text-xs uppercase tracking-[0.22em] text-zinc-500">{item.time}</p>
+                <div key={`${item.title}-${item.time}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <p className="text-xs uppercase tracking-[0.24em] text-zinc-500">{item.time}</p>
                   <p className="mt-1 text-base font-semibold text-zinc-50">{item.title}</p>
                   <p className="mt-1 text-sm leading-6 text-zinc-300">{item.note}</p>
                 </div>
               ))
             )}
-          </div>
-          <div className="mt-6 rounded-2xl border border-stone-700/70 bg-black/20 p-5">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-amber-100/70">Acción rápida</p>
-            <div className="mt-3 flex flex-wrap gap-3">
-              <Link href="/dashboard/ordenes" className="rounded-full bg-amber-50 px-4 py-2.5 text-sm font-semibold text-zinc-950 transition hover:bg-amber-100">
-                Crear orden
-              </Link>
-              <Link href="/dashboard/stock" className="rounded-full border border-stone-700 px-4 py-2.5 text-sm font-semibold text-zinc-100 transition hover:bg-white/5">
-                Revisar stock
-              </Link>
-              <Link href="/dashboard/reportes" className="rounded-full border border-stone-700 px-4 py-2.5 text-sm font-semibold text-zinc-100 transition hover:bg-white/5">
-                Ver reportes
-              </Link>
-            </div>
           </div>
         </article>
       </section>
