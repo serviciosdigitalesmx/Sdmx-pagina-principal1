@@ -346,7 +346,7 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
 
     const { data: userRow, error: userRowError } = await supabaseAdmin
       .from('users')
-      .select('tenant_id, role, sucursal_id, activo, is_active')
+      .select('id, tenant_id, role, sucursal_id, activo, is_active')
       .eq('auth_user_id', data.user.id)
       .maybeSingle();
 
@@ -414,7 +414,7 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
 
     const { error: sessionInsertError } = await supabaseAdmin.from('security_sessions').insert([{
       tenant_id: tenantSecurity.id,
-      user_id: authPayload.user.sub,
+      user_id: userRow.id,
       session_key: sessionId,
       ip_address: typeof req.ip === 'string' ? req.ip : null,
       user_agent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
