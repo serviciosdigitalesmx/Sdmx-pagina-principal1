@@ -216,7 +216,7 @@ function DashboardShellContent({
       tenantId: auth.tenantId,
       tenantSlug: auth.tenantSlug || auth.tenantId,
       querySucursalId: nextSucursalId || null,
-      sessionSucursalId: auth.sucursalId,
+      sessionSucursalId: auth.role === 'owner' ? null : tenant.userSucursalId || null,
     });
     setActiveScope(nextScope);
     const params = new URLSearchParams(searchParams.toString());
