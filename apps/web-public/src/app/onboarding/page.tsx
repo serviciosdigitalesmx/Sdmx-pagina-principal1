@@ -4,7 +4,7 @@ import { useState, type ChangeEvent, type FormEvent } from "react";
 import { saveAuthToken } from "@/lib/auth-storage";
 import Link from "next/link";
 import { ShellBadge, StatCard, srFixTheme } from "@/components/srfix-theme";
-import { resolveApiBaseUrl, requireEnv } from "@white-label/config";
+import { resolveApiBaseUrl, optionalEnv } from "@white-label/config";
 
 type RegisterState = {
   workshopName: string;
@@ -20,7 +20,7 @@ const initialState: RegisterState = {
   phone: "",
 };
 
-const trialDays = requireEnv("NEXT_PUBLIC_SAAS_TRIAL_DAYS");
+const trialDays = optionalEnv("NEXT_PUBLIC_SAAS_TRIAL_DAYS") ?? "7";
 
 export default function OnboardingPage() {
   const [form, setForm] = useState<RegisterState>(initialState);

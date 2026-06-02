@@ -1,15 +1,15 @@
 import Link from "next/link";
-import { requireEnv } from "@white-label/config";
+import { optionalEnv } from "@white-label/config";
 import { PublicPortalLookup } from "@/components/public-portal-lookup";
 
-const productName = requireEnv("NEXT_PUBLIC_SAAS_BRAND_NAME");
-const brandShort = requireEnv("NEXT_PUBLIC_SAAS_BRAND_SHORT");
-const hubName = requireEnv("NEXT_PUBLIC_HUB_NAME");
-const adminUrl = requireEnv("NEXT_PUBLIC_WEB_ADMIN_URL");
-const publicUrl = requireEnv("NEXT_PUBLIC_WEB_PUBLIC_URL");
-const trialDays = requireEnv("NEXT_PUBLIC_SAAS_TRIAL_DAYS");
-const contactEmail = requireEnv("NEXT_PUBLIC_SAAS_CONTACT_EMAIL");
-const contactPhone = requireEnv("NEXT_PUBLIC_SAAS_CONTACT_PHONE");
+const productName = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "FIXI";
+const brandShort = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_SHORT") ?? "FX";
+const hubName = optionalEnv("NEXT_PUBLIC_HUB_NAME") ?? "Hub";
+const adminUrl = optionalEnv("NEXT_PUBLIC_WEB_ADMIN_URL") ?? "";
+const publicUrl = optionalEnv("NEXT_PUBLIC_WEB_PUBLIC_URL") ?? "";
+const trialDays = optionalEnv("NEXT_PUBLIC_SAAS_TRIAL_DAYS") ?? "7";
+const contactEmail = optionalEnv("NEXT_PUBLIC_SAAS_CONTACT_EMAIL") ?? "";
+const contactPhone = optionalEnv("NEXT_PUBLIC_SAAS_CONTACT_PHONE") ?? "";
 
 const featureCards = [
   {
