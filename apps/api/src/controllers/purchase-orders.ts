@@ -213,7 +213,7 @@ export const createPurchaseOrder = async (req: Request, res: Response) => {
     if (!(await validateSupplierOwnership(supabase, tenantId, body.supplierId))) {
       return res.status(404).json({ error: 'Supplier not found' });
     }
-    const resolvedSucursalId = body.sucursalId || (scope?.sucursalId ?? req.user?.sucursalId ?? null);
+    const resolvedSucursalId = body.sucursalId || (scope?.sucursalId ?? null);
     if (!(await validateSucursalOwnership(supabase, tenantId, resolvedSucursalId))) {
       return res.status(404).json({ error: 'Sucursal not found' });
     }
