@@ -4,13 +4,25 @@ import Link from "next/link";
 import { useEffect } from "react";
 
 function resolveDashboardTarget() {
-  const dashboardBaseUrl = process.env.NEXT_PUBLIC_WEB_ADMIN_URL ?? (process.env.NEXT_PUBLIC_BASE_DOMAIN ? `https://app.${process.env.NEXT_PUBLIC_BASE_DOMAIN}` : "");
+  const candidates = [
+    process.env.NEXT_PUBLIC_WEB_ADMIN_URL?.trim(),
+    process.env.NEXT_PUBLIC_BASE_DOMAIN?.trim() ? `https://app.${process.env.NEXT_PUBLIC_BASE_DOMAIN.trim()}` : null,
+    typeof window !== "undefined" ? `${window.location.protocol}//app.${window.location.hostname.replace(/^www\./, "")}` : null,
+  ].filter((value): value is string => Boolean(value));
 
-  if (!dashboardBaseUrl) {
-    return null;
+  for (const candidate of candidates) {
+    try {
+      const parsed = new URL(candidate);
+      if (parsed.protocol !== "https:") {
+        continue;
+      }
+      return new URL("/", parsed.toString()).toString();
+    } catch {
+      // continue
+    }
   }
 
-  return new URL("/", dashboardBaseUrl).toString();
+  return null;
 }
 
 export default function DashboardBridgePage() {
