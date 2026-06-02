@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 
 function resolveDashboardTarget() {
-  const dashboardBaseUrl = process.env.NEXT_PUBLIC_WEB_ADMIN_URL;
+  const dashboardBaseUrl = process.env.NEXT_PUBLIC_WEB_ADMIN_URL ?? (process.env.NEXT_PUBLIC_BASE_DOMAIN ? `https://app.${process.env.NEXT_PUBLIC_BASE_DOMAIN}` : "");
 
   if (!dashboardBaseUrl) {
     return null;

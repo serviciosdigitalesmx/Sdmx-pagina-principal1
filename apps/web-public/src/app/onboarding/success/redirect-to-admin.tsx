@@ -3,24 +3,36 @@
 import { useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 
+function resolveAdminBaseUrl() {
+  const candidates = [
+    process.env.NEXT_PUBLIC_WEB_ADMIN_URL?.trim(),
+    process.env.NEXT_PUBLIC_BASE_DOMAIN?.trim() ? `https://app.${process.env.NEXT_PUBLIC_BASE_DOMAIN.trim()}` : null,
+    typeof window !== "undefined" ? `${window.location.protocol}//app.${window.location.hostname.replace(/^www\./, "")}` : null,
+  ].filter((value): value is string => Boolean(value));
+
+  for (const candidate of candidates) {
+    try {
+      const parsed = new URL(candidate);
+      if (parsed.protocol !== "https:") {
+        continue;
+      }
+      return parsed.toString().replace(/\/$/, "");
+    } catch {
+      // continue
+    }
+  }
+
+  return null;
+}
+
 function buildBridgeUrl(token: string, tenant: string | null) {
-  const adminUrl = process.env.NEXT_PUBLIC_WEB_ADMIN_URL;
+  const adminUrl = resolveAdminBaseUrl();
 
   if (!adminUrl) {
     return { url: null, error: "Falta configurar la URL del panel." };
   }
 
-  let base: URL;
-
-  try {
-    base = new URL(adminUrl);
-  } catch {
-    return { url: null, error: "La URL del panel no es válida." };
-  }
-
-  if (base.protocol !== "https:") {
-    return { url: null, error: "La URL del panel debe usar https." };
-  }
+  const base = new URL(adminUrl);
 
   base.pathname = "/auth/bridge";
   base.search = "";

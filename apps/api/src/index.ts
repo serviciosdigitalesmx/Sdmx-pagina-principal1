@@ -47,6 +47,13 @@ const localhostOrigins = new Set([
 ]);
 
 const isVercelPreviewHostname = (hostname: string) => hostname.endsWith('.vercel.app');
+const defaultProductionOrigins = [
+  process.env.APP_URL?.trim(),
+  process.env.NEXT_PUBLIC_WEB_PUBLIC_URL?.trim(),
+  process.env.NEXT_PUBLIC_WEB_ADMIN_URL?.trim(),
+  'https://serviciosdigitalesmx.online',
+  'https://app.serviciosdigitalesmx.online',
+].filter((origin): origin is string => Boolean(origin));
 
 app.use(cors({
   origin: (origin, callback) => {
@@ -69,10 +76,19 @@ app.use(cors({
       }
     });
 
+    const productionHostnames = defaultProductionOrigins.map((o) => {
+      try {
+        return new URL(o).hostname;
+      } catch {
+        return o;
+      }
+    });
+
     const isWildcardAllowed = baseDomains.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
 
     const isAllowed =
       allowedHostnames.includes(hostname) ||
+      productionHostnames.includes(hostname) ||
       isWildcardAllowed ||
       isVercelPreviewHostname(hostname) ||
       localhostOrigins.has(hostname);

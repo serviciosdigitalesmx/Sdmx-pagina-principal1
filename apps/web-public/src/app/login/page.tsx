@@ -20,7 +20,7 @@ const initialState: LoginState = {
 };
 
 function getDashboardRedirectUrl() {
-  const adminUrl = process.env.NEXT_PUBLIC_WEB_ADMIN_URL;
+  const adminUrl = process.env.NEXT_PUBLIC_WEB_ADMIN_URL ?? (process.env.NEXT_PUBLIC_BASE_DOMAIN ? `https://app.${process.env.NEXT_PUBLIC_BASE_DOMAIN}` : "");
 
   if (!adminUrl) {
     return new URL("/dashboard", window.location.origin).toString();
@@ -34,7 +34,7 @@ function getDashboardRedirectUrl() {
 }
 
 function getAdminBridgeUrl(token: string) {
-  const adminUrl = process.env.NEXT_PUBLIC_WEB_ADMIN_URL;
+  const adminUrl = process.env.NEXT_PUBLIC_WEB_ADMIN_URL ?? (process.env.NEXT_PUBLIC_BASE_DOMAIN ? `https://app.${process.env.NEXT_PUBLIC_BASE_DOMAIN}` : "");
 
   if (!adminUrl) {
     return getDashboardRedirectUrl();
