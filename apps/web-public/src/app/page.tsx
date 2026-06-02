@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { optionalEnv } from "@white-label/config";
 import { PublicPortalLookup } from "@/components/public-portal-lookup";
+import { RootAuthHashRedirect } from "@/components/root-auth-hash-redirect";
 
 const productName = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "Servicios Digitales MX";
 const brandShort = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_SHORT") ?? "FX";
@@ -220,6 +221,7 @@ function MobilePortalPreview() {
 export default function Home() {
   return (
     <main className="min-h-screen bg-[#f5f4ef] text-slate-950">
+      <RootAuthHashRedirect />
       <section className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
         <header className="flex flex-col gap-4 rounded-[2rem] border border-slate-200 bg-white px-5 py-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">

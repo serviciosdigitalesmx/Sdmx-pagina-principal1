@@ -299,6 +299,7 @@ type AdminUserRecord = {
 };
 
 import { readAuthToken } from "@/lib/auth-storage";
+import { clearAuthToken } from "@/lib/auth-storage";
 import { getCurrentSession } from "@/lib/session";
 import { getActiveScope } from "@/lib/scope";
 import { enqueueOfflineRequest } from "@/lib/pwa/offline-queue";
@@ -311,10 +312,10 @@ class FixService {
 
   private get tenantId() {
     const session = getCurrentSession();
-    if (session?.tenantSlug) {
-      return session.tenantSlug;
+    if (session?.tenantId) {
+      return session.tenantId;
     }
-    throw new Error("Sesión inválida: tenant_slug ausente");
+    throw new Error("Sesión inválida: tenant_id ausente");
   }
 
   private getToken(): string {
@@ -392,6 +393,17 @@ class FixService {
         (payload && typeof payload.error === 'string' && payload.error) ||
         `HTTP ${response.status}`;
       const details = (payload as ApiErrorResponse).details ? ` - ${JSON.stringify((payload as ApiErrorResponse).details)}` : '';
+
+      if (
+        response.status === 401 &&
+        /invalid token signature|token expired|session revoked|missing or invalid authorization header|unauthorized/i.test(message)
+      ) {
+        clearAuthToken();
+        if (typeof window !== 'undefined') {
+          window.location.replace('/login');
+        }
+      }
+
       throw new Error(`${message}${details}`);
     }
 
