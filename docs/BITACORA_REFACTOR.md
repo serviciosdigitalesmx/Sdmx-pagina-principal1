@@ -1,4 +1,4 @@
-# Bitacora Refactor Sr Fix
+# Historical: Bitacora Refactor Sr Fix
 
 ## 2026-04-14 09:55 America/Monterrey
 - Inicio formal de ejecucion con contrato.

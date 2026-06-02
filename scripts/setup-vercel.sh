@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Utility to add environment variables
+# Historical bootstrap helper for Vercel.
+# Keep this aligned with live project settings before any manual use.
 add_env() {
   local project=$1
   local key=$2
@@ -17,7 +18,7 @@ add_env() {
   cd ../..
 }
 
-echo "Configuring web-public..."
+echo "Configuring web-public (historical bootstrap)..."
 add_env "web-public" "NEXT_PUBLIC_API_URL" "https://api.serviciosdigitalesmx.online"
 add_env "web-public" "NEXT_PUBLIC_API_BASE_URL" "https://api.serviciosdigitalesmx.online"
 add_env "web-public" "NEXT_PUBLIC_RENDER_API_URL" "https://sdmx-backend-api.onrender.com"
@@ -28,7 +29,7 @@ add_env "web-public" "NEXT_PUBLIC_HUB_NAME" "Hub operativo"
 add_env "web-public" "NEXT_PUBLIC_TENANT_LANDING_URL_TEMPLATE" "/{tenant}"
 add_env "web-public" "NEXT_PUBLIC_SUPABASE_URL" "https://your-project.supabase.co"
 add_env "web-public" "NEXT_PUBLIC_SUPABASE_ANON_KEY" "your-supabase-anon-key"
-add_env "web-public" "NEXT_PUBLIC_SAAS_BRAND_NAME" "FIXI"
+add_env "web-public" "NEXT_PUBLIC_SAAS_BRAND_NAME" "Servicios Digitales MX"
 add_env "web-public" "NEXT_PUBLIC_SAAS_LEGAL_NAME" "Servicios Digitales MX"
 add_env "web-public" "NEXT_PUBLIC_SAAS_BRAND_SHORT" "SF"
 add_env "web-public" "NEXT_PUBLIC_SAAS_DEMO_URL" "https://clientes.serviciosdigitalesmx.online"
@@ -36,21 +37,21 @@ add_env "web-public" "NEXT_PUBLIC_SAAS_CONTACT_EMAIL" "contacto@serviciosdigital
 add_env "web-public" "NEXT_PUBLIC_SAAS_CONTACT_PHONE" "+52 8129716587"
 add_env "web-public" "NEXT_PUBLIC_SAAS_TRIAL_DAYS" "14"
 
-echo "Configuring web-admin..."
+echo "Configuring web-admin (historical bootstrap)..."
 add_env "web-admin" "NEXT_PUBLIC_AUTH_TOKEN_KEY" "srfix_auth_token"
 add_env "web-admin" "NEXT_PUBLIC_DEFAULT_TENANT_ID" "demo"
 add_env "web-admin" "NEXT_PUBLIC_DEFAULT_TENANT_NAME" "Taller Demo"
-add_env "web-admin" "NEXT_PUBLIC_TENANT_BRAND_NAME" "Sr. Fix Admin"
+add_env "web-admin" "NEXT_PUBLIC_TENANT_BRAND_NAME" "Servicios Digitales MX Admin"
 add_env "web-admin" "NEXT_PUBLIC_THEME_PRIMARY" "#22d3ee"
 add_env "web-admin" "NEXT_PUBLIC_THEME_SECONDARY" "#0f172a"
 add_env "web-admin" "NEXT_PUBLIC_THEME_ACCENT" "#34d399"
 
-echo "Configuring web-clientes..."
+echo "Configuring web-clientes (historical bootstrap)..."
 add_env "web-clientes" "NEXT_PUBLIC_API_URL" "https://api.serviciosdigitalesmx.online"
 add_env "web-clientes" "NEXT_PUBLIC_API_BASE_URL" "https://api.serviciosdigitalesmx.online"
 add_env "web-clientes" "NEXT_PUBLIC_RENDER_API_URL" "https://sdmx-backend-api.onrender.com"
 add_env "web-clientes" "NEXT_PUBLIC_CUSTOMER_PORTAL_NAME" "Portal de Seguimiento"
-add_env "web-clientes" "NEXT_PUBLIC_WORKSHOP_NAME" "Sr. Fix"
+add_env "web-clientes" "NEXT_PUBLIC_WORKSHOP_NAME" "Servicios Digitales MX"
 add_env "web-clientes" "NEXT_PUBLIC_CUSTOMER_SUPPORT_EMAIL" "soporte@serviciosdigitalesmx.online"
 add_env "web-clientes" "NEXT_PUBLIC_CUSTOMER_TRACKING_URL" "https://clientes.serviciosdigitalesmx.online"
 

@@ -1,4 +1,4 @@
-# Auditoría Contra CONTRATO_SR_FIX
+# Historical: Auditoría Contra CONTRATO_SR_FIX
 
 Fecha de auditoría: 2026-03-29
 

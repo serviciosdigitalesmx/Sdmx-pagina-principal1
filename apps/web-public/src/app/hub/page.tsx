@@ -7,7 +7,7 @@ import { optionalEnv, resolveApiBaseUrl } from "@white-label/config";
 
 const hubName = optionalEnv("NEXT_PUBLIC_HUB_NAME") ?? "Hub";
 const adminUrl = optionalEnv("NEXT_PUBLIC_WEB_ADMIN_URL") ?? "";
-const publicHomeLabel = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "FIXI";
+const publicHomeLabel = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "Servicios Digitales MX";
 const tenantLandingTemplate = optionalEnv("NEXT_PUBLIC_TENANT_LANDING_URL_TEMPLATE") ?? "/[tenantSlug]";
 const hubModules = [
   {

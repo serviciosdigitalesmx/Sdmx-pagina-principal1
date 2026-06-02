@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Historical helper retained for reference.
+# Prefer CI/Vercel project settings for deployments.
+
 deploy_app() {
   local project=$1
   echo "======================================="

@@ -69,7 +69,7 @@ self.addEventListener('fetch', (event) => {
 
 self.addEventListener('push', (event) => {
   const payload = event.data ? event.data.json() : {};
-  const title = payload.title || 'SrFix';
+  const title = payload.title || 'Servicios Digitales MX';
   const options = {
     body: payload.body || 'Tienes una actualización nueva en tu taller.',
     icon: payload.icon || '/favicon.ico',

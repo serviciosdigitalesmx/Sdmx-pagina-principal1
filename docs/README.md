@@ -1,4 +1,6 @@
-# SRFIX Cloud - Sistema de Gestión de Taller
+# Historical Docs
+
+> Legacy SrFix documentation retained for context only.
 
 Proyecto web + Google Apps Script para gestionar recepción, diagnóstico y seguimiento de equipos.
 

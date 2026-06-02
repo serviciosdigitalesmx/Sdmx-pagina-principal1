@@ -1,4 +1,4 @@
-# Web Admin vs SrFix Integration Map
+# Historical: Web Admin vs SrFix Integration Map
 
 ## Objetivo
 

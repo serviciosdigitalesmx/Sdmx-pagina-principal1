@@ -1,4 +1,4 @@
-# Checklist de Pendientes Refactor Sr Fix
+# Historical: Checklist de Pendientes Refactor Sr Fix
 
 Estado legend:
 - [ ] pendiente

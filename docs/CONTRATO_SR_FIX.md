@@ -1,4 +1,6 @@
-# CONTRATO SRFIX
+# Historical: CONTRATO SRFIX
+
+> Legacy contract retained for reference only.
 
 ## 1. Propósito
 

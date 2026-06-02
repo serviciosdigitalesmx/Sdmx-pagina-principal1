@@ -3,7 +3,7 @@ import { optionalEnv } from "@white-label/config";
 
 export default function NotFound() {
   const brandShort = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_SHORT") ?? "FX";
-  const productName = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "FIXI";
+  const productName = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "Servicios Digitales MX";
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(34,211,238,0.14),_transparent_35%),linear-gradient(180deg,#09090b_0%,#111113_48%,#18181b_100%)] px-4 py-16 text-zinc-50 flex flex-col items-center justify-center">
@@ -60,7 +60,7 @@ export default function NotFound() {
 
         {/* Footer Accent */}
           <div className="pt-12 text-xs text-zinc-500 font-medium tracking-wide">
-          &copy; {new Date().getFullYear()} FIXIE. Todos los derechos reservados.
+          &copy; {new Date().getFullYear()} Servicios Digitales MX. Todos los derechos reservados.
           </div>
         </div>
       </main>

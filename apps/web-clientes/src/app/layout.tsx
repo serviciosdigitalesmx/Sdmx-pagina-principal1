@@ -3,10 +3,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title:
-    process.env.NEXT_PUBLIC_CUSTOMER_META_TITLE ?? "FIXI | Portal del cliente",
+    process.env.NEXT_PUBLIC_CUSTOMER_META_TITLE ??
+    "Servicios Digitales MX | Portal del cliente",
   description:
     process.env.NEXT_PUBLIC_CUSTOMER_META_DESCRIPTION ??
-    "FIXI: portal para clientes de taller con seguimiento, soporte y notificaciones.",
+    "Servicios Digitales MX: portal para clientes de taller con seguimiento, soporte y notificaciones.",
 };
 
 export default function RootLayout({

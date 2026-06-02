@@ -181,7 +181,7 @@ export default function PortalPage() {
           <footer className="rounded-[1.5rem] border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-[0_12px_50px_rgba(15,23,42,0.06)]">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <div className="font-semibold text-slate-900">SrFix</div>
+                <div className="font-semibold text-slate-900">Servicios Digitales MX</div>
                 <div>Plataforma de seguimiento y atención para talleres.</div>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -432,7 +432,7 @@ export default function PortalPage() {
         <footer className="rounded-[1.5rem] border border-slate-200 bg-white p-5 text-sm text-slate-600 shadow-[0_12px_50px_rgba(15,23,42,0.06)]">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="font-semibold text-slate-900">SrFix</div>
+              <div className="font-semibold text-slate-900">Servicios Digitales MX</div>
               <div>Plataforma de seguimiento y atención para talleres.</div>
             </div>
             <div className="flex flex-wrap gap-3">

@@ -173,7 +173,7 @@ export default function LoginPage() {
           <p className="text-xs uppercase tracking-[0.35em] text-[#1f2937]">Acceso al taller</p>
           <h1 className="mt-4 text-4xl font-semibold tracking-tight sm:text-5xl [font-family:var(--font-display)]">
             <span className="sm:hidden">Entra al sistema.</span>
-            <span className="hidden sm:inline">Entra a FIXI.</span>
+            <span className="hidden sm:inline">Entra a Servicios Digitales MX.</span>
           </h1>
           <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">
             Tu acceso te lleva directo al área de trabajo del taller y mantiene tu sesión en este dispositivo hasta que cierres sesión.
@@ -266,7 +266,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full rounded-full bg-[#334155] px-6 py-3 font-semibold text-white transition hover:bg-[#1f2937] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? "Entrando..." : "Acceder a FIXI"}
+              {loading ? "Entrando..." : "Acceder"}
             </button>
 
             <button

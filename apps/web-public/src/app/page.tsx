@@ -2,7 +2,7 @@ import Link from "next/link";
 import { optionalEnv } from "@white-label/config";
 import { PublicPortalLookup } from "@/components/public-portal-lookup";
 
-const productName = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "FIXI";
+const productName = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "Servicios Digitales MX";
 const brandShort = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_SHORT") ?? "FX";
 const hubName = optionalEnv("NEXT_PUBLIC_HUB_NAME") ?? "Hub";
 const adminUrl = optionalEnv("NEXT_PUBLIC_WEB_ADMIN_URL") ?? "";

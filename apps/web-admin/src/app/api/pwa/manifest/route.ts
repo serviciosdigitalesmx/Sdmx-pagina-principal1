@@ -7,8 +7,8 @@ function getTenantSlug(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const tenantSlug = getTenantSlug(request);
   const manifest = {
-    name: `${tenantSlug} · SrFix`,
-    short_name: "SrFix Admin",
+    name: `${tenantSlug} · Servicios Digitales MX`,
+    short_name: "SDMX Admin",
     description: "Panel multi-tenant para seguimiento técnico y operación del taller.",
     start_url: "/dashboard",
     scope: "/",
@@ -26,4 +26,3 @@ export async function GET(request: NextRequest) {
     },
   });
 }
-

@@ -4,8 +4,10 @@ import { PwaBootstrap } from "@/components/pwa/pwa-bootstrap";
 import { ToastProvider } from "@white-label/ui";
 
 export const metadata: Metadata = {
-  title: process.env.NEXT_PUBLIC_TENANT_META_TITLE ?? "FIXI Admin",
-  description: process.env.NEXT_PUBLIC_TENANT_META_DESCRIPTION ?? "Panel operativo de FIXI",
+  title: process.env.NEXT_PUBLIC_TENANT_META_TITLE ?? "Servicios Digitales MX Admin",
+  description:
+    process.env.NEXT_PUBLIC_TENANT_META_DESCRIPTION ??
+    "Panel operativo de Servicios Digitales MX",
 };
 
 export const viewport = {

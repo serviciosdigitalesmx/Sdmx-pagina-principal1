@@ -185,7 +185,7 @@ export default function LoginPage() {
           <ShellBadge>Acceso al taller</ShellBadge>
           <h1 className="mt-5 text-4xl font-semibold tracking-tight text-stone-50 sm:text-5xl [font-family:var(--font-display)]">
             <span className="sm:hidden">Entra al sistema.</span>
-            <span className="hidden sm:inline">Entra a FIXI.</span>
+            <span className="hidden sm:inline">Entra a Servicios Digitales MX.</span>
           </h1>
           <p className="mt-4 max-w-xl text-base leading-7 text-stone-300">
             Tu acceso te lleva directo al área de trabajo del taller y mantiene tu sesión en este dispositivo hasta que cierres sesión.
