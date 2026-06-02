@@ -9,7 +9,7 @@ export type DashboardScope = {
   sucursalId: string | null;
   canUseConsolidatedView: boolean;
   role: ScopeRole;
-  source: 'query' | 'tenant' | 'default';
+  source: 'query' | 'bootstrap' | 'default';
 };
 
 let activeScope: DashboardScope | null = null;
@@ -46,7 +46,7 @@ export function resolveDashboardScope(input: {
       sucursalId,
       canUseConsolidatedView: true,
       role,
-      source: querySucursalId ? 'query' : defaultSucursalId ? 'tenant' : 'default',
+      source: querySucursalId ? 'query' : defaultSucursalId ? 'bootstrap' : 'default',
     };
   }
 
@@ -58,7 +58,7 @@ export function resolveDashboardScope(input: {
     sucursalId,
     canUseConsolidatedView: false,
     role,
-    source: querySucursalId ? 'query' : defaultSucursalId ? 'tenant' : 'default',
+    source: querySucursalId ? 'query' : defaultSucursalId ? 'bootstrap' : 'default',
   };
 }
 
