@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { requireEnv } from "@white-label/config";
+import { optionalEnv } from "@white-label/config";
 
 const geistSans = Geist({
   subsets: ["latin"],
@@ -16,12 +16,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: requireEnv("NEXT_PUBLIC_SAAS_BRAND_NAME"),
-  description: requireEnv("NEXT_PUBLIC_SAAS_META_DESCRIPTION"),
+  title: optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "FIXI",
+  description: optionalEnv("NEXT_PUBLIC_SAAS_META_DESCRIPTION") ?? "FIXI: SaaS multi-tenant para talleres.",
 };
 
 export const viewport = {
-  themeColor: requireEnv("NEXT_PUBLIC_SAAS_THEME_COLOR"),
+  themeColor: optionalEnv("NEXT_PUBLIC_SAAS_THEME_COLOR") ?? "#111827",
 };
 
 export default function RootLayout({

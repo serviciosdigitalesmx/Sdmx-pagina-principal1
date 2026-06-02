@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { readAuthToken, saveAuthToken } from "@/lib/auth-storage";
-import { requireEnv, resolveApiBaseUrl } from "@white-label/config";
+import { optionalEnv, resolveApiBaseUrl } from "@white-label/config";
 
-const hubName = requireEnv("NEXT_PUBLIC_HUB_NAME");
-const adminUrl = requireEnv("NEXT_PUBLIC_WEB_ADMIN_URL");
-const publicHomeLabel = requireEnv("NEXT_PUBLIC_SAAS_BRAND_NAME");
-const tenantLandingTemplate = requireEnv("NEXT_PUBLIC_TENANT_LANDING_URL_TEMPLATE");
+const hubName = optionalEnv("NEXT_PUBLIC_HUB_NAME") ?? "Hub";
+const adminUrl = optionalEnv("NEXT_PUBLIC_WEB_ADMIN_URL") ?? "";
+const publicHomeLabel = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "FIXI";
+const tenantLandingTemplate = optionalEnv("NEXT_PUBLIC_TENANT_LANDING_URL_TEMPLATE") ?? "/[tenantSlug]";
 const hubModules = [
   {
     title: "Recepción",
