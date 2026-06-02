@@ -8,6 +8,7 @@ import { ProtectedLink } from "@/components/guard/ProtectedLink";
 import { useAuth } from "@/components/guard/use-auth";
 import type { Role } from "@/components/guard/use-auth";
 import { fixService } from "@/services/fixService";
+import { resolveDashboardScope, setActiveScope } from "@/lib/scope";
 import { getModuleByRoute, getModuleStatusCounts } from "@/lib/module-catalog";
 import { readAuthToken } from "@/lib/auth-storage";
 import { resolveApiBaseUrl } from "@white-label/config";
@@ -98,7 +99,16 @@ function DashboardShellContent({
       userRole: auth.role || tenant.userRole,
     };
   }, [auth.role, auth.tenantSlug, auth.userEmail, tenant]);
-  const sucursalId = searchParams.get('sucursalId') ?? auth.sucursalId ?? '';
+  const dashboardScope = React.useMemo(() => {
+    return resolveDashboardScope({
+      role: auth.role,
+      tenantId: auth.tenantId,
+      tenantSlug: auth.tenantSlug || auth.tenantId,
+      querySucursalId: searchParams.get('sucursalId'),
+      sessionSucursalId: auth.sucursalId,
+    });
+  }, [auth.role, auth.sucursalId, auth.tenantId, auth.tenantSlug, searchParams]);
+  const sucursalId = dashboardScope.sucursalId ?? '';
   const enabledModules = React.useMemo(() => {
     const activeModules = tenantConfig?.capabilities?.active_modules ?? tenantConfig?.active_modules;
     if (Array.isArray(activeModules) && activeModules.length > 0) {
@@ -142,6 +152,11 @@ function DashboardShellContent({
       cancelled = true;
     };
   }, []);
+
+  React.useEffect(() => {
+    setActiveScope(dashboardScope);
+    return () => setActiveScope(null);
+  }, [dashboardScope]);
 
   React.useEffect(() => {
     setMobileNavOpen(false);
@@ -191,6 +206,14 @@ function DashboardShellContent({
   }, []);
 
   function updateSucursal(nextSucursalId: string) {
+    const nextScope = resolveDashboardScope({
+      role: auth.role,
+      tenantId: auth.tenantId,
+      tenantSlug: auth.tenantSlug || auth.tenantId,
+      querySucursalId: nextSucursalId || null,
+      sessionSucursalId: auth.sucursalId,
+    });
+    setActiveScope(nextScope);
     const params = new URLSearchParams(searchParams.toString());
     if (nextSucursalId) {
       params.set('sucursalId', nextSucursalId);
@@ -419,15 +442,22 @@ function DashboardShellContent({
           </div>
         </header>
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-dark bg-bg-dark px-4 py-2 text-xs font-medium text-text-secondary-dark sm:px-6">
-          <span>BUILD: {ADMIN_BUILD_MARKER}</span>
+          <div className="flex flex-wrap items-center gap-3">
+            <span>BUILD: {ADMIN_BUILD_MARKER}</span>
+            <span>
+              Modo: {dashboardScope.mode === 'consolidated' ? 'Consolidado' : 'Sucursal activa'}
+            </span>
+          </div>
           <div className="flex flex-wrap items-center gap-2 normal-case tracking-normal">
-            <span className="text-xs text-text-secondary-dark">Todas las sucursales</span>
+            <span className="text-xs text-text-secondary-dark">
+              {dashboardScope.mode === 'consolidated' ? 'Vista consolidada' : 'Sucursal activa'}
+            </span>
             <select
               value={sucursalId}
               onChange={(event) => updateSucursal(event.target.value)}
               className="min-h-10 min-w-48 rounded-lg border border-border-dark bg-bg-dark px-3 py-2 text-sm text-text-primary-dark focus:outline-none focus:ring-2 focus:ring-active touch-manipulation"
             >
-              <option value="">Todas / contexto actual</option>
+              <option value="">Consolidado / contexto actual</option>
               {sucursales.map((sucursal) => (
                 <option key={sucursal.id ?? sucursal.code ?? sucursal.name} value={sucursal.id ?? ''}>
                   {sucursal.name ?? 'Sucursal'}{sucursal.city ? ` · ${sucursal.city}` : ''}{sucursal.code ? ` (${sucursal.code})` : ''}

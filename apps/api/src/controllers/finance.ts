@@ -67,7 +67,8 @@ export const getBalance = async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'Only owner can access global balance' });
     }
 
-    const sucursalId = typeof req.query.sucursalId === 'string' ? req.query.sucursalId.trim() : '';
+    const scope = req.scope;
+    const sucursalId = scope?.mode === 'branch' ? scope.sucursalId ?? '' : '';
     const { orders, expenses } = await loadFinanceFacts(tenantId);
 
     const filteredOrders = sucursalId
@@ -121,7 +122,8 @@ export const getBalance = async (req: Request, res: Response) => {
 export const getCashflow = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
-    const sucursalId = req.params.sucursalId;
+    const scope = req.scope;
+    const sucursalId = scope?.sucursalId ?? req.params.sucursalId;
 
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
     if (!sucursalId) return res.status(400).json({ error: 'Missing sucursalId' });
@@ -169,14 +171,15 @@ export const createExpense = async (req: Request, res: Response) => {
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
 
     const body = createExpenseSchema.parse(req.body);
-    const tokenSucursalId = req.user?.sucursalId;
+    const scope = req.scope;
+    const tokenSucursalId = scope?.sucursalId ?? '';
     const supabase = getTenantClient(tenantId);
 
     if (!(await assertSucursalOwnership(supabase, tenantId, body.sucursalId))) {
       return res.status(403).json({ error: 'Sucursal mismatch' });
     }
 
-    if (req.user?.role === 'manager' && tokenSucursalId && body.sucursalId !== tokenSucursalId) {
+    if (scope?.mode === 'branch' && tokenSucursalId && body.sucursalId !== tokenSucursalId) {
       return res.status(403).json({ error: 'Sucursal mismatch' });
     }
 
@@ -231,7 +234,8 @@ export const getExpense = async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'Sucursal mismatch' });
     }
 
-    if (req.user?.role === 'manager' && req.user.sucursalId && data.sucursal_id !== req.user.sucursalId) {
+    const scope = req.scope;
+    if (scope?.mode === 'branch' && (scope?.sucursalId ?? '') && data.sucursal_id !== scope.sucursalId) {
       return res.status(403).json({ error: 'Sucursal mismatch' });
     }
 
@@ -261,7 +265,8 @@ export const deleteExpense = async (req: Request, res: Response) => {
       return res.status(502).json({ error: 'Failed to fetch expense', details: lookup.error.message });
     }
 
-    if (req.user?.role === 'manager' && req.user.sucursalId && lookup.data.sucursal_id !== req.user.sucursalId) {
+    const scope = req.scope;
+    if (scope?.mode === 'branch' && (scope?.sucursalId ?? '') && lookup.data.sucursal_id !== scope.sucursalId) {
       return res.status(403).json({ error: 'Sucursal mismatch' });
     }
 

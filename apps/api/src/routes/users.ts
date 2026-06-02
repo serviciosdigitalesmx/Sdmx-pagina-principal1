@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
+import { attachScope } from '../middleware/scope';
 import { requireTenantBillingActive } from '../middleware/tenantBilling';
 import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
 import { requireRole } from '../middleware/requireRole';
@@ -8,6 +9,7 @@ import { deactivateUser, getUserPurchaseOrders, inviteUser, listUsers, updateUse
 const router = Router({ mergeParams: true });
 
 router.use(requireAuth);
+router.use(attachScope);
 router.use(requireTenantBillingActive);
 router.use(attachTenantCapabilities);
 

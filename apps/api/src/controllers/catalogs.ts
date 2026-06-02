@@ -157,6 +157,7 @@ export const listCustomers = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
+    const scope = req.scope;
     const supabase = getTenantClient(tenantId);
     let query = supabase
       .from('customers')
@@ -165,8 +166,9 @@ export const listCustomers = async (req: Request, res: Response) => {
       .order('created_at', { ascending: false })
       .limit(100);
 
-    if (req.user?.role === 'manager' && req.user.sucursalId) {
-      query = query.eq('sucursal_id', req.user.sucursalId);
+    const scopedSucursalId = scope?.mode === 'branch' ? scope.sucursalId ?? '' : '';
+    if (scopedSucursalId) {
+      query = query.eq('sucursal_id', scopedSucursalId);
     }
 
     const { data, error } = await query;
@@ -183,10 +185,11 @@ export const createCustomer = async (req: Request, res: Response) => {
     const tenantId = req.tenantId;
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
     const body = createCustomerSchema.parse(req.body);
+    const scope = req.scope;
     const supabase = getTenantClient(tenantId);
     const { data, error } = await supabase.from('customers').insert([{
       tenant_id: tenantId,
-      sucursal_id: req.user?.sucursalId ?? null,
+      sucursal_id: scope?.sucursalId ?? null,
       name: body.name,
       phone: body.phone,
       email: body.email || null,
@@ -204,9 +207,9 @@ export const listInventory = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
-    const sucursalId = typeof req.query.sucursalId === 'string' ? req.query.sucursalId.trim() : '';
+    const scope = req.scope;
     const supabase = getTenantClient(tenantId);
-    const effectiveSucursalId = sucursalId || (req.user?.role === 'manager' ? req.user.sucursalId ?? '' : '');
+    const effectiveSucursalId = scope?.mode === 'branch' ? scope.sucursalId ?? '' : '';
 
     if (effectiveSucursalId && !(await validateSucursalOwnership(supabase, tenantId, effectiveSucursalId))) {
       return res.status(403).json({ error: 'Sucursal mismatch' });
@@ -259,6 +262,7 @@ export const createInventoryItem = async (req: Request, res: Response) => {
     const tenantId = req.tenantId;
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
     const body = createInventorySchema.parse(req.body);
+    const scope = req.scope;
     const supabase = getTenantClient(tenantId);
 
     if (body.sucursalId && !isUuid(body.sucursalId)) {
@@ -268,13 +272,14 @@ export const createInventoryItem = async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'Sucursal mismatch' });
     }
 
-    if (req.user?.role === 'manager' && req.user.sucursalId && body.sucursalId && body.sucursalId !== req.user.sucursalId) {
+    if (scope?.mode === 'branch' && scope.sucursalId && body.sucursalId && body.sucursalId !== scope.sucursalId) {
       return res.status(403).json({ error: 'Sucursal mismatch' });
     }
 
     const productRow = await ensureProductCatalogRecord(supabase, tenantId, body.sku, body.description, body.description);
-    const inventoryRow = await ensureSucursalInventoryRow(supabase, tenantId, body.sucursalId ?? null, productRow.id, Number(body.stock));
-    await refreshInventoryAlert(tenantId, productRow.id, body.sucursalId ?? null, Number(body.stock));
+    const resolvedSucursalId = body.sucursalId ?? scope?.sucursalId ?? null;
+    const inventoryRow = await ensureSucursalInventoryRow(supabase, tenantId, resolvedSucursalId, productRow.id, Number(body.stock));
+    await refreshInventoryAlert(tenantId, productRow.id, resolvedSucursalId, Number(body.stock));
     return res.status(201).json({
       success: true,
       data: {
@@ -298,6 +303,7 @@ export const updateInventoryItem = async (req: Request, res: Response) => {
 
     const inventoryId = req.params.id;
     const body = updateInventorySchema.parse(req.body);
+    const scope = req.scope;
     const supabase = getTenantClient(tenantId);
 
     const { data: currentRow, error: currentError } = await supabase
@@ -312,7 +318,9 @@ export const updateInventoryItem = async (req: Request, res: Response) => {
     }
 
     const nextStock = typeof body.stock === 'number' ? body.stock : Number(currentRow.stock_current ?? 0);
-    const nextSucursalId = body.sucursalId === null ? null : (body.sucursalId ?? currentRow.sucursal_id ?? null);
+    const nextSucursalId = body.sucursalId === null
+      ? null
+      : (body.sucursalId ?? scope?.sucursalId ?? currentRow.sucursal_id ?? null);
 
     if (body.sucursalId && !isUuid(body.sucursalId)) {
       return res.status(400).json({ error: 'Invalid sucursalId' });
@@ -321,7 +329,7 @@ export const updateInventoryItem = async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'Sucursal mismatch' });
     }
 
-    if (req.user?.role === 'manager' && req.user.sucursalId && body.sucursalId && body.sucursalId !== req.user.sucursalId) {
+    if (scope?.mode === 'branch' && scope.sucursalId && body.sucursalId && body.sucursalId !== scope.sucursalId) {
       return res.status(403).json({ error: 'Sucursal mismatch' });
     }
 

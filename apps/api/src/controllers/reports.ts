@@ -4,8 +4,9 @@ import { getTenantClient } from '@white-label/database';
 export const getReportsSummary = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
-    const requestedSucursalId = typeof req.query.sucursalId === 'string' ? req.query.sucursalId.trim() : '';
-    const effectiveSucursalId = req.user?.role === 'manager' ? req.user.sucursalId ?? requestedSucursalId : requestedSucursalId;
+    const scope = req.scope;
+    const requestedSucursalId = scope?.requestedSucursalId ?? '';
+    const effectiveSucursalId = scope?.mode === 'branch' ? scope.sucursalId ?? requestedSucursalId : '';
 
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context is required' });

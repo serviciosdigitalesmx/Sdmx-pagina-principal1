@@ -81,14 +81,18 @@ export async function syncStockAlertForInventoryRow(params: {
   return null;
 }
 
-export async function listStockAlerts(tenantId: string) {
+export async function listStockAlerts(tenantId: string, sucursalId?: string | null) {
   const supabase = getTenantClient(tenantId);
-  const { data, error } = await supabase
+  let query = supabase
     .from('stock_alerts')
     .select('id, tenant_id, sucursal_id, product_id, severity, acknowledged_by, acknowledged_at, created_at')
-    .eq('tenant_id', tenantId)
-    .order('created_at', { ascending: false })
-    .limit(200);
+    .eq('tenant_id', tenantId);
+
+  if (typeof sucursalId === 'string' && sucursalId.trim()) {
+    query = query.eq('sucursal_id', sucursalId.trim());
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: false }).limit(200);
 
   if (error) throw error;
   return (data ?? []) as StockAlertRow[];

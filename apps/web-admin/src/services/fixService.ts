@@ -300,6 +300,7 @@ type AdminUserRecord = {
 
 import { readAuthToken } from "@/lib/auth-storage";
 import { getCurrentSession } from "@/lib/session";
+import { getActiveScope } from "@/lib/scope";
 import { enqueueOfflineRequest } from "@/lib/pwa/offline-queue";
 import { resolveApiBaseUrl } from "@white-label/config";
 
@@ -324,10 +325,7 @@ class FixService {
   }
 
   private getSucursalId() {
-    if (typeof window === 'undefined') {
-      return '';
-    }
-    return new URLSearchParams(window.location.search).get('sucursalId')?.trim() || '';
+    return getActiveScope()?.sucursalId ?? '';
   }
 
   private withSucursalQuery(path: string) {

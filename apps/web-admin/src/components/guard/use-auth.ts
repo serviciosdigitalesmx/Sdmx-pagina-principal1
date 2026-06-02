@@ -3,8 +3,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTenant } from '@/components/tenant/tenant-provider';
 import { getCurrentSession } from '@/lib/session';
+import { getActiveScope } from '@/lib/scope';
 
-export type Role = 'owner' | 'manager' | 'technician';
+export type Role = 'owner' | 'manager' | 'technician' | 'client';
 
 export type AuthState = {
   role: Role;
@@ -30,12 +31,14 @@ export function useAuth(): AuthState {
   }, []);
 
   return useMemo(() => {
+    const activeScope = getActiveScope();
+
     if (session) {
       return {
         role: (session.role || tenant.userRole).toLowerCase() as Role,
         tenantId: session.tenantSlug || tenant.tenantId,
         tenantSlug: session.tenantSlug,
-        sucursalId: session.sucursalId || tenant.userSucursalId,
+        sucursalId: activeScope?.sucursalId || session.sucursalId || tenant.userSucursalId,
         userEmail: session.email || tenant.userEmail,
         ready: true,
       } satisfies AuthState;
@@ -45,7 +48,7 @@ export function useAuth(): AuthState {
       role: tenant.userRole.toLowerCase() as Role,
       tenantId: tenant.tenantId,
       tenantSlug: tenant.tenantId,
-      sucursalId: tenant.userSucursalId,
+      sucursalId: activeScope?.sucursalId || tenant.userSucursalId,
       userEmail: tenant.userEmail,
       ready: false,
     } satisfies AuthState;

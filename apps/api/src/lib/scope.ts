@@ -1,0 +1,45 @@
+import type { Request } from 'express';
+import { resolveEffectiveUserRole } from './user-roles';
+
+export type ScopeMode = 'consolidated' | 'branch';
+export type ScopeRole = 'owner' | 'manager' | 'technician' | 'client';
+export type ScopeSource = 'query' | 'session' | 'token' | 'default';
+
+export interface ScopeContext {
+  mode: ScopeMode;
+  tenantId: string;
+  tenantSlug: string | null;
+  sucursalId: string | null;
+  canUseConsolidatedView: boolean;
+  role: ScopeRole;
+  source: ScopeSource;
+  requestedSucursalId: string | null;
+}
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+export function isUuid(value: unknown): value is string {
+  return typeof value === 'string' && UUID_PATTERN.test(value.trim());
+}
+
+export function getRequestedSucursalId(req: Pick<Request, 'query' | 'params'>): string | null {
+  const queryValue = typeof req.query?.sucursalId === 'string' ? req.query.sucursalId.trim() : '';
+  if (isUuid(queryValue)) {
+    return queryValue;
+  }
+
+  const routeValue = typeof req.params?.sucursalId === 'string' ? req.params.sucursalId.trim() : '';
+  if (isUuid(routeValue)) {
+    return routeValue;
+  }
+
+  return null;
+}
+
+export function normalizeScopeRole(role: string | null | undefined): ScopeRole {
+  const resolved = resolveEffectiveUserRole(role);
+  if (resolved === 'owner') return 'owner';
+  if (resolved === 'manager') return 'manager';
+  if (resolved === 'technician') return 'technician';
+  return 'client';
+}

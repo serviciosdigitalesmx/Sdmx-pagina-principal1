@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { createCheckout, mercadopagoWebhook, createPublicCheckout } from '../controllers/billing';
 import { requireAuth } from '../middleware/auth';
 import { validateTenant } from '../middleware/validateTenant';
+import { attachScope } from '../middleware/scope';
 import { requireRole } from '../middleware/requireRole';
 
 const router = Router({ mergeParams: true });
@@ -10,7 +11,7 @@ const router = Router({ mergeParams: true });
 router.post('/checkout', createPublicCheckout);
 
 // Protected checkout for admin users
-router.post('/checkout/protected', requireAuth, validateTenant, requireRole('owner', 'manager'), createCheckout);
+router.post('/checkout/protected', requireAuth, validateTenant, attachScope, requireRole('owner', 'manager'), createCheckout);
 
 export default router;
 

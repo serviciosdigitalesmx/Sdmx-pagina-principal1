@@ -110,13 +110,12 @@ export const listTasks = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
-    const sucursalId = typeof req.query.sucursalId === 'string' ? req.query.sucursalId.trim() : '';
+    const scope = req.scope;
     const supabase = getTenantClient(tenantId);
     let query = supabase.from('tasks').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(100);
-    if (sucursalId) {
-      query = query.eq('sucursal_id', sucursalId);
-    } else if (req.user?.role === 'manager' && req.user.sucursalId) {
-      query = query.eq('sucursal_id', req.user.sucursalId);
+    const effectiveSucursalId = scope?.mode === 'branch' ? scope.sucursalId ?? '' : '';
+    if (effectiveSucursalId) {
+      query = query.eq('sucursal_id', effectiveSucursalId);
     }
     const { data, error } = await query;
     if (error) return res.status(502).json({ error: 'Failed to fetch tasks', details: error.message });
@@ -152,6 +151,7 @@ export const createTask = async (req: Request, res: Response) => {
     const tenantId = req.tenantId;
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
     const body = taskBaseSchema.parse(req.body);
+    const scope = req.scope;
     const supabase = getTenantClient(tenantId);
     const allowedStatuses = new Set((await getTaskStatuses(tenantId)).map((item) => String(item.key ?? '')));
     const nextStatus = body.status?.trim() || 'pendiente';
@@ -161,7 +161,7 @@ export const createTask = async (req: Request, res: Response) => {
 
     const { data, error } = await supabase.from('tasks').insert([{
       tenant_id: tenantId,
-      sucursal_id: body.sucursalId || null,
+      sucursal_id: body.sucursalId || (scope?.sucursalId ?? null),
       service_order_id: body.serviceOrderId || null,
       service_request_id: body.serviceRequestId || null,
       title: body.title,
@@ -202,6 +202,7 @@ export const updateTask = async (req: Request, res: Response) => {
     const taskId = req.params.id;
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
     const body = taskUpdateSchema.parse(req.body);
+    const scope = req.scope;
     const supabase = getTenantClient(tenantId);
     if (!(await ensureTaskOwnership(supabase, tenantId, taskId))) {
       return res.status(404).json({ error: 'Task not found' });
@@ -209,7 +210,7 @@ export const updateTask = async (req: Request, res: Response) => {
     const payload: Record<string, unknown> = {};
     if (body.title !== undefined) payload.title = body.title;
     if (body.description !== undefined) payload.description = body.description || null;
-    if (body.sucursalId !== undefined) payload.sucursal_id = body.sucursalId || null;
+    if (body.sucursalId !== undefined) payload.sucursal_id = body.sucursalId || (scope?.sucursalId ?? null);
     if (body.serviceOrderId !== undefined) payload.service_order_id = body.serviceOrderId || null;
     if (body.serviceRequestId !== undefined) payload.service_request_id = body.serviceRequestId || null;
     if (body.priority !== undefined) payload.priority = body.priority || 'media';

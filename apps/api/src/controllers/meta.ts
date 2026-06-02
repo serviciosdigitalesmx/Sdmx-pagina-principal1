@@ -37,7 +37,7 @@ export const getCurrentUser = (req: Request, res: Response) => {
       email: req.user.email ?? null,
       role: req.user.role,
       tenantId: req.user.tenantId,
-      sucursalId: req.user.sucursalId ?? null,
+      sucursalId: req.scope?.sucursalId ?? null,
     },
   });
 };

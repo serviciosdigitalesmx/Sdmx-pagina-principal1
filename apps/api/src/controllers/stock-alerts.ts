@@ -10,7 +10,8 @@ export const listAlerts = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
-    const data = await listStockAlerts(tenantId);
+    const scope = req.scope;
+    const data = await listStockAlerts(tenantId, scope?.mode === 'branch' ? scope.sucursalId : null);
     return res.json({ success: true, data });
   } catch (error) {
     console.error('Error listing stock alerts:', error);

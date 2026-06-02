@@ -2,6 +2,17 @@ export {};
 
 declare global {
   namespace Express {
+    interface ScopeContext {
+      mode: 'consolidated' | 'branch';
+      tenantId: string;
+      tenantSlug: string | null;
+      sucursalId: string | null;
+      canUseConsolidatedView: boolean;
+      role: 'owner' | 'manager' | 'technician' | 'client';
+      source: 'query' | 'session' | 'token' | 'default';
+      requestedSucursalId: string | null;
+    }
+
     interface TenantCapabilities {
       plan_key: 'basic' | 'pro' | 'scale';
       access_status: 'active' | 'trial' | 'billing_exempt' | 'master' | 'blocked';
@@ -22,6 +33,7 @@ declare global {
     interface Request {
       tenantId?: string;
       tenantCapabilities?: TenantCapabilities;
+      scope?: ScopeContext;
       user?: {
         tenantId: string;
         tenantSlug?: string | null;

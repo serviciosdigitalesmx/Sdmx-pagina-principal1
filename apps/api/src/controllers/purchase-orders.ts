@@ -154,13 +154,18 @@ export const listPurchaseOrders = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
+    const scope = req.scope;
     const supabase = getTenantClient(tenantId);
-    const { data, error } = await supabase
+    let query = supabase
       .from('purchase_orders')
       .select('id, tenant_id, sucursal_id, supplier_id, related_service_order_id, folio, status, reference, payment_terms, expected_date, subtotal, tax_amount, total, notes, created_at, updated_at')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(100);
+    if (scope?.mode === 'branch' && scope.sucursalId) {
+      query = query.eq('sucursal_id', scope.sucursalId);
+    }
+    const { data, error } = await query;
 
     if (error) return res.status(502).json({ error: 'Failed to fetch purchase orders', details: error.message });
 
@@ -177,11 +182,15 @@ export const getPurchaseOrderById = async (req: Request, res: Response) => {
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
 
     const supabase = getTenantClient(tenantId);
+    const scope = req.scope;
     const orderId = req.params.id;
     const { order, items, documents } = await getPurchaseOrderDetail(supabase, tenantId, orderId);
 
     if (order.error) return res.status(502).json({ error: 'Failed to fetch purchase order', details: order.error.message });
     if (!order.data) return res.status(404).json({ error: 'Purchase order not found' });
+    if (scope?.mode === 'branch' && scope.sucursalId && String((order.data as { sucursal_id?: string | null }).sucursal_id ?? '') !== scope.sucursalId) {
+      return res.status(403).json({ error: 'Sucursal mismatch' });
+    }
     if (items.error) return res.status(502).json({ error: 'Failed to fetch purchase order items', details: items.error.message });
     if (documents.error) return res.status(502).json({ error: 'Failed to fetch inventory movements', details: documents.error.message });
 
@@ -198,12 +207,14 @@ export const createPurchaseOrder = async (req: Request, res: Response) => {
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
 
     const body = createPurchaseOrderSchema.parse(req.body);
+    const scope = req.scope;
     const supabase = getTenantClient(tenantId);
 
     if (!(await validateSupplierOwnership(supabase, tenantId, body.supplierId))) {
       return res.status(404).json({ error: 'Supplier not found' });
     }
-    if (!(await validateSucursalOwnership(supabase, tenantId, body.sucursalId || null))) {
+    const resolvedSucursalId = body.sucursalId || (scope?.sucursalId ?? req.user?.sucursalId ?? null);
+    if (!(await validateSucursalOwnership(supabase, tenantId, resolvedSucursalId))) {
       return res.status(404).json({ error: 'Sucursal not found' });
     }
 
@@ -216,7 +227,7 @@ export const createPurchaseOrder = async (req: Request, res: Response) => {
       .from('purchase_orders')
       .insert([{
         tenant_id: tenantId,
-        sucursal_id: body.sucursalId || null,
+        sucursal_id: resolvedSucursalId,
         supplier_id: body.supplierId,
         folio,
         status: 'borrador',
@@ -276,13 +287,15 @@ export const updatePurchaseOrder = async (req: Request, res: Response) => {
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
     const body = updatePurchaseOrderSchema.parse(req.body);
     const orderId = req.params.id;
+    const scope = req.scope;
     const supabase = getTenantClient(tenantId);
 
     const { data: existing, error: existingError } = await supabase.from('purchase_orders').select('id').eq('tenant_id', tenantId).eq('id', orderId).maybeSingle();
     if (existingError) return res.status(502).json({ error: 'Failed to fetch purchase order', details: existingError.message });
     if (!existing) return res.status(404).json({ error: 'Purchase order not found' });
 
-    if (body.sucursalId && !(await validateSucursalOwnership(supabase, tenantId, body.sucursalId))) {
+    const resolvedSucursalId = body.sucursalId ?? scope?.sucursalId ?? null;
+    if (resolvedSucursalId && !(await validateSucursalOwnership(supabase, tenantId, resolvedSucursalId))) {
       return res.status(404).json({ error: 'Sucursal not found' });
     }
     if (body.supplierId && !(await validateSupplierOwnership(supabase, tenantId, body.supplierId))) {
@@ -290,7 +303,7 @@ export const updatePurchaseOrder = async (req: Request, res: Response) => {
     }
 
     const payload: Record<string, unknown> = {};
-    if (body.sucursalId !== undefined) payload.sucursal_id = body.sucursalId || null;
+    if (body.sucursalId !== undefined) payload.sucursal_id = resolvedSucursalId;
     if (body.supplierId !== undefined) payload.supplier_id = body.supplierId;
     if (body.expectedDate !== undefined) payload.expected_date = body.expectedDate || null;
     if (body.notes !== undefined) payload.notes = body.notes || null;
@@ -379,6 +392,7 @@ export const receivePurchaseOrder = async (req: Request, res: Response) => {
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
     const orderId = req.params.id;
     const body = receiveSchema.parse(req.body);
+    const scope = req.scope;
     const supabase = getTenantClient(tenantId);
 
     const { data: order, error: orderError } = await supabase.from('purchase_orders').select('*').eq('tenant_id', tenantId).eq('id', orderId).single();
@@ -406,6 +420,7 @@ export const receivePurchaseOrder = async (req: Request, res: Response) => {
       const sku = String(item.sku_snapshot ?? '');
       const receivedQuantity = receivedBySku.get(sku) ?? Number(item.qty_ordered ?? 0);
       if (!receivedQuantity || receivedQuantity <= 0) continue;
+      const orderSucursalId = order.sucursal_id ?? scope?.sucursalId ?? null;
 
       const productCatalog = await ensureProductCatalogRecord(
         supabase,
@@ -420,7 +435,7 @@ export const receivePurchaseOrder = async (req: Request, res: Response) => {
         .select('id, tenant_id, sucursal_id, product_id, stock_current')
         .eq('tenant_id', tenantId)
         .eq('product_id', productCatalog.id)
-        .eq('sucursal_id', order.sucursal_id ?? null)
+        .eq('sucursal_id', orderSucursalId)
         .maybeSingle();
       if (inventoryError) return res.status(502).json({ error: 'Failed to fetch inventory row', details: inventoryError.message });
 
@@ -430,7 +445,7 @@ export const receivePurchaseOrder = async (req: Request, res: Response) => {
           .from('sucursal_inventory')
           .insert([{
             tenant_id: tenantId,
-            sucursal_id: order.sucursal_id ?? null,
+            sucursal_id: orderSucursalId,
             product_id: productCatalog.id,
             stock_current: 0,
           }])
@@ -445,17 +460,17 @@ export const receivePurchaseOrder = async (req: Request, res: Response) => {
         .from('sucursal_inventory')
         .update({
           stock_current: nextStock,
-          sucursal_id: order.sucursal_id ?? nextInventory.sucursal_id ?? null,
+          sucursal_id: orderSucursalId ?? nextInventory.sucursal_id ?? null,
         })
         .eq('tenant_id', tenantId)
         .eq('id', nextInventory.id);
       if (updateInventoryError) return res.status(502).json({ error: 'Failed to update inventory stock', details: updateInventoryError.message });
-      await refreshInventoryAlert(tenantId, productCatalog.id, order.sucursal_id ?? nextInventory.sucursal_id ?? null, nextStock);
+      await refreshInventoryAlert(tenantId, productCatalog.id, orderSucursalId ?? nextInventory.sucursal_id ?? null, nextStock);
 
       inventorySnapshots.push({ id: nextInventory.id, sku, stock_current: nextStock });
       movementRows.push({
         tenant_id: tenantId,
-        sucursal_id: order.sucursal_id ?? null,
+        sucursal_id: orderSucursalId,
         product_id: productCatalog.id,
         purchase_order_id: orderId,
         movement_type: 'purchase_received',
