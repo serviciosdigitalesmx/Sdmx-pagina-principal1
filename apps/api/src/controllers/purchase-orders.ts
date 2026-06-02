@@ -214,6 +214,9 @@ export const createPurchaseOrder = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Supplier not found' });
     }
     const resolvedSucursalId = body.sucursalId || (scope?.sucursalId ?? null);
+    if (scope?.mode === 'branch' && !resolvedSucursalId) {
+      return res.status(400).json({ error: 'Sucursal activa requerida' });
+    }
     if (!(await validateSucursalOwnership(supabase, tenantId, resolvedSucursalId))) {
       return res.status(404).json({ error: 'Sucursal not found' });
     }
@@ -295,6 +298,9 @@ export const updatePurchaseOrder = async (req: Request, res: Response) => {
     if (!existing) return res.status(404).json({ error: 'Purchase order not found' });
 
     const resolvedSucursalId = body.sucursalId ?? scope?.sucursalId ?? null;
+    if (scope?.mode === 'branch' && !resolvedSucursalId) {
+      return res.status(400).json({ error: 'Sucursal activa requerida' });
+    }
     if (resolvedSucursalId && !(await validateSucursalOwnership(supabase, tenantId, resolvedSucursalId))) {
       return res.status(404).json({ error: 'Sucursal not found' });
     }
@@ -397,6 +403,10 @@ export const receivePurchaseOrder = async (req: Request, res: Response) => {
 
     const { data: order, error: orderError } = await supabase.from('purchase_orders').select('*').eq('tenant_id', tenantId).eq('id', orderId).single();
     if (orderError || !order) return res.status(404).json({ error: 'Purchase order not found', details: orderError?.message ?? 'Not found' });
+
+    if (scope?.mode === 'branch' && scope.sucursalId && String(order.sucursal_id ?? '') !== scope.sucursalId) {
+      return res.status(403).json({ error: 'Sucursal mismatch' });
+    }
 
     const { data: items, error: itemsError } = await supabase
       .from('purchase_order_items')
