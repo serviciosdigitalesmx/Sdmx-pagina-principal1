@@ -101,15 +101,18 @@ function DashboardShellContent({
   }, [auth.role, auth.tenantSlug, auth.userEmail, tenant]);
   const currentScope = getActiveScope();
   const dashboardScope = React.useMemo(() => {
-    const bootstrapSucursalId = currentScope?.sucursalId ?? searchParams.get('sucursalId');
+    const bootstrapSucursalId =
+      currentScope?.sucursalId
+      ?? searchParams.get('sucursalId')
+      ?? (auth.role === 'owner' ? null : tenant.userSucursalId || null);
     return resolveDashboardScope({
       role: auth.role,
       tenantId: auth.tenantId,
       tenantSlug: auth.tenantSlug || auth.tenantId,
       querySucursalId: bootstrapSucursalId,
-      sessionSucursalId: auth.sucursalId,
+      sessionSucursalId: auth.role === 'owner' ? null : tenant.userSucursalId || null,
     });
-  }, [auth.role, auth.sucursalId, auth.tenantId, auth.tenantSlug, currentScope?.sucursalId, searchParams]);
+  }, [auth.role, auth.tenantId, auth.tenantSlug, currentScope?.sucursalId, searchParams, tenant.userSucursalId]);
   const sucursalId = dashboardScope.sucursalId ?? '';
   const enabledModules = React.useMemo(() => {
     const activeModules = tenantConfig?.capabilities?.active_modules ?? tenantConfig?.active_modules;
