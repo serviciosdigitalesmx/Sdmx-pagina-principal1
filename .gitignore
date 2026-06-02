@@ -14,6 +14,7 @@ coverage/
 # Turbo / caches
 .turbo/
 **/.turbo/
+.tooling/
 .cache/
 **/.cache/
 .pnpm-store/
