@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
-import { getTenantClient } from '@white-label/database';
+import { getTenantClient, supabaseAdmin } from '@white-label/database';
 import { refreshInventoryAlert } from './stock-alerts';
 
 const purchaseOrderStatusSchema = z.enum(['borrador', 'enviada', 'parcial', 'recibida', 'cancelada']);
@@ -41,8 +41,10 @@ const statusSchema = z.object({
 const receiveSchema = z.object({
   notes: z.string().optional().or(z.literal('')),
   receivedItems: z.array(z.object({
+    purchaseOrderItemId: z.string().uuid().optional().or(z.literal('')),
     skuSnapshot: z.string().min(1).optional().or(z.literal('')),
     quantity: z.coerce.number().positive(),
+    unitCost: z.coerce.number().nonnegative().optional(),
   })).optional(),
 });
 
@@ -84,6 +86,45 @@ async function validateProductOwnership(supabase: ReturnType<typeof getTenantCli
     .maybeSingle();
   if (error) throw new Error(error.message);
   return Boolean(data);
+}
+
+function buildReceivedItemsPayload(
+  items: Array<Record<string, unknown>>,
+  receivedItems: z.infer<typeof receiveSchema>['receivedItems'],
+) {
+  const receivedById = new Map<string, { quantity: number; unitCost?: number }>();
+  const receivedBySku = new Map<string, { quantity: number; unitCost?: number }>();
+
+  for (const item of receivedItems ?? []) {
+    const itemId = String(item.purchaseOrderItemId ?? '').trim();
+    const sku = String(item.skuSnapshot ?? '').trim();
+    const quantity = Number(item.quantity ?? 0);
+    const unitCost = typeof item.unitCost === 'number' ? item.unitCost : undefined;
+    if (itemId) {
+      receivedById.set(itemId, { quantity, unitCost });
+    }
+    if (sku) {
+      receivedBySku.set(sku, { quantity, unitCost });
+    }
+  }
+
+  const usesExplicitReceipt = Boolean((receivedItems ?? []).length);
+
+  return items.map((item) => {
+    const itemId = String(item.id ?? '');
+    const sku = String(item.sku_snapshot ?? '');
+    const matched = receivedById.get(itemId) ?? receivedBySku.get(sku);
+    const quantity = usesExplicitReceipt
+      ? Number(matched?.quantity ?? 0)
+      : Number(item.qty_ordered ?? 0);
+
+    return {
+      purchaseOrderItemId: itemId,
+      skuSnapshot: sku || null,
+      quantity,
+      unitCost: Number(matched?.unitCost ?? item.unit_cost ?? 0),
+    };
+  });
 }
 
 async function ensureProductCatalogRecord(
@@ -416,110 +457,49 @@ export const receivePurchaseOrder = async (req: Request, res: Response) => {
       .order('created_at', { ascending: true });
     if (itemsError) return res.status(502).json({ error: 'Failed to fetch purchase order items', details: itemsError.message });
 
-    const receivedBySku = new Map<string, number>();
-    for (const receivedItem of body.receivedItems ?? []) {
-      const key = receivedItem.skuSnapshot?.trim();
-      if (!key) continue;
-      receivedBySku.set(key, Number(receivedItem.quantity));
+    const resolvedSucursalId = order.sucursal_id ?? scope?.sucursalId ?? null;
+    const receivedPayload = buildReceivedItemsPayload(items ?? [], body.receivedItems);
+    const changedBy = req.user?.userId ?? req.user?.sub ?? null;
+
+    const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('receive_purchase_inventory', {
+      p_tenant_id: tenantId,
+      p_purchase_order_id: orderId,
+      p_sucursal_id: resolvedSucursalId,
+      p_received_items: receivedPayload,
+      p_notes: body.notes || null,
+      p_changed_by: changedBy,
+    });
+
+    if (rpcError) {
+      return res.status(502).json({ error: 'Failed to receive purchase inventory', details: rpcError.message });
     }
 
-    const inventorySnapshots: Array<Record<string, unknown>> = [];
-    const movementRows: Array<Record<string, unknown>> = [];
+    const payload = Array.isArray(rpcResult) ? rpcResult[0] : rpcResult;
+    if (!payload) {
+      return res.status(502).json({ error: 'Failed to receive purchase inventory', details: 'Empty RPC response' });
+    }
 
-    for (const item of items ?? []) {
-      const sku = String(item.sku_snapshot ?? '');
-      const receivedQuantity = receivedBySku.get(sku) ?? Number(item.qty_ordered ?? 0);
-      if (!receivedQuantity || receivedQuantity <= 0) continue;
-      const orderSucursalId = order.sucursal_id ?? scope?.sucursalId ?? null;
-
-      const productCatalog = await ensureProductCatalogRecord(
-        supabase,
-        tenantId,
-        sku,
-        String(item.product_name_snapshot ?? sku),
-        String(item.product_name_snapshot ?? sku),
-      );
-
-      const { data: inventoryRow, error: inventoryError } = await supabase
-        .from('sucursal_inventory')
-        .select('id, tenant_id, sucursal_id, product_id, stock_current')
-        .eq('tenant_id', tenantId)
-        .eq('product_id', productCatalog.id)
-        .eq('sucursal_id', orderSucursalId)
-        .maybeSingle();
-      if (inventoryError) return res.status(502).json({ error: 'Failed to fetch inventory row', details: inventoryError.message });
-
-      let nextInventory = inventoryRow;
-      if (!nextInventory) {
-        const { data: createdInventory, error: createInventoryError } = await supabase
-          .from('sucursal_inventory')
-          .insert([{
-            tenant_id: tenantId,
-            sucursal_id: orderSucursalId,
-            product_id: productCatalog.id,
-            stock_current: 0,
-          }])
-          .select('id, tenant_id, sucursal_id, product_id, stock_current')
-          .single();
-        if (createInventoryError || !createdInventory) return res.status(502).json({ error: 'Failed to create inventory item on receipt', details: createInventoryError?.message ?? 'Unknown error' });
-        nextInventory = createdInventory;
+    const inventoryRows = Array.isArray((payload as { inventory?: unknown }).inventory) ? ((payload as { inventory?: unknown }).inventory as Array<Record<string, unknown>>) : [];
+    for (const inventoryRow of inventoryRows) {
+      const productId = String(inventoryRow.product_id ?? '');
+      const stockCurrent = Number(inventoryRow.stock_current ?? 0);
+      if (productId) {
+        await refreshInventoryAlert(tenantId, productId, String(inventoryRow.sucursal_id ?? resolvedSucursalId ?? ''), stockCurrent);
       }
-
-      const nextStock = Number(nextInventory.stock_current ?? 0) + receivedQuantity;
-      const { error: updateInventoryError } = await supabase
-        .from('sucursal_inventory')
-        .update({
-          stock_current: nextStock,
-          sucursal_id: orderSucursalId ?? nextInventory.sucursal_id ?? null,
-        })
-        .eq('tenant_id', tenantId)
-        .eq('id', nextInventory.id);
-      if (updateInventoryError) return res.status(502).json({ error: 'Failed to update inventory stock', details: updateInventoryError.message });
-      await refreshInventoryAlert(tenantId, productCatalog.id, orderSucursalId ?? nextInventory.sucursal_id ?? null, nextStock);
-
-      inventorySnapshots.push({ id: nextInventory.id, sku, stock_current: nextStock });
-      movementRows.push({
-        tenant_id: tenantId,
-        sucursal_id: orderSucursalId,
-        product_id: productCatalog.id,
-        purchase_order_id: orderId,
-        movement_type: 'purchase_received',
-        quantity: receivedQuantity,
-        unit_cost: Number(item.unit_cost ?? 0),
-        reference: String(order.folio),
-        notes: body.notes || null,
-        created_by: null,
-      });
-
-      const { error: updateItemError } = await supabase
-        .from('purchase_order_items')
-        .update({
-          qty_received: receivedQuantity,
-          subtotal: Number((Number(item.qty_ordered ?? 0) * Number(item.unit_cost ?? 0)).toFixed(2)),
-        })
-        .eq('tenant_id', tenantId)
-        .eq('id', item.id);
-      if (updateItemError) return res.status(502).json({ error: 'Failed to update purchase order item', details: updateItemError.message });
     }
 
-    if (movementRows.length > 0) {
-      const { error: movementError } = await supabase.from('inventory_movements').insert(movementRows);
-      if (movementError) return res.status(502).json({ error: 'Failed to persist inventory movements', details: movementError.message });
-    }
-
-    const { data: updatedOrder, error: updateOrderError } = await supabase
-      .from('purchase_orders')
-      .update({
-        status: 'recibida',
-      })
-      .eq('tenant_id', tenantId)
-      .eq('id', orderId)
-      .select('*')
-      .single();
-
-    if (updateOrderError) return res.status(502).json({ error: 'Failed to finalize purchase order', details: updateOrderError.message });
-
-    return res.json({ success: true, data: { order: updatedOrder, inventory: inventorySnapshots, movements: movementRows } });
+    return res.json({
+      success: true,
+      data: {
+        order: {
+          ...order,
+          status: (payload as { status?: string }).status ?? order.status,
+        },
+        items: (payload as { updated_items?: unknown }).updated_items ?? [],
+        movements: (payload as { movements?: unknown }).movements ?? [],
+        inventory: (payload as { inventory?: unknown }).inventory ?? [],
+      },
+    });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid payload', details: error.errors });
