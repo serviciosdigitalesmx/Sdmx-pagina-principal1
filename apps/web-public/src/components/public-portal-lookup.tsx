@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState, useEffect, type FormEvent } from "react";
-import { resolveApiBaseUrl } from "@white-label/config";
+import { fetchJson, type ApiErrorPayload } from "@white-label/config";
 import { srFixTheme } from "@/components/srfix-theme";
 
 type PublicPortalOrderResponse = {
@@ -30,7 +30,7 @@ type PublicPortalOrderResponse = {
     order: {
       folio: string;
       status: string;
-      total_cost?: number | null;
+      final_cost?: number | null;
       created_at?: string;
       updated_at?: string;
       promised_date?: string | null;
@@ -110,7 +110,6 @@ export function PublicPortalLookup({
   subtitle?: string;
   showTenantInput?: boolean;
 }) {
-  const apiBaseUrl = useMemo(() => resolveApiBaseUrl(), []);
   const [tenantSlug, setTenantSlug] = useState(initialTenantSlug);
   const [folio, setFolio] = useState(initialFolio);
   const [loading, setLoading] = useState(false);
@@ -137,19 +136,14 @@ export function PublicPortalLookup({
         throw new Error("Escribe el folio");
       }
 
-      const response = await fetch(
-        `${apiBaseUrl}/api/public/tenant/${encodeURIComponent(targetTenant.trim())}/orders/${encodeURIComponent(targetFolio.trim())}`
+      const payload = await fetchJson<PublicPortalOrderResponse>(
+        `/api/public/tenant/${encodeURIComponent(targetTenant.trim())}/orders/${encodeURIComponent(targetFolio.trim())}`
       );
-      const payload = (await response.json().catch(() => null)) as PublicPortalOrderResponse | { error?: string } | null;
-
-      if (!response.ok || !payload || !("success" in payload)) {
-        throw new Error(payload && "error" in payload && payload.error ? payload.error : "No encontramos la orden");
-      }
-
       setTenant(payload.tenant);
       setResult(payload.data);
     } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Error inesperado");
+      const apiError = submitError as ApiErrorPayload | Error;
+      setError(apiError instanceof Error ? apiError.message : "Error inesperado");
       setResult(null);
     } finally {
       setLoading(false);
@@ -284,7 +278,7 @@ export function PublicPortalLookup({
                       <p><span className="text-zinc-400">Cliente:</span> {result.order.device_info?.customer_name ?? "No disponible"}</p>
                       <p><span className="text-zinc-400">Equipo:</span> {(result.order.device_info?.brand ?? result.order.device_info?.type ?? "Equipo") + " / " + (result.order.device_info?.model ?? "Modelo")}</p>
                       <p><span className="text-zinc-400">Serie:</span> {result.order.serial_number ?? "No disponible"}</p>
-                      <p><span className="text-zinc-400">Total:</span> {typeof result.order.total_cost === "number" ? `$${result.order.total_cost.toFixed(2)} MXN` : "No disponible"}</p>
+                      <p><span className="text-zinc-400">Total:</span> {typeof result.order.final_cost === "number" ? `$${result.order.final_cost.toFixed(2)} MXN` : "No disponible"}</p>
                     </div>
                   </section>
                   <section className="rounded-[1.4rem] border border-zinc-800 bg-zinc-950 p-4">

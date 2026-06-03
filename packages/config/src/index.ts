@@ -2,13 +2,33 @@ const fail = (name: string): never => {
   throw new Error(`Missing required environment variable: ${name}`);
 };
 
+const apiBaseUrlCandidates = [
+  "NEXT_PUBLIC_API_BASE_URL",
+  "NEXT_PUBLIC_API_URL",
+  "NEXT_PUBLIC_RENDER_API_URL",
+] as const;
+
+function normalizeBaseUrl(value: string): string {
+  return new URL(value).toString().replace(/\/$/, "");
+}
+
+function resolveFirstConfiguredEnv(names: readonly string[]): string | null {
+  for (const name of names) {
+    const value = process.env[name]?.trim();
+    if (value) {
+      return value;
+    }
+  }
+  return null;
+}
+
 export function requireEnv(name: string): string {
   switch (name) {
-    case "NEXT_PUBLIC_API_URL":
-      return process.env.NEXT_PUBLIC_API_URL?.trim() || fail(name);
-
     case "NEXT_PUBLIC_API_BASE_URL":
-      return process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || fail(name);
+      return resolveApiBaseUrl();
+
+    case "NEXT_PUBLIC_API_URL":
+      return resolveApiBaseUrl();
 
     case "NEXT_PUBLIC_RENDER_API_URL":
       return process.env.NEXT_PUBLIC_RENDER_API_URL?.trim() || fail(name);
@@ -23,11 +43,11 @@ export function requireEnv(name: string): string {
 
 export function optionalEnv(name: string): string | null {
   switch (name) {
-    case "NEXT_PUBLIC_API_URL":
-      return process.env.NEXT_PUBLIC_API_URL?.trim() || null;
-
     case "NEXT_PUBLIC_API_BASE_URL":
-      return process.env.NEXT_PUBLIC_API_BASE_URL?.trim() || null;
+      return resolveFirstConfiguredEnv(apiBaseUrlCandidates);
+
+    case "NEXT_PUBLIC_API_URL":
+      return resolveFirstConfiguredEnv(apiBaseUrlCandidates);
 
     case "NEXT_PUBLIC_RENDER_API_URL":
       return process.env.NEXT_PUBLIC_RENDER_API_URL?.trim() || null;
@@ -38,19 +58,64 @@ export function optionalEnv(name: string): string | null {
 }
 
 export function resolveApiBaseUrl(): string {
-  const candidates = [
-    process.env.NEXT_PUBLIC_API_URL,
-    process.env.NEXT_PUBLIC_API_BASE_URL,
-    process.env.NEXT_PUBLIC_RENDER_API_URL,
-  ].filter((value): value is string => Boolean(value?.trim()));
+  const value = resolveFirstConfiguredEnv(apiBaseUrlCandidates);
 
-  if (candidates.length === 0) {
+  if (!value) {
     return fail("NEXT_PUBLIC_API_URL");
   }
 
   try {
-    return new URL(candidates[0]).toString().replace(/\/$/, "");
+    return normalizeBaseUrl(value);
   } catch {
     throw new Error("Invalid API base URL in environment");
   }
+}
+
+export type ApiErrorPayload = {
+  error?: string;
+  message?: string;
+  details?: unknown;
+  status?: number;
+};
+
+export class ApiError extends Error {
+  status: number;
+  details?: unknown;
+
+  constructor(message: string, status: number, details?: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.details = details;
+  }
+}
+
+export function isApiError(value: unknown): value is ApiError {
+  return value instanceof Error && (value as ApiError).name === "ApiError";
+}
+
+export async function fetchJson<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(`${resolveApiBaseUrl()}${endpoint}`, {
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+    ...options,
+  });
+
+  const payload = (await response.json().catch(() => null)) as ApiErrorPayload | T | null;
+
+  if (!response.ok) {
+    const errorPayload = payload && typeof payload === "object" ? (payload as ApiErrorPayload) : null;
+    const message =
+      errorPayload?.message && typeof errorPayload.message === "string"
+        ? errorPayload.message
+        : errorPayload?.error && typeof errorPayload.error === "string"
+          ? errorPayload.error
+          : `HTTP ${response.status}`;
+
+    throw new ApiError(message, response.status, errorPayload?.details);
+  }
+
+  return payload as T;
 }

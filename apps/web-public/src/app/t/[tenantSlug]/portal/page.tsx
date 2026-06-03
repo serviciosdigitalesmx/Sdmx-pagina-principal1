@@ -24,7 +24,7 @@ type PortalOrderResponse = {
     order: {
       folio: string;
       status: string;
-      total_cost?: number | null;
+      final_cost?: number | null;
       created_at?: string;
       device_info?: {
         customer_name?: string;

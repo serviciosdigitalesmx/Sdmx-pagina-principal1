@@ -79,7 +79,7 @@ export interface BackendOrderResponse {
       id: string;
       folio: string;
       status: string;
-      total_cost?: number | null;
+      final_cost?: number | null;
       created_at?: string | null;
       updated_at?: string | null;
       promised_date?: string | null;

@@ -89,7 +89,7 @@ function mapUserRow(row: Record<string, unknown>) {
     is_active: Boolean(row.is_active ?? row.activo ?? true),
     ultimo_acceso: row.ultimo_acceso ?? row.last_login_at ?? null,
     last_login_at: row.last_login_at ?? row.ultimo_acceso ?? null,
-    sucursalId: row.sucursal_id ?? row.branch_id ?? null,
+    sucursalId: row.sucursal_id ?? null,
     createdAt: row.created_at ?? null,
     updatedAt: row.updated_at ?? null,
   };
@@ -124,7 +124,7 @@ export const listUsers = async (req: Request, res: Response) => {
 
     let query = supabaseAdmin
       .from('users')
-      .select('id, tenant_id, auth_user_id, name, full_name, email, phone, role, activo, is_active, ultimo_acceso, last_login_at, sucursal_id, branch_id, created_at, updated_at', { count: 'exact' })
+      .select('id, tenant_id, auth_user_id, name, full_name, email, phone, role, activo, is_active, ultimo_acceso, last_login_at, sucursal_id, created_at, updated_at', { count: 'exact' })
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .range(from, to);
@@ -233,10 +233,9 @@ export const inviteUser = async (req: Request, res: Response) => {
           activo: true,
           is_active: true,
           sucursal_id: body.sucursalId ?? null,
-          branch_id: body.sucursalId ?? null,
-        })
+                  })
         .eq('id', existingUser.id)
-        .select('id, tenant_id, auth_user_id, name, full_name, email, phone, role, activo, is_active, ultimo_acceso, last_login_at, sucursal_id, branch_id, created_at, updated_at')
+        .select('id, tenant_id, auth_user_id, name, full_name, email, phone, role, activo, is_active, ultimo_acceso, last_login_at, sucursal_id, created_at, updated_at')
         .maybeSingle();
 
       if (updateError || !updatedUser) {
@@ -271,9 +270,8 @@ export const inviteUser = async (req: Request, res: Response) => {
         activo: true,
         is_active: true,
         sucursal_id: body.sucursalId ?? null,
-        branch_id: body.sucursalId ?? null,
-      }])
-      .select('id, tenant_id, auth_user_id, name, full_name, email, phone, role, activo, is_active, ultimo_acceso, last_login_at, sucursal_id, branch_id, created_at, updated_at')
+              }])
+      .select('id, tenant_id, auth_user_id, name, full_name, email, phone, role, activo, is_active, ultimo_acceso, last_login_at, sucursal_id, created_at, updated_at')
       .single();
 
     if (createError || !createdUser) {
@@ -352,7 +350,7 @@ export const updateUserRole = async (req: Request, res: Response) => {
       })
       .eq('id', userId)
       .eq('tenant_id', tenantId)
-      .select('id, tenant_id, auth_user_id, name, full_name, email, phone, role, activo, is_active, ultimo_acceso, last_login_at, sucursal_id, branch_id, created_at, updated_at')
+      .select('id, tenant_id, auth_user_id, name, full_name, email, phone, role, activo, is_active, ultimo_acceso, last_login_at, sucursal_id, created_at, updated_at')
       .single();
 
     if (updateError || !updatedUser) {
@@ -403,7 +401,7 @@ export const deactivateUser = async (req: Request, res: Response) => {
       })
       .eq('id', userId)
       .eq('tenant_id', tenantId)
-      .select('id, tenant_id, auth_user_id, name, full_name, email, phone, role, activo, is_active, ultimo_acceso, last_login_at, sucursal_id, branch_id, created_at, updated_at')
+      .select('id, tenant_id, auth_user_id, name, full_name, email, phone, role, activo, is_active, ultimo_acceso, last_login_at, sucursal_id, created_at, updated_at')
       .single();
 
     if (updateError || !updatedUser) {

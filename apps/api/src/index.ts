@@ -25,6 +25,7 @@ import { requireAuth } from './middleware/auth';
 import { requireTenantBillingActive } from './middleware/tenantBilling';
 import { attachTenantCapabilities, requireTenantModule } from './middleware/tenantCapabilities';
 import { requireRole } from './middleware/requireRole';
+import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
 
@@ -153,6 +154,7 @@ app.get('/api', getApiRoot);
 app.get('/health', getHealth);
 app.get('/healthz', getHealth);
 app.get('/api/health', getHealth);
+app.use(errorHandler);
 
 const isVercel = Boolean(process.env.VERCEL);
 

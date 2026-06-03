@@ -294,7 +294,7 @@ export async function trackPublicOrder(req: Request, res: Response) {
     const supabase = getTenantClient(tenant.id);
     const { data, error } = await supabase
       .from('service_orders')
-      .select('id, tenant_id, folio, status, total_cost, created_at, device_info, problem_description, serial_number, receipt_url, estimated_cost, final_cost, metadata')
+      .select('id, tenant_id, folio, status, created_at, device_info, problem_description, serial_number, receipt_url, estimated_cost, final_cost, metadata')
       .eq('tenant_id', tenant.id)
       .eq('folio', folio)
       .maybeSingle();
@@ -348,7 +348,7 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
 
     const { data, error } = await supabase
       .from('service_orders')
-      .select('id, tenant_id, folio, status, total_cost, created_at, updated_at, promised_date, device_info, problem_description, serial_number, receipt_url, estimated_cost, final_cost, evidence_metadata, metadata')
+      .select('id, tenant_id, folio, status, created_at, updated_at, promised_date, device_info, problem_description, serial_number, receipt_url, estimated_cost, final_cost, evidence_metadata, metadata')
       .eq('tenant_id', tenant.id)
       .or(`folio.eq.${searchValue},public_token.eq.${searchValue}`)
       .maybeSingle();

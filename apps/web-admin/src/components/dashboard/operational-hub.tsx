@@ -10,7 +10,7 @@ type OrderRecord = {
   status?: string;
   created_at?: string;
   updated_at?: string;
-  total_cost?: number;
+  final_cost?: number;
   promised_date?: string | null;
   device_info?: {
     customer_name?: string;
@@ -143,7 +143,7 @@ function BoardCard({ order }: { order: OrderRecord }) {
 
       <div className="mt-4 flex items-center justify-between gap-3 text-xs text-zinc-400">
         <span>{formatDate(order.created_at)}</span>
-        <span className="font-semibold text-emerald-300">{formatMoney(order.total_cost)}</span>
+        <span className="font-semibold text-emerald-300">{formatMoney(order.final_cost)}</span>
       </div>
     </article>
   );

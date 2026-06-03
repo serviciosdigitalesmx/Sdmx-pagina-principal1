@@ -14,8 +14,8 @@ function toDayKey(value?: string | null) {
   return value ? value.slice(0, 10) : new Date().toISOString().slice(0, 10);
 }
 
-function resolveOrderIncome(order: { total_cost?: number | null; final_cost?: number | null }) {
-  return Number(order.total_cost ?? order.final_cost ?? 0);
+function resolveOrderIncome(order: { final_cost?: number | null }) {
+  return Number(order.final_cost ?? 0);
 }
 
 async function assertSucursalOwnership(supabase: ReturnType<typeof getTenantClient>, tenantId: string, sucursalId: string) {
@@ -38,7 +38,7 @@ async function loadFinanceFacts(tenantId: string) {
   const [ordersResult, expensesResult] = await Promise.all([
     supabase
       .from('service_orders')
-      .select('id, tenant_id, sucursal_id, total_cost, final_cost, created_at, status')
+      .select('id, tenant_id, sucursal_id, final_cost, created_at, status')
       .eq('tenant_id', tenantId)
       .limit(1000),
     supabase
@@ -78,7 +78,7 @@ export const getBalance = async (req: Request, res: Response) => {
       ? expenses.filter((expense) => String((expense as { sucursal_id?: string | null }).sucursal_id ?? '') === sucursalId)
       : expenses;
 
-    const totalIncome = filteredOrders.reduce((sum, order) => sum + resolveOrderIncome(order as { total_cost?: number | null; final_cost?: number | null }), 0);
+    const totalIncome = filteredOrders.reduce((sum, order) => sum + resolveOrderIncome(order as { final_cost?: number | null }), 0);
     const totalExpense = filteredExpenses.reduce((sum, item) => sum + Number((item as { expense?: number }).expense ?? 0), 0);
     const totalBalance = Number((totalIncome - totalExpense).toFixed(2));
 
@@ -95,8 +95,8 @@ export const getBalance = async (req: Request, res: Response) => {
       ...filteredOrders.slice(0, 25).map((order) => ({
         id: String((order as { id?: string }).id ?? `${tenantId}-order`),
         tenant_id: tenantId,
-        balance: resolveOrderIncome(order as { total_cost?: number | null; final_cost?: number | null }),
-        income: resolveOrderIncome(order as { total_cost?: number | null; final_cost?: number | null }),
+        balance: resolveOrderIncome(order as { final_cost?: number | null }),
+        income: resolveOrderIncome(order as { final_cost?: number | null }),
         expense: 0,
         created_at: String((order as { created_at?: string }).created_at ?? new Date().toISOString()),
         type: 'order',
@@ -142,7 +142,7 @@ export const getCashflow = async (req: Request, res: Response) => {
     for (const order of sucursalOrders) {
       const day = toDayKey((order as { created_at?: string }).created_at ?? null);
       const current = grouped.get(day) ?? { id: `${sucursalId}-${day}`, tenant_id: tenantId, sucursal_id: sucursalId, balance: 0, income: 0, expense: 0, created_at: day };
-      const income = resolveOrderIncome(order as { total_cost?: number | null; final_cost?: number | null });
+      const income = resolveOrderIncome(order as { final_cost?: number | null });
       current.income += income;
       current.balance += income;
       grouped.set(day, current);

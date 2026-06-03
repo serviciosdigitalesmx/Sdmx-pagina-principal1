@@ -1,0 +1,95 @@
+apps/web-admin/src/app/dashboard/compras/page.tsx:220:        emptyCopy={error || "La lista real sale de /api/:tenantSlug/purchase-orders."}
+apps/web-admin/src/app/dashboard/proveedores/page.tsx:354:        emptyCopy={error || "La lista real sale de /api/:tenantSlug/suppliers con filtros y paginación."}
+apps/web-admin/src/app/login/page.tsx:35:  const response = await fetch(`${apiUrl}/api/auth/exchange`, {
+apps/web-admin/src/components/dashboard/dashboard-shell.tsx:263:    const vapidResponse = await fetch(`${apiBaseUrl}/api/${encodeURIComponent(activeTenant.tenantId)}/pwa/push/vapid`, {
+apps/web-admin/src/components/dashboard/dashboard-shell.tsx:304:    await fetch(`${apiBaseUrl}/api/${encodeURIComponent(activeTenant.tenantId)}/pwa/push/subscribe`, {
+apps/web-admin/src/components/pwa/pwa-bootstrap.tsx:8:  const manifestUrl = `/api/pwa/manifest?tenant=${encodeURIComponent(tenantSlug)}`;
+apps/web-admin/src/components/pwa/pwa-bootstrap.tsx:25:  const swUrl = `/api/pwa/sw.js?tenant=${encodeURIComponent(tenantSlug)}`;
+apps/web-admin/src/services/fixService.ts:415:      `/api/${this.tenantId}/customers`,
+apps/web-admin/src/services/fixService.ts:423:      `/api/${this.tenantId}/inventory`,
+apps/web-admin/src/services/fixService.ts:431:      `/api/${this.tenantId}/inventory`,
+apps/web-admin/src/services/fixService.ts:442:      `/api/${this.tenantId}/inventory/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:453:      `/api/${this.tenantId}/inventory/${encodeURIComponent(id)}/movements`,
+apps/web-admin/src/services/fixService.ts:461:      `/api/${this.tenantId}/customers`,
+apps/web-admin/src/services/fixService.ts:472:      `/api/${this.tenantId}/orders`,
+apps/web-admin/src/services/fixService.ts:483:      `/api/${this.tenantId}/orders/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:492:      `/api/${this.tenantId}/orders/${encodeURIComponent(orderId)}/attachments`,
+apps/web-admin/src/services/fixService.ts:512:      `/api/${this.tenantId}/orders/${encodeURIComponent(orderId)}/notes`,
+apps/web-admin/src/services/fixService.ts:523:      `/api/${this.tenantId}/orders/${encodeURIComponent(orderId)}/status`,
+apps/web-admin/src/services/fixService.ts:534:      `/api/${this.tenantId}/orders/${encodeURIComponent(orderId)}/financials`,
+apps/web-admin/src/services/fixService.ts:553:      `/api/${this.tenantId}/orders/${encodeURIComponent(orderId)}/details`,
+apps/web-admin/src/services/fixService.ts:564:      `/api/${this.tenantId}/orders/${encodeURIComponent(orderId)}/checklist`,
+apps/web-admin/src/services/fixService.ts:572:      `/api/${this.tenantId}/orders/${encodeURIComponent(orderId)}/checklist`,
+apps/web-admin/src/services/fixService.ts:583:      `/api/${this.tenantId}/orders/${encodeURIComponent(orderId)}/warranty`,
+apps/web-admin/src/services/fixService.ts:594:      `/api/${this.tenantId}/orders`,
+apps/web-admin/src/services/fixService.ts:602:      `/api/${this.tenantId}/finance/balance`,
+apps/web-admin/src/services/fixService.ts:614:      `/api/${this.tenantId}/finance/cashflow/${encodeURIComponent(resolvedSucursalId)}`,
+apps/web-admin/src/services/fixService.ts:622:      `/api/${this.tenantId}/sucursales`,
+apps/web-admin/src/services/fixService.ts:638:      `/api/${this.tenantId}/sucursales`,
+apps/web-admin/src/services/fixService.ts:657:      `/api/${this.tenantId}/sucursales/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:668:      `/api/${this.tenantId}/sucursales/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:675:      `/api/${this.tenantId}/sucursales/${encodeURIComponent(sucursalId)}/users`,
+apps/web-admin/src/services/fixService.ts:686:      `/api/${this.tenantId}/procurement/summary`,
+apps/web-admin/src/services/fixService.ts:694:      `/api/${this.tenantId}/stock-alerts`,
+apps/web-admin/src/services/fixService.ts:702:      `/api/${this.tenantId}/stock-alerts/${encodeURIComponent(id)}/acknowledge`,
+apps/web-admin/src/services/fixService.ts:713:      `/api/${this.tenantId}/reports/summary`,
+apps/web-admin/src/services/fixService.ts:737:      `/api/${this.tenantId}/suppliers${suffix ? `?${suffix}` : ''}`,
+apps/web-admin/src/services/fixService.ts:751:      `/api/${this.tenantId}/suppliers/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:759:      `/api/${this.tenantId}/suppliers`,
+apps/web-admin/src/services/fixService.ts:770:      `/api/${this.tenantId}/suppliers/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:781:      `/api/${this.tenantId}/suppliers/${encodeURIComponent(id)}/status`,
+apps/web-admin/src/services/fixService.ts:792:      `/api/${this.tenantId}/suppliers/${encodeURIComponent(id)}/purchase-orders`,
+apps/web-admin/src/services/fixService.ts:800:      `/api/${this.tenantId}/suppliers/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:808:      `/api/${this.tenantId}/purchase-orders`,
+apps/web-admin/src/services/fixService.ts:816:      `/api/${this.tenantId}/purchase-orders/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:824:      `/api/${this.tenantId}/purchase-orders`,
+apps/web-admin/src/services/fixService.ts:835:      `/api/${this.tenantId}/purchase-orders/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:846:      `/api/${this.tenantId}/purchase-orders/${encodeURIComponent(id)}/status`,
+apps/web-admin/src/services/fixService.ts:857:      `/api/${this.tenantId}/purchase-orders/${encodeURIComponent(id)}/receive`,
+apps/web-admin/src/services/fixService.ts:868:      `/api/${this.tenantId}/purchase-orders/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:876:      `/api/${this.tenantId}/security/summary`,
+apps/web-admin/src/services/fixService.ts:892:      `/api/${this.tenantId}/security/audit${search.toString() ? `?${search.toString()}` : ''}`,
+apps/web-admin/src/services/fixService.ts:907:      `/api/${this.tenantId}/security/sessions`,
+apps/web-admin/src/services/fixService.ts:915:      `/api/${this.tenantId}/security/sessions/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:923:      `/api/${this.tenantId}/security/rotate-keys`,
+apps/web-admin/src/services/fixService.ts:934:      `/api/${this.tenantId}/security/mfa/setup`,
+apps/web-admin/src/services/fixService.ts:942:      `/api/${this.tenantId}/security/mfa/verify`,
+apps/web-admin/src/services/fixService.ts:953:      `/api/${this.tenantId}/security/mfa/require-admins`,
+apps/web-admin/src/services/fixService.ts:972:      `/api/users${query ? `?${query}` : ''}`,
+apps/web-admin/src/services/fixService.ts:987:      `/api/users/invite`,
+apps/web-admin/src/services/fixService.ts:998:      `/api/users/${encodeURIComponent(id)}/role`,
+apps/web-admin/src/services/fixService.ts:1009:      `/api/users/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:1019:      `/api/users/${encodeURIComponent(id)}/purchase-orders`,
+apps/web-admin/src/services/fixService.ts:1027:      `/api/${this.tenantId}/requests`,
+apps/web-admin/src/services/fixService.ts:1035:      `/api/${this.tenantId}/requests/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:1049:      `/api/${this.tenantId}/requests/${encodeURIComponent(id)}/convert`,
+apps/web-admin/src/services/fixService.ts:1058:    return this.request<ApiSingleResponse<TenantLandingSettings>>(`/api/auth/tenant/${encodeURIComponent(this.tenantId)}/settings`, {
+apps/web-admin/src/services/fixService.ts:1064:    return this.request<ApiSingleResponse<TenantLandingSettings>>(`/api/auth/tenant/${encodeURIComponent(this.tenantId)}/settings`, {
+apps/web-admin/src/services/fixService.ts:1079:    return this.request<ApiSingleResponse<TenantLandingSettings>>(`/api/auth/tenant/${encodeURIComponent(this.tenantId)}/settings`, {
+apps/web-admin/src/services/fixService.ts:1087:      `/api/${this.tenantId}/tasks`,
+apps/web-admin/src/services/fixService.ts:1095:      `/api/${this.tenantId}/tasks/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:1103:      `/api/${this.tenantId}/tasks`,
+apps/web-admin/src/services/fixService.ts:1114:      `/api/${this.tenantId}/tasks/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:1125:      `/api/${this.tenantId}/tasks/${encodeURIComponent(id)}/status`,
+apps/web-admin/src/services/fixService.ts:1136:      `/api/${this.tenantId}/tasks/${encodeURIComponent(id)}/history`,
+apps/web-admin/src/services/fixService.ts:1144:      `/api/${this.tenantId}/tasks/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:1178:    return this.request<ApiSingleResponse<TenantLandingSettings>>(`/api/auth/tenant/${encodeURIComponent(this.tenantId)}/settings`, {
+apps/web-public/src/app/[tenant]/cotizar/page.tsx:99:        const response = await fetch(`${apiUrl}/api/public/${encodeURIComponent(tenant)}`);
+apps/web-public/src/app/[tenant]/cotizar/page.tsx:156:      const response = await fetch(`${apiUrl}/api/public/quotes`, {
+apps/web-public/src/app/[tenant]/tracking/page.tsx:30:      const url = new URL(`${apiUrl}/api/public/tracking`);
+apps/web-public/src/app/[tenant]/page.tsx:55:  const response = await fetch(`${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenant)}/landing`, { cache: "no-store" });
+apps/web-public/src/app/t/[tenantSlug]/portal/page.tsx:148:    fetch(`${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenantSlug)}/landing`)
+apps/web-public/src/app/t/[tenantSlug]/portal/page.tsx:187:        `${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(searchValue.trim())}`
+apps/web-public/src/app/login/page.tsx:39:    const url = new URL(`${apiUrl}/api/auth/google`);
+apps/web-public/src/app/login/page.tsx:50:  const response = await fetch(`${apiUrl}/api/auth/exchange`, {
+apps/web-public/src/app/billing/page.tsx:60:      const response = await fetch(`${apiUrl}/api/billing/checkout`, {
+apps/web-public/src/app/onboarding/google/callback/page.tsx:116:      const response = await fetch(`${apiUrl}/api/auth/google/complete`, {
+apps/web-public/src/app/onboarding/page.tsx:48:      const response = await fetch(`${apiUrl}/api/auth/register`, {
+apps/web-public/src/app/onboarding/page.tsx:92:    const url = new URL(`${apiUrl}/api/auth/google`);
+apps/web-public/src/components/root-auth-hash-redirect.tsx:36:  const response = await fetch(`${apiUrl}/api/auth/exchange`, {
+apps/web-public/src/components/public-portal-lookup.tsx:140:        `/api/public/tenant/${encodeURIComponent(targetTenant.trim())}/orders/${encodeURIComponent(targetFolio.trim())}`
+apps/web-clientes/src/app/[tenantSlug]/page.tsx:3:import { getTenantLanding } from "@/lib/api/tenant";
+apps/web-clientes/src/app/t/[tenantSlug]/portal/page.tsx:7:import { getTenantLanding } from "@/lib/api/tenant";
+apps/web-clientes/src/app/t/[tenantSlug]/portal/page.tsx:8:import { getOrderByFolio } from "@/lib/api/orders";
+apps/web-clientes/src/lib/api/orders.ts:5:  return apiClient<BackendOrderResponse>(`/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(folio)}`);
+apps/web-clientes/src/lib/api/tenant.ts:5:  return apiClient<LandingResponse>(`/api/public/tenant/${encodeURIComponent(tenantSlug)}/landing`);
