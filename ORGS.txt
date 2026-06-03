@@ -1,4 +1,0 @@
-apps/api/src/services/tenant-billing.ts:37:      .from('organizations')
-apps/api/src/services/billing.ts:185:    .from('organizations')
-apps/api/src/services/billing.ts:192:      .from('organizations')
-apps/api/src/services/billing.ts:204:  const { error } = await supabaseAdmin.from('organizations').insert([{
