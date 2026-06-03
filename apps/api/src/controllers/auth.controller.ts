@@ -137,6 +137,7 @@ export const register = async (req: Request, res: Response) => {
       },
     });
     authUser = created?.data ? created : { data: created?.data, error: created?.error };
+  console.log('STEP_CREATEUSER_DONE');
     if (created?.error || !created?.data?.user) {
       console.error('REGISTER_CREATEUSER_FAILED', { error: created?.error });
       return res.status(409).json({ error: created?.error?.message ?? 'Unable to create auth user' });
@@ -160,31 +161,32 @@ export const register = async (req: Request, res: Response) => {
     }
 
     const tenant = Array.isArray(tenantRows) ? tenantRows[0] : tenantRows;
-
-    if (!tenant?.tenant_id || !tenant?.tenant_slug) {
-      throw new Error('Tenant transaction returned no data');
-    }
-
-    const token = await signJwt({
-      sub: authUser.user.id,
-      email,
-      role: 'owner',
-      tenant_id: tenant.tenant_id,
-      tenant_slug: tenant.tenant_slug,
-    }, tenant.tenant_id);
+  // Map database column `slug` to expected `tenant_slug`
+  const tenantSlug = tenant.slug ?? tenant.tenant_slug;
+  if (!tenant?.tenant_id || !tenantSlug) {
+    throw new Error('Tenant transaction returned no data');
+  }
+  console.log('STEP_TENANT_OBTAINED', { tenantId: tenant.tenant_id, tenantSlug });
+  const token = await signJwt({
+    sub: authUser.user.id,
+    email,
+    role: 'owner',
+    tenant_id: tenant.tenant_id,
+    tenant_slug: tenantSlug,
+  }, tenant.tenant_id);
 
     return res.status(201).json({
       token,
       tenant: {
         id: tenant.tenant_id,
-        slug: tenant.tenant_slug,
+        slug: tenantSlug,
         trialExpiresAt: tenant.trial_expires_at,
       },
       billing: {
         subscriptionStatus: 'trial',
         billingExempt: false,
       },
-      redirectUrl: `${appUrl}/onboarding/success?tenant=${encodeURIComponent(tenant.tenant_slug)}&token=${encodeURIComponent(token)}`,
+      redirectUrl: `${appUrl}/onboarding/success?tenant=${encodeURIComponent(tenantSlug)}&token=${encodeURIComponent(token)}`,
     });
   } catch (error) {
     await supabaseAdmin.auth.admin.deleteUser(authUser.user.id).catch((deleteError) => {
@@ -277,30 +279,30 @@ export const completeGoogleRegistration = async (req: Request, res: Response) =>
     }
 
     const tenant = Array.isArray(tenantRows) ? tenantRows[0] : tenantRows;
-
-    if (!tenant?.tenant_id || !tenant?.tenant_slug) {
-      throw new Error('Tenant transaction returned no data');
-    }
-
-    const authPayload = await buildAuthPayload(
-      { id: userResult.user.id, email },
-      { id: tenant.tenant_id, slug: tenant.tenant_slug },
-      'owner'
-    );
+  const tenantSlug = tenant.slug ?? tenant.tenant_slug;
+  if (!tenant?.tenant_id || !tenantSlug) {
+    throw new Error('Tenant transaction returned no data');
+  }
+  console.log('STEP_GOOGLE_TENANT_OBTAINED', { tenantId: tenant.tenant_id, tenantSlug });
+  const authPayload = await buildAuthPayload(
+    { id: userResult.user.id, email },
+    { id: tenant.tenant_id, slug: tenantSlug },
+    'owner'
+  );
 
     return res.status(201).json({
       token: authPayload.token,
       user: authPayload.user,
       tenant: {
         id: tenant.tenant_id,
-        slug: tenant.tenant_slug,
+        slug: tenantSlug,
         trialExpiresAt: tenant.trial_expires_at,
       },
       billing: {
         subscriptionStatus: 'trial',
         billingExempt: false,
       },
-      redirectUrl: `${appUrl}/onboarding/success?tenant=${encodeURIComponent(tenant.tenant_slug)}&token=${encodeURIComponent(authPayload.token)}`,
+      redirectUrl: `${appUrl}/onboarding/success?tenant=${encodeURIComponent(tenantSlug)}&token=${encodeURIComponent(authPayload.token)}`,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
