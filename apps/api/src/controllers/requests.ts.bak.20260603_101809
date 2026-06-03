@@ -114,60 +114,25 @@ export async function convertServiceRequestToOrder(req: Request, res: Response) 
     }
 
     let customerId: string | null = null;
-
     if (body.createCustomer) {
-      const phone = String(requestRow.customer_phone ?? '').trim();
-      const email = String(requestRow.customer_email ?? '').trim();
+      const { data: customerData, error: customerError } = await supabase
+        .from('customers')
+        .insert([
+          {
+            tenant_id: tenantId,
+            name: requestRow.customer_name,
+            phone: requestRow.customer_phone,
+            email: requestRow.customer_email || null,
+          },
+        ])
+        .select('id')
+        .single();
 
-      let existingCustomer = null;
-
-      if (phone) {
-        const { data } = await supabase
-          .from('customers')
-          .select('id')
-          .eq('tenant_id', tenantId)
-          .eq('phone', phone)
-          .maybeSingle();
-
-        existingCustomer = data;
+      if (customerError || !customerData) {
+        return res.status(502).json({ error: 'Failed to create customer from request', details: customerError?.message ?? 'Unknown error' });
       }
 
-      if (!existingCustomer && email) {
-        const { data } = await supabase
-          .from('customers')
-          .select('id')
-          .eq('tenant_id', tenantId)
-          .eq('email', email)
-          .maybeSingle();
-
-        existingCustomer = data;
-      }
-
-      if (existingCustomer?.id) {
-        customerId = existingCustomer.id;
-      } else {
-        const { data: customerData, error: customerError } = await supabase
-          .from('customers')
-          .insert([
-            {
-              tenant_id: tenantId,
-              name: requestRow.customer_name,
-              phone: phone || null,
-              email: email || null,
-            },
-          ])
-          .select('id')
-          .single();
-
-        if (customerError || !customerData) {
-          return res.status(502).json({
-            error: 'Failed to create customer from request',
-            details: customerError?.message ?? 'Unknown error',
-          });
-        }
-
-        customerId = customerData.id;
-      }
+      customerId = customerData.id;
     }
 
     const folioPrefix = process.env.ORDER_FOLIO_PREFIX ?? 'ORD';
