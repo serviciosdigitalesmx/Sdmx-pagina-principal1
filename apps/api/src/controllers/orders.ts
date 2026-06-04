@@ -1131,6 +1131,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
         received_at: nextStatus === 'recibido' ? new Date().toISOString() : undefined,
         completed_at: nextStatus === 'listo' ? new Date().toISOString() : undefined,
         delivered_at: nextStatus === 'entregado' ? new Date().toISOString() : undefined,
+        updated_by: req.user?.userId ?? null,
       })
       .eq('tenant_id', tenantId)
       .eq('id', orderId)
@@ -1229,6 +1230,7 @@ export const updateOrderFinancials = async (req: Request, res: Response) => {
         estimated_cost: nextEstimatedCost,
         final_cost: nextFinalCost,
         receipt_url: body.receiptUrl || undefined,
+        updated_by: req.user?.userId ?? null,
       })
       .eq('tenant_id', tenantId)
       .eq('id', orderId)
@@ -1335,6 +1337,7 @@ export const updateOrderDetails = async (req: Request, res: Response) => {
         problem_description: body.issue ?? undefined,
         promised_date: body.promisedDate === '' ? null : body.promisedDate,
         metadata: body.metadata ?? undefined,
+        updated_by: req.user?.userId ?? null,
       })
       .eq('tenant_id', tenantId)
       .eq('id', orderId)

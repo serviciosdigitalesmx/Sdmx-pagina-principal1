@@ -10,7 +10,6 @@ const supplierFiltersSchema = z.object({
   pageSize: z.coerce.number().int().positive().max(100).optional(),
   q: z.string().optional(),
   name: z.string().optional(),
-  rfc: z.string().optional(),
   status: z.enum(['active', 'inactive', 'all']).optional(),
 });
 
@@ -79,23 +78,18 @@ function buildSupplierQuery(supabase: ReturnType<typeof getTenantClient>, tenant
   const offset = (page - 1) * pageSize;
   const search = normalizeSearch(filters.q);
   const name = normalizeSearch(filters.name);
-  const rfc = normalizeSearch(filters.rfc);
 
   let query = supabase
     .from('suppliers')
-    .select('id, tenant_id, business_name, rfc, legal_name, contact_name, phone, whatsapp, email, address, city, state, categories, lead_time_days, payment_terms, price_score, speed_score, quality_score, reliability_score, notes, is_active, created_at, updated_at', { count: 'exact' })
+    .select('id, tenant_id, business_name, legal_name, contact_name, phone, whatsapp, email, address, city, state, categories, lead_time_days, payment_terms, price_score, speed_score, quality_score, reliability_score, notes, is_active, created_at, updated_at', { count: 'exact' })
     .eq('tenant_id', tenantId);
 
   if (search) {
-    query = query.or(`business_name.ilike.%${search}%,rfc.ilike.%${search}%`);
+    query = query.or(`business_name.ilike.%${search}%`);
   }
 
   if (name) {
     query = query.ilike('business_name', `%${name}%`);
-  }
-
-  if (rfc) {
-    query = query.ilike('rfc', `%${rfc}%`);
   }
 
   if (filters.status === 'active') {
@@ -159,7 +153,7 @@ export const getSupplierById = async (req: Request, res: Response) => {
     const supabase = getTenantClient(tenantId);
     const { data, error } = await supabase
       .from('suppliers')
-      .select('id, tenant_id, business_name, rfc, legal_name, contact_name, phone, whatsapp, email, address, city, state, categories, lead_time_days, payment_terms, price_score, speed_score, quality_score, reliability_score, notes, is_active, created_at, updated_at')
+      .select('id, tenant_id, business_name, legal_name, contact_name, phone, whatsapp, email, address, city, state, categories, lead_time_days, payment_terms, price_score, speed_score, quality_score, reliability_score, notes, is_active, created_at, updated_at')
       .eq('tenant_id', tenantId)
       .eq('id', supplierId)
       .maybeSingle();
@@ -196,7 +190,6 @@ export const createSupplier = async (req: Request, res: Response) => {
         {
           tenant_id: tenantId,
           business_name: body.businessName.trim(),
-          rfc: body.rfc?.trim() || null,
           legal_name: body.legalName?.trim() || null,
           contact_name: body.contactName?.trim() || null,
           phone: body.phone?.trim() || null,
@@ -216,7 +209,7 @@ export const createSupplier = async (req: Request, res: Response) => {
           is_active: body.isActive ?? true,
         },
       ])
-      .select('id, tenant_id, business_name, rfc, legal_name, contact_name, phone, whatsapp, email, address, city, state, categories, lead_time_days, payment_terms, price_score, speed_score, quality_score, reliability_score, notes, is_active, created_at, updated_at')
+      .select('id, tenant_id, business_name, legal_name, contact_name, phone, whatsapp, email, address, city, state, categories, lead_time_days, payment_terms, price_score, speed_score, quality_score, reliability_score, notes, is_active, created_at, updated_at')
       .single();
 
     if (error) {
@@ -273,7 +266,6 @@ export const updateSupplier = async (req: Request, res: Response) => {
 
     const payload: Record<string, unknown> = {};
     if (body.businessName !== undefined) payload.business_name = body.businessName.trim();
-    if (body.rfc !== undefined) payload.rfc = body.rfc?.trim() || null;
     if (body.legalName !== undefined) payload.legal_name = body.legalName?.trim() || null;
     if (body.contactName !== undefined) payload.contact_name = body.contactName?.trim() || null;
     if (body.phone !== undefined) payload.phone = body.phone?.trim() || null;
@@ -293,7 +285,7 @@ export const updateSupplier = async (req: Request, res: Response) => {
       .update(payload)
       .eq('tenant_id', tenantId)
       .eq('id', supplierId)
-      .select('id, tenant_id, business_name, rfc, legal_name, contact_name, phone, whatsapp, email, address, city, state, categories, lead_time_days, payment_terms, price_score, speed_score, quality_score, reliability_score, notes, is_active, created_at, updated_at')
+      .select('id, tenant_id, business_name, legal_name, contact_name, phone, whatsapp, email, address, city, state, categories, lead_time_days, payment_terms, price_score, speed_score, quality_score, reliability_score, notes, is_active, created_at, updated_at')
       .single();
 
     if (error) {
@@ -354,7 +346,7 @@ export const updateSupplierStatus = async (req: Request, res: Response) => {
       .update({ is_active: body.status === 'active' })
       .eq('tenant_id', tenantId)
       .eq('id', supplierId)
-      .select('id, tenant_id, business_name, rfc, legal_name, contact_name, phone, whatsapp, email, address, city, state, categories, lead_time_days, payment_terms, price_score, speed_score, quality_score, reliability_score, notes, is_active, created_at, updated_at')
+      .select('id, tenant_id, business_name, legal_name, contact_name, phone, whatsapp, email, address, city, state, categories, lead_time_days, payment_terms, price_score, speed_score, quality_score, reliability_score, notes, is_active, created_at, updated_at')
       .single();
 
     if (error) {

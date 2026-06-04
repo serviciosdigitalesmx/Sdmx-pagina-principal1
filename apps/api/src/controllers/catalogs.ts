@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { getTenantClient } from '@white-label/database';
-import { supabaseAdmin } from '@white-label/database';
 import { refreshInventoryAlert } from './stock-alerts';
 
 const createCustomerSchema = z.object({
@@ -99,6 +98,61 @@ async function validateSucursalOwnership(
   }
 
   return Boolean(data);
+}
+
+async function persistInventoryStock(
+  supabase: ReturnType<typeof getTenantClient>,
+  params: {
+    tenantId: string;
+    sucursalId: string | null;
+    productId: string;
+    stock: number;
+    reference: string;
+    notes: string | null;
+    changedBy: string | null;
+  },
+) {
+  const { tenantId, sucursalId, productId, stock, reference, notes, changedBy } = params;
+
+  const { data: inventoryRow, error: inventoryError } = await supabase
+    .from('sucursal_inventory')
+    .upsert([
+      {
+        tenant_id: tenantId,
+        sucursal_id: sucursalId,
+        product_id: productId,
+        stock_current: stock,
+      },
+    ], { onConflict: 'tenant_id,sucursal_id,product_id' })
+    .select('id, tenant_id, sucursal_id, product_id, stock_current, created_at, updated_at')
+    .single();
+
+  if (inventoryError || !inventoryRow) {
+    throw inventoryError ?? new Error('Failed to persist inventory row');
+  }
+
+  const movementPayload = {
+    tenant_id: tenantId,
+    branch_id: sucursalId,
+    sucursal_id: sucursalId,
+    product_id: productId,
+    movement_type: 'adjustment',
+    quantity: stock,
+    unit_cost: 0,
+    reference,
+    notes,
+    created_by: changedBy,
+  };
+
+  const { error: movementError } = await supabase
+    .from('inventory_movements')
+    .insert([movementPayload]);
+
+  if (movementError) {
+    throw movementError;
+  }
+
+  return inventoryRow;
 }
 
 export const listCustomers = async (req: Request, res: Response) => {
@@ -231,24 +285,15 @@ export const createInventoryItem = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Sucursal activa requerida' });
     }
 
-    const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('adjust_inventory', {
-      p_tenant_id: tenantId,
-      p_sucursal_id: resolvedSucursalId,
-      p_product_id: productRow.id,
-      p_target_stock: Number(body.stock),
-      p_reference: 'inventory_seed',
-      p_notes: body.description,
-      p_changed_by: changedBy,
+    const inventoryRow = await persistInventoryStock(supabase, {
+      tenantId,
+      sucursalId: resolvedSucursalId,
+      productId: productRow.id,
+      stock: Number(body.stock),
+      reference: 'inventory_seed',
+      notes: body.description,
+      changedBy,
     });
-
-    if (rpcError) {
-      return res.status(502).json({ error: 'Failed to adjust inventory', details: rpcError.message });
-    }
-
-    const inventoryRow = Array.isArray(rpcResult) ? rpcResult[0] : rpcResult;
-    if (!inventoryRow) {
-      return res.status(502).json({ error: 'Failed to adjust inventory', details: 'Empty RPC response' });
-    }
 
     await refreshInventoryAlert(tenantId, productRow.id, resolvedSucursalId, Number((inventoryRow as { stock_current?: number }).stock_current ?? body.stock));
     return res.status(201).json({
@@ -326,24 +371,15 @@ export const updateInventoryItem = async (req: Request, res: Response) => {
     const effectiveSucursalId = scope?.mode === 'branch' ? (scope.sucursalId ?? currentRow.sucursal_id ?? nextSucursalId) : nextSucursalId;
     const changedBy = req.user?.userId ?? req.user?.sub ?? null;
 
-    const { data: rpcResult, error: rpcError } = await supabaseAdmin.rpc('adjust_inventory', {
-      p_tenant_id: tenantId,
-      p_sucursal_id: effectiveSucursalId,
-      p_product_id: productRow.id,
-      p_target_stock: nextStock,
-      p_reference: body.note || 'stock_adjustment',
-      p_notes: body.note || null,
-      p_changed_by: changedBy,
+    const updatedRow = await persistInventoryStock(supabase, {
+      tenantId,
+      sucursalId: effectiveSucursalId,
+      productId: productRow.id,
+      stock: nextStock,
+      reference: body.note || 'stock_adjustment',
+      notes: body.note || null,
+      changedBy,
     });
-
-    if (rpcError) {
-      return res.status(502).json({ error: 'Failed to update inventory item', details: rpcError.message });
-    }
-
-    const updatedRow = Array.isArray(rpcResult) ? rpcResult[0] : rpcResult;
-    if (!updatedRow) {
-      return res.status(502).json({ error: 'Failed to update inventory item', details: 'Empty RPC response' });
-    }
 
     await refreshInventoryAlert(tenantId, productRow.id, effectiveSucursalId, Number((updatedRow as { stock_current?: number }).stock_current ?? nextStock));
 

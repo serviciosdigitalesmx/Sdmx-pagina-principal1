@@ -17,6 +17,7 @@ const inviteUserSchema = z.object({
   name: z.string().trim().min(2),
   role: z.string().trim().min(1),
   sucursalId: z.string().uuid().nullable().optional(),
+  password: z.string().min(8).optional(),
 });
 
 const updateRoleSchema = z.object({
@@ -197,25 +198,40 @@ export const inviteUser = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Tenant not found' });
     }
 
-    const { data: authInvite, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(body.email, {
-      data: {
-        tenant_id: tenantId,
-        tenant_slug: tenantRow.slug,
-        role,
-        sucursal_id: body.sucursalId ?? undefined,
-        name: body.name,
-      },
-    });
+    const authMetadata = {
+      tenant_id: tenantId,
+      tenant_slug: tenantRow.slug,
+      role,
+      sucursal_id: body.sucursalId ?? undefined,
+      name: body.name,
+    };
 
-    if (inviteError || !authInvite.user) {
-      return res.status(502).json({ error: 'Failed to invite user', details: inviteError?.message ?? 'Unknown error' });
+    const authResponse = body.password
+      ? await supabaseAdmin.auth.admin.createUser({
+          email: body.email,
+          password: body.password,
+          email_confirm: true,
+          user_metadata: authMetadata,
+        })
+      : await supabaseAdmin.auth.admin.inviteUserByEmail(body.email, {
+          data: authMetadata,
+        });
+
+    const authUser = authResponse.data.user ?? null;
+    const authError = authResponse.error;
+
+    if (authError || !authUser) {
+      return res.status(502).json({
+        error: body.password ? 'Failed to create user credentials' : 'Failed to invite user',
+        details: authError?.message ?? 'Unknown error',
+      });
     }
 
     const { data: existingUser, error: existingError } = await supabaseAdmin
       .from('users')
       .select('id')
       .eq('tenant_id', tenantId)
-      .eq('auth_user_id', authInvite.user.id)
+      .eq('auth_user_id', authUser.id)
       .maybeSingle();
 
     if (existingError) {
@@ -247,7 +263,7 @@ export const inviteUser = async (req: Request, res: Response) => {
         data: {
           user: mapUserRow(updatedUser),
           invite: {
-            id: authInvite.user.id,
+            id: authUser.id,
             email: body.email,
             role,
             sucursalId: body.sucursalId ?? null,
@@ -262,7 +278,7 @@ export const inviteUser = async (req: Request, res: Response) => {
       .from('users')
       .insert([{
         tenant_id: tenantId,
-        auth_user_id: authInvite.user.id,
+        auth_user_id: authUser.id,
         name: body.name,
         full_name: body.name,
         email: body.email,
@@ -275,7 +291,7 @@ export const inviteUser = async (req: Request, res: Response) => {
       .single();
 
     if (createError || !createdUser) {
-      await supabaseAdmin.auth.admin.deleteUser(authInvite.user.id).catch((rollbackError) => {
+      await supabaseAdmin.auth.admin.deleteUser(authUser.id).catch((rollbackError) => {
         console.error('Failed to rollback invited auth user:', rollbackError);
       });
 
@@ -287,7 +303,7 @@ export const inviteUser = async (req: Request, res: Response) => {
       data: {
         user: mapUserRow(createdUser),
         invite: {
-          id: authInvite.user.id,
+          id: authUser.id,
           email: body.email,
           role,
           sucursalId: body.sucursalId ?? null,
