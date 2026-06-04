@@ -370,15 +370,37 @@ export const updateInventoryItem = async (req: Request, res: Response) => {
     const effectiveSucursalId = scope?.mode === 'branch' ? (scope.sucursalId ?? currentRow.sucursal_id ?? nextSucursalId) : nextSucursalId;
     const changedBy = req.user?.userId ?? req.user?.sub ?? null;
 
-    const updatedRow = await persistInventoryStock(supabase, {
-      tenantId,
-      sucursalId: effectiveSucursalId,
-      productId: productRow.id,
-      stock: nextStock,
-      reference: body.note || 'stock_adjustment',
-      notes: body.note || null,
-      changedBy,
-    });
+    const { data: updatedRow, error: updateError } = await supabase
+      .from('sucursal_inventory')
+      .update({
+        stock_current: nextStock,
+      })
+      .eq('tenant_id', tenantId)
+      .eq('id', inventoryId)
+      .select('id, tenant_id, sucursal_id, product_id, stock_current, created_at, updated_at')
+      .single();
+
+    if (updateError || !updatedRow) {
+      return res.status(502).json({ error: 'Failed to update inventory item', details: updateError?.message ?? 'Unable to persist inventory row' });
+    }
+
+    const movementErrorResult = await supabase
+      .from('inventory_movements')
+      .insert([{
+        tenant_id: tenantId,
+        branch_id: effectiveSucursalId,
+        product_id: productRow.id,
+        movement_type: 'adjustment',
+        quantity: nextStock - Number(currentRow.stock_current ?? 0),
+        unit_cost: 0,
+        reference: body.note || 'stock_adjustment',
+        notes: body.note || null,
+        created_by: changedBy,
+      }]);
+
+    if (movementErrorResult.error) {
+      return res.status(502).json({ error: 'Failed to update inventory item', details: movementErrorResult.error.message });
+    }
 
     await refreshInventoryAlert(tenantId, productRow.id, effectiveSucursalId, Number((updatedRow as { stock_current?: number }).stock_current ?? nextStock));
 
