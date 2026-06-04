@@ -482,6 +482,88 @@ class FixService {
     };
   }
 
+  private normalizeSupplierRow(row: JsonRecord): JsonRecord {
+    return {
+      ...row,
+      id: String(row.id ?? ''),
+      business_name: String(row.business_name ?? row.nombre ?? row.legal_name ?? ''),
+      nombre: String(row.nombre ?? row.business_name ?? row.legal_name ?? ''),
+      rfc: typeof row.rfc === 'string' ? row.rfc : null,
+      legal_name: typeof row.legal_name === 'string' ? row.legal_name : null,
+      contact_name: typeof row.contact_name === 'string' ? row.contact_name : null,
+      phone: typeof row.phone === 'string' ? row.phone : null,
+      telefono: typeof row.telefono === 'string' ? row.telefono : null,
+      whatsapp: typeof row.whatsapp === 'string' ? row.whatsapp : null,
+      email: typeof row.email === 'string' ? row.email : null,
+      address: typeof row.address === 'string' ? row.address : null,
+      direccion: typeof row.direccion === 'string' ? row.direccion : null,
+      city: typeof row.city === 'string' ? row.city : null,
+      state: typeof row.state === 'string' ? row.state : null,
+      categories: typeof row.categories === 'string' ? row.categories : null,
+      lead_time_days: typeof row.lead_time_days === 'number' ? row.lead_time_days : null,
+      payment_terms: typeof row.payment_terms === 'string' ? row.payment_terms : null,
+      condiciones_pago: typeof row.condiciones_pago === 'string' ? row.condiciones_pago : null,
+      notes: typeof row.notes === 'string' ? row.notes : null,
+      is_active: typeof row.is_active === 'boolean' ? row.is_active : typeof row.is_active === 'string' ? row.is_active : null,
+      estatus: row.estatus === 'active' || row.estatus === 'inactive' ? row.estatus : (row.is_active === true || row.is_active === 'true' ? 'active' : 'inactive'),
+      created_at: typeof row.created_at === 'string' ? row.created_at : null,
+      updated_at: typeof row.updated_at === 'string' ? row.updated_at : null,
+    };
+  }
+
+  private normalizePurchaseOrderRow(row: JsonRecord): JsonRecord {
+    return {
+      ...row,
+      id: String(row.id ?? ''),
+      folio: String(row.folio ?? ''),
+      status: String(row.status ?? 'pendiente'),
+      supplier_id: String(row.supplier_id ?? row.supplierId ?? ''),
+      sucursal_id: typeof row.sucursal_id === 'string' ? row.sucursal_id : null,
+      expected_date: typeof row.expected_date === 'string' ? row.expected_date : null,
+      total: Number(row.total ?? row.total_amount ?? 0),
+      notes: typeof row.notes === 'string' ? row.notes : null,
+      items: Array.isArray(row.items) ? row.items : [],
+      movements: Array.isArray(row.movements) ? row.movements : [],
+    };
+  }
+
+  private normalizePurchaseOrderDetail(row: JsonRecord): JsonRecord {
+    if (row && typeof row === 'object' && row.order) {
+      return {
+        ...row,
+        order: this.normalizePurchaseOrderRow(row.order as JsonRecord),
+        items: Array.isArray(row.items) ? row.items : [],
+        movements: Array.isArray(row.movements) ? row.movements : [],
+      };
+    }
+
+    const normalizedOrder = this.normalizePurchaseOrderRow(row);
+    return {
+      order: normalizedOrder,
+      items: Array.isArray(row.items) ? row.items : normalizedOrder.items ?? [],
+      movements: Array.isArray(row.movements) ? row.movements : normalizedOrder.movements ?? [],
+    };
+  }
+
+  private normalizeReportsSummary(row: JsonRecord): JsonRecord {
+    return {
+      ...row,
+      ordersCount: Number(row.ordersCount ?? row.orders_count ?? 0),
+      customersCount: Number(row.customersCount ?? row.customers_count ?? 0),
+      inventoryCount: Number(row.inventoryCount ?? row.inventory_count ?? 0),
+      lowStockCount: Number(row.lowStockCount ?? row.low_stock_count ?? 0),
+      totalIncome: Number(row.totalIncome ?? row.total_income ?? 0),
+      totalExpense: Number(row.totalExpense ?? row.total_expense ?? 0),
+      totalBalance: Number(row.totalBalance ?? row.total_balance ?? 0),
+      productivity: typeof row.productivity === 'number' ? row.productivity : Number(row.productivity ?? 0),
+      inventoryValuation: typeof row.inventoryValuation === 'number' ? row.inventoryValuation : Number(row.inventoryValuation ?? row.inventory_valuation ?? 0),
+      accountsReceivable: typeof row.accountsReceivable === 'number' ? row.accountsReceivable : Number(row.accountsReceivable ?? row.accounts_receivable ?? 0),
+      ordersByTechnician: (row.ordersByTechnician as Record<string, number> | undefined) ?? (row.orders_by_technician as Record<string, number> | undefined) ?? {},
+      statusCounts: (row.statusCounts as Record<string, number> | undefined) ?? (row.status_counts as Record<string, number> | undefined) ?? {},
+      lastUpdatedAt: typeof row.lastUpdatedAt === 'string' ? row.lastUpdatedAt : typeof row.last_updated_at === 'string' ? row.last_updated_at : null,
+    };
+  }
+
   public async getCustomers(): Promise<JsonRecord[]> {
     const result = await this.request<ApiListResponse<JsonRecord[]>>(
       this.apiPath('/customers'),
@@ -810,10 +892,10 @@ class FixService {
 
   public async getReportsSummary(): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/reports/summary`,
+      this.apiPath('/reports/summary'),
       { method: 'GET' }
     );
-    return result.data;
+    return this.normalizeReportsSummary(result.data);
   }
 
   public async getSuppliers(params: SupplierQueryParams = {}): Promise<JsonRecord[] & { page: number; pageSize: number; total: number; hasMore: boolean; }> {
@@ -834,10 +916,10 @@ class FixService {
       total: number;
       hasMore: boolean;
     }>(
-      `/api/${this.tenantId}/suppliers${suffix ? `?${suffix}` : ''}`,
+      `${this.apiPath('/suppliers')}${suffix ? `?${suffix}` : ''}`,
       { method: 'GET' }
     );
-    const payload = Object.assign(result.data as JsonRecord[], {
+    const payload = Object.assign((result.data ?? []).map((row) => this.normalizeSupplierRow(row)), {
       page: result.page,
       pageSize: result.pageSize,
       total: result.total,
@@ -848,108 +930,108 @@ class FixService {
 
   public async getSupplierById(id: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/suppliers/${encodeURIComponent(id)}`,
+      this.apiPath(`/suppliers/${encodeURIComponent(id)}`),
       { method: 'GET' }
     );
-    return result.data;
+    return this.normalizeSupplierRow(result.data);
   }
 
   public async createSupplier(data: JsonRecord): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/suppliers`,
+      this.apiPath('/suppliers'),
       {
         method: 'POST',
         body: JSON.stringify(data),
       }
     );
-    return result.data;
+    return this.normalizeSupplierRow(result.data);
   }
 
   public async updateSupplier(id: string, data: JsonRecord): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/suppliers/${encodeURIComponent(id)}`,
+      this.apiPath(`/suppliers/${encodeURIComponent(id)}`),
       {
         method: 'PUT',
         body: JSON.stringify(data),
       }
     );
-    return result.data;
+    return this.normalizeSupplierRow(result.data);
   }
 
   public async updateSupplierStatus(id: string, status: SupplierStatus): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/suppliers/${encodeURIComponent(id)}/status`,
+      this.apiPath(`/suppliers/${encodeURIComponent(id)}/status`),
       {
         method: 'PATCH',
         body: JSON.stringify({ status }),
       }
     );
-    return result.data;
+    return this.normalizeSupplierRow(result.data);
   }
 
   public async getSupplierPurchaseOrders(id: string): Promise<JsonRecord[]> {
     const result = await this.request<ApiListResponse<JsonRecord[]>>(
-      `/api/${this.tenantId}/suppliers/${encodeURIComponent(id)}/purchase-orders`,
+      this.apiPath(`/suppliers/${encodeURIComponent(id)}/purchase-orders`),
       { method: 'GET' }
     );
-    return result.data;
+    return (result.data ?? []).map((row) => this.normalizePurchaseOrderRow(row));
   }
 
   public async deleteSupplier(id: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/suppliers/${encodeURIComponent(id)}`,
+      this.apiPath(`/suppliers/${encodeURIComponent(id)}`),
       { method: 'DELETE' }
     );
-    return result.data;
+    return this.normalizeSupplierRow(result.data);
   }
 
   public async getPurchaseOrders(): Promise<JsonRecord[]> {
     const result = await this.request<ApiListResponse<JsonRecord[]>>(
-      `/api/${this.tenantId}/purchase-orders`,
+      this.apiPath('/purchase-orders'),
       { method: 'GET' }
     );
-    return result.data;
+    return (result.data ?? []).map((row) => this.normalizePurchaseOrderRow(row));
   }
 
   public async getPurchaseOrderById(id: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/purchase-orders/${encodeURIComponent(id)}`,
+      this.apiPath(`/purchase-orders/${encodeURIComponent(id)}`),
       { method: 'GET' }
     );
-    return result.data;
+    return this.normalizePurchaseOrderDetail(result.data);
   }
 
   public async createPurchaseOrder(data: PurchaseOrderPayload): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/purchase-orders`,
+      this.apiPath('/purchase-orders'),
       {
         method: 'POST',
         body: JSON.stringify(data),
       }
     );
-    return result.data;
+    return this.normalizePurchaseOrderRow(result.data);
   }
 
   public async updatePurchaseOrder(id: string, data: JsonRecord): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/purchase-orders/${encodeURIComponent(id)}`,
+      this.apiPath(`/purchase-orders/${encodeURIComponent(id)}`),
       {
         method: 'PUT',
         body: JSON.stringify(data),
       }
     );
-    return result.data;
+    return this.normalizePurchaseOrderRow(result.data);
   }
 
   public async updatePurchaseOrderStatus(id: string, status: string, note?: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/purchase-orders/${encodeURIComponent(id)}/status`,
+      this.apiPath(`/purchase-orders/${encodeURIComponent(id)}/status`),
       {
         method: 'PATCH',
         body: JSON.stringify({ status, note }),
       }
     );
-    return result.data;
+    return this.normalizePurchaseOrderRow(result.data);
   }
 
   public async receivePurchaseOrder(id: string, payload?: { notes?: string; receivedItems?: Array<{ skuSnapshot?: string; quantity: number }> }): Promise<JsonRecord> {
@@ -965,10 +1047,10 @@ class FixService {
 
   public async deletePurchaseOrder(id: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/purchase-orders/${encodeURIComponent(id)}`,
+      this.apiPath(`/purchase-orders/${encodeURIComponent(id)}`),
       { method: 'DELETE' }
     );
-    return result.data;
+    return this.normalizePurchaseOrderRow(result.data);
   }
 
   public async getSecuritySummary(): Promise<JsonRecord> {
