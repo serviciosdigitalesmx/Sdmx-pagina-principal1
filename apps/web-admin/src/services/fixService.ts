@@ -492,40 +492,53 @@ class FixService {
 
   public async getInventory(): Promise<JsonRecord[]> {
     const result = await this.request<ApiListResponse<JsonRecord[]>>(
-      `/api/${this.tenantId}/inventory`,
+      this.apiPath('/inventory'),
       { method: 'GET' }
     );
-    return result.data;
+    return (result.data ?? []).map((row) => ({
+      ...row,
+      sku: String(row.sku ?? ''),
+      description: String(row.description ?? ''),
+      stock_current: Number(row.stock_current ?? 0),
+      minimum_stock: Number(row.minimum_stock ?? 0),
+      sucursal_id: typeof row.sucursal_id === 'string' ? row.sucursal_id : null,
+    }));
   }
 
   public async createInventoryItem(data: { sku: string; description: string; stock: number; sucursalId?: string }): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/inventory`,
+      this.apiPath('/inventory'),
       {
         method: 'POST',
         body: JSON.stringify(data),
       }
     );
-    return result.data;
+    return {
+      ...result.data,
+      stock_current: Number((result.data as { stock_current?: number }).stock_current ?? data.stock),
+    };
   }
 
   public async updateInventoryItem(id: string, data: { description?: string; stock?: number; sucursalId?: string | null; note?: string }): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/inventory/${encodeURIComponent(id)}`,
+      this.apiPath(`/inventory/${encodeURIComponent(id)}`),
       {
         method: 'PATCH',
         body: JSON.stringify(data),
       }
     );
-    return result.data;
+    return {
+      ...result.data,
+      stock_current: Number((result.data as { stock_current?: number }).stock_current ?? data.stock ?? 0),
+    };
   }
 
   public async getInventoryMovements(id: string): Promise<JsonRecord[]> {
     const result = await this.request<ApiListResponse<JsonRecord[]>>(
-      `/api/${this.tenantId}/inventory/${encodeURIComponent(id)}/movements`,
+      this.apiPath(`/inventory/${encodeURIComponent(id)}/movements`),
       { method: 'GET' }
     );
-    return result.data;
+    return result.data ?? [];
   }
 
   public async createCustomer(data: JsonRecord): Promise<JsonRecord> {
@@ -561,7 +574,7 @@ class FixService {
   public async uploadOrderAttachment(orderId: string, file: File, fileType: 'intake_photo' | 'attachment_pdf'): Promise<JsonRecord> {
     const base64 = await this.fileToBase64(file);
     const result = await this.request<ApiListResponse<JsonRecord>>(
-      `/api/${this.tenantId}/orders/${encodeURIComponent(orderId)}/attachments`,
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/attachments`),
       {
         method: 'POST',
         body: JSON.stringify({
@@ -581,7 +594,7 @@ class FixService {
 
   public async addOrderNote(orderId: string, note: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/orders/${encodeURIComponent(orderId)}/notes`,
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/notes`),
       {
         method: 'POST',
         body: JSON.stringify({ note }),
@@ -592,7 +605,7 @@ class FixService {
 
   public async updateOrderStatus(orderId: string, status: string, note?: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/orders/${encodeURIComponent(orderId)}/status`,
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/status`),
       {
         method: 'PATCH',
         body: JSON.stringify({ status, note }),
@@ -603,7 +616,7 @@ class FixService {
 
   public async updateOrderFinancials(orderId: string, data: { estimatedCost?: number; finalCost?: number; receiptUrl?: string; note?: string }): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/orders/${encodeURIComponent(orderId)}/financials`,
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/financials`),
       {
         method: 'PATCH',
         body: JSON.stringify(data),
@@ -620,9 +633,9 @@ class FixService {
     deviceModel?: string;
     issue?: string;
     promisedDate?: string;
-  }): Promise<JsonRecord> {
+    }): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/orders/${encodeURIComponent(orderId)}/details`,
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/details`),
       {
         method: 'PATCH',
         body: JSON.stringify(data),
@@ -633,7 +646,7 @@ class FixService {
 
   public async getOrderChecklist(orderId: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/orders/${encodeURIComponent(orderId)}/checklist`,
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/checklist`),
       { method: 'GET' }
     );
     return result.data;
@@ -641,7 +654,7 @@ class FixService {
 
   public async updateOrderChecklist(orderId: string, data: JsonRecord): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/orders/${encodeURIComponent(orderId)}/checklist`,
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/checklist`),
       {
         method: 'PUT',
         body: JSON.stringify(data),
@@ -652,7 +665,7 @@ class FixService {
 
   public async updateOrderWarranty(orderId: string, data: { warrantyUntil?: string; warrantyDays?: number; note?: string }): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/orders/${encodeURIComponent(orderId)}/warranty`,
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/warranty`),
       {
         method: 'PATCH',
         body: JSON.stringify(data),
@@ -671,10 +684,10 @@ class FixService {
 
   public async getBalance(): Promise<JsonRecord[]> {
     const result = await this.request<ApiListResponse<JsonRecord[]>>(
-      `/api/${this.tenantId}/finance/balance`,
+      this.apiPath('/finance/balance'),
       { method: 'GET' }
     );
-    return result.data;
+    return result.data ?? [];
   }
 
   public async getCashflow(sucursalId: string): Promise<JsonRecord[]> {
@@ -683,18 +696,27 @@ class FixService {
       throw new Error('Sucursal activa requerida para consultar flujo de caja');
     }
     const result = await this.request<ApiListResponse<JsonRecord[]>>(
-      `/api/${this.tenantId}/finance/cashflow/${encodeURIComponent(resolvedSucursalId)}`,
+      this.apiPath(`/finance/cashflow/${encodeURIComponent(resolvedSucursalId)}`),
       { method: 'GET' }
     );
-    return result.data;
+    return result.data ?? [];
   }
 
   public async getSucursales(): Promise<JsonRecord[]> {
     const result = await this.request<ApiListResponse<JsonRecord[]>>(
-      `/api/${this.tenantId}/sucursales`,
+      this.apiPath('/sucursales'),
       { method: 'GET' }
     );
-    return result.data;
+    return (result.data ?? []).map((row) => ({
+      ...row,
+      name: String(row.name ?? ''),
+      code: typeof row.code === 'string' ? row.code : null,
+      address: typeof row.address === 'string' ? row.address : null,
+      city: typeof row.city === 'string' ? row.city : null,
+      state: typeof row.state === 'string' ? row.state : null,
+      phone: typeof row.phone === 'string' ? row.phone : null,
+      is_active: Boolean(row.is_active ?? true),
+    }));
   }
 
   public async createSucursal(data: {
@@ -707,13 +729,16 @@ class FixService {
     isActive?: boolean;
   }): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/sucursales`,
+      this.apiPath('/sucursales'),
       {
         method: 'POST',
         body: JSON.stringify(data),
       }
     );
-    return result.data;
+    return {
+      ...result.data,
+      is_active: Boolean((result.data as { is_active?: boolean }).is_active ?? data.isActive ?? true),
+    };
   }
 
   public async updateSucursal(id: string, data: {
@@ -726,25 +751,28 @@ class FixService {
     isActive?: boolean;
   }): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/sucursales/${encodeURIComponent(id)}`,
+      this.apiPath(`/sucursales/${encodeURIComponent(id)}`),
       {
         method: 'PUT',
         body: JSON.stringify(data),
       }
     );
-    return result.data;
+    return {
+      ...result.data,
+      is_active: Boolean((result.data as { is_active?: boolean }).is_active ?? data.isActive ?? true),
+    };
   }
 
   public async deleteSucursal(id: string): Promise<void> {
     await this.request(
-      `/api/${this.tenantId}/sucursales/${encodeURIComponent(id)}`,
+      this.apiPath(`/sucursales/${encodeURIComponent(id)}`),
       { method: 'DELETE' }
     );
   }
 
   public async assignUserToSucursal(sucursalId: string, userId: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/sucursales/${encodeURIComponent(sucursalId)}/users`,
+      this.apiPath(`/sucursales/${encodeURIComponent(sucursalId)}/users`),
       {
         method: 'PUT',
         body: JSON.stringify({ userId }),
@@ -763,15 +791,15 @@ class FixService {
 
   public async getStockAlerts(): Promise<JsonRecord[]> {
     const result = await this.request<ApiListResponse<JsonRecord[]>>(
-      `/api/${this.tenantId}/stock-alerts`,
+      this.apiPath('/stock-alerts'),
       { method: 'GET' }
     );
-    return result.data;
+    return result.data ?? [];
   }
 
   public async acknowledgeStockAlert(id: string, note?: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/stock-alerts/${encodeURIComponent(id)}/acknowledge`,
+      this.apiPath(`/stock-alerts/${encodeURIComponent(id)}/acknowledge`),
       {
         method: 'PATCH',
         body: JSON.stringify({ note }),
@@ -1162,15 +1190,26 @@ class FixService {
 
   public async getTasks(): Promise<JsonRecord[]> {
     const result = await this.request<ApiListResponse<JsonRecord[]>>(
-      `/api/${this.tenantId}/tasks`,
+      this.apiPath('/tasks'),
       { method: 'GET' }
     );
-    return result.data;
+    return (result.data ?? []).map((row) => ({
+      ...row,
+      title: String(row.title ?? ''),
+      description: typeof row.description === 'string' ? row.description : null,
+      status: String(row.status ?? 'pendiente'),
+      priority: String(row.priority ?? 'media'),
+      sucursal_id: typeof row.sucursal_id === 'string' ? row.sucursal_id : null,
+      service_order_id: typeof row.service_order_id === 'string' ? row.service_order_id : null,
+      service_request_id: typeof row.service_request_id === 'string' ? row.service_request_id : null,
+      assigned_user_id: typeof row.assigned_user_id === 'string' ? row.assigned_user_id : null,
+      due_date: typeof row.due_date === 'string' ? row.due_date : null,
+    }));
   }
 
   public async getTaskById(id: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/tasks/${encodeURIComponent(id)}`,
+      this.apiPath(`/tasks/${encodeURIComponent(id)}`),
       { method: 'GET' }
     );
     return result.data;
@@ -1178,7 +1217,7 @@ class FixService {
 
   public async createTask(data: TaskPayload): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/tasks`,
+      this.apiPath('/tasks'),
       {
         method: 'POST',
         body: JSON.stringify(data),
@@ -1189,7 +1228,7 @@ class FixService {
 
   public async updateTask(id: string, data: TaskPayload): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/tasks/${encodeURIComponent(id)}`,
+      this.apiPath(`/tasks/${encodeURIComponent(id)}`),
       {
         method: 'PUT',
         body: JSON.stringify(data),
@@ -1200,7 +1239,7 @@ class FixService {
 
   public async updateTaskStatus(id: string, status: string, note?: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/tasks/${encodeURIComponent(id)}/status`,
+      this.apiPath(`/tasks/${encodeURIComponent(id)}/status`),
       {
         method: 'PATCH',
         body: JSON.stringify({ status, note }),
@@ -1211,15 +1250,15 @@ class FixService {
 
   public async getTaskHistory(id: string): Promise<JsonRecord[]> {
     const result = await this.request<ApiListResponse<JsonRecord[]>>(
-      `/api/${this.tenantId}/tasks/${encodeURIComponent(id)}/history`,
+      this.apiPath(`/tasks/${encodeURIComponent(id)}/history`),
       { method: 'GET' }
     );
-    return result.data;
+    return result.data ?? [];
   }
 
   public async deleteTask(id: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/tasks/${encodeURIComponent(id)}`,
+      this.apiPath(`/tasks/${encodeURIComponent(id)}`),
       { method: 'DELETE' }
     );
     return result.data;
