@@ -181,36 +181,9 @@ async function updateOrganizationSubscription(input: {
   tenantSlug: string;
   status: string;
 }) {
-  const { data: existing } = await supabaseAdmin
-    .from('organizations')
-    .select('id')
-    .eq('id', input.tenantId)
-    .maybeSingle();
-
-  if (existing) {
-    const { error } = await supabaseAdmin
-      .from('organizations')
-      .update({
-        subscription_status: input.status,
-      })
-      .eq('id', input.tenantId);
-
-    if (error) {
-      throw error;
-    }
-    return;
-  }
-
-  const { error } = await supabaseAdmin.from('organizations').insert([{
-    id: input.tenantId,
-    name: input.tenantSlug,
-    slug: input.tenantSlug,
-    subscription_status: input.status,
-  }]);
-
-  if (error) {
-    throw error;
-  }
+  // Use adapter to write subscription status (feature-flag controlled in caller)
+  const { upsertSubscriptionStatus } = await import('./billing-adapter');
+  await upsertSubscriptionStatus(input.tenantId, input.status, (process.env.BILLING_ADAPTER_MODE as any) ?? 'legacy');
 }
 
 export async function createBillingCheckout(authUserId: string | null, request: CheckoutRequest): Promise<CheckoutResponse> {

@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { getTenantClient, supabaseAdmin } from '@white-label/database';
 import { loadTenantRuntimeConfig } from '../services/tenant-config';
+import { getEvidenceMetadata } from '../services/evidence-adapter';
+import { FEATURE_EVIDENCE_MODE } from '../config/feature-flags';
 
 type PdfAttachment = {
   type: 'receipt_pdf';
@@ -348,7 +350,7 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
 
     const { data, error } = await supabase
       .from('service_orders')
-      .select('id, tenant_id, folio, status, created_at, updated_at, promised_date, device_info, problem_description, serial_number, receipt_url, estimated_cost, final_cost, evidence_metadata, metadata')
+      .select('id, tenant_id, folio, status, created_at, updated_at, promised_date, device_info, problem_description, serial_number, receipt_url, estimated_cost, final_cost, metadata')
       .eq('tenant_id', tenant.id)
       .or(`folio.eq.${searchValue},public_token.eq.${searchValue}`)
       .maybeSingle();
@@ -379,7 +381,7 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
       return res.status(502).json({ error: 'Failed to load events', details: eventsError.message });
     }
 
-    const evidenceMetadata = Array.isArray(data.evidence_metadata) ? data.evidence_metadata : [];
+    const evidenceMetadata = (await getEvidenceMetadata(data.id, FEATURE_EVIDENCE_MODE)) ?? [];
     const metadataDocuments = evidenceMetadata
       .filter((entry) => entry && typeof entry === 'object' && (entry as { kind?: string }).kind === 'document')
       .map((entry) => {

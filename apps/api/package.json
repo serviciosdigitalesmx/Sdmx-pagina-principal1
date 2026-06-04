@@ -10,7 +10,8 @@
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "test:breaking": "node --test tests/breaking.integration.mjs",
-    "test:inventory": "node --test tests/inventory-rpc.integration.mjs"
+    "test:inventory": "node --test tests/inventory-rpc.integration.mjs",
+    "test:evidence": "node --test tests/evidence-adapter.integration.mjs"
   },
   "dependencies": {
     "@white-label/database": "workspace:*",

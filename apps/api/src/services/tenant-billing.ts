@@ -1,4 +1,6 @@
 import { supabaseAdmin } from '@white-label/database';
+import { getBillingStatus } from './billing-adapter';
+import { BILLING_ADAPTER_MODE } from '../config/feature-flags';
 
 export type TenantBillingSummary = {
   tenantId: string;
@@ -44,10 +46,10 @@ export async function loadTenantBillingSummary(tenantId: string, tenantSlug?: st
     throw tenantError;
   }
 
-  const resolvedTenantSlug = tenantSlug ?? tenantRow?.slug ?? organizationRow?.slug ?? null;
+  const resolvedTenantSlug = tenantSlug ?? tenantRow?.slug ?? null;
   const trialExpiresAt = tenantRow?.trial_expires_at ?? null;
   const billingExempt = Boolean(tenantRow?.billing_exempt);
-  const subscriptionStatus = String(!orgError ? organizationRow?.subscription_status : 'trial').trim() || 'trial';
+  const subscriptionStatus = String((await getBillingStatus(tenantId, BILLING_ADAPTER_MODE)) ?? 'trial').trim() || 'trial';
   const daysLeft = computeDaysLeft(trialExpiresAt ? new Date(trialExpiresAt).toISOString() : null);
   const isTrialActive = subscriptionStatus === 'trial' && daysLeft !== null && daysLeft > 0;
   const isBillingBlocked = !billingExempt && subscriptionStatus !== 'active' && (!isTrialActive || daysLeft === 0);

@@ -6,6 +6,8 @@ import { getTenantClient, supabaseAdmin } from '@white-label/database';
 import { loadTenantRuntimeConfig } from '../services/tenant-config';
 import { calculateOperationalRisk } from '../services/operational-risk';
 import { sendTenantPushNotification } from '../services/pwa-push';
+import { getEvidenceMetadata, type EvidenceEntry } from '../services/evidence-adapter';
+import { FEATURE_EVIDENCE_MODE } from '../config/feature-flags';
 
 const defaultOrderStatuses = ['recibido', 'diagnostico', 'reparacion', 'listo', 'entregado'] as const;
 const orderStatusSchema = z.string().min(1);
@@ -48,27 +50,6 @@ const orderDetailsUpdateSchema = z.object({
   promisedDate: z.string().optional().or(z.literal('')),
   metadata: z.record(z.unknown()).optional(),
 });
-
-type EvidenceEntry =
-  | {
-      kind: 'document';
-      id: string;
-      file_name: string;
-      file_type: 'intake_photo' | 'attachment_pdf' | 'receipt_pdf';
-      public_url: string | null;
-      mime_type: string;
-      created_at: string;
-    }
-  | {
-      kind: 'event';
-      id: string;
-      event_type: string;
-      previous_status: string | null;
-      new_status: string | null;
-      note: string | null;
-      actor_name: string | null;
-      created_at: string;
-    };
 
 type TenantBranding = {
   primaryColor?: string;
@@ -754,9 +735,9 @@ export const getOrderById = async (req: Request, res: Response) => {
       return res.status(502).json({ error: 'Failed to fetch order events', details: eventsResult.error.message });
     }
 
-    const evidenceMetadata = readEvidenceMetadata(orderResult.data.evidence_metadata);
-    const documents = normalizeOrderDocuments(documentsResult.data ?? [], evidenceMetadata);
-    const events = normalizeOrderEvents(eventsResult.data ?? [], evidenceMetadata);
+    const evidenceMetadata = await getEvidenceMetadata(orderId, FEATURE_EVIDENCE_MODE);
+    const documents = normalizeOrderDocuments(documentsResult.data ?? [], evidenceMetadata ?? []);
+    const events = normalizeOrderEvents(eventsResult.data ?? [], evidenceMetadata ?? []);
     const operationalRisk = calculateOperationalRisk({
       order: orderResult.data,
       runtimeConfig,
