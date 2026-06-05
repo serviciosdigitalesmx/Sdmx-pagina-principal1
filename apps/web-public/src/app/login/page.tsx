@@ -24,8 +24,21 @@ function getDashboardRedirectUrl() {
 }
 
 function getAdminBridgeUrl(token: string) {
-  const dashboardUrl = getDashboardRedirectUrl();
-  return dashboardUrl;
+  const adminUrl =
+    process.env.NEXT_PUBLIC_WEB_ADMIN_URL?.trim() ??
+    (process.env.NEXT_PUBLIC_BASE_DOMAIN ? `https://app.${process.env.NEXT_PUBLIC_BASE_DOMAIN}` : "");
+
+  if (!adminUrl) {
+    return getDashboardRedirectUrl();
+  }
+
+  try {
+    const bridgeUrl = new URL("/auth/bridge", adminUrl);
+    bridgeUrl.searchParams.set("token", token);
+    return bridgeUrl.toString();
+  } catch {
+    return getDashboardRedirectUrl();
+  }
 }
 
 function getGoogleOnboardingUrl() {
@@ -105,11 +118,11 @@ export default function LoginPage() {
       if (accessToken) {
         const apiToken = await exchangeSessionForApiToken(accessToken);
         saveAuthToken(apiToken, form.rememberDevice);
-        window.location.replace(getDashboardRedirectUrl());
+        window.location.replace(getAdminBridgeUrl(apiToken));
         return;
       }
 
-      window.location.replace(getDashboardRedirectUrl());
+      window.location.replace(getAdminBridgeUrl(readAuthToken() ?? ""));
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : "Error inesperado";
       setError(message);
