@@ -388,7 +388,7 @@ export const updateInventoryItem = async (req: Request, res: Response) => {
       .from('inventory_movements')
       .insert([{
         tenant_id: tenantId,
-        branch_id: effectiveSucursalId,
+        sucursal_id: effectiveSucursalId,
         product_id: productRow.id,
         movement_type: 'adjustment',
         quantity: nextStock - Number(currentRow.stock_current ?? 0),
