@@ -53,18 +53,24 @@ export default function OnboardingPage() {
         }),
       });
 
-      const data = await response.json();
+      const contentType = response.headers.get("content-type") ?? "";
+      const payload = contentType.includes("application/json")
+        ? await response.json()
+        : { error: await response.text() };
 
       if (!response.ok) {
-        throw new Error(data.error || "Ocurrió un error en el registro");
+        throw new Error(
+          payload.error ||
+            `Ocurrió un error en el registro (${response.status} ${response.statusText})`,
+        );
       }
 
-      if (data.token) {
-        saveAuthToken(data.token);
+      if (payload.token) {
+        saveAuthToken(payload.token);
       }
 
-      if (data.redirectUrl) {
-        window.location.assign(data.redirectUrl);
+      if (payload.redirectUrl) {
+        window.location.assign(payload.redirectUrl);
       } else {
         throw new Error("No se recibió URL de redirección válida del servidor");
       }
