@@ -53,6 +53,38 @@ async function proxyRequest(request: NextRequest, params: RouteParams) {
     responseHeaders.delete(header);
   }
 
+  const acceptHeader = request.headers.get("accept") ?? "";
+  const wantsHtmlRedirect = acceptHeader.includes("text/html");
+
+  if (request.method === "POST" && wantsHtmlRedirect) {
+    const payload = await response.clone().json().catch(() => null) as
+      | { redirectUrl?: string; error?: string }
+      | null;
+
+    if (!response.ok) {
+      const errorMessage = payload?.error ?? `Request failed with status ${response.status}`;
+      return NextResponse.redirect(
+        new URL(`/onboarding?error=${encodeURIComponent(errorMessage)}`, request.url),
+        303,
+      );
+    }
+
+    const redirectUrl = payload?.redirectUrl;
+    if (!redirectUrl) {
+      return NextResponse.redirect(
+        new URL(`/onboarding?error=${encodeURIComponent("No redirect URL returned by backend")}`, request.url),
+        303,
+      );
+    }
+
+    const redirectResponse = NextResponse.redirect(redirectUrl, 303);
+    const setCookie = responseHeaders.get("set-cookie");
+    if (setCookie) {
+      redirectResponse.headers.set("set-cookie", setCookie);
+    }
+    return redirectResponse;
+  }
+
   return new NextResponse(response.body, {
     status: response.status,
     headers: responseHeaders,

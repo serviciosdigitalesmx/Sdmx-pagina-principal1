@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type ChangeEvent, type FormEvent } from "react";
-import { saveAuthToken } from "@/lib/auth-storage";
 import Link from "next/link";
 import { ShellBadge, StatCard, srFixTheme } from "@/components/srfix-theme";
 import { optionalEnv } from "@white-label/config";
@@ -39,44 +38,33 @@ export default function OnboardingPage() {
     setError(null);
 
     try {
-      const response = await fetch(getPublicApiPath("/api/auth/register"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          workshopName: form.workshopName.trim(),
-          email: form.email.trim(),
-          password: form.password,
-          phone: form.phone.trim(),
-          origin: window.location.origin,
-        }),
-      });
+      const nativeForm = document.createElement("form");
+      nativeForm.method = "POST";
+      nativeForm.action = getPublicApiPath("/api/auth/register");
+      nativeForm.style.display = "none";
 
-      const contentType = response.headers.get("content-type") ?? "";
-      const payload = contentType.includes("application/json")
-        ? await response.json()
-        : { error: await response.text() };
+      const fields: Record<string, string> = {
+        workshopName: form.workshopName.trim(),
+        email: form.email.trim(),
+        password: form.password,
+        phone: form.phone.trim(),
+        origin: window.location.origin,
+      };
 
-      if (!response.ok) {
-        throw new Error(
-          payload.error ||
-            `Ocurrió un error en el registro (${response.status} ${response.statusText})`,
-        );
+      for (const [name, value] of Object.entries(fields)) {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = name;
+        input.value = value;
+        nativeForm.appendChild(input);
       }
 
-      if (payload.token) {
-        saveAuthToken(payload.token);
-      }
-
-      if (payload.redirectUrl) {
-        window.location.assign(payload.redirectUrl);
-      } else {
-        throw new Error("No se recibió URL de redirección válida del servidor");
-      }
+      document.body.appendChild(nativeForm);
+      nativeForm.submit();
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : "Error inesperado al crear la cuenta";
       setError(message);
+      setLoading(false);
     } finally {
       setLoading(false);
     }
