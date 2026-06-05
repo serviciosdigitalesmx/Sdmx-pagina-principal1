@@ -3,10 +3,10 @@ import "./globals.css";
 import { optionalEnv } from "@white-label/config";
 
 export const metadata: Metadata = {
-  title: optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "Servicios Digitales MX",
+  title: optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "FIXI",
   description:
     optionalEnv("NEXT_PUBLIC_SAAS_META_DESCRIPTION") ??
-    "Servicios Digitales MX: SaaS multi-tenant para talleres.",
+    "FIXI: SaaS multi-tenant para talleres.",
 };
 
 export const viewport = {

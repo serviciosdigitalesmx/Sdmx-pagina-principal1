@@ -3,7 +3,7 @@ import { optionalEnv } from "@white-label/config";
 import { PublicPortalLookup } from "@/components/public-portal-lookup";
 import { RootAuthHashRedirect } from "@/components/root-auth-hash-redirect";
 
-const productName = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "Servicios Digitales MX";
+const productName = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "FIXI";
 const brandShort = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_SHORT") ?? "FX";
 const hubName = optionalEnv("NEXT_PUBLIC_HUB_NAME") ?? "Hub";
 const adminUrl = optionalEnv("NEXT_PUBLIC_WEB_ADMIN_URL") ?? "";
@@ -280,7 +280,7 @@ export default function Home() {
 
           <div className="flex flex-wrap gap-4">
             <CTA href="/onboarding">Probar {trialDays} días gratis</CTA>
-            <GoogleCTA href="/onboarding">Continuar con Google</GoogleCTA>
+            <GoogleCTA href="/auth/google">Continuar con Google</GoogleCTA>
             <Link href="#portal" className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-slate-900 transition hover:-translate-y-0.5 hover:bg-slate-50">
               Ver demostración
             </Link>
@@ -429,7 +429,7 @@ export default function Home() {
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">Sin instalación</div>
             <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">Activación en minutos</div>
             <CTA href="/onboarding">Crear mi taller ahora</CTA>
-            <GoogleCTA href="/onboarding">Crear con Google</GoogleCTA>
+            <GoogleCTA href="/auth/google">Crear con Google</GoogleCTA>
           </div>
         </div>
       </section>

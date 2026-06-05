@@ -7,7 +7,7 @@ import { optionalEnv } from "@white-label/config";
 
 const hubName = optionalEnv("NEXT_PUBLIC_HUB_NAME") ?? "Hub";
 const adminUrl = optionalEnv("NEXT_PUBLIC_WEB_ADMIN_URL") ?? "";
-const publicHomeLabel = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "Servicios Digitales MX";
+const publicHomeLabel = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "FIXI";
 
 function resolveAdminBridgeUrl(token: string) {
   if (!adminUrl) {

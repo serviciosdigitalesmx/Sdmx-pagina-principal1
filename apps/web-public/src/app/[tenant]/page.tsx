@@ -109,7 +109,7 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
               )}
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-sky-100/75">SERVICIOS DIGITALES MX</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-sky-100/75">FIXI</p>
               <h1 className="text-2xl font-black tracking-tight text-zinc-50 sm:text-3xl">{data.tenant.name}</h1>
               <p className="text-sm text-zinc-400">{heroSubtitle}</p>
             </div>
@@ -328,7 +328,7 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
         </section>
 
         <footer className="flex flex-col items-center justify-between gap-4 border-t border-zinc-800 py-8 text-center text-sm text-zinc-500 md:flex-row md:text-left">
-          <p>© 2026 Servicios Digitales MX. Todos los derechos reservados.</p>
+          <p>© 2026 FIXI. Todos los derechos reservados.</p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link href={trackingHref} className="text-sky-300 transition hover:text-sky-200">
               Ver estado

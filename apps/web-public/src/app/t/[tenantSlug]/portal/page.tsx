@@ -255,7 +255,7 @@ export default function PortalPage() {
       <section className="mx-auto w-full max-w-5xl rounded-[2rem] border border-zinc-800/70 bg-zinc-950/88 p-6 shadow-[0_24px_90px_rgba(0,0,0,0.28)] sm:p-8">
         <div className="flex flex-col gap-6 rounded-[1.8rem] border border-zinc-800 bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(10,10,12,0.96))] p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.35em] text-sky-300/80">SERVICIOS DIGITALES MX</p>
+            <p className="text-xs uppercase tracking-[0.35em] text-sky-300/80">FIXI</p>
             <h1 className="text-3xl font-black uppercase tracking-tight text-zinc-50 sm:text-4xl">
               {String(portalTemplate?.heroTitle ?? "Seguimiento de servicio")}
             </h1>
@@ -445,7 +445,7 @@ export default function PortalPage() {
         </div>
 
         <footer className="mt-8 border-t border-zinc-800 pt-6 text-center text-sm text-zinc-500">
-          © 2026 Servicios Digitales MX · Todos los derechos reservados · Aviso de privacidad
+          © 2026 FIXI · Todos los derechos reservados · Aviso de privacidad
         </footer>
       </section>
     </main>

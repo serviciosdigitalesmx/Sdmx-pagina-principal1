@@ -100,7 +100,7 @@ export default function OnboardingPage() {
         <div className={`${srFixTheme.surface} p-8`}>
           <ShellBadge>Prueba gratuita</ShellBadge>
           <h1 className="mt-5 text-4xl font-semibold tracking-tight text-stone-50 sm:text-5xl [font-family:var(--font-display)]">
-            Empieza a operar con Servicios Digitales MX hoy mismo.
+            Empieza a operar con FIXI hoy mismo.
           </h1>
           <p className="mt-4 max-w-xl text-base leading-7 text-stone-300">
             Regístrate para obtener tu entorno seguro y aislado. Toma el control total de tu taller con el sistema de nueva generación.
