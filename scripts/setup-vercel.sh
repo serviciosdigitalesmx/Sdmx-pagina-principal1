@@ -19,9 +19,7 @@ add_env() {
 }
 
 echo "Configuring web-public (historical bootstrap)..."
-add_env "web-public" "NEXT_PUBLIC_API_URL" "https://api.serviciosdigitalesmx.online"
-add_env "web-public" "NEXT_PUBLIC_API_BASE_URL" "https://api.serviciosdigitalesmx.online"
-add_env "web-public" "NEXT_PUBLIC_RENDER_API_URL" "https://api.serviciosdigitalesmx.online"
+add_env "web-public" "API_URL" "https://api.serviciosdigitalesmx.online"
 add_env "web-public" "NEXT_PUBLIC_WEB_ADMIN_URL" "https://app.serviciosdigitalesmx.online"
 add_env "web-public" "NEXT_PUBLIC_WEB_PUBLIC_URL" "https://serviciosdigitalesmx.online"
 add_env "web-public" "NEXT_PUBLIC_BASE_DOMAIN" "serviciosdigitalesmx.online"
@@ -47,9 +45,7 @@ add_env "web-admin" "NEXT_PUBLIC_THEME_SECONDARY" "#0f172a"
 add_env "web-admin" "NEXT_PUBLIC_THEME_ACCENT" "#34d399"
 
 echo "Configuring web-clientes (historical bootstrap)..."
-add_env "web-clientes" "NEXT_PUBLIC_API_URL" "https://api.serviciosdigitalesmx.online"
-add_env "web-clientes" "NEXT_PUBLIC_API_BASE_URL" "https://api.serviciosdigitalesmx.online"
-add_env "web-clientes" "NEXT_PUBLIC_RENDER_API_URL" "https://api.serviciosdigitalesmx.online"
+add_env "web-clientes" "API_URL" "https://api.serviciosdigitalesmx.online"
 add_env "web-clientes" "NEXT_PUBLIC_CUSTOMER_PORTAL_NAME" "Portal de Seguimiento"
 add_env "web-clientes" "NEXT_PUBLIC_WORKSHOP_NAME" "Servicios Digitales MX"
 add_env "web-clientes" "NEXT_PUBLIC_CUSTOMER_SUPPORT_EMAIL" "soporte@serviciosdigitalesmx.online"

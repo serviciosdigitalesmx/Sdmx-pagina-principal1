@@ -3,8 +3,9 @@ const fail = (name: string): never => {
 };
 
 const apiBaseUrlCandidates = [
-  "NEXT_PUBLIC_API_BASE_URL",
+  "API_URL",
   "NEXT_PUBLIC_API_URL",
+  "NEXT_PUBLIC_API_BASE_URL",
   "NEXT_PUBLIC_RENDER_API_URL",
 ] as const;
 
@@ -36,13 +37,10 @@ function resolveFirstConfiguredEnv(names: readonly string[]): string | null {
 export function requireEnv(name: string): string {
   switch (name) {
     case "NEXT_PUBLIC_API_BASE_URL":
-      return resolveApiBaseUrl();
-
     case "NEXT_PUBLIC_API_URL":
-      return resolveApiBaseUrl();
-
     case "NEXT_PUBLIC_RENDER_API_URL":
-      return process.env.NEXT_PUBLIC_RENDER_API_URL?.trim() || fail(name);
+    case "API_URL":
+      return resolveApiBaseUrl();
 
     default: {
       const value = process.env[name]?.trim();
@@ -55,13 +53,10 @@ export function requireEnv(name: string): string {
 export function optionalEnv(name: string): string | null {
   switch (name) {
     case "NEXT_PUBLIC_API_BASE_URL":
-      return resolveFirstConfiguredEnv(apiBaseUrlCandidates);
-
     case "NEXT_PUBLIC_API_URL":
-      return resolveFirstConfiguredEnv(apiBaseUrlCandidates);
-
     case "NEXT_PUBLIC_RENDER_API_URL":
-      return process.env.NEXT_PUBLIC_RENDER_API_URL?.trim() || null;
+    case "API_URL":
+      return resolveFirstConfiguredEnv(apiBaseUrlCandidates);
 
     default:
       return process.env[name]?.trim() || null;
@@ -72,7 +67,7 @@ export function resolveApiBaseUrl(): string {
   const value = resolveFirstConfiguredEnv(apiBaseUrlCandidates);
 
   if (!value) {
-    return fail("NEXT_PUBLIC_API_URL");
+    return fail("API_URL");
   }
 
   try {

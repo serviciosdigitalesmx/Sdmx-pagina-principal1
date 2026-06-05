@@ -13,7 +13,7 @@ const HOP_BY_HOP_HEADERS = new Set([
 ]);
 
 function getBackendBaseUrl() {
-  const configuredUrl = optionalEnv("NEXT_PUBLIC_API_URL") ?? optionalEnv("NEXT_PUBLIC_API_BASE_URL") ?? optionalEnv("NEXT_PUBLIC_RENDER_API_URL");
+  const configuredUrl = optionalEnv("API_URL");
 
   if (!configuredUrl) {
     return resolveApiBaseUrl();
