@@ -12,6 +12,8 @@ const trialDays = optionalEnv("NEXT_PUBLIC_SAAS_TRIAL_DAYS") ?? "7";
 const contactEmail = optionalEnv("NEXT_PUBLIC_SAAS_CONTACT_EMAIL") ?? "";
 const contactPhone = optionalEnv("NEXT_PUBLIC_SAAS_CONTACT_PHONE") ?? "";
 
+// FIXI branding is driven by production env vars so the landing stays consistent across deploys.
+
 const featureCards = [
   {
     title: "Órdenes",
