@@ -29,7 +29,7 @@ type RouteParams = {
 async function proxyRequest(request: NextRequest, params: RouteParams) {
   const backendBaseUrl = getBackendBaseUrl();
   const pathSegment = Array.isArray(params.path) ? params.path.join("/") : params.path ?? "";
-  const path = `/${pathSegment}`;
+  const path = `/api/${pathSegment}`;
   const targetUrl = new URL(path, backendBaseUrl);
   targetUrl.search = request.nextUrl.search;
 
