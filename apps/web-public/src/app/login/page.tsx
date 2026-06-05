@@ -24,9 +24,7 @@ function getDashboardRedirectUrl() {
 }
 
 function getAdminBridgeUrl(token: string) {
-  const adminUrl =
-    process.env.NEXT_PUBLIC_WEB_ADMIN_URL?.trim() ??
-    (process.env.NEXT_PUBLIC_BASE_DOMAIN ? `https://app.${process.env.NEXT_PUBLIC_BASE_DOMAIN}` : "");
+  const adminUrl = process.env.NEXT_PUBLIC_WEB_ADMIN_URL?.trim() ?? "";
 
   if (!adminUrl) {
     return getDashboardRedirectUrl();

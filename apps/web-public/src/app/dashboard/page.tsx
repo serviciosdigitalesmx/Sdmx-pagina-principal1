@@ -4,11 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 
 function resolveDashboardTarget() {
-  const candidates = [
-    process.env.NEXT_PUBLIC_WEB_ADMIN_URL?.trim(),
-    process.env.NEXT_PUBLIC_BASE_DOMAIN?.trim() ? `https://app.${process.env.NEXT_PUBLIC_BASE_DOMAIN.trim()}` : null,
-    typeof window !== "undefined" ? `${window.location.protocol}//app.${window.location.hostname.replace(/^www\./, "")}` : null,
-  ].filter((value): value is string => Boolean(value));
+  const candidates = [process.env.NEXT_PUBLIC_WEB_ADMIN_URL?.trim()].filter((value): value is string => Boolean(value));
 
   for (const candidate of candidates) {
     try {
