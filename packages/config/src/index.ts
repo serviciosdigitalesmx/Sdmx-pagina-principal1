@@ -71,6 +71,46 @@ export function resolveApiBaseUrl(): string {
   }
 }
 
+export function resolveBaseDomain(): string | null {
+  const candidates = [
+    process.env.NEXT_PUBLIC_BASE_DOMAIN?.trim(),
+    process.env.BASE_DOMAIN?.trim(),
+  ].filter(Boolean) as string[];
+
+  for (const candidate of candidates) {
+    const normalized = candidate.replace(/^https?:\/\//, "").replace(/^app\./, "").trim();
+    if (normalized) {
+      return normalized;
+    }
+  }
+
+  return null;
+}
+
+export function resolveSharedCookieDomain(hostname?: string): string | undefined {
+  const baseDomain = resolveBaseDomain();
+
+  if (baseDomain) {
+    return `.${baseDomain}`;
+  }
+
+  const host = hostname?.trim();
+  if (!host || host === 'localhost' || host === '127.0.0.1' || host === '::1') {
+    return undefined;
+  }
+
+  if (host.endsWith('.vercel.app')) {
+    return undefined;
+  }
+
+  const parts = host.split('.').filter(Boolean);
+  if (parts.length >= 2) {
+    return `.${parts.slice(-2).join('.')}`;
+  }
+
+  return undefined;
+}
+
 export type ApiErrorPayload = {
   error?: string;
   message?: string;

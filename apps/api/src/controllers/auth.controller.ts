@@ -35,7 +35,6 @@ function isAllowedRedirectUrl(candidate: string) {
   try {
     const parsed = new URL(candidate);
     return (
-      parsed.hostname.endsWith('.vercel.app') ||
       parsed.hostname.endsWith('serviciosdigitalesmx.online') ||
       parsed.hostname === 'serviciosdigitalesmx.online' ||
       getAllowedAppOrigins().has(parsed.origin)
@@ -59,6 +58,44 @@ function resolveAppUrl(requestOrigin: string | undefined) {
   const fallbackOrigin = Array.from(getAllowedAppOrigins()).find((origin) => isAllowedRedirectUrl(origin));
 
   return fallbackOrigin ?? null;
+}
+
+function resolveSharedCookieDomain() {
+  const baseDomain = process.env.BASE_DOMAIN?.trim() || process.env.NEXT_PUBLIC_BASE_DOMAIN?.trim();
+
+  if (baseDomain) {
+    const normalized = baseDomain.replace(/^https?:\/\//, '').replace(/^app\./, '');
+    return normalized ? `.${normalized}` : undefined;
+  }
+
+  return undefined;
+}
+
+function buildSharedCookieHeader(token: string) {
+  const domain = resolveSharedCookieDomain();
+  const attrs = [
+    `Path=/`,
+    `HttpOnly`,
+    `Secure`,
+    `SameSite=None`,
+    `Max-Age=${60 * 60 * 24 * 7}`,
+    domain ? `Domain=${domain}` : undefined,
+  ].filter(Boolean);
+
+  return `app_auth_token=${encodeURIComponent(token)}; ${attrs.join('; ')}`;
+}
+
+function attachAuthCookie(res: Response, token: string) {
+  const existing = res.getHeader('Set-Cookie');
+  const cookieHeader = buildSharedCookieHeader(token);
+
+  if (!existing) {
+    res.setHeader('Set-Cookie', cookieHeader);
+    return;
+  }
+
+  const cookies = Array.isArray(existing) ? existing : [String(existing)];
+  res.setHeader('Set-Cookie', [...cookies, cookieHeader]);
 }
 
 async function signJwt(payload: Record<string, unknown>, tenantId?: string) {
@@ -213,6 +250,7 @@ export const register = async (req: Request, res: Response) => {
       tenantId: tenant.tenant_id,
       tenantSlug,
     });
+    attachAuthCookie(res, token);
     return res.status(201).json({
       token,
       tenant: {
@@ -467,6 +505,8 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
     if (sessionInsertError) {
       return res.status(502).json({ error: sessionInsertError.message });
     }
+
+    attachAuthCookie(res, authPayload.token);
 
     return res.status(200).json({
       ...authPayload,

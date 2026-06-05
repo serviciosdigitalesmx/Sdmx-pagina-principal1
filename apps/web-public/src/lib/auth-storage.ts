@@ -1,7 +1,43 @@
 "use client";
 
+import { resolveSharedCookieDomain } from "@white-label/config";
+
 export const AUTH_TOKEN_KEY = process.env.NEXT_PUBLIC_AUTH_TOKEN_KEY ?? "app_auth_token";
 const AUTH_TOKEN_KEYS = Array.from(new Set([AUTH_TOKEN_KEY, "app_auth_token", "auth_token"]));
+const AUTH_COOKIE_NAME = AUTH_TOKEN_KEY;
+const AUTH_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+
+function getCookieDomain() {
+  return resolveSharedCookieDomain(typeof window !== "undefined" ? window.location.hostname : undefined);
+}
+
+function buildCookieAttributes(persistent: boolean) {
+  const attrs = [
+    "Path=/",
+    "SameSite=None",
+    "Secure",
+    persistent ? `Max-Age=${AUTH_COOKIE_MAX_AGE}` : undefined,
+    getCookieDomain() ? `Domain=${getCookieDomain()}` : undefined,
+  ].filter(Boolean);
+
+  return attrs.join("; ");
+}
+
+function writeCookie(token: string, persistent: boolean) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  document.cookie = `${AUTH_COOKIE_NAME}=${encodeURIComponent(token)}; ${buildCookieAttributes(persistent)}`;
+}
+
+function clearCookie() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  document.cookie = `${AUTH_COOKIE_NAME}=; Path=/; Max-Age=0; SameSite=None; Secure${getCookieDomain() ? `; Domain=${getCookieDomain()}` : ""}`;
+}
 
 function writeToken(token: string, persistent: boolean) {
   if (typeof window === "undefined") {
@@ -15,6 +51,8 @@ function writeToken(token: string, persistent: boolean) {
     primaryStorage.setItem(key, token);
     secondaryStorage.removeItem(key);
   }
+
+  writeCookie(token, persistent);
 }
 
 export function saveAuthToken(token: string, persistent = true) {
@@ -38,6 +76,18 @@ export function readAuthToken() {
     }
   }
 
+  const cookieValue = document.cookie
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${AUTH_COOKIE_NAME}=`))
+    ?.split("=")
+    .slice(1)
+    .join("=");
+
+  if (cookieValue) {
+    return decodeURIComponent(cookieValue);
+  }
+
   return null;
 }
 
@@ -50,4 +100,6 @@ export function clearAuthToken() {
     window.localStorage.removeItem(key);
     window.sessionStorage.removeItem(key);
   }
+
+  clearCookie();
 }

@@ -30,15 +30,11 @@ import { errorHandler } from './middleware/errorHandler';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1);
 const port = process.env.PORT || 4000;
 const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? 'http://localhost:3000')
   .split(',')
   .map((origin) => origin.trim())
-  .filter(Boolean);
-
-const baseDomains = (process.env.BASE_DOMAIN ?? 'serviciosdigitalesmx.online,serviciosdigitalesmx.dev')
-  .split(',')
-  .map((d) => d.trim())
   .filter(Boolean);
 
 const localhostOrigins = new Set([
@@ -46,8 +42,6 @@ const localhostOrigins = new Set([
   '127.0.0.1',
   '::1',
 ]);
-
-const isVercelPreviewHostname = (hostname: string) => hostname.endsWith('.vercel.app');
 const defaultProductionOrigins = [
   process.env.APP_URL?.trim(),
   process.env.NEXT_PUBLIC_WEB_PUBLIC_URL?.trim(),
@@ -59,9 +53,6 @@ const defaultProductionOrigins = [
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (origin.includes('vercel.app')) {
-      return callback(null, true);
-    }
     let hostname = '';
     try {
       hostname = new URL(origin).hostname;
@@ -85,13 +76,9 @@ app.use(cors({
       }
     });
 
-    const isWildcardAllowed = baseDomains.some((domain) => hostname === domain || hostname.endsWith(`.${domain}`));
-
     const isAllowed =
       allowedHostnames.includes(hostname) ||
       productionHostnames.includes(hostname) ||
-      isWildcardAllowed ||
-      isVercelPreviewHostname(hostname) ||
       localhostOrigins.has(hostname);
     if (isAllowed) {
       return callback(null, true);
