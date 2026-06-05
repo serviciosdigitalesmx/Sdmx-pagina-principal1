@@ -95,7 +95,6 @@ export interface BackendOrderResponse {
       problem_description?: string | null;
       serial_number?: string | null;
       estimated_cost?: number | null;
-      final_cost?: number | null;
     };
     orderStatusLabel: string;
     timeline: Array<{
