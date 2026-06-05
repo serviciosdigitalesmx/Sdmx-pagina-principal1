@@ -2,17 +2,17 @@
 import https from 'node:https';
 
 const liveChecks = [
-  { endpoint: 'GET /api/health', url: 'https://api.serviciosdigitales.online/api/health', expected: [200], kind: 'public' },
-  { endpoint: 'GET /api', url: 'https://api.serviciosdigitales.online/api', expected: [200], kind: 'public' },
-  { endpoint: 'GET /api/auth/me', url: 'https://api.serviciosdigitales.online/api/auth/me', expected: [200, 401], kind: 'protected' },
+  { endpoint: 'GET /api/health', url: 'https://api.serviciosdigitalesmx.online/api/health', expected: [200], kind: 'public' },
+  { endpoint: 'GET /api', url: 'https://api.serviciosdigitalesmx.online/api', expected: [200], kind: 'public' },
+  { endpoint: 'GET /api/auth/me', url: 'https://api.serviciosdigitalesmx.online/api/auth/me', expected: [200, 401], kind: 'protected' },
   { endpoint: 'GET /login', url: 'https://serviciosdigitalesmx.online/login', expected: [200], kind: 'frontend' },
   { endpoint: 'GET /auth/bridge', url: 'https://app.serviciosdigitalesmx.online/auth/bridge', expected: [200], kind: 'frontend' },
   { endpoint: 'GET /dashboard', url: 'https://app.serviciosdigitalesmx.online/dashboard', expected: [200], kind: 'frontend' },
   { endpoint: 'GET /onboarding', url: 'https://serviciosdigitalesmx.online/onboarding', expected: [200], kind: 'frontend' },
   { endpoint: 'GET /billing', url: 'https://serviciosdigitalesmx.online/billing', expected: [200], kind: 'frontend' },
   { endpoint: 'GET /t/:tenantSlug/portal', url: 'https://serviciosdigitalesmx.online/t/srfix/portal', expected: [200], kind: 'frontend' },
-  { endpoint: 'GET /api/public/tenant/:tenantSlug/landing', url: 'https://api.serviciosdigitales.online/api/public/tenant/srfix/landing', expected: [200], kind: 'public' },
-  { endpoint: 'GET /api/public/tenant/:tenantSlug/orders/:folio', url: 'https://api.serviciosdigitales.online/api/public/tenant/srfix/orders/SRF-00106', expected: [200, 404], kind: 'public' },
+  { endpoint: 'GET /api/public/tenant/:tenantSlug/landing', url: 'https://api.serviciosdigitalesmx.online/api/public/tenant/srfix/landing', expected: [200], kind: 'public' },
+  { endpoint: 'GET /api/public/tenant/:tenantSlug/orders/:folio', url: 'https://api.serviciosdigitalesmx.online/api/public/tenant/srfix/orders/SRF-00106', expected: [200, 404], kind: 'public' },
 ];
 
 const declared = new Set([

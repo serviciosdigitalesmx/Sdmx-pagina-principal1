@@ -36,10 +36,8 @@ function isAllowedRedirectUrl(candidate: string) {
     const parsed = new URL(candidate);
     return (
       parsed.hostname.endsWith('serviciosdigitalesmx.online') ||
-      parsed.hostname.endsWith('serviciosdigitales.online') ||
       parsed.hostname === 'serviciosdigitalesmx.online' ||
-      parsed.hostname === 'serviciosdigitales.online' ||
-      parsed.hostname === 'api.serviciosdigitales.online' ||
+      parsed.hostname === 'api.serviciosdigitalesmx.online' ||
       getAllowedAppOrigins().has(parsed.origin)
     );
   } catch {
