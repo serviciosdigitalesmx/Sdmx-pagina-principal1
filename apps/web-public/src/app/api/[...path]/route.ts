@@ -35,16 +35,29 @@ async function proxyRequest(request: NextRequest, params: RouteParams) {
 
   const headers = new Headers(request.headers);
   headers.delete("host");
+  headers.delete("content-length");
+
+  const contentType = headers.get("content-type") ?? "";
+  const isFormSubmission = contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data");
+
+  let body: BodyInit | undefined;
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    if (isFormSubmission) {
+      const formData = await request.formData();
+      const payload = Object.fromEntries(formData.entries());
+      body = JSON.stringify(payload);
+      headers.set("content-type", "application/json");
+    } else {
+      body = await request.arrayBuffer();
+    }
+  }
 
   const init: RequestInit = {
     method: request.method,
     headers,
     redirect: "manual",
+    body,
   };
-
-  if (request.method !== "GET" && request.method !== "HEAD") {
-    init.body = await request.arrayBuffer();
-  }
 
   const response = await fetch(targetUrl, init);
   const responseHeaders = new Headers(response.headers);
