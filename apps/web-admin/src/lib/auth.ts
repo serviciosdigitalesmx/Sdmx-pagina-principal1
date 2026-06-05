@@ -1,6 +1,7 @@
 import { apiClient } from './api-client';
 import { saveAuthToken, clearAuthToken, readAuthToken } from '@/lib/auth-storage';
 import { getCurrentSession } from '@/lib/session';
+import { resolveApiBaseUrl } from '@white-label/config';
 import type { User, Tenant } from '@/types';
 
 interface LoginResponse {
@@ -16,10 +17,7 @@ interface ExchangeResponse {
 }
 
 export async function exchangeSupabaseSession(accessToken: string): Promise<ExchangeResponse> {
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiUrl) {
-    throw new Error('NEXT_PUBLIC_API_URL no configurada');
-  }
+  const apiUrl = resolveApiBaseUrl();
 
   const response = await fetch(`${apiUrl}/api/auth/exchange`, {
     method: 'POST',

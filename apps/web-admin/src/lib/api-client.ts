@@ -1,6 +1,5 @@
 import { readAuthToken } from '@/lib/auth-storage';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+import { resolveApiBaseUrl } from '@white-label/config';
 
 interface ApiOptions {
   tenantSlug?: string;
@@ -24,10 +23,8 @@ class ApiClient {
     apiOptions: ApiOptions = {}
   ): Promise<T> {
     const { tenantSlug, sucursalId } = apiOptions;
-    if (!API_URL) {
-      throw new Error('NEXT_PUBLIC_API_URL no configurada');
-    }
-    let url = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
+    const apiUrl = resolveApiBaseUrl();
+    let url = endpoint.startsWith('http') ? endpoint : `${apiUrl}${endpoint}`;
 
     // Inject tenantSlug in path if needed
     if (tenantSlug && !url.includes('/:tenantSlug')) {
@@ -118,6 +115,7 @@ class ApiClient {
     metadata?: Record<string, unknown>,
     options?: ApiOptions
   ): Promise<T> {
+    const apiUrl = resolveApiBaseUrl();
     let url = endpoint;
     if (options?.tenantSlug) {
       url = url.replace('/api/', `/api/${options.tenantSlug}/`);
@@ -139,7 +137,7 @@ class ApiClient {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${API_URL}${url}`, {
+    const response = await fetch(`${apiUrl}${url}`, {
       method: 'POST',
       headers,
       body: formData,
