@@ -6,6 +6,7 @@ import { ShellBadge, StatCard, srFixTheme } from "@/components/srfix-theme";
 import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { readAuthToken, saveAuthToken } from "@/lib/auth-storage";
 import { getPublicApiPath } from "@/lib/public-api";
+import { resolveAdminBridgeUrl } from "@/lib/admin-url";
 
 type LoginState = {
   email: string;
@@ -24,19 +25,7 @@ function getDashboardRedirectUrl() {
 }
 
 function getAdminBridgeUrl(token: string) {
-  const adminUrl = process.env.NEXT_PUBLIC_WEB_ADMIN_URL?.trim() ?? "";
-
-  if (!adminUrl) {
-    return getDashboardRedirectUrl();
-  }
-
-  try {
-    const bridgeUrl = new URL("/auth/bridge", adminUrl);
-    bridgeUrl.searchParams.set("token", token);
-    return bridgeUrl.toString();
-  } catch {
-    return getDashboardRedirectUrl();
-  }
+  return resolveAdminBridgeUrl(token) ?? getDashboardRedirectUrl();
 }
 
 function getGoogleOnboardingUrl() {

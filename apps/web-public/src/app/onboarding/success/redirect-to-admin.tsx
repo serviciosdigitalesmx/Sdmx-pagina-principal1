@@ -2,44 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-
-function resolveAdminBaseUrl() {
-  const candidates = [process.env.NEXT_PUBLIC_WEB_ADMIN_URL?.trim()].filter((value): value is string => Boolean(value));
-
-  for (const candidate of candidates) {
-    try {
-      const parsed = new URL(candidate);
-      if (parsed.protocol !== "https:") {
-        continue;
-      }
-      return parsed.toString().replace(/\/$/, "");
-    } catch {
-      // continue
-    }
-  }
-
-  return null;
-}
-
-function buildBridgeUrl(token: string, tenant: string | null) {
-  const adminUrl = resolveAdminBaseUrl();
-
-  if (!adminUrl) {
-    return { url: null, error: "Falta configurar la URL del panel." };
-  }
-
-  const base = new URL(adminUrl);
-
-  base.pathname = "/auth/bridge";
-  base.search = "";
-  base.searchParams.set("token", token);
-
-  if (tenant) {
-    base.searchParams.set("tenant", tenant);
-  }
-
-  return { url: base.toString(), error: null };
-}
+import { resolveAdminBridgeUrl } from "@/lib/admin-url";
 
 export function RedirectToAdmin() {
   const searchParams = useSearchParams();
@@ -51,7 +14,9 @@ export function RedirectToAdmin() {
       return { url: null as string | null, error: null as string | null };
     }
 
-    return buildBridgeUrl(token, tenant);
+    const url = resolveAdminBridgeUrl(token, tenant);
+
+    return url ? { url, error: null } : { url: null, error: "Falta configurar la URL del panel." };
   }, [tenant, token]);
 
   const error = !token ? "Falta la sesión en el callback de éxito." : bridgeResult.error;

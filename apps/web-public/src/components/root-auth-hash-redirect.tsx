@@ -3,26 +3,7 @@
 import { useEffect } from "react";
 import { saveAuthToken } from "@/lib/auth-storage";
 import { getPublicApiPath } from "@/lib/public-api";
-
-function getDashboardRedirectUrl() {
-  return "/dashboard";
-}
-
-function getAdminBridgeUrl(token: string) {
-  const adminUrl = process.env.NEXT_PUBLIC_WEB_ADMIN_URL ?? "";
-
-  if (!adminUrl) {
-    return getDashboardRedirectUrl();
-  }
-
-  try {
-    const bridgeUrl = new URL("/auth/bridge", adminUrl);
-    bridgeUrl.searchParams.set("token", token);
-    return bridgeUrl.toString();
-  } catch {
-    return getDashboardRedirectUrl();
-  }
-}
+import { resolveAdminBridgeUrl } from "@/lib/admin-url";
 
 async function exchangeSessionForApiToken(accessToken: string) {
   const response = await fetch(getPublicApiPath("/api/auth/exchange"), {
@@ -68,7 +49,7 @@ export function RootAuthHashRedirect() {
         }
 
         saveAuthToken(apiToken, true);
-        window.location.replace(getAdminBridgeUrl(apiToken));
+        window.location.replace(resolveAdminBridgeUrl(apiToken) ?? "/dashboard");
       } catch (error) {
         console.error("ROOT_HASH_REDIRECT_FAILED", error);
       }
