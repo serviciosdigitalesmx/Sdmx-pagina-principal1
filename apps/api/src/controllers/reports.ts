@@ -8,6 +8,12 @@ export const getReportsSummary = async (req: Request, res: Response) => {
     const requestedSucursalId = scope?.requestedSucursalId ?? '';
     const effectiveSucursalId = scope?.mode === 'branch' ? scope.sucursalId ?? requestedSucursalId : '';
 
+    console.log('REPORTS_SUMMARY_START', {
+      tenantId,
+      requestedSucursalId,
+      effectiveSucursalId,
+    });
+
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context is required' });
     }
@@ -45,6 +51,24 @@ export const getReportsSummary = async (req: Request, res: Response) => {
     ]);
 
     const errors = [ordersResult.error, customersResult.error, inventoryResult.error, financeResult.error, requestsResult.error, usersResult.error, movementsResult.error].filter(Boolean);
+
+    console.log('REPORTS_SUMMARY_RESULTS', {
+      ordersError: ordersResult.error?.message,
+      customersError: customersResult.error?.message,
+      inventoryError: inventoryResult.error?.message,
+      financeError: financeResult.error?.message,
+      requestsError: requestsResult.error?.message,
+      usersError: usersResult.error?.message,
+      movementsError: movementsResult.error?.message,
+      ordersRows: ordersResult.data?.length,
+      customersRows: customersResult.data?.length,
+      inventoryRows: inventoryResult.data?.length,
+      financeRows: financeResult.data?.length,
+      requestsRows: requestsResult.data?.length,
+      usersRows: usersResult.data?.length,
+      movementsRows: movementsResult.data?.length,
+    });
+
     if (errors.length > 0) {
       return res.status(502).json({
         error: 'Failed to build reports summary',
@@ -198,7 +222,10 @@ export const getReportsSummary = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
-    console.error('Error getting reports summary:', error);
+    console.error('REPORTS_SUMMARY_FATAL', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : null,
+    });
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
