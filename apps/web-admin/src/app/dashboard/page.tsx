@@ -60,6 +60,7 @@ export default function DashboardPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [summary, setSummary] = useState<ReportsSummary | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const loadData = async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
@@ -76,6 +77,7 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
+    setMounted(true);
     loadData();
     // Auto-refresh every 60 seconds
     const interval = setInterval(() => loadData(), 60000);
@@ -209,56 +211,66 @@ export default function DashboardPage() {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Status Distribution */}
         <div className="card">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-srf-muted mb-4">
             Distribución por estado
           </h3>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={statusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={2}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name}: ${(((percent ?? 0) * 100)).toFixed(0)}%`}
-                  labelLine={false}
-                >
-                  {statusData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#2B2B2B', border: '1px solid #1F7EDC', borderRadius: '8px' }}
-                  labelStyle={{ color: '#F2F2F2' }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            {mounted ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={statusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={2}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name}: ${(((percent ?? 0) * 100)).toFixed(0)}%`}
+                    labelLine={false}
+                  >
+                    {statusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#2B2B2B', border: '1px solid #1F7EDC', borderRadius: '8px' }}
+                    labelStyle={{ color: '#F2F2F2' }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-srf-muted">
+                Cargando gráfico...
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Orders by Technician */}
         <div className="card">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-srf-muted mb-4">
             Órdenes por técnico
           </h3>
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={technicianData} layout="vertical" margin={{ left: 40 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#3a3a3a" />
-                <XAxis type="number" stroke="#8A8F95" />
-                <YAxis type="category" dataKey="name" stroke="#8A8F95" width={80} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#2B2B2B', border: '1px solid #1F7EDC', borderRadius: '8px' }}
-                  labelStyle={{ color: '#F2F2F2' }}
-                />
-                <Bar dataKey="count" fill={CHART_COLORS.primary} radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            {mounted ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={technicianData} layout="vertical" margin={{ left: 40 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#3a3a3a" />
+                  <XAxis type="number" stroke="#8A8F95" />
+                  <YAxis type="category" dataKey="name" stroke="#8A8F95" width={80} />
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#2B2B2B', border: '1px solid #1F7EDC', borderRadius: '8px' }}
+                    labelStyle={{ color: '#F2F2F2' }}
+                  />
+                  <Bar dataKey="count" fill={CHART_COLORS.primary} radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-srf-muted">
+                Cargando gráfico...
+              </div>
+            )}
           </div>
         </div>
       </div>
