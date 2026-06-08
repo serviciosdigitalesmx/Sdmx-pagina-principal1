@@ -5,7 +5,7 @@ import { attachScope } from '../middleware/scope';
 import { requireTenantBillingActive } from '../middleware/tenantBilling';
 import { requireRole } from '../middleware/requireRole';
 import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
-import { getSecuritySummary, listAuditLogs, listActiveSessions, revokeSession, rotateKeys, setupAdminMfa, updateAdminMfaRequirement, verifyAdminMfa } from '../controllers/security';
+import { getSecurityConfig, getSecuritySummary, listAuditLogs, listActiveSessions, revokeSession, rotateKeys, setupAdminMfa, updateAdminMfaRequirement, updateSecurityConfig, verifyAdminMfa } from '../controllers/security';
 import { inviteUser } from '../controllers/users';
 
 const router = Router({ mergeParams: true });
@@ -17,6 +17,9 @@ router.use(requireTenantBillingActive);
 router.use(attachTenantCapabilities);
 
 router.get('/summary', requireTenantModule('security'), getSecuritySummary);
+router.get('/config', requireTenantModule('security'), requireRole('owner'), getSecurityConfig);
+router.patch('/config', requireTenantModule('security'), requireRole('owner'), updateSecurityConfig);
+router.post('/config', requireTenantModule('security'), requireRole('owner'), updateSecurityConfig);
 router.get('/audit', requireTenantModule('security'), requireRole('owner'), listAuditLogs);
 router.get('/sessions', requireTenantModule('security'), requireRole('owner'), listActiveSessions);
 router.delete('/sessions/:id', requireTenantModule('security'), requireRole('owner'), revokeSession);

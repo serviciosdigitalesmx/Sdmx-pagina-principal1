@@ -31,6 +31,14 @@ const mfaRequirementSchema = z.object({
   enabled: z.boolean(),
 });
 
+const securityConfigSchema = z.object({
+  adminPasswordConfigured: z.boolean().optional(),
+  requireAdminMfa: z.boolean().optional(),
+  require_admin_mfa: z.boolean().optional(),
+  mensajeAutorizacion: z.string().trim().max(500).optional(),
+  bitacoraActiva: z.boolean().optional(),
+});
+
 async function countTenantUsers(tenantId: string) {
   const { count, error } = await supabaseAdmin
     .from('users')
@@ -57,6 +65,38 @@ async function assertSucursalOwnership(tenantId: string, sucursalId: string) {
   }
 
   return Boolean(data);
+}
+
+function buildSecurityConfigPayload(row: { require_admin_mfa?: boolean | null } | null) {
+  const adminPasswordConfigured = Boolean(row?.require_admin_mfa);
+  return {
+    adminPasswordConfigured,
+    mensajeAutorizacion: adminPasswordConfigured ? 'Autorización administrativa requerida' : 'Autorización administrativa disponible',
+    bitacoraActiva: true,
+    acciones: [
+      {
+        clave: 'mfa',
+        titulo: 'MFA',
+        descripcion: 'Autenticación multifactor para administradores',
+        accion: 'security.mfa.requirement.updated',
+        requiereAdmin: true,
+      },
+      {
+        clave: 'audit',
+        titulo: 'Bitácora',
+        descripcion: 'Registro de eventos de seguridad',
+        accion: 'security.audit.view',
+        requiereAdmin: true,
+      },
+      {
+        clave: 'sessions',
+        titulo: 'Sesiones',
+        descripcion: 'Control de sesiones activas',
+        accion: 'security.session.revoked',
+        requiereAdmin: true,
+      },
+    ],
+  };
 }
 
 export const getSecuritySummary = async (req: Request, res: Response) => {
@@ -89,6 +129,95 @@ export const getSecuritySummary = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error getting security summary:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const getSecurityConfig = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context is required' });
+    }
+
+    const { data: tenantRow, error } = await supabaseAdmin
+      .from('tenants')
+      .select('id, require_admin_mfa')
+      .eq('id', tenantId)
+      .maybeSingle();
+
+    if (error) {
+      return res.status(502).json({ error: 'Failed to load security config', details: error.message });
+    }
+
+    return res.json({
+      success: true,
+      data: buildSecurityConfigPayload(tenantRow),
+    });
+  } catch (error) {
+    console.error('Error getting security config:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const updateSecurityConfig = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context is required' });
+    }
+
+    if (req.user?.role !== 'owner') {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    const parsed = securityConfigSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Invalid payload', details: parsed.error.flatten() });
+    }
+
+    const { data: beforeRow, error: fetchError } = await supabaseAdmin
+      .from('tenants')
+      .select('id, require_admin_mfa')
+      .eq('id', tenantId)
+      .maybeSingle();
+
+    if (fetchError) {
+      return res.status(502).json({ error: 'Failed to load security config', details: fetchError.message });
+    }
+
+    const nextRequireAdminMfa = parsed.data.requireAdminMfa ?? parsed.data.require_admin_mfa ?? parsed.data.adminPasswordConfigured;
+
+    if (typeof nextRequireAdminMfa === 'boolean') {
+      const { error: updateError } = await supabaseAdmin
+        .from('tenants')
+        .update({ require_admin_mfa: nextRequireAdminMfa })
+        .eq('id', tenantId);
+
+      if (updateError) {
+        return res.status(502).json({ error: 'Failed to update security config', details: updateError.message });
+      }
+    }
+
+    await writeAuditLog({
+      tenantId,
+      userId: req.user?.userId ?? null,
+      action: 'security.config.updated',
+      ipAddress: req.ip ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+      dataBefore: beforeRow ?? null,
+      dataAfter: { ...parsed.data, require_admin_mfa: nextRequireAdminMfa ?? beforeRow?.require_admin_mfa ?? false },
+    });
+
+    return res.json({
+      success: true,
+      data: buildSecurityConfigPayload({
+        require_admin_mfa: typeof nextRequireAdminMfa === 'boolean' ? nextRequireAdminMfa : beforeRow?.require_admin_mfa ?? null,
+      }),
+    });
+  } catch (error) {
+    console.error('Error updating security config:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };

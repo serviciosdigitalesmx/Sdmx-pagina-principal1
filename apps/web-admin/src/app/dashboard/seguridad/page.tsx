@@ -29,7 +29,7 @@ export default function SeguridadPage() {
       const [usersData, configData, auditData, sessionsData] = await Promise.all([
         apiClient.get<{ data: { items: SecurityUser[] } }>('/users', getApiOptions()),
         apiClient.get<{ data: SecurityConfig }>('/security/config', getApiOptions()),
-        apiClient.get<{ data: { items: AuditLog[] } }>('/audit', getApiOptions()),
+        apiClient.get<{ data: { items: AuditLog[] } }>('/security/audit', getApiOptions()),
         apiClient.get<{ data: SecuritySession[] }>('/security/sessions', getApiOptions()),
       ]);
 
@@ -110,7 +110,7 @@ export default function SeguridadPage() {
 
   const handleUpdateConfig = async (field: string, value: any) => {
     try {
-      await apiClient.post('/security/config', { [field]: value }, getApiOptions());
+      await apiClient.patch('/security/config', { [field]: value }, getApiOptions());
       loadData();
     } catch (error) {
       console.error('Failed to update config:', error);
