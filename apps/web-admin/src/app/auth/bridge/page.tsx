@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { saveAuthToken } from "@/lib/auth-storage";
 
 function resolveDashboardUrl() {
@@ -9,8 +9,14 @@ function resolveDashboardUrl() {
 }
 
 export default function AuthBridgePage() {
-  const token = typeof window === "undefined" ? null : new URL(window.location.href).searchParams.get("token");
+  const [token, setToken] = useState<string | null>(null);
   const dashboardUrl = resolveDashboardUrl();
+
+  useEffect(() => {
+    const currentToken = new URL(window.location.href).searchParams.get("token");
+    setToken(currentToken);
+  }, []);
+
   const message = token ? "Sesión sincronizada. Redirigiendo al panel..." : "No llegó la sesión.";
 
   useEffect(() => {

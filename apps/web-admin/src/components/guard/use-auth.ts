@@ -19,8 +19,10 @@ export type AuthState = {
 export function useAuth(): AuthState {
   const tenant = useTenant();
   const [session, setSession] = useState<ReturnType<typeof getCurrentSession> | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     const sessionTimer = window.setTimeout(() => {
       setSession(getCurrentSession());
     }, 0);
@@ -33,6 +35,17 @@ export function useAuth(): AuthState {
   return useMemo(() => {
     const activeScope = getActiveScope();
     const resolvedSucursalId = activeScope?.sucursalId ?? '';
+
+    if (!mounted) {
+      return {
+        role: tenant.userRole.toLowerCase() as Role,
+        tenantId: tenant.tenantId,
+        tenantSlug: tenant.tenantSlug,
+        sucursalId: resolvedSucursalId,
+        userEmail: tenant.userEmail,
+        ready: false,
+      } satisfies AuthState;
+    }
 
     if (session) {
       return {
@@ -53,5 +66,5 @@ export function useAuth(): AuthState {
       userEmail: tenant.userEmail,
       ready: false,
     } satisfies AuthState;
-  }, [session, tenant]);
+  }, [mounted, session, tenant]);
 }

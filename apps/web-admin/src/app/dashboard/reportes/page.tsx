@@ -30,6 +30,7 @@ export default function ReportesPage() {
   const [summary, setSummary] = useState<ReportsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [mounted, setMounted] = useState(false);
 
   async function load() {
     try {
@@ -46,6 +47,7 @@ export default function ReportesPage() {
   }
 
   useEffect(() => {
+    setMounted(true);
     void load();
   }, [scope?.mode, scope?.sucursalId]);
 
@@ -148,7 +150,9 @@ export default function ReportesPage() {
         </div>
         <div className="card">
           <div className="text-xs uppercase tracking-[0.2em] text-srf-muted">Última actualización</div>
-          <div className="mt-3 text-sm font-semibold text-srf-text">{summary?.lastUpdatedAt ? new Date(summary.lastUpdatedAt).toLocaleString("es-MX") : "No disponible"}</div>
+          <div className="mt-3 text-sm font-semibold text-srf-text">
+            {mounted && summary?.lastUpdatedAt ? new Date(summary.lastUpdatedAt).toLocaleString("es-MX") : "No disponible"}
+          </div>
         </div>
       </div>
     </div>

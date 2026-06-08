@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -52,9 +52,14 @@ export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  const activeSucursalId = getActiveSucursalId();
-  const showConsolidated = canUseConsolidatedView();
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const activeSucursalId = mounted ? getActiveSucursalId() : null;
+  const showConsolidated = mounted ? canUseConsolidatedView() : false;
 
   const sidebarContent = (
     <div className="flex flex-col h-full">

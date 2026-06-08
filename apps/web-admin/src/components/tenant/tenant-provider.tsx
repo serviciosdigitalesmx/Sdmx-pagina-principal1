@@ -4,6 +4,7 @@ import React, { createContext, useContext } from 'react';
 
 export type TenantConfig = {
   tenantId: string;
+  tenantSlug: string;
   tenantName: string;
   brandName: string;
   sucursalName: string;
