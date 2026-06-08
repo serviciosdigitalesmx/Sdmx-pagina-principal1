@@ -36,6 +36,8 @@ function isAllowedRedirectUrl(candidate: string) {
     const parsed = new URL(candidate);
     return (
       parsed.hostname.endsWith('serviciosdigitalesmx.online') ||
+      parsed.hostname.endsWith('vercel.app') ||
+      parsed.hostname.endsWith('vercel-sh.com') ||
       parsed.hostname === 'serviciosdigitalesmx.online' ||
       parsed.hostname === 'api.serviciosdigitalesmx.online' ||
       getAllowedAppOrigins().has(parsed.origin)
@@ -56,6 +58,8 @@ function resolveAppUrl(requestOrigin: string | undefined) {
       return (
         parsed.hostname === 'serviciosdigitalesmx.online' ||
         parsed.hostname === 'www.serviciosdigitalesmx.online' ||
+        parsed.hostname.endsWith('vercel.app') ||
+        parsed.hostname.endsWith('vercel-sh.com') ||
         (parsed.hostname.endsWith('serviciosdigitalesmx.online') && !parsed.hostname.startsWith('api.') && !parsed.hostname.startsWith('app.'))
       );
     } catch {

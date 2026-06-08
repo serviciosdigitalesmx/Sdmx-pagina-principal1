@@ -42,6 +42,7 @@ const localhostOrigins = new Set([
   '127.0.0.1',
   '::1',
 ]);
+const vercelHostSuffixes = ['vercel.app', 'vercel-sh.com'];
 const defaultProductionOrigins = [
   process.env.APP_URL?.trim(),
   process.env.NEXT_PUBLIC_WEB_PUBLIC_URL?.trim(),
@@ -77,10 +78,13 @@ app.use(cors({
       }
     });
 
+    const isVercelHostname = vercelHostSuffixes.some((suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`));
+
     const isAllowed =
       allowedHostnames.includes(hostname) ||
       productionHostnames.includes(hostname) ||
-      localhostOrigins.has(hostname);
+      localhostOrigins.has(hostname) ||
+      isVercelHostname;
     if (isAllowed) {
       return callback(null, true);
     }
