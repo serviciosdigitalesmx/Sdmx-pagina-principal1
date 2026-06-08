@@ -25,15 +25,18 @@ export function getActiveSucursalId(): string | null {
   return getCurrentUserSucursalId();
 }
 
-export function setActiveSucursalId(sucursalId: string | null) {
+export function setActiveSucursalId(sucursalId: string | null, options?: { skipReload?: boolean }) {
   if (typeof window === 'undefined') return;
   if (!sucursalId || sucursalId === 'GLOBAL') {
     localStorage.removeItem('srf_sucursal_activa');
   } else {
     localStorage.setItem('srf_sucursal_activa', sucursalId);
   }
-  // Reload to refresh all queries with new sucursal context
-  window.location.reload();
+
+  if (!options?.skipReload) {
+    // Reload to refresh all queries with new sucursal context
+    window.location.reload();
+  }
 }
 
 export function canUseConsolidatedView(): boolean {

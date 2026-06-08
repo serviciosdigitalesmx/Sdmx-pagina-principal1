@@ -30,6 +30,15 @@ async function registerServiceWorker(tenantSlug: string) {
   }
 }
 
+async function clearServiceWorkers() {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  await Promise.all(registrations.map((registration) => registration.unregister().catch(() => undefined)));
+}
+
 export function PwaBootstrap() {
   const [online, setOnline] = useState<boolean>(true);
   const tenantSlug = useMemo(() => {
@@ -41,7 +50,12 @@ export function PwaBootstrap() {
   }, []);
 
   useEffect(() => {
-    if (!tenantSlug) {
+    const isLocalhost =
+      typeof window !== "undefined" &&
+      ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+
+    if (!tenantSlug || isLocalhost) {
+      void clearServiceWorkers();
       return;
     }
 
