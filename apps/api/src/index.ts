@@ -52,48 +52,70 @@ const defaultProductionOrigins = [
   'https://api.serviciosdigitalesmx.online',
 ].filter((origin): origin is string => Boolean(origin));
 
+function isAllowedCorsOrigin(origin: string | undefined) {
+  if (!origin) return false;
+
+  let hostname = '';
+  try {
+    hostname = new URL(origin).hostname;
+  } catch {
+    hostname = origin || '';
+  }
+
+  const allowedHostnames = allowedOrigins.map((o) => {
+    try {
+      return new URL(o).hostname;
+    } catch {
+      return o;
+    }
+  });
+
+  const productionHostnames = defaultProductionOrigins.map((o) => {
+    try {
+      return new URL(o).hostname;
+    } catch {
+      return o;
+    }
+  });
+
+  const isVercelHostname = vercelHostSuffixes.some((suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`));
+
+  return (
+    allowedHostnames.includes(hostname) ||
+    productionHostnames.includes(hostname) ||
+    localhostOrigins.has(hostname) ||
+    isVercelHostname
+  );
+}
+
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    let hostname = '';
-    try {
-      hostname = new URL(origin).hostname;
-    } catch {
-      hostname = origin || '';
-    }
-
-    const allowedHostnames = allowedOrigins.map((o) => {
-      try {
-        return new URL(o).hostname;
-      } catch {
-        return o;
-      }
-    });
-
-    const productionHostnames = defaultProductionOrigins.map((o) => {
-      try {
-        return new URL(o).hostname;
-      } catch {
-        return o;
-      }
-    });
-
-    const isVercelHostname = vercelHostSuffixes.some((suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`));
-
-    const isAllowed =
-      allowedHostnames.includes(hostname) ||
-      productionHostnames.includes(hostname) ||
-      localhostOrigins.has(hostname) ||
-      isVercelHostname;
-    if (isAllowed) {
+    if (!origin || isAllowedCorsOrigin(origin)) {
       return callback(null, true);
     }
 
     return callback(new Error(`Origin not allowed by CORS: ${origin}`));
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 204,
 }));
 app.use(express.json());
+
+app.options('*', cors({
+  origin: (origin, callback) => {
+    if (!origin || isAllowedCorsOrigin(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`Origin not allowed by CORS: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 204,
+}));
 
 // Routes
 app.use('/api/auth', authRouter);
