@@ -4,7 +4,7 @@ import '@/styles/globals.css';
 export const metadata: Metadata = {
   title: 'SrFix - Panel de Administración',
   description: 'Plataforma de gestión para talleres de reparación',
-  manifest: '/manifest.json',
+  manifest: '/api/pwa/manifest',
 };
 
 export const viewport = {

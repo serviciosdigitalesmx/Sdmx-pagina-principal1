@@ -441,6 +441,12 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
       email: data?.user?.email,
     });
 
+    console.log("EXCHANGE_AFTER_GET_USER", {
+      hasData: !!data,
+      hasUser: !!data?.user,
+      hasError: !!error,
+    });
+
 
     if (error || !data.user) {
       console.error("EXCHANGE_401", {
@@ -456,6 +462,13 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
       .select('id, tenant_id, role, sucursal_id, activo, is_active')
       .eq('auth_user_id', data.user.id)
       .maybeSingle();
+
+    console.log("EXCHANGE_AFTER_USERS_QUERY", {
+      hasUserRow: !!userRow,
+      userRowError: userRowError?.message ?? null,
+      userRowTenantId: userRow?.tenant_id ?? null,
+      userRowRole: userRow?.role ?? null,
+    });
 
     if (userRowError) {
       return res.status(502).json({ error: userRowError.message });
@@ -474,6 +487,13 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
       .select('id, slug, name, require_admin_mfa')
       .eq('id', userRow.tenant_id)
       .maybeSingle();
+
+    console.log("EXCHANGE_AFTER_TENANTS_QUERY", {
+      hasTenantSecurity: !!tenantSecurity,
+      tenantSecurityError: tenantSecurityError?.message ?? null,
+      tenantSecurityId: tenantSecurity?.id ?? null,
+      tenantSecuritySlug: tenantSecurity?.slug ?? null,
+    });
 
     if (tenantSecurityError) {
       return res.status(502).json({ error: tenantSecurityError.message });
@@ -510,6 +530,14 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
       sessionId
     );
 
+    console.log("EXCHANGE_AFTER_BUILD_AUTH", {
+      sessionId,
+      tokenPresent: !!authPayload?.token,
+      userSub: authPayload?.user?.sub ?? null,
+      tenantId: tenantSecurity.id,
+      tenantSlug: tenantSecurity.slug,
+    });
+
     await supabaseAdmin
       .from('users')
       .update({
@@ -519,6 +547,11 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
       .eq('auth_user_id', data.user.id)
       .eq('tenant_id', tenantSecurity.id);
 
+    console.log("EXCHANGE_BEFORE_SECURITY_SESSION_INSERT", {
+      tenantId: tenantSecurity.id,
+      userRowId: userRow.id,
+      sessionId,
+    });
     const { error: sessionInsertError } = await supabaseAdmin.from('security_sessions').insert([{
       tenant_id: tenantSecurity.id,
       user_id: userRow.id,
@@ -528,10 +561,20 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
       last_activity_at: new Date().toISOString(),
     }]);
 
+    console.log("EXCHANGE_AFTER_SECURITY_SESSION_INSERT", {
+      sessionInsertError: sessionInsertError?.message ?? null,
+      sessionId,
+    });
+
     if (sessionInsertError) {
       return res.status(502).json({ error: sessionInsertError.message });
     }
 
+    console.log("EXCHANGE_BEFORE_ATTACH_COOKIE", {
+      tokenPresent: !!authPayload.token,
+      sessionId,
+      tenantId: tenantSecurity.id,
+    });
     attachAuthCookie(res, authPayload.token);
 
     return res.status(200).json({
@@ -543,6 +586,7 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
       },
     });
   } catch (error) {
+    console.error("EXCHANGE_500_FULL", error);
     const message = error instanceof Error ? error.message : 'Internal server error';
     return res.status(500).json({ error: message });
   }

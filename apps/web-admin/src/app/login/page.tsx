@@ -41,7 +41,7 @@ function LoginScreen() {
       }
 
       const { user } = await loginWithSupabase(accessToken);
-      setActiveSucursalId(user.sucursalId || null);
+      setActiveSucursalId(user.sucursalId || null, { skipReload: true });
       router.push(redirect);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');

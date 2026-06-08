@@ -6,6 +6,7 @@ function getTenantSlug(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   const tenantSlug = getTenantSlug(request);
+  const themeColor = process.env.NEXT_PUBLIC_THEME_PRIMARY?.trim() || "#334155";
   const manifest = {
     name: `${tenantSlug} · Servicios Digitales MX`,
     short_name: "SDMX Admin",
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
     scope: "/",
     display: "standalone",
     background_color: "#09090b",
-    theme_color: process.env.NEXT_PUBLIC_THEME_PRIMARY ?? "#334155",
+    theme_color: themeColor,
     icons: [
       { src: "/favicon.ico", sizes: "256x256", type: "image/x-icon" },
     ],
