@@ -20,7 +20,7 @@ export const getReportsSummary = async (req: Request, res: Response) => {
 
     const supabase = getTenantClient(tenantId);
 
-    let ordersQuery = supabase.from('service_orders').select('id, status, created_at, final_cost, sucursal_id, promised_date, folio').eq('tenant_id', tenantId).limit(500);
+    let ordersQuery = supabase.from('service_orders').select('id, status, created_at, final_cost, sucursal_id, promised_date, folio, assigned_user_id').eq('tenant_id', tenantId).limit(500);
     let customersQuery = supabase.from('customers').select('id, sucursal_id').eq('tenant_id', tenantId).limit(500);
     let inventoryQuery = supabase.from('sucursal_inventory').select('id, stock_current, product_id, sucursal_id, products:product_id (id, cost)').eq('tenant_id', tenantId).limit(500);
     let financeQuery = supabase.from('finances').select('id, balance, income, expense, created_at, sucursal_id').eq('tenant_id', tenantId).limit(500);
