@@ -166,7 +166,8 @@ export function StorefrontClient({
   };
 
   const landingTitle = tenantSlug ? `Tienda de ${tenantSlug}` : "Tu tienda dropshipping";
-  const adminLoginUrl = resolveAdminUrl() ? `${resolveAdminUrl()}/login` : "/login";
+  const adminBaseUrl = resolveAdminUrl();
+  const adminLoginUrl = adminBaseUrl ? `${adminBaseUrl}/login` : "/login";
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(234,88,12,0.18),_transparent_28%),radial-gradient(circle_at_80%_10%,_rgba(251,191,36,0.12),_transparent_26%),linear-gradient(180deg,#090909_0%,#111111_45%,#171311_100%)] text-zinc-50">

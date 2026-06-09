@@ -52,6 +52,10 @@ async function exchangeSessionForApiToken(accessToken: string) {
   return payload.token;
 }
 
+const resolveAdminUrl = () => {
+  return process.env.NEXT_PUBLIC_ADMIN_URL?.replace(/\/$/, "") || null;
+};
+
 export default function LoginPage() {
   const [form, setForm] = useState<LoginState>(initialState);
   const [loading, setLoading] = useState(false);
@@ -60,7 +64,9 @@ export default function LoginPage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    const adminLoginUrl = resolveAdminUrl() ? `${resolveAdminUrl()}/login` : null;
+    const adminBaseUrl = resolveAdminUrl();
+    const adminLoginUrl = adminBaseUrl ? `${adminBaseUrl}/login` : null;
+
     const existing = readAuthToken();
 
     if (existing) {
