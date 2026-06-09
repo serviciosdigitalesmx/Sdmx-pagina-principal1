@@ -91,7 +91,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderM
       setNotas(orderData.internal_notes || '');
       
       // CRM priority fallback to device_info
-      setClienteNombre(orderData.customers?.full_name || orderData.device_info?.customer_name || '');
+      setClienteNombre(orderData.customers?.name || orderData.device_info?.customer_name || '');
       setClienteTelefono(orderData.customers?.phone || orderData.device_info?.customer_phone || '');
       setClienteEmail(orderData.customers?.email || orderData.device_info?.customer_email || '');
       setDispositivo(orderData.device_info?.type || '');

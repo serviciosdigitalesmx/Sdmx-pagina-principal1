@@ -32,6 +32,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@supabase/supabase-js':
+        specifier: ^2.105.4
+        version: 2.105.4
       '@white-label/database':
         specifier: workspace:*
         version: link:../../packages/database

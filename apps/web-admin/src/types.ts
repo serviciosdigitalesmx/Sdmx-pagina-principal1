@@ -157,7 +157,7 @@ export interface Customer {
   id: string;
   tenant_id: string;
   sucursal_id: string | null;
-  full_name: string;
+  name: string;
   phone: string;
   email: string | null;
   created_at: string;

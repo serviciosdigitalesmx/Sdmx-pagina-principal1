@@ -104,7 +104,7 @@ export default function TecnicoPage() {
       filtered = filtered.filter(
         (o) =>
           o.folio?.toLowerCase().includes(term) ||
-          o.customers?.full_name?.toLowerCase().includes(term) ||
+          o.customers?.name?.toLowerCase().includes(term) ||
           o.device_info?.customer_name?.toLowerCase().includes(term) ||
           o.device_info?.type?.toLowerCase().includes(term) ||
           o.device_info?.model?.toLowerCase().includes(term)
