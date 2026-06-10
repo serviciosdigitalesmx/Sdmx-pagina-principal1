@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Plus, Search, RefreshCw, Trash2, Calendar, DollarSign, X } from 'lucide-react';
-import { fixService } from '@/services/fixService';
+import { financeService } from '@/services/finance/financeService';
 import { getActiveSucursalId } from '@/lib/tenant';
 
 type ExpenseRow = {
@@ -46,7 +46,7 @@ export default function GastosPage() {
   const loadExpenses = async () => {
     setLoading(true);
     try {
-      const data = await fixService.getExpenses();
+      const data = await financeService.getExpenses();
       const expensesList = data as ExpenseRow[];
       setExpenses(expensesList);
       setError('');
@@ -96,7 +96,7 @@ export default function GastosPage() {
     try {
       setSaving(true);
       setError('');
-      await fixService.createExpense({
+      await financeService.createExpense({
         sucursalId: activeSucursalId,
         amount: Number(form.amount),
         description: form.description.trim(),
@@ -118,7 +118,7 @@ export default function GastosPage() {
     if (!window.confirm(`¿Eliminar el gasto "${expense.description ?? expense.concept ?? expense.id}"?`)) return;
     try {
       setError('');
-      await fixService.deleteExpense(expense.id);
+      await financeService.deleteExpense(expense.id);
       await loadExpenses();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo eliminar el gasto');

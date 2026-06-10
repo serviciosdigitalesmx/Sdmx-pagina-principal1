@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Banknote, CircleCheckBig, Clock3, RefreshCw } from 'lucide-react';
+import { financeService } from '@/services/finance/financeService';
 import { fixService } from '@/services/fixService';
 import { getActiveScope } from '@/lib/scope';
 import type { FinanceBalance, Order } from '@/types';
@@ -39,7 +40,7 @@ export default function FinanzasPage() {
     setLoading(true);
     try {
       const [balance, orderRows] = await Promise.all([
-        fixService.getBalance(),
+        financeService.getBalance(),
         fixService.getOrders(),
       ]);
 
@@ -60,7 +61,7 @@ export default function FinanzasPage() {
       })));
 
       if (scope?.sucursalId) {
-        const flow = await fixService.getCashflow(scope.sucursalId);
+        const flow = await financeService.getCashflow(scope.sucursalId);
         setCashflow((flow as unknown as FinanceBalance[]).map((row) => ({
           id: String(row.id ?? ''),
           tenant_id: String(row.tenant_id ?? ''),
