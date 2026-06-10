@@ -1,0 +1,54 @@
+apps/web-clientes/.vercel/.env.production.local:NEXT_PUBLIC_SUPABASE_ANON_KEY=""
+apps/web-clientes/.vercel/.env.production.local:NEXT_PUBLIC_SUPABASE_URL=""
+apps/web-clientes/.env.production.detected:NEXT_PUBLIC_SUPABASE_ANON_KEY=""
+apps/web-clientes/.env.production.detected:NEXT_PUBLIC_SUPABASE_URL=""
+apps/web-clientes/.env.example:NEXT_PUBLIC_SUPABASE_URL=
+apps/web-clientes/.env.example:NEXT_PUBLIC_SUPABASE_ANON_KEY=
+apps/web-public/.vercel/.env.production.local:NEXT_PUBLIC_SUPABASE_ANON_KEY=""
+apps/web-public/.vercel/.env.production.local:NEXT_PUBLIC_SUPABASE_URL=""
+apps/web-public/.env.production.detected:NEXT_PUBLIC_SUPABASE_ANON_KEY=""
+apps/web-public/.env.production.detected:NEXT_PUBLIC_SUPABASE_URL=""
+apps/web-public/.env.example:NEXT_PUBLIC_SUPABASE_URL=
+apps/web-public/.env.example:NEXT_PUBLIC_SUPABASE_ANON_KEY=
+apps/web-public/src/lib/supabase-browser.ts:  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+apps/web-public/src/lib/supabase-browser.ts:  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+apps/web-public/src/lib/supabase-browser.ts:    throw new Error('Falta configurar NEXT_PUBLIC_SUPABASE_URL');
+apps/web-public/src/lib/supabase-browser.ts:    throw new Error('Falta configurar NEXT_PUBLIC_SUPABASE_ANON_KEY');
+apps/api/dist/controllers/orders.js:    return process.env.SUPABASE_ORDER_BUCKET ?? 'order-assets';
+apps/api/dist/controllers/auth.controller.js:    const supabaseUrl = process.env.SUPABASE_URL;
+apps/api/dist/controllers/auth.controller.js:        return res.status(500).json({ error: 'SUPABASE_URL is required' });
+apps/api/tests/evidence-adapter.integration.mjs:const requiredEnv = runLocalApi ? ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'EVIDENCE_TEST_TENANT_SLUG', 'EVIDENCE_TEST_PUBLIC_FOLIO'] : [];
+apps/api/tests/inventory-rpc.integration.mjs:const supabaseUrl = process.env.SUPABASE_URL?.trim() ?? '';
+apps/api/tests/inventory-rpc.integration.mjs:const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? '';
+apps/api/tests/inventory-rpc.integration.mjs:  'SUPABASE_URL',
+apps/api/tests/inventory-rpc.integration.mjs:  'SUPABASE_SERVICE_ROLE_KEY',
+apps/api/tests/inventory-rpc.integration.mjs:  assert.ok(supabaseUrl, 'SUPABASE_URL is required');
+apps/api/tests/inventory-rpc.integration.mjs:  assert.ok(serviceRoleKey, 'SUPABASE_SERVICE_ROLE_KEY is required');
+apps/api/tests/breaking.integration.mjs:const requiredEnv = runLocalApi ? ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'] : [];
+apps/api/src/types/env.d.ts:    SUPABASE_URL?: string;
+apps/api/src/types/env.d.ts:    SUPABASE_ANON_KEY?: string;
+apps/api/src/types/env.d.ts:    SUPABASE_SERVICE_ROLE_KEY?: string;
+apps/api/src/controllers/auth.controller.ts:  const supabaseUrl = process.env.SUPABASE_URL;
+apps/api/src/controllers/auth.controller.ts:    return res.status(500).json({ error: 'SUPABASE_URL is required' });
+apps/api/src/controllers/orders.ts:  return process.env.SUPABASE_ORDER_BUCKET ?? 'order-assets';
+apps/web-admin/.env.vercel.check:NEXT_PUBLIC_SUPABASE_ANON_KEY=""
+apps/web-admin/.env.vercel.check:NEXT_PUBLIC_SUPABASE_URL=""
+apps/web-admin/.vercel/.env.production.local:NEXT_PUBLIC_SUPABASE_ANON_KEY=""
+apps/web-admin/.vercel/.env.production.local:NEXT_PUBLIC_SUPABASE_URL=""
+apps/web-admin/.env.local:NEXT_PUBLIC_SUPABASE_ANON_KEY="sb_publishable_XxZ68z8L2OdFcOLlALtJzg_Z9FW2ECQ"
+apps/web-admin/.env.local:NEXT_PUBLIC_SUPABASE_URL="https://wydspsvcvbwcmumynkwx.supabase.co"
+apps/web-admin/.env.production.verify:NEXT_PUBLIC_SUPABASE_ANON_KEY=""
+apps/web-admin/.env.production.verify:NEXT_PUBLIC_SUPABASE_URL=""
+apps/web-admin/.env.production.detected:NEXT_PUBLIC_SUPABASE_ANON_KEY=""
+apps/web-admin/.env.production.detected:NEXT_PUBLIC_SUPABASE_URL=""
+apps/web-admin/.env.example:NEXT_PUBLIC_SUPABASE_URL=
+apps/web-admin/.env.example:NEXT_PUBLIC_SUPABASE_ANON_KEY=
+apps/web-admin/src/app/login/page.tsx:      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+apps/web-admin/src/lib/supabase-browser.ts:  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+apps/web-admin/src/lib/supabase-browser.ts:  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+apps/web-admin/src/lib/supabase-browser.ts:    throw new Error("Falta configurar NEXT_PUBLIC_SUPABASE_URL");
+apps/web-admin/src/lib/supabase-browser.ts:    throw new Error("Falta configurar NEXT_PUBLIC_SUPABASE_ANON_KEY");
+packages/database/src/index.ts:const supabaseUrl = process.env.SUPABASE_URL;
+packages/database/src/index.ts:const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+packages/database/src/index.ts:  throw new Error('SUPABASE_URL is required');
+packages/database/src/index.ts:  throw new Error('SUPABASE_SERVICE_ROLE_KEY is required');

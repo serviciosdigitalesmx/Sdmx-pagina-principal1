@@ -1,0 +1,1263 @@
+FILE: apps/web-clientes/next-env.d.ts
+import "./.next/types/routes.d.ts";
+
+FILE: apps/web-clientes/next.config.ts
+import type { NextConfig } from "next";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+FILE: apps/web-clientes/src/app/[tenantSlug]/page.tsx
+import { notFound } from "next/navigation";
+import { LandingSectionFactory } from "@/lib/landing/landing-section-factory";
+import { loadTenantLanding } from "@/lib/landing/tenant-landing-loader";
+import { TenantThemeProvider } from "@/lib/theme/tenant-theme-provider";
+import { resolveTenantTheme } from "@/lib/theme/theme-resolver";
+import type { Metadata } from "next";
+
+FILE: apps/web-clientes/src/app/t/[tenantSlug]/portal/[folio]/page.tsx
+import { PortalView } from "@/lib/portal/portal-view";
+
+FILE: apps/web-clientes/src/app/t/[tenantSlug]/portal/page.tsx
+import { PortalView } from "@/lib/portal/portal-view";
+import type { Metadata } from "next";
+
+FILE: apps/web-clientes/src/app/layout.tsx
+import type { Metadata } from "next";
+import "./globals.css";
+
+FILE: apps/web-clientes/src/app/page.tsx
+import Link from "next/link";
+
+FILE: apps/web-clientes/src/app/not-found.tsx
+import Link from "next/link";
+
+FILE: apps/web-clientes/src/lib/landing/section-registry.ts
+import type { LandingContent, Tenant } from "../types";
+
+FILE: apps/web-clientes/src/lib/landing/landing-section-factory.tsx
+import type { ReactNode } from "react";
+import type { LandingContent, Tenant } from "../types";
+import { resolveLandingSectionRegistry, type LandingSectionId } from "./section-registry";
+import { LandingRenderer } from "./landing-renderer";
+
+FILE: apps/web-clientes/src/lib/landing/landing-renderer.tsx
+import Image from "next/image";
+import Link from "next/link";
+import { LeadForm } from "../lead/lead-form";
+import { resolveTenantTheme } from "../theme/theme-resolver";
+import type { LandingContent, Tenant } from "../types";
+
+FILE: apps/web-clientes/src/lib/landing/tenant-landing-loader.ts
+import { getTenantLanding } from "../api/tenant";
+import type { LandingContent, Tenant } from "../types";
+import { resolveTenantContent } from "../content/content-resolver";
+
+FILE: apps/web-clientes/src/lib/portal/portal-view.tsx
+import { useMemo, useState, useEffect, useCallback, type FormEvent } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { getTenantLanding } from "@/lib/api/tenant";
+import { getOrderByFolio } from "@/lib/api/orders";
+import { normalizeOrderDetail } from "@/lib/utils/normalizers";
+import type { NormalizedOrderDetail, Tenant } from "@/lib/types";
+import { TenantThemeProvider } from "@/lib/theme/tenant-theme-provider";
+import { resolveTenantTheme } from "@/lib/theme/theme-resolver";
+
+FILE: apps/web-clientes/src/lib/content/content-validator.ts
+import type { Benefit, FaqItem, GalleryItem, LandingContent, Service, SocialLink, Testimonial } from "../types";
+
+FILE: apps/web-clientes/src/lib/content/content-resolver.ts
+import type { LandingContent, Tenant } from "../types";
+import { normalizeLandingContent, validateLandingContent } from "./content-validator";
+
+FILE: apps/web-clientes/src/lib/content/content-renderer.tsx
+import type { LandingContent, Tenant } from "../types";
+import { LandingRenderer } from "../landing/landing-renderer";
+
+FILE: apps/web-clientes/src/lib/utils/normalizers.ts
+import type { BackendOrderResponse, NormalizedAttachment, NormalizedDocument, NormalizedEvent, NormalizedMessage, NormalizedOrder, NormalizedOrderDetail, NormalizedTimelineEvent } from "../types";
+
+FILE: apps/web-clientes/src/lib/types.ts
+
+FILE: apps/web-clientes/src/lib/lead/lead-form.tsx
+import { useState, type ChangeEvent, type FormEvent } from "react";
+import { submitPublicQuote } from "../api/leads";
+
+FILE: apps/web-clientes/src/lib/theme/tenant-theme-provider.tsx
+import type { CSSProperties, ReactNode } from "react";
+import type { ResolvedTenantTheme } from "./theme-resolver";
+
+FILE: apps/web-clientes/src/lib/theme/theme-resolver.ts
+import type { Tenant } from "../types";
+
+FILE: apps/web-clientes/src/lib/api/leads.ts
+import { apiClient } from "./client";
+
+FILE: apps/web-clientes/src/lib/api/orders.ts
+import { apiClient } from "./client";
+import type { BackendOrderResponse } from "../types";
+
+FILE: apps/web-clientes/src/lib/api/client.ts
+import { fetchJson } from "@white-label/config";
+
+FILE: apps/web-clientes/src/lib/api/tenant.ts
+import { apiClient } from "./client";
+import type { LandingResponse } from "../types";
+
+FILE: apps/mobile/capacitor.config.ts
+import { CapacitorConfig } from "@capacitor/cli";
+import { config as loadEnv } from "dotenv";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+
+FILE: apps/web-public/next-env.d.ts
+import "./.next/types/routes.d.ts";
+
+FILE: apps/web-public/next.config.ts
+import type { NextConfig } from "next";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+FILE: apps/web-public/src/app/landing/[slug]/page.tsx
+import { redirect } from "next/navigation";
+
+FILE: apps/web-public/src/app/portal/[folio]/page.tsx
+import { PublicPortalLookup } from "@/components/public-portal-lookup";
+
+FILE: apps/web-public/src/app/portal/page.tsx
+import Link from "next/link";
+
+FILE: apps/web-public/src/app/auth/bridge/page.tsx
+import { useEffect } from "react";
+import { saveAuthToken } from "@/lib/auth-storage";
+
+FILE: apps/web-public/src/app/auth/google/page.tsx
+import { redirect } from "next/navigation";
+import { optionalEnv } from "@white-label/config";
+import { getPublicApiPath } from "@/lib/public-api";
+
+FILE: apps/web-public/src/app/auth/callback/page.tsx
+import { redirect } from "next/navigation";
+
+FILE: apps/web-public/src/app/[tenant]/cotizar/page.tsx
+import { useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { DynamicFields, type DynamicFieldDefinition } from "@white-label/ui";
+import { getPublicApiPath } from "@/lib/public-api";
+
+FILE: apps/web-public/src/app/[tenant]/tracking/page.tsx
+import { useState, type FormEvent } from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { getPublicApiPath } from "@/lib/public-api";
+
+FILE: apps/web-public/src/app/[tenant]/page.tsx
+import Link from "next/link";
+import type { ReactNode } from "react";
+import { srFixTheme } from "@/components/srfix-theme";
+import { resolveApiBaseUrl as getApiBaseUrl } from "@white-label/config";
+
+FILE: apps/web-public/src/app/t/[tenantSlug]/portal/page.tsx
+import Link from "next/link";
+import { useMemo, useState, useEffect, useCallback, type FormEvent } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { optionalEnv } from "@white-label/config";
+import { getPublicApiPath } from "@/lib/public-api";
+
+FILE: apps/web-public/src/app/dashboard/page.tsx
+import Link from "next/link";
+import { useEffect } from "react";
+import { resolveAdminUrl } from "@/lib/admin-url";
+
+FILE: apps/web-public/src/app/layout.tsx
+import type { Metadata } from "next";
+import "./globals.css";
+import { optionalEnv } from "@white-label/config";
+
+FILE: apps/web-public/src/app/api/[...path]/route.ts
+import { NextRequest, NextResponse } from "next/server";
+import { optionalEnv, resolveApiBaseUrl } from "@white-label/config";
+
+FILE: apps/web-public/src/app/page.tsx
+import Link from "next/link";
+import { optionalEnv } from "@white-label/config";
+import { PublicPortalLookup } from "@/components/public-portal-lookup";
+import { RootAuthHashRedirect } from "@/components/root-auth-hash-redirect";
+
+FILE: apps/web-public/src/app/hub/page.tsx
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { readAuthToken, saveAuthToken } from "@/lib/auth-storage";
+import { optionalEnv } from "@white-label/config";
+import { resolveAdminUrl } from "@/lib/admin-url";
+
+FILE: apps/web-public/src/app/login/reset-password/page.tsx
+import Link from "next/link";
+
+FILE: apps/web-public/src/app/login/page.tsx
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import Link from "next/link";
+import { ShellBadge, StatCard, srFixTheme } from "@/components/srfix-theme";
+import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { readAuthToken, saveAuthToken } from "@/lib/auth-storage";
+import { getPublicApiPath } from "@/lib/public-api";
+import { resolveAdminBridgeUrl } from "@/lib/admin-url";
+
+FILE: apps/web-public/src/app/billing/success/page.tsx
+import Link from "next/link";
+import { srFixTheme } from "@/components/srfix-theme";
+
+FILE: apps/web-public/src/app/billing/failure/page.tsx
+import Link from "next/link";
+import { srFixTheme } from "@/components/srfix-theme";
+
+FILE: apps/web-public/src/app/billing/page.tsx
+import Link from "next/link";
+import { useState } from "react";
+import { readAuthToken } from "@/lib/auth-storage";
+import { HeroButton, ShellBadge, StatCard, srFixTheme } from "@/components/srfix-theme";
+import { getPublicApiPath } from "@/lib/public-api";
+
+FILE: apps/web-public/src/app/billing/pending/page.tsx
+import Link from "next/link";
+import { srFixTheme } from "@/components/srfix-theme";
+
+FILE: apps/web-public/src/app/onboarding/success/save-onboarding-token.tsx
+import { useEffect } from 'react';
+import { saveAuthToken } from '@/lib/auth-storage';
+
+FILE: apps/web-public/src/app/onboarding/success/redirect-to-admin.tsx
+import { useEffect, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
+import { resolveAdminBridgeUrl } from "@/lib/admin-url";
+
+FILE: apps/web-public/src/app/onboarding/success/page.tsx
+import { Suspense } from "react";
+import { RedirectToAdmin } from "./redirect-to-admin";
+
+FILE: apps/web-public/src/app/onboarding/google/callback/page.tsx
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
+import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
+import { saveAuthToken } from "@/lib/auth-storage";
+import { ShellBadge, srFixTheme } from "@/components/srfix-theme";
+import { getPublicApiPath } from "@/lib/public-api";
+
+FILE: apps/web-public/src/app/onboarding/page.tsx
+import { useState, type ChangeEvent, type FormEvent } from "react";
+import Link from "next/link";
+import { ShellBadge, StatCard, srFixTheme } from "@/components/srfix-theme";
+import { optionalEnv } from "@white-label/config";
+import { getPublicApiPath } from "@/lib/public-api";
+
+FILE: apps/web-public/src/app/not-found.tsx
+import Link from "next/link";
+import { optionalEnv } from "@white-label/config";
+
+FILE: apps/web-public/src/components/srfix-theme.tsx
+import type { ReactNode } from "react";
+
+FILE: apps/web-public/src/components/storefront-client.tsx
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { fetchJson } from "@white-label/config";
+import { RootAuthHashRedirect } from "@/components/root-auth-hash-redirect";
+import { getPublicApiPath } from "@/lib/public-api";
+import { resolveAdminUrl } from "@/lib/admin-url";
+
+FILE: apps/web-public/src/components/root-auth-hash-redirect.tsx
+import { useEffect } from "react";
+import { saveAuthToken } from "@/lib/auth-storage";
+import { getPublicApiPath } from "@/lib/public-api";
+import { resolveAdminBridgeUrl } from "@/lib/admin-url";
+
+FILE: apps/web-public/src/components/public-portal-lookup.tsx
+import Link from "next/link";
+import { useMemo, useState, useEffect, useRef, useCallback, type FormEvent } from "react";
+import { fetchJson, type ApiErrorPayload } from "@white-label/config";
+import { srFixTheme } from "@/components/srfix-theme";
+
+FILE: apps/web-public/src/lib/admin-url.ts
+import { optionalEnv } from "@white-label/config";
+
+FILE: apps/web-public/src/lib/public-api.ts
+
+FILE: apps/web-public/src/lib/auth-storage.ts
+import { resolveSharedCookieDomain } from "@white-label/config";
+
+FILE: apps/web-public/src/lib/supabase-browser.ts
+import { createClient } from '@supabase/supabase-js';
+
+FILE: apps/api/src/middleware/tenantCapabilities.ts
+import { Request, Response, NextFunction } from 'express';
+import { loadTenantBillingSummary } from '../services/tenant-billing';
+import { loadTenantRuntimeConfig } from '../services/tenant-config';
+import { resolveTenantCapabilities } from '../services/tenant-capabilities';
+
+FILE: apps/api/src/middleware/requireRole.ts
+import { Request, Response, NextFunction } from 'express';
+
+FILE: apps/api/src/middleware/scope.ts
+import { Request, Response, NextFunction } from 'express';
+import { resolveScope } from '../lib/resolve-scope';
+
+FILE: apps/api/src/middleware/errorHandler.ts
+import { Request, Response, NextFunction } from 'express';
+
+FILE: apps/api/src/middleware/financeScope.ts
+import { Request, Response, NextFunction } from 'express';
+
+FILE: apps/api/src/middleware/validateTenant.ts
+import { Request, Response, NextFunction } from 'express';
+
+FILE: apps/api/src/middleware/tenantResolver.ts
+import { Request, Response, NextFunction } from 'express';
+
+FILE: apps/api/src/middleware/auth.ts
+import { createHmac, timingSafeEqual } from 'crypto';
+import { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
+import { supabaseAdmin } from '@white-label/database';
+import { resolveEffectiveUserRole } from '../lib/user-roles';
+import { resolveTenantJwtSecret } from '../services/security-backoffice';
+
+FILE: apps/api/src/middleware/tenantBilling.ts
+import { Request, Response, NextFunction } from 'express';
+import { loadTenantBillingSummary } from '../services/tenant-billing';
+
+FILE: apps/api/src/types/web-push.d.ts
+
+FILE: apps/api/src/types/env.d.ts
+
+FILE: apps/api/src/types/express.d.ts
+
+FILE: apps/api/src/config/feature-flags.ts
+
+FILE: apps/api/src/lib/scope.ts
+import type { Request } from 'express';
+import { resolveEffectiveUserRole } from './user-roles';
+
+FILE: apps/api/src/lib/resolve-scope.ts
+import type { Request } from 'express';
+import { getRequestedSucursalId, isUuid, normalizeScopeRole, type ScopeContext, type ScopeRole } from './scope';
+
+FILE: apps/api/src/lib/user-roles.ts
+
+FILE: apps/api/src/index.ts
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import authRouter from './routes/auth';
+import ordersRouter from './routes/orders';
+import requestsRouter from './routes/requests';
+import financeRouter from './routes/finance';
+import customersRouter from './routes/customers';
+import inventoryRouter from './routes/inventory';
+import sucursalesRouter from './routes/sucursales';
+import suppliersRouter from './routes/suppliers';
+import purchaseOrdersRouter from './routes/purchase-orders';
+import tasksRouter from './routes/tasks';
+import usersRouter from './routes/users';
+import securityRouter from './routes/security';
+import publicRouter from './routes/public';
+import procurementRouter from './routes/procurement';
+import reportsRouter from './routes/reports';
+import stockAlertsRouter from './routes/stock-alerts';
+import pwaRouter from './routes/pwa';
+import billingRouter, { webhookRouter } from './routes/billing';
+import { getApiRoot, getHealth } from './controllers/meta';
+import { listAuditLogs } from './controllers/security';
+import { requireAuth } from './middleware/auth';
+import { requireTenantBillingActive } from './middleware/tenantBilling';
+import { attachTenantCapabilities, requireTenantModule } from './middleware/tenantCapabilities';
+import { requireRole } from './middleware/requireRole';
+import { errorHandler } from './middleware/errorHandler';
+
+FILE: apps/api/src/controllers/meta.ts
+import { Request, Response } from 'express';
+import { supabaseAdmin } from '@white-label/database';
+import { loadTenantBillingSummary } from '../services/tenant-billing';
+import { getIndustryTemplate, listAvailableIndustries, loadTenantRuntimeConfig } from '../services/tenant-config';
+import { resolveTenantCapabilities } from '../services/tenant-capabilities';
+import { resolveEffectiveUserRole } from '../lib/user-roles';
+
+FILE: apps/api/src/controllers/auth.controller.ts
+import { Request, Response } from 'express';
+import { createHmac, randomUUID } from 'crypto';
+import { z } from 'zod';
+import { supabaseAdmin } from '@white-label/database';
+import { resolveEffectiveUserRole } from '../lib/user-roles';
+import { resolveTenantJwtSecret } from '../services/security-backoffice';
+
+FILE: apps/api/src/controllers/requests.ts
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import { getTenantClient } from '@white-label/database';
+
+FILE: apps/api/src/controllers/suppliers.ts
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import { getTenantClient } from '@white-label/database';
+import { writeAuditLog } from '../services/security-backoffice';
+
+FILE: apps/api/src/controllers/reports.ts
+import { Request, Response } from 'express';
+import { getTenantClient } from '@white-label/database';
+
+FILE: apps/api/src/controllers/purchase-orders.ts
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import { randomUUID } from 'crypto';
+import { getTenantClient, supabaseAdmin } from '@white-label/database';
+import { refreshInventoryAlert } from './stock-alerts';
+
+FILE: apps/api/src/controllers/pwa.ts
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import { supabaseAdmin } from '@white-label/database';
+
+FILE: apps/api/src/controllers/orders.ts
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import { randomUUID } from 'crypto';
+import PDFDocument from 'pdfkit';
+import { getTenantClient, supabaseAdmin } from '@white-label/database';
+import { loadTenantRuntimeConfig } from '../services/tenant-config';
+import { calculateOperationalRisk } from '../services/operational-risk';
+import { sendTenantPushNotification } from '../services/pwa-push';
+import { getEvidenceMetadata, type EvidenceEntry } from '../services/evidence-adapter';
+import { FEATURE_EVIDENCE_MODE } from '../config/feature-flags';
+
+FILE: apps/api/src/controllers/security.ts
+import { Request, Response } from 'express';
+import { randomBytes } from 'crypto';
+import { z } from 'zod';
+import { supabaseAdmin } from '@white-label/database';
+import { buildOtpAuthUri, generateTotpSecret, verifyTotp, writeAuditLog } from '../services/security-backoffice';
+
+FILE: apps/api/src/controllers/catalogs.ts
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import { getTenantClient } from '@white-label/database';
+import { refreshInventoryAlert } from './stock-alerts';
+
+FILE: apps/api/src/controllers/users.ts
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import { supabaseAdmin } from '@white-label/database';
+import { resolveDisplayUserRole, resolveEffectiveUserRole, normalizeStoredUserRole } from '../lib/user-roles';
+import { writeAuditLog } from '../services/security-backoffice';
+
+FILE: apps/api/src/controllers/billing.ts
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import { createBillingCheckout, handleMercadoPagoWebhook } from '../services/billing';
+
+FILE: apps/api/src/controllers/finance.ts
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import { getTenantClient } from '@white-label/database';
+
+FILE: apps/api/src/controllers/tasks.ts
+import { Request, Response } from 'express';
+import { randomUUID } from 'crypto';
+import { z } from 'zod';
+import { getTenantClient, supabaseAdmin } from '@white-label/database';
+
+FILE: apps/api/src/controllers/procurement.ts
+import { Request, Response } from 'express';
+import { getTenantClient } from '@white-label/database';
+
+FILE: apps/api/src/controllers/public.ts
+import { Request, Response } from 'express';
+import { randomUUID } from 'crypto';
+import { z } from 'zod';
+import { getTenantClient, supabaseAdmin } from '@white-label/database';
+import { loadTenantRuntimeConfig } from '../services/tenant-config';
+import { getEvidenceMetadata } from '../services/evidence-adapter';
+import { FEATURE_EVIDENCE_MODE } from '../config/feature-flags';
+
+FILE: apps/api/src/controllers/stock-alerts.ts
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import { acknowledgeStockAlert, listStockAlerts, syncStockAlertForInventoryRow } from '../services/stock-alerts';
+
+FILE: apps/api/src/controllers/sucursales.ts
+import { Request, Response } from 'express';
+import { z } from 'zod';
+import { getTenantClient, supabaseAdmin } from '@white-label/database';
+
+FILE: apps/api/src/routes/inventory.ts
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { validateTenant } from '../middleware/validateTenant';
+import { attachScope } from '../middleware/scope';
+import { requireTenantBillingActive } from '../middleware/tenantBilling';
+import { requireRole } from '../middleware/requireRole';
+import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
+import { createInventoryItem, listInventory, listInventoryMovements, updateInventoryItem } from '../controllers/catalogs';
+
+FILE: apps/api/src/routes/customers.ts
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { validateTenant } from '../middleware/validateTenant';
+import { attachScope } from '../middleware/scope';
+import { requireTenantBillingActive } from '../middleware/tenantBilling';
+import { requireRole } from '../middleware/requireRole';
+import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
+import { createCustomer, listCustomers } from '../controllers/catalogs';
+
+FILE: apps/api/src/routes/requests.ts
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { validateTenant } from '../middleware/validateTenant';
+import { attachScope } from '../middleware/scope';
+import { requireTenantBillingActive } from '../middleware/tenantBilling';
+import { requireRole } from '../middleware/requireRole';
+import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
+import { convertServiceRequestToOrder, getServiceRequestById, listServiceRequests } from '../controllers/requests';
+
+FILE: apps/api/src/routes/suppliers.ts
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { validateTenant } from '../middleware/validateTenant';
+import { attachScope } from '../middleware/scope';
+import { requireTenantBillingActive } from '../middleware/tenantBilling';
+import { requireRole } from '../middleware/requireRole';
+import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
+import {
+
+FILE: apps/api/src/routes/reports.ts
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { validateTenant } from '../middleware/validateTenant';
+import { attachScope } from '../middleware/scope';
+import { requireTenantBillingActive } from '../middleware/tenantBilling';
+import { requireRole } from '../middleware/requireRole';
+import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
+import { getReportsSummary } from '../controllers/reports';
+
+FILE: apps/api/src/routes/purchase-orders.ts
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { validateTenant } from '../middleware/validateTenant';
+import { attachScope } from '../middleware/scope';
+import { requireTenantBillingActive } from '../middleware/tenantBilling';
+import { requireRole } from '../middleware/requireRole';
+import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
+import {
+
+FILE: apps/api/src/routes/pwa.ts
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { validateTenant } from '../middleware/validateTenant';
+import { attachScope } from '../middleware/scope';
+import { requireTenantBillingActive } from '../middleware/tenantBilling';
+import { attachTenantCapabilities } from '../middleware/tenantCapabilities';
+import { getVapidPublicKey, subscribePush, unsubscribePush } from '../controllers/pwa';
+
+FILE: apps/api/src/routes/orders.ts
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { validateTenant } from '../middleware/validateTenant';
+import { attachScope } from '../middleware/scope';
+import { requireTenantBillingActive } from '../middleware/tenantBilling';
+import { requireRole } from '../middleware/requireRole';
+import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
+import { addOrderMessage, addOrderNote, createOrder, getOrderById, getOrderChecklist, listOrders, updateOrderChecklist, updateOrderDetails, updateOrderFinancials, updateOrderStatus, updateOrderWarranty, uploadOrderAttachments } from '../controllers/orders';
+
+FILE: apps/api/src/routes/security.ts
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { validateTenant } from '../middleware/validateTenant';
+import { attachScope } from '../middleware/scope';
+import { requireTenantBillingActive } from '../middleware/tenantBilling';
+import { requireRole } from '../middleware/requireRole';
+import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
+import { getSecurityConfig, getSecuritySummary, listAuditLogs, listActiveSessions, revokeSession, rotateKeys, setupAdminMfa, updateAdminMfaRequirement, updateSecurityConfig, verifyAdminMfa } from '../controllers/security';
+import { inviteUser } from '../controllers/users';
+
+FILE: apps/api/src/routes/users.ts
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { attachScope } from '../middleware/scope';
+import { requireTenantBillingActive } from '../middleware/tenantBilling';
+import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
+import { requireRole } from '../middleware/requireRole';
+import { deactivateUser, getUserPurchaseOrders, inviteUser, listUsers, updateUserRole } from '../controllers/users';
+
+FILE: apps/api/src/routes/billing.ts
+import { Router } from 'express';
+import { createCheckout, mercadopagoWebhook, createPublicCheckout } from '../controllers/billing';
+import { requireAuth } from '../middleware/auth';
+import { validateTenant } from '../middleware/validateTenant';
+import { attachScope } from '../middleware/scope';
+import { requireRole } from '../middleware/requireRole';
+
+FILE: apps/api/src/routes/finance.ts
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { validateTenant } from '../middleware/validateTenant';
+import { attachScope } from '../middleware/scope';
+import { requireTenantBillingActive } from '../middleware/tenantBilling';
+import { requireRole } from '../middleware/requireRole';
+import { requireFinanceScope } from '../middleware/financeScope';
+import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
+import { createExpense, deleteExpense, getBalance, getCashflow, getExpense } from '../controllers/finance';
+
+FILE: apps/api/src/routes/tasks.ts
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { validateTenant } from '../middleware/validateTenant';
+import { attachScope } from '../middleware/scope';
+import { requireTenantBillingActive } from '../middleware/tenantBilling';
+import { requireRole } from '../middleware/requireRole';
+import { createTask, deleteTask, getTaskById, getTaskHistory, listTasks, updateTask, updateTaskStatus } from '../controllers/tasks';
+
+FILE: apps/api/src/routes/procurement.ts
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { validateTenant } from '../middleware/validateTenant';
+import { attachScope } from '../middleware/scope';
+import { requireTenantBillingActive } from '../middleware/tenantBilling';
+import { requireRole } from '../middleware/requireRole';
+import { getProcurementSummary } from '../controllers/procurement';
+
+FILE: apps/api/src/routes/public.ts
+import { Router } from 'express';
+import { createPublicQuote, createPublicStoreOrder, getPublicPortalOrder, getPublicStoreCatalog, getPublicTenantLanding, trackPublicOrder } from '../controllers/public';
+
+FILE: apps/api/src/routes/stock-alerts.ts
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { validateTenant } from '../middleware/validateTenant';
+import { requireTenantBillingActive } from '../middleware/tenantBilling';
+import { requireRole } from '../middleware/requireRole';
+import { acknowledgeAlert, listAlerts } from '../controllers/stock-alerts';
+
+FILE: apps/api/src/routes/auth.ts
+import { Router } from 'express';
+import { register, redirectGoogleAuth, completeGoogleRegistration, exchangeSupabaseSession } from '../controllers/auth.controller';
+import { requireAuth } from '../middleware/auth';
+import { validateTenant } from '../middleware/validateTenant';
+import { getCurrentUser, resolveTenantForSupabaseUser, getTenantSettings, updateTenantSettings } from '../controllers/meta';
+
+FILE: apps/api/src/routes/sucursales.ts
+import { Router } from 'express';
+import { requireAuth } from '../middleware/auth';
+import { validateTenant } from '../middleware/validateTenant';
+import { requireTenantBillingActive } from '../middleware/tenantBilling';
+import { requireRole } from '../middleware/requireRole';
+import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
+import { assignUserToSucursal, createSucursal, deleteSucursal, listSucursales, updateSucursal } from '../controllers/sucursales';
+
+FILE: apps/api/src/services/security-backoffice.ts
+import { createHmac, randomBytes } from 'crypto';
+import { supabaseAdmin } from '@white-label/database';
+
+FILE: apps/api/src/services/operational-risk.ts
+import type { TenantRuntimeConfig, TenantSemaphoreRule, TenantWorkflowStatus } from '@white-label/types';
+
+FILE: apps/api/src/services/billing-adapter.ts
+import { supabaseAdmin } from '@white-label/database';
+
+FILE: apps/api/src/services/tenant-capabilities.ts
+import type {
+import type { TenantBillingSummary } from './tenant-billing';
+
+FILE: apps/api/src/services/pwa-push.ts
+import webpush from 'web-push';
+import { supabaseAdmin } from '@white-label/database';
+
+FILE: apps/api/src/services/tenant-config.ts
+import { supabaseAdmin } from '@white-label/database';
+import type {
+
+FILE: apps/api/src/services/tenant-billing.ts
+import { supabaseAdmin } from '@white-label/database';
+import { getBillingStatus } from './billing-adapter';
+import { BILLING_ADAPTER_MODE } from '../config/feature-flags';
+
+FILE: apps/api/src/services/evidence-adapter.ts
+import { supabaseAdmin } from '@white-label/database';
+
+FILE: apps/api/src/services/CustomerService.ts
+import { SupabaseClient } from '@supabase/supabase-js';
+
+FILE: apps/api/src/services/billing.ts
+import { createHmac } from 'node:crypto';
+import { supabaseAdmin } from '@white-label/database';
+
+FILE: apps/api/src/services/FinanceService.ts
+import { SupabaseClient } from '@supabase/supabase-js';
+
+FILE: apps/api/src/services/stock-alerts.ts
+import { getTenantClient } from '@white-label/database';
+
+FILE: apps/api/src/services/InventoryService.ts
+import { SupabaseClient } from '@supabase/supabase-js';
+
+FILE: apps/web-admin/next-env.d.ts
+import "./.next/types/routes.d.ts";
+
+FILE: apps/web-admin/next.config.ts
+import type { NextConfig } from "next";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import withPWA from "next-pwa";
+
+FILE: apps/web-admin/src/types/next-pwa.d.ts
+
+FILE: apps/web-admin/src/app/auth/bridge/page.tsx
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { saveAuthToken } from "@/lib/auth-storage";
+
+FILE: apps/web-admin/src/app/dashboard/tecnico/page.tsx
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Search, Filter, RefreshCw, Eye } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import { OrderCard } from '@/components/tecnico/order-card';
+import { OrderModal } from '@/components/tecnico/order-modal';
+import type { Order } from '@/types';
+
+FILE: apps/web-admin/src/app/dashboard/compras/page.tsx
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { Plus, RefreshCw, ShoppingCart, Package, Truck, CheckCircle2, X } from 'lucide-react';
+import { fixService } from '@/services/fixService';
+
+FILE: apps/web-admin/src/app/dashboard/landing/page.tsx
+import { useEffect, useMemo, useState } from "react";
+import { Globe, RefreshCw, Save, Eye } from "lucide-react";
+import { fixService } from "@/services/fixService";
+
+FILE: apps/web-admin/src/app/dashboard/finanzas/page.tsx
+import { useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Banknote, CircleCheckBig, Clock3, RefreshCw } from 'lucide-react';
+import { fixService } from '@/services/fixService';
+import { getActiveScope } from '@/lib/scope';
+import type { FinanceBalance, Order } from '@/types';
+
+FILE: apps/web-admin/src/app/dashboard/seguridad/page.tsx
+import { useState, useEffect } from 'react';
+import { Shield, Users, Key, RefreshCw, Eye, EyeOff, Copy, Check } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { UserModal } from '@/components/seguridad/user-modal';
+import type { SecurityUser, SecurityConfig, AuditLog, SecuritySession } from '@/types';
+import { Plus, Edit2 } from 'lucide-react';
+
+FILE: apps/web-admin/src/app/dashboard/ordenes/page.tsx
+import { useEffect, useMemo, useState } from 'react';
+import { Search, RefreshCw, Filter, Grid2X2, List, Clock3, MessageSquare, Eye, Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { fixService } from '@/services/fixService';
+import type { Order } from '@/types';
+import { OrderCard } from '@/components/tecnico/order-card';
+import { OrderModal } from '@/components/tecnico/order-modal';
+import { LoadingState, ErrorState } from '@/components/base/states';
+import { EmptyState, MoneyCard } from '@/components/base/cards';
+import { StatusBadge } from '@/components/base/badges';
+import { Button } from '@/components/ui/button';
+
+FILE: apps/web-admin/src/app/dashboard/reportes/page.tsx
+import { useEffect, useMemo, useState } from "react";
+import { BarChart3, LineChart, RefreshCw, Users, Package, Wallet } from "lucide-react";
+import { getActiveScope } from "@/lib/scope";
+import { fixService } from "@/services/fixService";
+
+FILE: apps/web-admin/src/app/dashboard/sucursales/page.tsx
+import { useState, useEffect } from 'react';
+import { Plus, RefreshCw, Edit2, Trash2, Building2, Phone, Mail, MapPin, ArrowRightLeft } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions, getActiveSucursalId, setActiveSucursalId } from '@/lib/tenant';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { SucursalModal } from '@/components/sucursales/sucursal-modal';
+import { TransferModal } from '@/components/sucursales/transfer-modal';
+import type { Sucursal } from '@/types';
+import { Search } from 'lucide-react';
+
+FILE: apps/web-admin/src/app/dashboard/solicitudes/page.tsx
+import { useState, useEffect } from 'react';
+import { RefreshCw, FileText, MessageSquare } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import { RequestCard } from '@/components/solicitudes/request-card';
+import { QuoteModal } from '@/components/solicitudes/quote-modal';
+import type { ServiceRequest } from '@/types';
+
+FILE: apps/web-admin/src/app/dashboard/usuarios/page.tsx
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Plus, RefreshCw, Search, Shield, UserX, History } from "lucide-react";
+import { fixService } from "@/services/fixService";
+
+FILE: apps/web-admin/src/app/dashboard/layout.tsx
+import { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { Sidebar } from '@/components/dashboard/sidebar';
+import { Header } from '@/components/dashboard/header';
+import { AppShell, ShellContent } from '@/components/base/app-shell';
+import { LoadingState, ErrorState } from '@/components/base/states';
+import { isAuthenticated, getStoredUser } from '@/lib/auth';
+import { TenantIdentityProvider } from '@/providers/TenantIdentityProvider';
+
+FILE: apps/web-admin/src/app/dashboard/proveedores/page.tsx
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { Plus, RefreshCw, Search, Edit2, Phone, Mail, Truck, Power, Trash2, X } from 'lucide-react';
+import { fixService } from '@/services/fixService';
+
+FILE: apps/web-admin/src/app/dashboard/tareas/page.tsx
+import { useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
+import { Plus, Search, RefreshCw, Edit2, Trash2, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { TaskModal } from '@/components/tareas/task-modal';
+import type { Task } from '@/types';
+
+FILE: apps/web-admin/src/app/dashboard/archivo/page.tsx
+import { useEffect, useMemo, useState } from "react";
+import { Archive, RefreshCw, Search, PackageCheck } from "lucide-react";
+import { fixService } from "@/services/fixService";
+
+FILE: apps/web-admin/src/app/dashboard/gastos/page.tsx
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { Plus, Search, RefreshCw, Trash2, Calendar, DollarSign, X } from 'lucide-react';
+import { fixService } from '@/services/fixService';
+import { getActiveSucursalId } from '@/lib/tenant';
+
+FILE: apps/web-admin/src/app/dashboard/stock/page.tsx
+import { useState, useEffect, useMemo } from 'react';
+import { Plus, Search, RefreshCw, Edit2, Package, AlertTriangle, ArrowUpDown, Filter, Layers3 } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ProductModal } from '@/components/stock/product-modal';
+import { MovementModal } from '@/components/stock/movement-modal';
+import type { Product, StockAlert } from '@/types';
+
+FILE: apps/web-admin/src/app/dashboard/operativo/page.tsx
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Step1 } from '@/components/operativo/step-1';
+import { Step2 } from '@/components/operativo/step-2';
+import { Step3 } from '@/components/operativo/step-3';
+import { Success } from '@/components/operativo/success';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import { CheckCircle } from 'lucide-react';
+
+FILE: apps/web-admin/src/app/dashboard/page.tsx
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+import {
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import type { ReportsSummary } from '@/types';
+import { ShoppingCart, BarChart3 } from 'lucide-react';
+
+FILE: apps/web-admin/src/app/dashboard/clientes/page.tsx
+import { useState, useEffect } from 'react';
+import { Plus, Search, RefreshCw, Edit2, Eye, Trash2, Phone, MessageSquare, Wrench } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { CustomerModal } from '@/components/clientes/customer-modal';
+import { CustomerHistory } from '@/components/clientes/customer-history';
+import type { Customer } from '@/types';
+
+FILE: apps/web-admin/src/app/layout.tsx
+import type { Metadata } from 'next';
+import '@/styles/globals.css';
+
+FILE: apps/web-admin/src/app/api/pwa/manifest/route.ts
+import { NextRequest } from "next/server";
+
+FILE: apps/web-admin/src/app/api/pwa/sw.js/route.ts
+import { NextRequest } from "next/server";
+
+FILE: apps/web-admin/src/app/page.tsx
+import { redirect } from "next/navigation";
+
+FILE: apps/web-admin/src/app/login/page.tsx
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { getBrowserSupabaseClient } from '@/lib/supabase-browser';
+import { loginWithSupabase } from '@/lib/auth';
+import { setActiveSucursalId } from '@/lib/tenant';
+
+FILE: apps/web-admin/src/app/not-found.tsx
+import Link from "next/link";
+
+FILE: apps/web-admin/src/config/branding.ts
+
+FILE: apps/web-admin/src/providers/TenantIdentityProvider.tsx
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { getStoredUser, getStoredTenant } from '@/lib/auth';
+import { getActiveSucursalId, getApiOptions } from '@/lib/tenant';
+import { apiClient } from '@/lib/api-client';
+import type { TenantIdentity } from '@/domain/tenant/Identity';
+import type { Sucursal } from '@/types';
+
+FILE: apps/web-admin/src/types.ts
+
+FILE: apps/web-admin/src/components/tecnico/order-card.tsx
+import { Eye, Calendar, User, Package, DollarSign } from 'lucide-react';
+import type { Order } from '@/types';
+
+FILE: apps/web-admin/src/components/tecnico/order-modal.tsx
+import { useState, useEffect } from 'react';
+import {
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import type { Order, OrderChecklist, OrderDocument, OrderEvent } from '@/types';
+import Image from 'next/image';
+
+FILE: apps/web-admin/src/components/tenant/tenant-provider.tsx
+import React, { createContext, useContext } from 'react';
+
+FILE: apps/web-admin/src/components/ui/tabs.tsx
+import React, { createContext, useContext, useMemo, useState } from "react";
+
+FILE: apps/web-admin/src/components/ui/label.tsx
+import React from "react";
+
+FILE: apps/web-admin/src/components/ui/dialog.tsx
+import React from "react";
+
+FILE: apps/web-admin/src/components/ui/button.tsx
+import React from "react";
+
+FILE: apps/web-admin/src/components/ui/textarea.tsx
+import React from "react";
+
+FILE: apps/web-admin/src/components/ui/input.tsx
+import React from "react";
+
+FILE: apps/web-admin/src/components/auth/session-gate.tsx
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { readAuthToken } from "@/lib/auth-storage";
+import { OperationalHub } from "@/components/dashboard/operational-hub";
+import { EmptyState } from "@white-label/ui";
+
+FILE: apps/web-admin/src/components/seguridad/user-modal.tsx
+import { useState, useEffect } from 'react';
+import {
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions, getActiveSucursalId } from '@/lib/tenant';
+import type { SecurityUser } from '@/types';
+
+FILE: apps/web-admin/src/components/sucursales/sucursal-modal.tsx
+import { useState, useEffect } from 'react';
+import {
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import type { Sucursal } from '@/types';
+
+FILE: apps/web-admin/src/components/sucursales/transfer-modal.tsx
+import { useState, useEffect } from 'react';
+import {
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import type { Sucursal, Product } from '@/types';
+
+FILE: apps/web-admin/src/components/solicitudes/request-card.tsx
+import { Calendar, User, Phone, Package, AlertCircle, MessageSquare, FileText, ArrowRightCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import type { ServiceRequest } from '@/types';
+
+FILE: apps/web-admin/src/components/solicitudes/quote-modal.tsx
+import { useState, useEffect } from 'react';
+import {
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Plus, Trash2, FileText, Send, ArrowRightCircle, Printer } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import type { ServiceRequest } from '@/types';
+
+FILE: apps/web-admin/src/components/dashboard/module-shell.tsx
+import React from "react";
+
+FILE: apps/web-admin/src/components/dashboard/operational-hub.tsx
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { fixService } from "@/services/fixService";
+
+FILE: apps/web-admin/src/components/dashboard/header.tsx
+import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { User, LogOut, ChevronDown, Building2, Menu } from 'lucide-react';
+import { BranchSelector } from './branch-selector';
+import { logout } from '@/lib/auth';
+import type { User as UserType } from '@/types';
+import { useTenantIdentity } from '@/providers/TenantIdentityProvider';
+
+FILE: apps/web-admin/src/components/dashboard/dashboard-shell.tsx
+import React, { useEffect, useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { Sidebar } from "@/components/dashboard/sidebar";
+import { Header } from "@/components/dashboard/header";
+import { isAuthenticated, getStoredUser } from "@/lib/auth";
+
+FILE: apps/web-admin/src/components/dashboard/sidebar.tsx
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import {
+import { DASHBOARD_MODULES } from '@/types';
+import { getActiveSucursalId, canUseConsolidatedView } from '@/lib/tenant';
+import { useTenantIdentity } from '@/providers/TenantIdentityProvider';
+import { platformBrand } from '@/config/branding';
+
+FILE: apps/web-admin/src/components/dashboard/branch-selector.tsx
+import { useState, useEffect } from 'react';
+import { Building2, Check, ChevronDown, Globe } from 'lucide-react';
+import { getActiveSucursalId, setActiveSucursalId, canUseConsolidatedView } from '@/lib/tenant';
+import { apiClient } from '@/lib/api-client';
+import { getTenantSlug } from '@/lib/tenant';
+import type { Sucursal } from '@/types';
+
+FILE: apps/web-admin/src/components/dashboard/orders/order-detail-drawer.tsx
+import { useState } from "react";
+import { OrderTimeline } from "./order-timeline";
+
+FILE: apps/web-admin/src/components/dashboard/orders/order-timeline.tsx
+
+FILE: apps/web-admin/src/components/dashboard/orders/order-intake-modal.tsx
+import { useEffect, useMemo, useState } from "react";
+import { DynamicFields, type DynamicFieldDefinition } from "@white-label/ui";
+
+FILE: apps/web-admin/src/components/pwa/pwa-bootstrap.tsx
+import { useEffect, useMemo, useState } from "react";
+import { getCurrentSession } from "@/lib/session";
+import { replayOfflineRequests } from "@/lib/pwa/offline-queue";
+
+FILE: apps/web-admin/src/components/tareas/task-modal.tsx
+import { useState, useEffect } from 'react';
+import {
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import type { Task } from '@/types';
+
+FILE: apps/web-admin/src/components/guard/RequireRole.tsx
+import React from 'react';
+import { useAuth, type Role } from './use-auth';
+
+FILE: apps/web-admin/src/components/guard/use-auth.ts
+import { useEffect, useMemo, useState } from 'react';
+import { useTenant } from '@/components/tenant/tenant-provider';
+import { getCurrentSession } from '@/lib/session';
+import { getActiveScope } from '@/lib/scope';
+
+FILE: apps/web-admin/src/components/guard/ProtectedLink.tsx
+import Link from 'next/link';
+import React from 'react';
+import { useAuth, type Role } from './use-auth';
+
+FILE: apps/web-admin/src/components/stock/movement-modal.tsx
+import { useEffect, useMemo, useState } from 'react';
+import { AlertTriangle, ArrowDownLeft, ArrowUpRight, CircleSlash, Package, RefreshCw } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import type { InventoryMovement, Product } from '@/types';
+
+FILE: apps/web-admin/src/components/stock/product-modal.tsx
+import { useState, useEffect } from 'react';
+import {
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import type { Product } from '@/types';
+
+FILE: apps/web-admin/src/components/operativo/step-1.tsx
+import { useEffect, useState } from 'react';
+import { User, Phone, Mail, Search, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import type { OrderFormData } from '@/app/dashboard/operativo/page';
+import { ArrowRight } from 'lucide-react';
+
+FILE: apps/web-admin/src/components/operativo/step-2.tsx
+import { useState, useRef } from 'react';
+import { Calendar, DollarSign, FileText, Camera, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import type { OrderFormData } from '@/app/dashboard/operativo/page';
+import { ArrowRight } from 'lucide-react';
+
+FILE: apps/web-admin/src/components/operativo/step-3.tsx
+import { Calendar, User, Phone, Mail, Package, DollarSign, CheckCircle, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import type { OrderFormData } from '@/app/dashboard/operativo/page';
+
+FILE: apps/web-admin/src/components/operativo/success.tsx
+import { CheckCircle, Copy, Download, Plus, MessageCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+FILE: apps/web-admin/src/components/clientes/customer-history.tsx
+import { useState, useEffect } from 'react';
+import {
+import { Loader2, Calendar, Package, DollarSign, FileText } from 'lucide-react';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import type { Customer, CustomerHistory } from '@/types';
+
+FILE: apps/web-admin/src/components/clientes/customer-modal.tsx
+import { useState, useEffect } from 'react';
+import {
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { apiClient } from '@/lib/api-client';
+import { getApiOptions } from '@/lib/tenant';
+import type { Customer } from '@/types';
+
+FILE: apps/web-admin/src/components/base/states.tsx
+import type { ReactNode } from 'react';
+
+FILE: apps/web-admin/src/components/base/cards.tsx
+import type { ReactNode } from 'react';
+
+FILE: apps/web-admin/src/components/base/badges.tsx
+import type { ReactNode } from 'react';
+
+FILE: apps/web-admin/src/components/base/app-shell.tsx
+import type { ReactNode } from 'react';
+
+FILE: apps/web-admin/src/lib/api-client.ts
+import { readAuthToken } from '@/lib/auth-storage';
+import { resolveAdminApiBaseUrl } from '@/lib/api-base-url';
+
+FILE: apps/web-admin/src/lib/module-catalog.ts
+
+FILE: apps/web-admin/src/lib/scope.ts
+
+FILE: apps/web-admin/src/lib/auth-storage.ts
+import { resolveSharedCookieDomain } from "@white-label/config";
+
+FILE: apps/web-admin/src/lib/api-base-url.ts
+
+FILE: apps/web-admin/src/lib/session.ts
+import { readAuthToken } from "@/lib/auth-storage";
+
+FILE: apps/web-admin/src/lib/pwa/offline-queue.ts
+
+FILE: apps/web-admin/src/lib/supabase-browser.ts
+import { createClient } from "@supabase/supabase-js";
+
+FILE: apps/web-admin/src/lib/tenant.ts
+import { getStoredUser, getStoredTenant } from './auth';
+
+FILE: apps/web-admin/src/lib/auth.ts
+import { apiClient } from './api-client';
+import { saveAuthToken, clearAuthToken, readAuthToken } from '@/lib/auth-storage';
+import { getCurrentSession } from '@/lib/session';
+import { resolveAdminApiBaseUrl } from '@/lib/api-base-url';
+import type { User, Tenant } from '@/types';
+
+FILE: apps/web-admin/src/domain/tenant/Identity.ts
+
+FILE: apps/web-admin/src/services/fixService.ts
+import { readAuthToken } from "@/lib/auth-storage";
+import { clearAuthToken } from "@/lib/auth-storage";
+import { getCurrentSession } from "@/lib/session";
+import { getActiveScope } from "@/lib/scope";
+import { enqueueOfflineRequest } from "@/lib/pwa/offline-queue";
+import { resolveAdminApiBaseUrl } from "@/lib/api-base-url";
+
+FILE: packages/ui/src/components/srfix-theme.tsx
+import type { ReactNode } from "react";
+
+FILE: packages/ui/src/components/Card.tsx
+import React from "react";
+
+FILE: packages/ui/src/components/DynamicFields.tsx
+import type { ReactNode } from 'react';
+
+FILE: packages/ui/src/components/Badge.tsx
+import React from "react";
+
+FILE: packages/ui/src/components/Table.tsx
+import React from 'react';
+
+FILE: packages/ui/src/components/feedback.tsx
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+
+FILE: packages/ui/src/components/PdfExportButton.ts
+import { createElement } from 'react';
+import { usePdfExport, type PdfExportInput } from '../hooks/usePdfExport';
+import { useTenantTheme } from '../hooks/useTenantTheme';
+
+FILE: packages/ui/src/components/Button.tsx
+import React from "react";
+
+FILE: packages/ui/src/components/EmptyState.tsx
+import React from "react";
+import { Card } from "./Card";
+
+FILE: packages/ui/src/components/WhatsAppButton.ts
+import { useTenantTheme } from '../hooks/useTenantTheme';
+import { useWhatsAppTemplate } from '../hooks/useWhatsAppTemplate';
+
+FILE: packages/ui/src/hooks/useTenantTheme.ts
+
+FILE: packages/ui/src/hooks/usePdfExport.ts
+import { useCallback, useState } from 'react';
+
+FILE: packages/ui/src/hooks/useWhatsAppTemplate.ts
+
+FILE: packages/ui/src/index.ts
+
+FILE: packages/database/src/index.ts
+import { createClient } from '@supabase/supabase-js';
+
+FILE: packages/types/index.ts
+
+FILE: packages/config/src/index.ts
+

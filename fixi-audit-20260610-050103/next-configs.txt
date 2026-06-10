@@ -1,0 +1,3 @@
+./apps/web-clientes/next.config.ts
+./apps/web-public/next.config.ts
+./apps/web-admin/next.config.ts

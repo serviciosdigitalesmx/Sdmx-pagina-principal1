@@ -1,0 +1,6 @@
+apps/web-public/src/app/[tenant]/page.tsx:import { resolveApiBaseUrl as getApiBaseUrl } from "@white-label/config";
+apps/web-public/src/app/api/[...path]/route.ts:import { optionalEnv, resolveApiBaseUrl } from "@white-label/config";
+apps/web-public/src/app/api/[...path]/route.ts:    return resolveApiBaseUrl();
+packages/config/src/index.ts:      return resolveApiBaseUrl();
+packages/config/src/index.ts:export function resolveApiBaseUrl(): string {
+packages/config/src/index.ts:  const response = await fetch(`${resolveApiBaseUrl()}${endpoint}`, {

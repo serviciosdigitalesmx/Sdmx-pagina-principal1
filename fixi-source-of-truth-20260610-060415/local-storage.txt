@@ -1,0 +1,31 @@
+apps/web-public/src/lib/auth-storage.ts:  const primaryStorage = persistent ? window.localStorage : window.sessionStorage;
+apps/web-public/src/lib/auth-storage.ts:  const secondaryStorage = persistent ? window.sessionStorage : window.localStorage;
+apps/web-public/src/lib/auth-storage.ts:    const persistentValue = window.localStorage.getItem(key);
+apps/web-public/src/lib/auth-storage.ts:    window.localStorage.removeItem(key);
+apps/web-admin/src/app/dashboard/operativo/page.tsx:  // Cargar borrador guardado en localStorage
+apps/web-admin/src/app/dashboard/operativo/page.tsx:    const saved = localStorage.getItem('srf_borrador_orden');
+apps/web-admin/src/app/dashboard/operativo/page.tsx:  // Guardar borrador en localStorage
+apps/web-admin/src/app/dashboard/operativo/page.tsx:    // No guardar File objects en localStorage
+apps/web-admin/src/app/dashboard/operativo/page.tsx:    localStorage.setItem('srf_borrador_orden', JSON.stringify(toStore));
+apps/web-admin/src/app/dashboard/operativo/page.tsx:      localStorage.removeItem('srf_borrador_orden');
+apps/web-admin/src/app/dashboard/operativo/page.tsx:    localStorage.removeItem('srf_borrador_orden');
+apps/web-admin/src/app/dashboard/clientes/page.tsx:    // Guardar en localStorage y redirigir a recepción
+apps/web-admin/src/app/dashboard/clientes/page.tsx:    localStorage.setItem('srf_borrador_orden', JSON.stringify(draft));
+apps/web-admin/src/lib/auth-storage.ts:  const primaryStorage = persistent ? window.localStorage : window.sessionStorage;
+apps/web-admin/src/lib/auth-storage.ts:  const secondaryStorage = persistent ? window.sessionStorage : window.localStorage;
+apps/web-admin/src/lib/auth-storage.ts:    const persistentValue = window.localStorage.getItem(key);
+apps/web-admin/src/lib/auth-storage.ts:    window.localStorage.removeItem(key);
+apps/web-admin/src/lib/tenant.ts:  // First check localStorage (user selection)
+apps/web-admin/src/lib/tenant.ts:  const stored = localStorage.getItem('srf_sucursal_activa');
+apps/web-admin/src/lib/tenant.ts:    localStorage.removeItem('srf_sucursal_activa');
+apps/web-admin/src/lib/tenant.ts:    localStorage.setItem('srf_sucursal_activa', sucursalId);
+apps/web-admin/src/lib/auth.ts:  localStorage.setItem('srf_token', token);
+apps/web-admin/src/lib/auth.ts:  localStorage.setItem('srf_user', JSON.stringify(user));
+apps/web-admin/src/lib/auth.ts:  localStorage.setItem('srf_tenant', JSON.stringify(tenant));
+apps/web-admin/src/lib/auth.ts:  localStorage.removeItem('srf_token');
+apps/web-admin/src/lib/auth.ts:  localStorage.removeItem('srf_user');
+apps/web-admin/src/lib/auth.ts:  localStorage.removeItem('srf_tenant');
+apps/web-admin/src/lib/auth.ts:  localStorage.removeItem('srf_sucursal_activa');
+apps/web-admin/src/lib/auth.ts:  return localStorage.getItem('srf_token') || readAuthToken();
+apps/web-admin/src/lib/auth.ts:  const user = localStorage.getItem('srf_user');
+apps/web-admin/src/lib/auth.ts:  const tenant = localStorage.getItem('srf_tenant');

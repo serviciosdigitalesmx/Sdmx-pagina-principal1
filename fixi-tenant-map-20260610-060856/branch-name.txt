@@ -1,0 +1,6 @@
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:        let branchName = 'Todas las sucursales';
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:            branchName = activeSucursal.name;
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:          branchName,
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:          branchName: 'Sucursal',
+apps/web-admin/src/components/dashboard/sidebar.tsx:            {identity.branchName}
+apps/web-admin/src/domain/tenant/Identity.ts:  branchName: string;

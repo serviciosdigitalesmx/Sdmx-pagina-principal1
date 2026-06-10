@@ -1,0 +1,4 @@
+apps/web-admin/src/app/dashboard/operativo/page.tsx
+apps/web-admin/src/lib/auth-storage.ts
+apps/web-admin/src/lib/tenant.ts
+apps/web-admin/src/lib/auth.ts

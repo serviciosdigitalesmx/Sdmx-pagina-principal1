@@ -1,0 +1,1 @@
+apps/web-admin/src/domain/tenant/Identity.ts:export interface TenantIdentity {

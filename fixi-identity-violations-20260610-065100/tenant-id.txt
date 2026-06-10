@@ -1,0 +1,9 @@
+apps/web-admin/src/types.ts
+apps/web-admin/src/components/tenant/tenant-provider.tsx
+apps/web-admin/src/components/dashboard/dashboard-shell.tsx
+apps/web-admin/src/components/guard/use-auth.ts
+apps/web-admin/src/lib/scope.ts
+apps/web-admin/src/lib/session.ts
+apps/web-admin/src/lib/pwa/offline-queue.ts
+apps/web-admin/src/lib/auth.ts
+apps/web-admin/src/services/fixService.ts

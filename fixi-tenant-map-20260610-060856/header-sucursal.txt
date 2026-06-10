@@ -1,0 +1,431 @@
+apps/api/dist/middleware/financeScope.js:    const routeSucursalId = req.params.sucursalId || req.body?.sucursalId;
+apps/api/dist/middleware/financeScope.js:    const tokenSucursalId = req.user?.sucursalId;
+apps/api/dist/middleware/financeScope.js:    if (role === 'manager' && routeSucursalId && tokenSucursalId && routeSucursalId !== tokenSucursalId) {
+apps/api/dist/middleware/financeScope.js:        return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/lib/scope.js:exports.getRequestedSucursalId = getRequestedSucursalId;
+apps/api/dist/lib/scope.js:function getRequestedSucursalId(req) {
+apps/api/dist/lib/resolve-scope.js:    const requestedSucursalId = (0, scope_1.getRequestedSucursalId)(req);
+apps/api/dist/lib/resolve-scope.js:    const sessionSucursalId = (0, scope_1.isUuid)(user?.sucursalId) ? user?.sucursalId ?? null : null;
+apps/api/dist/lib/resolve-scope.js:        const sucursalId = requestedSucursalId ?? null;
+apps/api/dist/lib/resolve-scope.js:            source: requestedSucursalId ? 'query' : sessionSucursalId ? 'session' : 'default',
+apps/api/dist/lib/resolve-scope.js:            requestedSucursalId,
+apps/api/dist/lib/resolve-scope.js:    const sucursalId = requestedSucursalId ?? sessionSucursalId ?? null;
+apps/api/dist/lib/resolve-scope.js:        source: requestedSucursalId ? 'query' : sessionSucursalId ? 'session' : 'default',
+apps/api/dist/lib/resolve-scope.js:        requestedSucursalId,
+apps/api/dist/controllers/security.js:async function assertSucursalOwnership(tenantId, sucursalId) {
+apps/api/dist/controllers/security.js:            const ownsSucursal = await assertSucursalOwnership(tenantId, body.sucursalId);
+apps/api/dist/controllers/security.js:            if (!ownsSucursal) {
+apps/api/dist/controllers/security.js:                return res.status(404).json({ error: 'Sucursal not found' });
+apps/api/dist/controllers/catalogs.js:async function validateSucursalOwnership(supabase, tenantId, sucursalId) {
+apps/api/dist/controllers/catalogs.js:        const scopedSucursalId = scope?.mode === 'branch' ? scope.sucursalId ?? '' : '';
+apps/api/dist/controllers/catalogs.js:        if (scopedSucursalId) {
+apps/api/dist/controllers/catalogs.js:            query = query.eq('sucursal_id', scopedSucursalId);
+apps/api/dist/controllers/catalogs.js:        const effectiveSucursalId = scope?.mode === 'branch' ? scope.sucursalId ?? '' : '';
+apps/api/dist/controllers/catalogs.js:        if (effectiveSucursalId && !(await validateSucursalOwnership(supabase, tenantId, effectiveSucursalId))) {
+apps/api/dist/controllers/catalogs.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/catalogs.js:        if (effectiveSucursalId) {
+apps/api/dist/controllers/catalogs.js:            query = query.eq('sucursal_id', effectiveSucursalId);
+apps/api/dist/controllers/catalogs.js:        if (body.sucursalId && !(await validateSucursalOwnership(supabase, tenantId, body.sucursalId))) {
+apps/api/dist/controllers/catalogs.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/catalogs.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/catalogs.js:        const resolvedSucursalId = body.sucursalId ?? scope?.sucursalId ?? null;
+apps/api/dist/controllers/catalogs.js:        if (scope?.mode === 'branch' && !resolvedSucursalId) {
+apps/api/dist/controllers/catalogs.js:            return res.status(400).json({ error: 'Sucursal activa requerida' });
+apps/api/dist/controllers/catalogs.js:            sucursalId: resolvedSucursalId,
+apps/api/dist/controllers/catalogs.js:        await (0, stock_alerts_1.refreshInventoryAlert)(tenantId, productRow.id, resolvedSucursalId, Number(inventoryRow.stock_current ?? body.stock));
+apps/api/dist/controllers/catalogs.js:        const nextSucursalId = body.sucursalId === null
+apps/api/dist/controllers/catalogs.js:        if (body.sucursalId && !(await validateSucursalOwnership(supabase, tenantId, body.sucursalId))) {
+apps/api/dist/controllers/catalogs.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/catalogs.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/catalogs.js:            return res.status(400).json({ error: 'Sucursal activa requerida' });
+apps/api/dist/controllers/catalogs.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/catalogs.js:        const effectiveSucursalId = scope?.mode === 'branch' ? (scope.sucursalId ?? currentRow.sucursal_id ?? nextSucursalId) : nextSucursalId;
+apps/api/dist/controllers/catalogs.js:                sucursal_id: effectiveSucursalId,
+apps/api/dist/controllers/catalogs.js:        await (0, stock_alerts_1.refreshInventoryAlert)(tenantId, productRow.id, effectiveSucursalId, Number(updatedRow.stock_current ?? nextStock));
+apps/api/dist/controllers/catalogs.js:        if (inventoryRow?.sucursal_id && !(await validateSucursalOwnership(supabase, tenantId, inventoryRow.sucursal_id))) {
+apps/api/dist/controllers/catalogs.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/catalogs.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/orders.js:        const scopeSucursalId = scope?.sucursalId ?? null;
+apps/api/dist/controllers/orders.js:        const requestedSucursalId = isUuid(validatedData.sucursalId)
+apps/api/dist/controllers/orders.js:            : isUuid(scopeSucursalId)
+apps/api/dist/controllers/orders.js:                ? scopeSucursalId
+apps/api/dist/controllers/orders.js:        if (scope?.role === 'manager' && isUuid(scopeSucursalId) && requestedSucursalId && requestedSucursalId !== scopeSucursalId) {
+apps/api/dist/controllers/orders.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/orders.js:                sucursal_id: requestedSucursalId,
+apps/api/dist/controllers/orders.js:                sucursal_id: requestedSucursalId,
+apps/api/dist/controllers/sucursales.js:exports.assignUserToSucursal = exports.deleteSucursal = exports.updateSucursal = exports.createSucursal = exports.listSucursales = void 0;
+apps/api/dist/controllers/sucursales.js:const createSucursalSchema = zod_1.z.object({
+apps/api/dist/controllers/sucursales.js:const updateSucursalSchema = createSucursalSchema.partial();
+apps/api/dist/controllers/sucursales.js:async function assertSucursalOwnership(tenantId, sucursalId) {
+apps/api/dist/controllers/sucursales.js:async function countTenantSucursales(tenantId) {
+apps/api/dist/controllers/sucursales.js:const listSucursales = async (req, res) => {
+apps/api/dist/controllers/sucursales.js:exports.listSucursales = listSucursales;
+apps/api/dist/controllers/sucursales.js:const createSucursal = async (req, res) => {
+apps/api/dist/controllers/sucursales.js:        const maxSucursales = req.tenantCapabilities?.limits.sucursales ?? null;
+apps/api/dist/controllers/sucursales.js:        if (typeof maxSucursales === 'number') {
+apps/api/dist/controllers/sucursales.js:            const currentSucursales = await countTenantSucursales(tenantId);
+apps/api/dist/controllers/sucursales.js:            if (currentSucursales >= maxSucursales) {
+apps/api/dist/controllers/sucursales.js:                    error: 'Sucursal limit reached for this plan',
+apps/api/dist/controllers/sucursales.js:                        currentSucursales,
+apps/api/dist/controllers/sucursales.js:                        maxSucursales,
+apps/api/dist/controllers/sucursales.js:        const body = createSucursalSchema.parse(req.body);
+apps/api/dist/controllers/sucursales.js:exports.createSucursal = createSucursal;
+apps/api/dist/controllers/sucursales.js:const updateSucursal = async (req, res) => {
+apps/api/dist/controllers/sucursales.js:        const ownsSucursal = await assertSucursalOwnership(tenantId, sucursalId);
+apps/api/dist/controllers/sucursales.js:        if (!ownsSucursal) {
+apps/api/dist/controllers/sucursales.js:            return res.status(404).json({ error: 'Sucursal not found' });
+apps/api/dist/controllers/sucursales.js:        const body = updateSucursalSchema.parse(req.body);
+apps/api/dist/controllers/sucursales.js:exports.updateSucursal = updateSucursal;
+apps/api/dist/controllers/sucursales.js:const deleteSucursal = async (req, res) => {
+apps/api/dist/controllers/sucursales.js:        const ownsSucursal = await assertSucursalOwnership(tenantId, sucursalId);
+apps/api/dist/controllers/sucursales.js:        if (!ownsSucursal) {
+apps/api/dist/controllers/sucursales.js:            return res.status(404).json({ error: 'Sucursal not found' });
+apps/api/dist/controllers/sucursales.js:exports.deleteSucursal = deleteSucursal;
+apps/api/dist/controllers/sucursales.js:const assignUserToSucursal = async (req, res) => {
+apps/api/dist/controllers/sucursales.js:        const ownsSucursal = await assertSucursalOwnership(tenantId, sucursalId);
+apps/api/dist/controllers/sucursales.js:        if (!ownsSucursal) {
+apps/api/dist/controllers/sucursales.js:            return res.status(404).json({ error: 'Sucursal not found' });
+apps/api/dist/controllers/sucursales.js:exports.assignUserToSucursal = assignUserToSucursal;
+apps/api/dist/controllers/users.js:async function assertSucursalOwnership(tenantId, sucursalId) {
+apps/api/dist/controllers/users.js:            const ownsSucursal = await assertSucursalOwnership(tenantId, body.sucursalId);
+apps/api/dist/controllers/users.js:            if (!ownsSucursal) {
+apps/api/dist/controllers/users.js:                return res.status(404).json({ error: 'Sucursal not found' });
+apps/api/dist/controllers/finance.js:async function assertSucursalOwnership(supabase, tenantId, sucursalId) {
+apps/api/dist/controllers/finance.js:        if (!(await assertSucursalOwnership(supabase, tenantId, sucursalId))) {
+apps/api/dist/controllers/finance.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/finance.js:        const tokenSucursalId = scope?.sucursalId ?? '';
+apps/api/dist/controllers/finance.js:        if (!(await assertSucursalOwnership(supabase, tenantId, body.sucursalId))) {
+apps/api/dist/controllers/finance.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/finance.js:        if (scope?.mode === 'branch' && tokenSucursalId && body.sucursalId !== tokenSucursalId) {
+apps/api/dist/controllers/finance.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/finance.js:        if (data?.sucursal_id && !(await assertSucursalOwnership(supabase, tenantId, data.sucursal_id))) {
+apps/api/dist/controllers/finance.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/finance.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/finance.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/tasks.js:        const effectiveSucursalId = scope?.mode === 'branch' ? scope.sucursalId ?? '' : '';
+apps/api/dist/controllers/tasks.js:        if (effectiveSucursalId) {
+apps/api/dist/controllers/tasks.js:            query = query.eq('sucursal_id', effectiveSucursalId);
+apps/api/dist/controllers/tasks.js:            return res.status(400).json({ error: 'Sucursal activa requerida' });
+apps/api/dist/controllers/tasks.js:        const resolvedSucursalId = body.sucursalId || (scope?.mode === 'branch' ? scope.sucursalId ?? null : scope?.sucursalId ?? null);
+apps/api/dist/controllers/tasks.js:        if (scope?.mode === 'branch' && resolvedSucursalId && scope.sucursalId && resolvedSucursalId !== scope.sucursalId) {
+apps/api/dist/controllers/tasks.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/tasks.js:                sucursal_id: resolvedSucursalId,
+apps/api/dist/controllers/tasks.js:            return res.status(400).json({ error: 'Sucursal activa requerida' });
+apps/api/dist/controllers/tasks.js:            const resolvedSucursalId = body.sucursalId || (scope?.mode === 'branch' ? scope.sucursalId ?? null : scope?.sucursalId ?? null);
+apps/api/dist/controllers/tasks.js:            if (scope?.mode === 'branch' && scope.sucursalId && resolvedSucursalId && resolvedSucursalId !== scope.sucursalId) {
+apps/api/dist/controllers/tasks.js:                return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/tasks.js:            payload.sucursal_id = resolvedSucursalId;
+apps/api/dist/controllers/reports.js:        const requestedSucursalId = scope?.requestedSucursalId ?? '';
+apps/api/dist/controllers/reports.js:        const effectiveSucursalId = scope?.mode === 'branch' ? scope.sucursalId ?? requestedSucursalId : '';
+apps/api/dist/controllers/reports.js:            requestedSucursalId,
+apps/api/dist/controllers/reports.js:            effectiveSucursalId,
+apps/api/dist/controllers/reports.js:        if (effectiveSucursalId) {
+apps/api/dist/controllers/reports.js:            ordersQuery = ordersQuery.eq('sucursal_id', effectiveSucursalId);
+apps/api/dist/controllers/reports.js:            customersQuery = customersQuery.eq('sucursal_id', effectiveSucursalId);
+apps/api/dist/controllers/reports.js:            inventoryQuery = inventoryQuery.eq('sucursal_id', effectiveSucursalId);
+apps/api/dist/controllers/reports.js:            financeQuery = financeQuery.eq('sucursal_id', effectiveSucursalId);
+apps/api/dist/controllers/reports.js:            usersQuery = usersQuery.eq('sucursal_id', effectiveSucursalId);
+apps/api/dist/controllers/reports.js:            movementsQuery = movementsQuery.eq('sucursal_id', effectiveSucursalId);
+apps/api/dist/controllers/reports.js:        const ordersBySucursal = orders.reduce((acc, order) => {
+apps/api/dist/controllers/reports.js:                ordersBySucursal,
+apps/api/dist/controllers/purchase-orders.js:async function validateSucursalOwnership(supabase, tenantId, sucursalId) {
+apps/api/dist/controllers/purchase-orders.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/purchase-orders.js:        const resolvedSucursalId = body.sucursalId || (scope?.sucursalId ?? null);
+apps/api/dist/controllers/purchase-orders.js:        if (scope?.mode === 'branch' && !resolvedSucursalId) {
+apps/api/dist/controllers/purchase-orders.js:            return res.status(400).json({ error: 'Sucursal activa requerida' });
+apps/api/dist/controllers/purchase-orders.js:        if (!(await validateSucursalOwnership(supabase, tenantId, resolvedSucursalId))) {
+apps/api/dist/controllers/purchase-orders.js:            return res.status(404).json({ error: 'Sucursal not found' });
+apps/api/dist/controllers/purchase-orders.js:                sucursal_id: resolvedSucursalId,
+apps/api/dist/controllers/purchase-orders.js:        const resolvedSucursalId = body.sucursalId ?? scope?.sucursalId ?? null;
+apps/api/dist/controllers/purchase-orders.js:        if (scope?.mode === 'branch' && !resolvedSucursalId) {
+apps/api/dist/controllers/purchase-orders.js:            return res.status(400).json({ error: 'Sucursal activa requerida' });
+apps/api/dist/controllers/purchase-orders.js:        if (resolvedSucursalId && !(await validateSucursalOwnership(supabase, tenantId, resolvedSucursalId))) {
+apps/api/dist/controllers/purchase-orders.js:            return res.status(404).json({ error: 'Sucursal not found' });
+apps/api/dist/controllers/purchase-orders.js:            payload.sucursal_id = resolvedSucursalId;
+apps/api/dist/controllers/purchase-orders.js:            return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/dist/controllers/purchase-orders.js:        const resolvedSucursalId = order.sucursal_id ?? scope?.sucursalId ?? null;
+apps/api/dist/controllers/purchase-orders.js:            p_sucursal_id: resolvedSucursalId,
+apps/api/dist/controllers/purchase-orders.js:                await (0, stock_alerts_1.refreshInventoryAlert)(tenantId, productId, String(inventoryRow.sucursal_id ?? resolvedSucursalId ?? ''), stockCurrent);
+apps/api/dist/routes/sucursales.js:router.get('/', (0, tenantCapabilities_1.requireTenantModule)('sucursales'), (0, requireRole_1.requireRole)('owner', 'manager', 'technician'), sucursales_1.listSucursales);
+apps/api/dist/routes/sucursales.js:router.post('/', (0, tenantCapabilities_1.requireTenantModule)('sucursales'), (0, requireRole_1.requireRole)('owner', 'manager'), sucursales_1.createSucursal);
+apps/api/dist/routes/sucursales.js:router.put('/:id', (0, tenantCapabilities_1.requireTenantModule)('sucursales'), (0, requireRole_1.requireRole)('owner', 'manager'), sucursales_1.updateSucursal);
+apps/api/dist/routes/sucursales.js:router.delete('/:id', (0, tenantCapabilities_1.requireTenantModule)('sucursales'), (0, requireRole_1.requireRole)('owner'), sucursales_1.deleteSucursal);
+apps/api/dist/routes/sucursales.js:router.put('/:id/users', (0, tenantCapabilities_1.requireTenantModule)('sucursales'), (0, requireRole_1.requireRole)('owner', 'manager'), sucursales_1.assignUserToSucursal);
+apps/api/dist/services/tenant-capabilities.js:    { key: 'sucursales', label: 'Sucursales', description: 'Sucursales y contexto operativo', category: 'admin', frontend_routes: ['/dashboard/sucursales'], backend_permissions: [], default_enabled_by_industry: ['electronics_repair', 'hvac_service'], required_plan: 'pro', aliases: [] },
+apps/api/tests/inventory-rpc.integration.mjs:  const resolvedSucursalId = String(order.sucursal_id ?? sucursalId ?? '');
+apps/api/tests/inventory-rpc.integration.mjs:  assert.ok(resolvedSucursalId, 'sucursal_id or INVENTORY_RPC_TEST_SUCURSAL_ID is required');
+apps/api/tests/inventory-rpc.integration.mjs:      p_sucursal_id: resolvedSucursalId,
+apps/api/tests/inventory-rpc.integration.mjs:      p_sucursal_id: resolvedSucursalId,
+apps/api/tests/breaking.integration.mjs:const inventorySucursalId = process.env.BREAKING_TESTS_INVENTORY_SUCURSAL_ID?.trim() ?? '';
+apps/api/tests/breaking.integration.mjs:const otherInventorySucursalId = process.env.BREAKING_TESTS_OTHER_INVENTORY_SUCURSAL_ID?.trim() ?? '';
+apps/api/tests/breaking.integration.mjs:  if (!authToken || !authTenantSlug || !inventoryId || !inventorySucursalId || !otherInventorySucursalId) {
+apps/api/tests/breaking.integration.mjs:      sucursalId: otherInventorySucursalId,
+apps/api/src/middleware/financeScope.ts:  const routeSucursalId = req.params.sucursalId || req.body?.sucursalId;
+apps/api/src/middleware/financeScope.ts:  const tokenSucursalId = req.user?.sucursalId;
+apps/api/src/middleware/financeScope.ts:  if (role === 'manager' && routeSucursalId && tokenSucursalId && routeSucursalId !== tokenSucursalId) {
+apps/api/src/middleware/financeScope.ts:    return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/types/express.d.ts:      requestedSucursalId: string | null;
+apps/api/src/lib/scope.ts:  requestedSucursalId: string | null;
+apps/api/src/lib/scope.ts:export function getRequestedSucursalId(req: Pick<Request, 'query' | 'params' | 'headers'>): string | null {
+apps/api/src/lib/resolve-scope.ts:import { getRequestedSucursalId, isUuid, normalizeScopeRole, type ScopeContext, type ScopeRole } from './scope';
+apps/api/src/lib/resolve-scope.ts:  const requestedSucursalId = getRequestedSucursalId(req);
+apps/api/src/lib/resolve-scope.ts:  const sessionSucursalId = isUuid(user?.sucursalId) ? user?.sucursalId ?? null : null;
+apps/api/src/lib/resolve-scope.ts:    const sucursalId = requestedSucursalId ?? null;
+apps/api/src/lib/resolve-scope.ts:      source: requestedSucursalId ? 'query' : sessionSucursalId ? 'session' : 'default',
+apps/api/src/lib/resolve-scope.ts:      requestedSucursalId,
+apps/api/src/lib/resolve-scope.ts:  const sucursalId = requestedSucursalId ?? sessionSucursalId ?? null;
+apps/api/src/lib/resolve-scope.ts:    source: requestedSucursalId ? 'query' : sessionSucursalId ? 'session' : 'default',
+apps/api/src/lib/resolve-scope.ts:    requestedSucursalId,
+apps/api/src/controllers/reports.ts:    const requestedSucursalId = scope?.requestedSucursalId ?? '';
+apps/api/src/controllers/reports.ts:    const effectiveSucursalId = scope?.mode === 'branch' ? scope.sucursalId ?? requestedSucursalId : '';
+apps/api/src/controllers/reports.ts:      requestedSucursalId,
+apps/api/src/controllers/reports.ts:      effectiveSucursalId,
+apps/api/src/controllers/reports.ts:    if (effectiveSucursalId) {
+apps/api/src/controllers/reports.ts:      ordersQuery = ordersQuery.eq('sucursal_id', effectiveSucursalId);
+apps/api/src/controllers/reports.ts:      customersQuery = customersQuery.eq('sucursal_id', effectiveSucursalId);
+apps/api/src/controllers/reports.ts:      inventoryQuery = inventoryQuery.eq('sucursal_id', effectiveSucursalId);
+apps/api/src/controllers/reports.ts:      financeQuery = financeQuery.eq('sucursal_id', effectiveSucursalId);
+apps/api/src/controllers/reports.ts:      usersQuery = usersQuery.eq('sucursal_id', effectiveSucursalId);
+apps/api/src/controllers/reports.ts:      movementsQuery = movementsQuery.eq('sucursal_id', effectiveSucursalId);
+apps/api/src/controllers/reports.ts:    const ordersBySucursal = orders.reduce<Record<string, number>>((acc, order) => {
+apps/api/src/controllers/reports.ts:        ordersBySucursal,
+apps/api/src/controllers/purchase-orders.ts:async function validateSucursalOwnership(supabase: ReturnType<typeof getTenantClient>, tenantId: string, sucursalId?: string | null) {
+apps/api/src/controllers/purchase-orders.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/purchase-orders.ts:    const resolvedSucursalId = body.sucursalId || (scope?.sucursalId ?? null);
+apps/api/src/controllers/purchase-orders.ts:    if (scope?.mode === 'branch' && !resolvedSucursalId) {
+apps/api/src/controllers/purchase-orders.ts:      return res.status(400).json({ error: 'Sucursal activa requerida' });
+apps/api/src/controllers/purchase-orders.ts:    if (!(await validateSucursalOwnership(supabase, tenantId, resolvedSucursalId))) {
+apps/api/src/controllers/purchase-orders.ts:      return res.status(404).json({ error: 'Sucursal not found' });
+apps/api/src/controllers/purchase-orders.ts:        sucursal_id: resolvedSucursalId,
+apps/api/src/controllers/purchase-orders.ts:    const resolvedSucursalId = body.sucursalId ?? scope?.sucursalId ?? null;
+apps/api/src/controllers/purchase-orders.ts:    if (scope?.mode === 'branch' && !resolvedSucursalId) {
+apps/api/src/controllers/purchase-orders.ts:      return res.status(400).json({ error: 'Sucursal activa requerida' });
+apps/api/src/controllers/purchase-orders.ts:    if (resolvedSucursalId && !(await validateSucursalOwnership(supabase, tenantId, resolvedSucursalId))) {
+apps/api/src/controllers/purchase-orders.ts:      return res.status(404).json({ error: 'Sucursal not found' });
+apps/api/src/controllers/purchase-orders.ts:    if (body.sucursalId !== undefined) payload.sucursal_id = resolvedSucursalId;
+apps/api/src/controllers/purchase-orders.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/purchase-orders.ts:    const resolvedSucursalId = order.sucursal_id ?? scope?.sucursalId ?? null;
+apps/api/src/controllers/purchase-orders.ts:      p_sucursal_id: resolvedSucursalId,
+apps/api/src/controllers/purchase-orders.ts:        await refreshInventoryAlert(tenantId, productId, String(inventoryRow.sucursal_id ?? resolvedSucursalId ?? ''), stockCurrent);
+apps/api/src/controllers/orders.ts:    const scopeSucursalId = scope?.sucursalId ?? null;
+apps/api/src/controllers/orders.ts:    const requestedSucursalId = isUuid(validatedData.sucursalId)
+apps/api/src/controllers/orders.ts:      : isUuid(scopeSucursalId)
+apps/api/src/controllers/orders.ts:        ? scopeSucursalId
+apps/api/src/controllers/orders.ts:    if (scope?.role === 'manager' && isUuid(scopeSucursalId) && requestedSucursalId && requestedSucursalId !== scopeSucursalId) {
+apps/api/src/controllers/orders.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/orders.ts:          sucursal_id: requestedSucursalId,
+apps/api/src/controllers/orders.ts:        sucursal_id: requestedSucursalId,
+apps/api/src/controllers/security.ts:async function assertSucursalOwnership(tenantId: string, sucursalId: string) {
+apps/api/src/controllers/security.ts:      const ownsSucursal = await assertSucursalOwnership(tenantId, body.sucursalId);
+apps/api/src/controllers/security.ts:      if (!ownsSucursal) {
+apps/api/src/controllers/security.ts:        return res.status(404).json({ error: 'Sucursal not found' });
+apps/api/src/controllers/catalogs.ts:async function validateSucursalOwnership(
+apps/api/src/controllers/catalogs.ts:    const scopedSucursalId = scope?.mode === 'branch' ? scope.sucursalId ?? '' : '';
+apps/api/src/controllers/catalogs.ts:    if (scopedSucursalId) {
+apps/api/src/controllers/catalogs.ts:      query = query.eq('sucursal_id', scopedSucursalId);
+apps/api/src/controllers/catalogs.ts:    const effectiveSucursalId = scope?.mode === 'branch' ? scope.sucursalId ?? '' : '';
+apps/api/src/controllers/catalogs.ts:    if (effectiveSucursalId && !(await validateSucursalOwnership(supabase, tenantId, effectiveSucursalId))) {
+apps/api/src/controllers/catalogs.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/catalogs.ts:    if (effectiveSucursalId) {
+apps/api/src/controllers/catalogs.ts:      query = query.eq('sucursal_id', effectiveSucursalId);
+apps/api/src/controllers/catalogs.ts:    if (body.sucursalId && !(await validateSucursalOwnership(supabase, tenantId, body.sucursalId))) {
+apps/api/src/controllers/catalogs.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/catalogs.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/catalogs.ts:    const resolvedSucursalId = body.sucursalId ?? scope?.sucursalId ?? null;
+apps/api/src/controllers/catalogs.ts:    if (scope?.mode === 'branch' && !resolvedSucursalId) {
+apps/api/src/controllers/catalogs.ts:      return res.status(400).json({ error: 'Sucursal activa requerida' });
+apps/api/src/controllers/catalogs.ts:      sucursalId: resolvedSucursalId,
+apps/api/src/controllers/catalogs.ts:    await refreshInventoryAlert(tenantId, productRow.id, resolvedSucursalId, Number((inventoryRow as { stock_current?: number }).stock_current ?? body.stock));
+apps/api/src/controllers/catalogs.ts:    const nextSucursalId = body.sucursalId === null
+apps/api/src/controllers/catalogs.ts:    if (body.sucursalId && !(await validateSucursalOwnership(supabase, tenantId, body.sucursalId))) {
+apps/api/src/controllers/catalogs.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/catalogs.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/catalogs.ts:      return res.status(400).json({ error: 'Sucursal activa requerida' });
+apps/api/src/controllers/catalogs.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/catalogs.ts:    const effectiveSucursalId = scope?.mode === 'branch' ? (scope.sucursalId ?? currentRow.sucursal_id ?? nextSucursalId) : nextSucursalId;
+apps/api/src/controllers/catalogs.ts:        sucursal_id: effectiveSucursalId,
+apps/api/src/controllers/catalogs.ts:    await refreshInventoryAlert(tenantId, productRow.id, effectiveSucursalId, Number((updatedRow as { stock_current?: number }).stock_current ?? nextStock));
+apps/api/src/controllers/catalogs.ts:    if (inventoryRow?.sucursal_id && !(await validateSucursalOwnership(supabase, tenantId, inventoryRow.sucursal_id))) {
+apps/api/src/controllers/catalogs.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/catalogs.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/users.ts:async function assertSucursalOwnership(tenantId: string, sucursalId: string) {
+apps/api/src/controllers/users.ts:      const ownsSucursal = await assertSucursalOwnership(tenantId, body.sucursalId);
+apps/api/src/controllers/users.ts:      if (!ownsSucursal) {
+apps/api/src/controllers/users.ts:        return res.status(404).json({ error: 'Sucursal not found' });
+apps/api/src/controllers/finance.ts:async function assertSucursalOwnership(supabase: ReturnType<typeof getTenantClient>, tenantId: string, sucursalId: string) {
+apps/api/src/controllers/finance.ts:    if (!(await assertSucursalOwnership(supabase, tenantId, sucursalId))) {
+apps/api/src/controllers/finance.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/finance.ts:    const tokenSucursalId = scope?.sucursalId ?? '';
+apps/api/src/controllers/finance.ts:    if (!(await assertSucursalOwnership(supabase, tenantId, body.sucursalId))) {
+apps/api/src/controllers/finance.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/finance.ts:    if (scope?.mode === 'branch' && tokenSucursalId && body.sucursalId !== tokenSucursalId) {
+apps/api/src/controllers/finance.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/finance.ts:    if (data?.sucursal_id && !(await assertSucursalOwnership(supabase, tenantId, data.sucursal_id))) {
+apps/api/src/controllers/finance.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/finance.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/finance.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/tasks.ts:    const effectiveSucursalId = scope?.mode === 'branch' ? scope.sucursalId ?? '' : '';
+apps/api/src/controllers/tasks.ts:    if (effectiveSucursalId) {
+apps/api/src/controllers/tasks.ts:      query = query.eq('sucursal_id', effectiveSucursalId);
+apps/api/src/controllers/tasks.ts:      return res.status(400).json({ error: 'Sucursal activa requerida' });
+apps/api/src/controllers/tasks.ts:    const resolvedSucursalId = body.sucursalId || (scope?.mode === 'branch' ? scope.sucursalId ?? null : scope?.sucursalId ?? null);
+apps/api/src/controllers/tasks.ts:    if (scope?.mode === 'branch' && resolvedSucursalId && scope.sucursalId && resolvedSucursalId !== scope.sucursalId) {
+apps/api/src/controllers/tasks.ts:      return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/tasks.ts:      sucursal_id: resolvedSucursalId,
+apps/api/src/controllers/tasks.ts:      return res.status(400).json({ error: 'Sucursal activa requerida' });
+apps/api/src/controllers/tasks.ts:      const resolvedSucursalId = body.sucursalId || (scope?.mode === 'branch' ? scope.sucursalId ?? null : scope?.sucursalId ?? null);
+apps/api/src/controllers/tasks.ts:      if (scope?.mode === 'branch' && scope.sucursalId && resolvedSucursalId && resolvedSucursalId !== scope.sucursalId) {
+apps/api/src/controllers/tasks.ts:        return res.status(403).json({ error: 'Sucursal mismatch' });
+apps/api/src/controllers/tasks.ts:      payload.sucursal_id = resolvedSucursalId;
+apps/api/src/controllers/sucursales.ts:const createSucursalSchema = z.object({
+apps/api/src/controllers/sucursales.ts:const updateSucursalSchema = createSucursalSchema.partial();
+apps/api/src/controllers/sucursales.ts:async function assertSucursalOwnership(tenantId: string, sucursalId: string) {
+apps/api/src/controllers/sucursales.ts:async function countTenantSucursales(tenantId: string) {
+apps/api/src/controllers/sucursales.ts:export const listSucursales = async (req: Request, res: Response) => {
+apps/api/src/controllers/sucursales.ts:export const createSucursal = async (req: Request, res: Response) => {
+apps/api/src/controllers/sucursales.ts:    const maxSucursales = req.tenantCapabilities?.limits.sucursales ?? null;
+apps/api/src/controllers/sucursales.ts:    if (typeof maxSucursales === 'number') {
+apps/api/src/controllers/sucursales.ts:      const currentSucursales = await countTenantSucursales(tenantId);
+apps/api/src/controllers/sucursales.ts:      if (currentSucursales >= maxSucursales) {
+apps/api/src/controllers/sucursales.ts:          error: 'Sucursal limit reached for this plan',
+apps/api/src/controllers/sucursales.ts:            currentSucursales,
+apps/api/src/controllers/sucursales.ts:            maxSucursales,
+apps/api/src/controllers/sucursales.ts:    const body = createSucursalSchema.parse(req.body);
+apps/api/src/controllers/sucursales.ts:export const updateSucursal = async (req: Request, res: Response) => {
+apps/api/src/controllers/sucursales.ts:    const ownsSucursal = await assertSucursalOwnership(tenantId, sucursalId);
+apps/api/src/controllers/sucursales.ts:    if (!ownsSucursal) {
+apps/api/src/controllers/sucursales.ts:      return res.status(404).json({ error: 'Sucursal not found' });
+apps/api/src/controllers/sucursales.ts:    const body = updateSucursalSchema.parse(req.body);
+apps/api/src/controllers/sucursales.ts:export const deleteSucursal = async (req: Request, res: Response) => {
+apps/api/src/controllers/sucursales.ts:    const ownsSucursal = await assertSucursalOwnership(tenantId, sucursalId);
+apps/api/src/controllers/sucursales.ts:    if (!ownsSucursal) {
+apps/api/src/controllers/sucursales.ts:      return res.status(404).json({ error: 'Sucursal not found' });
+apps/api/src/controllers/sucursales.ts:export const assignUserToSucursal = async (req: Request, res: Response) => {
+apps/api/src/controllers/sucursales.ts:    const ownsSucursal = await assertSucursalOwnership(tenantId, sucursalId);
+apps/api/src/controllers/sucursales.ts:    if (!ownsSucursal) {
+apps/api/src/controllers/sucursales.ts:      return res.status(404).json({ error: 'Sucursal not found' });
+apps/api/src/routes/sucursales.ts:import { assignUserToSucursal, createSucursal, deleteSucursal, listSucursales, updateSucursal } from '../controllers/sucursales';
+apps/api/src/routes/sucursales.ts:router.get('/', requireTenantModule('sucursales'), requireRole('owner', 'manager', 'technician'), listSucursales);
+apps/api/src/routes/sucursales.ts:router.post('/', requireTenantModule('sucursales'), requireRole('owner', 'manager'), createSucursal);
+apps/api/src/routes/sucursales.ts:router.put('/:id', requireTenantModule('sucursales'), requireRole('owner', 'manager'), updateSucursal);
+apps/api/src/routes/sucursales.ts:router.delete('/:id', requireTenantModule('sucursales'), requireRole('owner'), deleteSucursal);
+apps/api/src/routes/sucursales.ts:router.put('/:id/users', requireTenantModule('sucursales'), requireRole('owner', 'manager'), assignUserToSucursal);
+apps/api/src/services/tenant-capabilities.ts:  { key: 'sucursales', label: 'Sucursales', description: 'Sucursales y contexto operativo', category: 'admin', frontend_routes: ['/dashboard/sucursales'], backend_permissions: [], default_enabled_by_industry: ['electronics_repair', 'hvac_service'], required_plan: 'pro', aliases: [] },
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:import { getApiOptions, getActiveSucursalId, setActiveSucursalId } from '@/lib/tenant';
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:import { SucursalModal } from '@/components/sucursales/sucursal-modal';
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:import type { Sucursal } from '@/types';
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:export default function SucursalesPage() {
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:  const [filteredSucursales, setFilteredSucursales] = useState<Sucursal[]>([]);
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:  const [selectedSucursal, setSelectedSucursal] = useState<Sucursal | null>(null);
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:  const [activeSucursalId, setActiveSucursalIdLocal] = useState<string | null>(null);
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:  const loadSucursales = async () => {
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:      const data = await apiClient.get<{ data: Sucursal[] }>('/sucursales', getApiOptions());
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:      setSucursales(data.data || []);
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:      setActiveSucursalIdLocal(getActiveSucursalId());
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:    loadSucursales();
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:      setFilteredSucursales(filtered);
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:      setFilteredSucursales(sucursales);
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:    setActiveSucursalId(sucursalId);
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:  const handleDelete = async (sucursal: Sucursal) => {
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:      loadSucursales();
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:          <h1 className="text-2xl font-orbitron font-bold text-srf-primary">Sucursales</h1>
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:              setSelectedSucursal(null);
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:      {/* Sucursales grid */}
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:        {filteredSucursales.map((sucursal) => (
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:                    setSelectedSucursal(sucursal);
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:            {('email' in sucursal) && (sucursal as Sucursal & { email?: string | null }).email && (
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:                <span>{(sucursal as Sucursal & { email?: string | null }).email}</span>
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:                  activeSucursalId === sucursal.id
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:                {activeSucursalId === sucursal.id ? 'Activa' : 'Usar'}
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:      {filteredSucursales.length === 0 && (
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:      <SucursalModal
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:        sucursal={selectedSucursal}
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:        onSucursalSaved={() => loadSucursales()}
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:          loadSucursales();
+apps/web-admin/src/app/dashboard/usuarios/page.tsx:            <input value={invite.sucursalId} onChange={(event) => setInvite((current) => ({ ...current, sucursalId: event.target.value }))} className="input" placeholder="Sucursal ID opcional" />
+apps/web-admin/src/app/dashboard/gastos/page.tsx:import { getActiveSucursalId } from '@/lib/tenant';
+apps/web-admin/src/app/dashboard/gastos/page.tsx:    const activeSucursalId = getActiveSucursalId();
+apps/web-admin/src/app/dashboard/gastos/page.tsx:    if (!activeSucursalId || activeSucursalId === 'GLOBAL') {
+apps/web-admin/src/app/dashboard/gastos/page.tsx:        sucursalId: activeSucursalId,
+apps/web-admin/src/app/login/page.tsx:import { setActiveSucursalId } from '@/lib/tenant';
+apps/web-admin/src/app/login/page.tsx:      setActiveSucursalId(user.sucursalId || null, { skipReload: true });
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:import { getActiveSucursalId, getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:import type { Sucursal } from '@/types';
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:        const activeSucursalId = getActiveSucursalId();
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:        if (activeSucursalId && activeSucursalId !== 'GLOBAL') {
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:          const data = await apiClient.get<{ data: Sucursal[] }>('/sucursales', getApiOptions());
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:          const activeSucursal = sucursales.find(s => s.id === activeSucursalId);
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:          if (activeSucursal) {
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:            branchName = activeSucursal.name;
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:            branchCode = activeSucursal.code || activeSucursal.name.substring(0, 3).toUpperCase();
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:          branchName: 'Sucursal',
+apps/web-admin/src/types.ts:export interface Sucursal {
+apps/web-admin/src/types.ts:  { key: 'sucursales', label: 'Sucursales', icon: 'Building2', href: '/dashboard/sucursales', enabled: true },
+apps/web-admin/src/types.ts:  ordersBySucursal: Record<string, number>;
+apps/web-admin/src/components/tenant/tenant-provider.tsx:  userSucursalId: string;
+apps/web-admin/src/components/seguridad/user-modal.tsx:import { getApiOptions, getActiveSucursalId } from '@/lib/tenant';
+apps/web-admin/src/components/seguridad/user-modal.tsx:        sucursalId: getActiveSucursalId(),
+apps/web-admin/src/components/sucursales/sucursal-modal.tsx:import type { Sucursal } from '@/types';
+apps/web-admin/src/components/sucursales/sucursal-modal.tsx:interface SucursalModalProps {
+apps/web-admin/src/components/sucursales/sucursal-modal.tsx:  sucursal: Sucursal | null;
+apps/web-admin/src/components/sucursales/sucursal-modal.tsx:  onSucursalSaved: () => void;
+apps/web-admin/src/components/sucursales/sucursal-modal.tsx:export function SucursalModal({ open, onOpenChange, sucursal, onSucursalSaved }: SucursalModalProps) {
+apps/web-admin/src/components/sucursales/sucursal-modal.tsx:        email: ('email' in sucursal ? (sucursal as Sucursal & { email?: string | null }).email : '') || '',
+apps/web-admin/src/components/sucursales/sucursal-modal.tsx:      onSucursalSaved();
+apps/web-admin/src/components/sucursales/sucursal-modal.tsx:              placeholder="Ej: Sucursal Centro"
+apps/web-admin/src/components/sucursales/sucursal-modal.tsx:            <span className="text-sm">Sucursal activa</span>
+apps/web-admin/src/components/sucursales/transfer-modal.tsx:import type { Sucursal, Product } from '@/types';
+apps/web-admin/src/components/sucursales/transfer-modal.tsx:  sucursales: Sucursal[];
+apps/web-admin/src/components/sucursales/transfer-modal.tsx:  const activeSucursales = sucursales.filter((s) => s.is_active);
+apps/web-admin/src/components/sucursales/transfer-modal.tsx:              <Label>Sucursal origen</Label>
+apps/web-admin/src/components/sucursales/transfer-modal.tsx:                {activeSucursales.map((s) => (
+apps/web-admin/src/components/sucursales/transfer-modal.tsx:              <Label>Sucursal destino</Label>
+apps/web-admin/src/components/sucursales/transfer-modal.tsx:                {activeSucursales.map((s) => (
+apps/web-admin/src/components/dashboard/dashboard-shell.tsx:  userSucursalId: string;
+apps/web-admin/src/components/dashboard/sidebar.tsx:import { getActiveSucursalId, canUseConsolidatedView } from '@/lib/tenant';
+apps/web-admin/src/components/dashboard/sidebar.tsx:  const activeSucursalId = mounted ? getActiveSucursalId() : null;
+apps/web-admin/src/components/dashboard/sidebar.tsx:      {/* Sucursal indicator */}
+apps/web-admin/src/components/dashboard/sidebar.tsx:          <p className="text-xs text-srf-muted">Sucursal activa</p>
+apps/web-admin/src/components/dashboard/sidebar.tsx:          {showConsolidated && activeSucursalId !== 'GLOBAL' && (
+apps/web-admin/src/components/dashboard/branch-selector.tsx:import { getActiveSucursalId, setActiveSucursalId, canUseConsolidatedView } from '@/lib/tenant';
+apps/web-admin/src/components/dashboard/branch-selector.tsx:import type { Sucursal } from '@/types';
+apps/web-admin/src/components/dashboard/branch-selector.tsx:  const [sucursales, setSucursales] = useState<Sucursal[]>([]);
+apps/web-admin/src/components/dashboard/branch-selector.tsx:  const loadSucursales = async () => {
+apps/web-admin/src/components/dashboard/branch-selector.tsx:      const data = await apiClient.get<{ data: Sucursal[] }>('/sucursales', {
+apps/web-admin/src/components/dashboard/branch-selector.tsx:      const active = getActiveSucursalId();
+apps/web-admin/src/components/dashboard/branch-selector.tsx:      setSucursales(data.data || []);
+apps/web-admin/src/components/dashboard/branch-selector.tsx:    loadSucursales();
+apps/web-admin/src/components/dashboard/branch-selector.tsx:    setActiveSucursalId(sucursalId);
+apps/web-admin/src/components/guard/use-auth.ts:    const resolvedSucursalId = activeScope?.sucursalId ?? '';
+apps/web-admin/src/components/guard/use-auth.ts:        sucursalId: resolvedSucursalId,
+apps/web-admin/src/components/guard/use-auth.ts:        sucursalId: resolvedSucursalId,
+apps/web-admin/src/components/guard/use-auth.ts:      sucursalId: resolvedSucursalId,
+apps/web-admin/src/lib/module-catalog.ts:    label: "Sucursales",
+apps/web-admin/src/lib/scope.ts:  querySucursalId?: string | null;
+apps/web-admin/src/lib/scope.ts:  defaultSucursalId?: string | null;
+apps/web-admin/src/lib/scope.ts:  const querySucursalId = typeof input.querySucursalId === 'string' && input.querySucursalId.trim().length > 0
+apps/web-admin/src/lib/scope.ts:    ? input.querySucursalId.trim()
+apps/web-admin/src/lib/scope.ts:  const defaultSucursalId = typeof input.defaultSucursalId === 'string' && input.defaultSucursalId.trim().length > 0
+apps/web-admin/src/lib/scope.ts:    ? input.defaultSucursalId.trim()
+apps/web-admin/src/lib/scope.ts:    const sucursalId = querySucursalId ?? null;
+apps/web-admin/src/lib/scope.ts:      source: querySucursalId ? 'query' : defaultSucursalId ? 'bootstrap' : 'default',
+apps/web-admin/src/lib/scope.ts:  const sucursalId = querySucursalId ?? defaultSucursalId ?? null;
+apps/web-admin/src/lib/scope.ts:    source: querySucursalId ? 'query' : defaultSucursalId ? 'bootstrap' : 'default',
+apps/web-admin/src/lib/tenant.ts:export function getCurrentUserSucursalId(): string | null {
+apps/web-admin/src/lib/tenant.ts:export function getActiveSucursalId(): string | null {
+apps/web-admin/src/lib/tenant.ts:  return getCurrentUserSucursalId();
+apps/web-admin/src/lib/tenant.ts:export function setActiveSucursalId(sucursalId: string | null, options?: { skipReload?: boolean }) {
+apps/web-admin/src/lib/tenant.ts:    sucursalId: getActiveSucursalId(),
+apps/web-admin/src/services/fixService.ts:  private getSucursalId() {
+apps/web-admin/src/services/fixService.ts:    const sucursalId = this.getSucursalId();
+apps/web-admin/src/services/fixService.ts:    const resolvedSucursalId = sucursalId.trim();
+apps/web-admin/src/services/fixService.ts:    if (!resolvedSucursalId) {
+apps/web-admin/src/services/fixService.ts:      throw new Error('Sucursal activa requerida para consultar flujo de caja');
+apps/web-admin/src/services/fixService.ts:      this.apiPath(`/finance/cashflow/${encodeURIComponent(resolvedSucursalId)}`),
+apps/web-admin/src/services/fixService.ts:  public async getSucursales(): Promise<JsonRecord[]> {
+apps/web-admin/src/services/fixService.ts:  public async createSucursal(data: {
+apps/web-admin/src/services/fixService.ts:  public async updateSucursal(id: string, data: {
+apps/web-admin/src/services/fixService.ts:  public async deleteSucursal(id: string): Promise<void> {
+apps/web-admin/src/services/fixService.ts:  public async assignUserToSucursal(sucursalId: string, userId: string): Promise<JsonRecord> {
+packages/types/index.ts:  userSucursalId: string;

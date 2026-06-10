@@ -1,0 +1,5 @@
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:export function useTenantIdentity() {
+apps/web-admin/src/components/dashboard/header.tsx:import { useTenantIdentity } from '@/providers/TenantIdentityProvider';
+apps/web-admin/src/components/dashboard/header.tsx:  const { identity } = useTenantIdentity();
+apps/web-admin/src/components/dashboard/sidebar.tsx:import { useTenantIdentity } from '@/providers/TenantIdentityProvider';
+apps/web-admin/src/components/dashboard/sidebar.tsx:  const { identity, isLoading } = useTenantIdentity();

@@ -1,0 +1,214 @@
+apps/web-admin/src/app/dashboard/tecnico/page.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/app/dashboard/landing/page.tsx:  tenant: {
+apps/web-admin/src/app/dashboard/landing/page.tsx:  seoDescription: "Landing pública por tenant para talleres de reparación de electrónicos.",
+apps/web-admin/src/app/dashboard/landing/page.tsx:function toPublicHref(tenantSlug: string, href: string) {
+apps/web-admin/src/app/dashboard/landing/page.tsx:  return `/${encodeURIComponent(tenantSlug)}${normalized}`;
+apps/web-admin/src/app/dashboard/landing/page.tsx:      setLandingContent(normalizeLandingContent(result.data.tenant.landing_content ?? null));
+apps/web-admin/src/app/dashboard/landing/page.tsx:      setIndustryKey(typeof result.data.tenant.industry_profile?.industry_key === "string" ? result.data.tenant.industry_profile.industry_key : DEFAULT_INDUSTRY_KEY);
+apps/web-admin/src/app/dashboard/landing/page.tsx:  const tenantSlug = settings?.tenant.slug ?? "";
+apps/web-admin/src/app/dashboard/landing/page.tsx:    primaryHref: toPublicHref(tenantSlug, landingContent.primaryCtaHref),
+apps/web-admin/src/app/dashboard/landing/page.tsx:    secondaryHref: toPublicHref(tenantSlug, landingContent.secondaryCtaHref),
+apps/web-admin/src/app/dashboard/landing/page.tsx:    contactHref: toPublicHref(tenantSlug, landingContent.contactHref),
+apps/web-admin/src/app/dashboard/landing/page.tsx:  }), [landingContent.contactHref, landingContent.primaryCtaHref, landingContent.secondaryCtaHref, tenantSlug]);
+apps/web-admin/src/app/dashboard/landing/page.tsx:        branding: settings?.tenant.branding ?? undefined,
+apps/web-admin/src/app/dashboard/landing/page.tsx:          industry_label: selectedIndustry?.label ?? settings?.tenant.industry_profile?.industry_label ?? null,
+apps/web-admin/src/app/dashboard/landing/page.tsx:          asset_label: settings?.tenant.industry_profile?.asset_label ?? null,
+apps/web-admin/src/app/dashboard/landing/page.tsx:          order_label: settings?.tenant.industry_profile?.order_label ?? null,
+apps/web-admin/src/app/dashboard/landing/page.tsx:          request_label: settings?.tenant.industry_profile?.request_label ?? null,
+apps/web-admin/src/app/dashboard/landing/page.tsx:          customer_label: settings?.tenant.industry_profile?.customer_label ?? null,
+apps/web-admin/src/app/dashboard/landing/page.tsx:          portal_label: settings?.tenant.industry_profile?.portal_label ?? null,
+apps/web-admin/src/app/dashboard/landing/page.tsx:          quote_label: settings?.tenant.industry_profile?.quote_label ?? null,
+apps/web-admin/src/app/dashboard/landing/page.tsx:          default_workflow_key: selectedIndustry?.defaultWorkflowKey ?? settings?.tenant.industry_profile?.default_workflow_key ?? "service_orders",
+apps/web-admin/src/app/dashboard/landing/page.tsx:      setLandingContent(normalizeLandingContent(result.data.tenant.landing_content ?? null));
+apps/web-admin/src/app/dashboard/landing/page.tsx:          <p className="mt-1 text-sm text-srf-muted">Configura la landing pública del tenant {settings?.tenant.name ?? tenantSlug}.</p>
+apps/web-admin/src/app/dashboard/landing/page.tsx:            <div className="text-xs uppercase tracking-[0.25em] text-srf-accent">{tenantSlug || "tenant"}</div>
+apps/web-admin/src/app/dashboard/finanzas/page.tsx:        tenant_id: String(row.tenant_id ?? ''),
+apps/web-admin/src/app/dashboard/finanzas/page.tsx:          tenant_id: String(row.tenant_id ?? ''),
+apps/web-admin/src/app/dashboard/finanzas/page.tsx:          <p className="mt-1 text-sm text-srf-muted">Balance real del tenant, flujo por sucursal y validación visual de cobros de órdenes</p>
+apps/web-admin/src/app/dashboard/seguridad/page.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/app/dashboard/reportes/page.tsx:          <p className="mt-1 text-sm text-srf-muted">Resumen operativo real del tenant y de la sucursal activa.</p>
+apps/web-admin/src/app/dashboard/sucursales/page.tsx:import { getApiOptions, getActiveSucursalId, setActiveSucursalId } from '@/lib/tenant';
+apps/web-admin/src/app/dashboard/solicitudes/page.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/app/dashboard/tareas/page.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/app/dashboard/gastos/page.tsx:import { getActiveSucursalId } from '@/lib/tenant';
+apps/web-admin/src/app/dashboard/stock/page.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/app/dashboard/operativo/page.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/app/dashboard/page.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/app/dashboard/clientes/page.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/app/api/pwa/manifest/route.ts:  return request.nextUrl.searchParams.get("tenant")?.trim() || process.env.NEXT_PUBLIC_DEFAULT_TENANT_SLUG?.trim() || "web-admin";
+apps/web-admin/src/app/api/pwa/manifest/route.ts:  const tenantSlug = getTenantSlug(request);
+apps/web-admin/src/app/api/pwa/manifest/route.ts:    name: `${tenantSlug} · Servicios Digitales MX`,
+apps/web-admin/src/app/api/pwa/manifest/route.ts:    description: "Panel multi-tenant para seguimiento técnico y operación del taller.",
+apps/web-admin/src/app/api/pwa/sw.js/route.ts:function buildFallbackServiceWorker(tenantSlug: string) {
+apps/web-admin/src/app/api/pwa/sw.js/route.ts:const CACHE_VERSION = 'srfix-web-admin-${tenantSlug}-v2';
+apps/web-admin/src/app/api/pwa/sw.js/route.ts:  const tenantSlug = request.nextUrl.searchParams.get("tenant")?.trim() || process.env.NEXT_PUBLIC_DEFAULT_TENANT_SLUG?.trim() || "web-admin";
+apps/web-admin/src/app/api/pwa/sw.js/route.ts:  const script = buildFallbackServiceWorker(tenantSlug);
+apps/web-admin/src/app/login/page.tsx:import { setActiveSucursalId } from '@/lib/tenant';
+apps/web-admin/src/config/branding.ts:export const tenantBrandMap: Record<string, string> = {
+apps/web-admin/src/config/branding.ts:  // Map other tenants if necessary
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:import { getActiveSucursalId, getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:import type { TenantIdentity } from '@/domain/tenant/Identity';
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:        const tenant = getStoredTenant();
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:          tenantName: tenant?.name || tenant?.slug || 'Negocio',
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:        console.error('Failed to load tenant identity:', error);
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:        const tenant = getStoredTenant();
+apps/web-admin/src/providers/TenantIdentityProvider.tsx:          tenantName: tenant?.name || tenant?.slug || 'Negocio',
+apps/web-admin/src/types.ts:  tenantId: string;
+apps/web-admin/src/types.ts:  tenantSlug: string;
+apps/web-admin/src/types.ts:  tenant_id: string;
+apps/web-admin/src/types.ts:  tenant_id: string;
+apps/web-admin/src/types.ts:  tenant_id: string;
+apps/web-admin/src/types.ts:  tenant_id: string;
+apps/web-admin/src/types.ts:  tenant_id: string;
+apps/web-admin/src/types.ts:  tenant_id: string;
+apps/web-admin/src/types.ts:  tenant_id: string;
+apps/web-admin/src/types.ts:  tenant_id: string;
+apps/web-admin/src/types.ts:  tenant_id: string;
+apps/web-admin/src/types.ts:  tenant_id: string;
+apps/web-admin/src/types.ts:  tenant_id: string;
+apps/web-admin/src/types.ts:  tenant_id: string;
+apps/web-admin/src/types.ts:  tenant_id: string;
+apps/web-admin/src/types.ts:  tenant_id: string;
+apps/web-admin/src/types.ts:  tenantId: string;
+apps/web-admin/src/types.ts:  tenant_id: string;
+apps/web-admin/src/components/tecnico/order-modal.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/components/tenant/tenant-provider.tsx:  tenantId: string;
+apps/web-admin/src/components/tenant/tenant-provider.tsx:  tenantSlug: string;
+apps/web-admin/src/components/tenant/tenant-provider.tsx:  tenantName: string;
+apps/web-admin/src/components/tenant/tenant-provider.tsx:            '--tenant-primary': value.theme.primary,
+apps/web-admin/src/components/tenant/tenant-provider.tsx:            '--tenant-secondary': value.theme.secondary,
+apps/web-admin/src/components/tenant/tenant-provider.tsx:            '--tenant-accent': value.theme.accent,
+apps/web-admin/src/components/tenant/tenant-provider.tsx:  const tenant = useTenant();
+apps/web-admin/src/components/tenant/tenant-provider.tsx:  return tenant.theme;
+apps/web-admin/src/components/seguridad/user-modal.tsx:import { getApiOptions, getActiveSucursalId } from '@/lib/tenant';
+apps/web-admin/src/components/sucursales/sucursal-modal.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/components/sucursales/transfer-modal.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/components/solicitudes/quote-modal.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/components/dashboard/module-shell.tsx:          <div className="rounded-2xl border border-white/10 bg-black/20 p-5 text-sm text-zinc-300">Cargando datos reales del tenant...</div>
+apps/web-admin/src/components/dashboard/operational-hub.tsx:      { label: "Ingresos del mes", value: formatMoney(summary?.totalIncome), helper: "Cobros confirmados en el tenant." },
+apps/web-admin/src/components/dashboard/operational-hub.tsx:          Cargando órdenes reales del tenant...
+apps/web-admin/src/components/dashboard/header.tsx:          <span className="truncate">{identity?.tenantName || 'Mi taller'}</span>
+apps/web-admin/src/components/dashboard/header.tsx:                  <p className="text-xs text-srf-muted mt-1">Tenant: {identity?.tenantName}</p>
+apps/web-admin/src/components/dashboard/dashboard-shell.tsx:  tenantId: string;
+apps/web-admin/src/components/dashboard/dashboard-shell.tsx:  tenantName: string;
+apps/web-admin/src/components/dashboard/dashboard-shell.tsx:export function DashboardShell({ children }: { children: React.ReactNode; tenant?: TenantConfig }) {
+apps/web-admin/src/components/dashboard/sidebar.tsx:import { getActiveSucursalId, canUseConsolidatedView } from '@/lib/tenant';
+apps/web-admin/src/components/dashboard/branch-selector.tsx:import { getActiveSucursalId, setActiveSucursalId, canUseConsolidatedView } from '@/lib/tenant';
+apps/web-admin/src/components/dashboard/branch-selector.tsx:import { getTenantSlug } from '@/lib/tenant';
+apps/web-admin/src/components/dashboard/branch-selector.tsx:        tenantSlug: getTenantSlug() || undefined,
+apps/web-admin/src/components/dashboard/orders/order-intake-modal.tsx:  tenantSlug: string | null;
+apps/web-admin/src/components/dashboard/orders/order-intake-modal.tsx:  tenantSlug,
+apps/web-admin/src/components/dashboard/orders/order-intake-modal.tsx:    if (!successSummary?.folio || !tenantSlug) return "";
+apps/web-admin/src/components/dashboard/orders/order-intake-modal.tsx:    return `${base}/t/${encodeURIComponent(tenantSlug)}/portal?folio=${encodeURIComponent(successSummary.folio)}`;
+apps/web-admin/src/components/dashboard/orders/order-intake-modal.tsx:  }, [customerPortalBase, successSummary?.folio, tenantSlug]);
+apps/web-admin/src/components/dashboard/orders/order-intake-modal.tsx:                        title="Campos del tenant"
+apps/web-admin/src/components/pwa/pwa-bootstrap.tsx:function ensureManifestHref(tenantSlug: string) {
+apps/web-admin/src/components/pwa/pwa-bootstrap.tsx:  const manifestUrl = `/api/pwa/manifest?tenant=${encodeURIComponent(tenantSlug)}`;
+apps/web-admin/src/components/pwa/pwa-bootstrap.tsx:async function registerServiceWorker(tenantSlug: string) {
+apps/web-admin/src/components/pwa/pwa-bootstrap.tsx:  const swUrl = `/api/pwa/sw.js?tenant=${encodeURIComponent(tenantSlug)}`;
+apps/web-admin/src/components/pwa/pwa-bootstrap.tsx:  const tenantSlug = useMemo(() => {
+apps/web-admin/src/components/pwa/pwa-bootstrap.tsx:      return getCurrentSession()?.tenantSlug?.trim() || "";
+apps/web-admin/src/components/pwa/pwa-bootstrap.tsx:    if (!tenantSlug || isLocalhost) {
+apps/web-admin/src/components/pwa/pwa-bootstrap.tsx:    ensureManifestHref(tenantSlug);
+apps/web-admin/src/components/pwa/pwa-bootstrap.tsx:    void registerServiceWorker(tenantSlug);
+apps/web-admin/src/components/pwa/pwa-bootstrap.tsx:  }, [tenantSlug]);
+apps/web-admin/src/components/tareas/task-modal.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/components/guard/use-auth.ts:import { useTenant } from '@/components/tenant/tenant-provider';
+apps/web-admin/src/components/guard/use-auth.ts:  tenantId: string;
+apps/web-admin/src/components/guard/use-auth.ts:  tenantSlug: string;
+apps/web-admin/src/components/guard/use-auth.ts:  const tenant = useTenant();
+apps/web-admin/src/components/guard/use-auth.ts:        role: tenant.userRole.toLowerCase() as Role,
+apps/web-admin/src/components/guard/use-auth.ts:        tenantId: tenant.tenantId,
+apps/web-admin/src/components/guard/use-auth.ts:        tenantSlug: tenant.tenantSlug,
+apps/web-admin/src/components/guard/use-auth.ts:        userEmail: tenant.userEmail,
+apps/web-admin/src/components/guard/use-auth.ts:        role: (session.role || tenant.userRole).toLowerCase() as Role,
+apps/web-admin/src/components/guard/use-auth.ts:        tenantId: session.tenantId || tenant.tenantId,
+apps/web-admin/src/components/guard/use-auth.ts:        tenantSlug: session.tenantSlug,
+apps/web-admin/src/components/guard/use-auth.ts:        userEmail: session.email || tenant.userEmail,
+apps/web-admin/src/components/guard/use-auth.ts:      role: tenant.userRole.toLowerCase() as Role,
+apps/web-admin/src/components/guard/use-auth.ts:      tenantId: tenant.tenantId,
+apps/web-admin/src/components/guard/use-auth.ts:      tenantSlug: tenant.tenantId,
+apps/web-admin/src/components/guard/use-auth.ts:      userEmail: tenant.userEmail,
+apps/web-admin/src/components/guard/use-auth.ts:  }, [mounted, session, tenant]);
+apps/web-admin/src/components/stock/movement-modal.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/components/stock/product-modal.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/components/clientes/customer-history.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/components/clientes/customer-modal.tsx:import { getApiOptions } from '@/lib/tenant';
+apps/web-admin/src/lib/api-client.ts:  tenantSlug?: string;
+apps/web-admin/src/lib/api-client.ts:    const { tenantSlug, sucursalId } = apiOptions;
+apps/web-admin/src/lib/api-client.ts:    // Inject tenantSlug in path if needed
+apps/web-admin/src/lib/api-client.ts:    if (tenantSlug && !url.includes('/:tenantSlug')) {
+apps/web-admin/src/lib/api-client.ts:      url = url.replace('/api/', `/api/${tenantSlug}/`);
+apps/web-admin/src/lib/api-client.ts:    if (options?.tenantSlug) {
+apps/web-admin/src/lib/api-client.ts:      url = url.replace('/api/', `/api/${options.tenantSlug}/`);
+apps/web-admin/src/lib/module-catalog.ts:    notes: "Mesa operativa conectada a órdenes reales y KPIs del tenant.",
+apps/web-admin/src/lib/module-catalog.ts:    label: "Sitio del tenant",
+apps/web-admin/src/lib/module-catalog.ts:    notes: "Editor de landing comercial por tenant.",
+apps/web-admin/src/lib/module-catalog.ts:    notes: "CRM ligero por tenant con captura y búsqueda.",
+apps/web-admin/src/lib/module-catalog.ts:    notes: "Flujo real de egresos con tenant scope.",
+apps/web-admin/src/lib/module-catalog.ts:    notes: "Gestión real por tenant y sucursal activa.",
+apps/web-admin/src/lib/scope.ts:  tenantId: string;
+apps/web-admin/src/lib/scope.ts:  tenantSlug: string;
+apps/web-admin/src/lib/scope.ts:  tenantId: string;
+apps/web-admin/src/lib/scope.ts:  tenantSlug: string;
+apps/web-admin/src/lib/scope.ts:      tenantId: input.tenantId,
+apps/web-admin/src/lib/scope.ts:      tenantSlug: input.tenantSlug,
+apps/web-admin/src/lib/scope.ts:    tenantId: input.tenantId,
+apps/web-admin/src/lib/scope.ts:    tenantSlug: input.tenantSlug,
+apps/web-admin/src/lib/session.ts:  tenantId: string;
+apps/web-admin/src/lib/session.ts:  tenantSlug: string;
+apps/web-admin/src/lib/session.ts:  const tenantSlug = typeof decoded.tenant_slug === "string" ? decoded.tenant_slug.trim() : "";
+apps/web-admin/src/lib/session.ts:  const tenantId = typeof decoded.tenant_id === "string" ? decoded.tenant_id.trim() : "";
+apps/web-admin/src/lib/session.ts:  if (!tenantSlug) {
+apps/web-admin/src/lib/session.ts:    tenantId,
+apps/web-admin/src/lib/session.ts:    tenantSlug,
+apps/web-admin/src/lib/pwa/offline-queue.ts:  tenantId: string;
+apps/web-admin/src/lib/tenant.ts:  const tenant = getStoredTenant();
+apps/web-admin/src/lib/tenant.ts:  return tenant?.slug || null;
+apps/web-admin/src/lib/tenant.ts:  const tenant = getStoredTenant();
+apps/web-admin/src/lib/tenant.ts:  return tenant?.id || null;
+apps/web-admin/src/lib/tenant.ts:    tenantSlug: getTenantSlug() || undefined,
+apps/web-admin/src/lib/auth.ts:  tenant: Tenant;
+apps/web-admin/src/lib/auth.ts:  tenant: Tenant;
+apps/web-admin/src/lib/auth.ts:    tenant: data.tenant,
+apps/web-admin/src/lib/auth.ts:  const { token, user, tenant } = await exchangeSupabaseSession(accessToken);
+apps/web-admin/src/lib/auth.ts:  localStorage.setItem('srf_tenant', JSON.stringify(tenant));
+apps/web-admin/src/lib/auth.ts:  return { token, user, tenant };
+apps/web-admin/src/lib/auth.ts:  localStorage.removeItem('srf_tenant');
+apps/web-admin/src/lib/auth.ts:      id: session.email || session.tenantId,
+apps/web-admin/src/lib/auth.ts:      tenantId: session.tenantId,
+apps/web-admin/src/lib/auth.ts:      tenantSlug: session.tenantSlug,
+apps/web-admin/src/lib/auth.ts:      id: session.tenantId,
+apps/web-admin/src/lib/auth.ts:      slug: session.tenantSlug,
+apps/web-admin/src/lib/auth.ts:      name: session.tenantSlug,
+apps/web-admin/src/lib/auth.ts:  const tenant = localStorage.getItem('srf_tenant');
+apps/web-admin/src/lib/auth.ts:  if (!tenant) return null;
+apps/web-admin/src/lib/auth.ts:    return JSON.parse(tenant);
+apps/web-admin/src/domain/tenant/Identity.ts:  tenantName: string;
+apps/web-admin/src/services/fixService.ts:  tenant_id?: string;
+apps/web-admin/src/services/fixService.ts:  tenant_id?: string;
+apps/web-admin/src/services/fixService.ts:  tenant_id?: string;
+apps/web-admin/src/services/fixService.ts:  tenant: {
+apps/web-admin/src/services/fixService.ts:    tenantId: string;
+apps/web-admin/src/services/fixService.ts:    tenantSlug: string;
+apps/web-admin/src/services/fixService.ts:  tenant_id: string;
+apps/web-admin/src/services/fixService.ts:  tenantId: string;
+apps/web-admin/src/services/fixService.ts:  private get tenantId() {
+apps/web-admin/src/services/fixService.ts:    if (session?.tenantId) {
+apps/web-admin/src/services/fixService.ts:      return session.tenantId;
+apps/web-admin/src/services/fixService.ts:    throw new Error("Sesión inválida: tenant_id ausente");
+apps/web-admin/src/services/fixService.ts:        tenantId: session?.tenantId ?? this.tenantId,
+apps/web-admin/src/services/fixService.ts:      `/api/${this.tenantId}/procurement/summary`,
+apps/web-admin/src/services/fixService.ts:      `/api/${this.tenantId}/purchase-orders/${encodeURIComponent(id)}/receive`,
+apps/web-admin/src/services/fixService.ts:      `/api/${this.tenantId}/security/summary`,
+apps/web-admin/src/services/fixService.ts:      `/api/${this.tenantId}/security/audit${search.toString() ? `?${search.toString()}` : ''}`,
+apps/web-admin/src/services/fixService.ts:      `/api/${this.tenantId}/security/sessions`,
+apps/web-admin/src/services/fixService.ts:      `/api/${this.tenantId}/security/sessions/${encodeURIComponent(id)}`,
+apps/web-admin/src/services/fixService.ts:      `/api/${this.tenantId}/security/rotate-keys`,
+apps/web-admin/src/services/fixService.ts:      `/api/${this.tenantId}/security/mfa/setup`,
+apps/web-admin/src/services/fixService.ts:      `/api/${this.tenantId}/security/mfa/verify`,
+apps/web-admin/src/services/fixService.ts:      `/api/${this.tenantId}/security/mfa/require-admins`,
+apps/web-admin/src/services/fixService.ts:    return this.request<ApiSingleResponse<TenantLandingSettings>>(`/api/auth/tenant/${encodeURIComponent(this.tenantId)}/settings`, {
+apps/web-admin/src/services/fixService.ts:    return this.request<ApiSingleResponse<TenantLandingSettings>>(`/api/auth/tenant/${encodeURIComponent(this.tenantId)}/settings`, {
+apps/web-admin/src/services/fixService.ts:    return this.request<ApiSingleResponse<TenantLandingSettings>>(`/api/auth/tenant/${encodeURIComponent(this.tenantId)}/settings`, {
+apps/web-admin/src/services/fixService.ts:    return this.request<ApiSingleResponse<TenantLandingSettings>>(`/api/auth/tenant/${encodeURIComponent(this.tenantId)}/settings`, {

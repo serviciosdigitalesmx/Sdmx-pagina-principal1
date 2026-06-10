@@ -1,0 +1,16 @@
+ÚNICA FUENTE DE VERDAD
+
+JWT
+ ↓
+getCurrentSession()
+ ↓
+TenantIdentityProvider
+ ↓
+useTenantIdentity()
+
+PROHIBIDO
+
+getStoredTenant()
+getStoredUser()
+useTenant()
+TenantProvider
