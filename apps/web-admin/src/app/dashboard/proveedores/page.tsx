@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Plus, RefreshCw, Search, Edit2, Phone, Mail, Truck, Power, Trash2, X } from 'lucide-react';
-import { fixService } from '@/services/fixService';
+import { procurementService } from '@/services/procurement/procurementService';
 
 type SupplierRow = {
   id?: string;
@@ -89,7 +89,7 @@ export default function ProveedoresPage() {
   const loadSuppliers = async () => {
     setLoading(true);
     try {
-      const data = await fixService.getSuppliers();
+      const data = await procurementService.getSuppliers();
       const list = data as SupplierRow[];
       setRows(list);
       setFiltered(list);
@@ -153,9 +153,9 @@ export default function ProveedoresPage() {
         notes: form.notes.trim() || null,
       };
       if (editing?.id) {
-        await fixService.updateSupplier(editing.id, payload);
+        await procurementService.updateSupplier(editing.id, payload);
       } else {
-        await fixService.createSupplier(payload);
+        await procurementService.createSupplier(payload);
       }
       setShowForm(false);
       setEditing(null);
@@ -172,7 +172,7 @@ export default function ProveedoresPage() {
     if (!row.id) return;
     try {
       setError('');
-      await fixService.updateSupplierStatus(row.id, isActive(row) ? 'inactive' : 'active');
+      await procurementService.updateSupplierStatus(row.id, isActive(row) ? 'inactive' : 'active');
       await loadSuppliers();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo actualizar el estado');
@@ -184,7 +184,7 @@ export default function ProveedoresPage() {
     if (!window.confirm(`Eliminar a ${supplierName(row)}?`)) return;
     try {
       setError('');
-      await fixService.deleteSupplier(row.id);
+      await procurementService.deleteSupplier(row.id);
       await loadSuppliers();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo eliminar el proveedor');
