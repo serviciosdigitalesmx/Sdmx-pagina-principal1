@@ -301,7 +301,7 @@ type AdminUserRecord = {
 import { readAuthToken } from "@/lib/auth-storage";
 import { clearAuthToken } from "@/lib/auth-storage";
 import { getCurrentSession } from "@/lib/session";
-import { getActiveScope } from "@/lib/scope";
+import { getPlatformScope } from "@/lib/scope";
 import { enqueueOfflineRequest } from "@/lib/pwa/offline-queue";
 import { resolveAdminApiBaseUrl } from "@/lib/api-base-url";
 
@@ -315,12 +315,22 @@ class FixService {
     return `/api${normalizedPath}`;
   }
 
-  private get tenantId() {
-    const session = getCurrentSession();
-    if (session?.tenantId) {
-      return session.tenantId;
+  private get scope() {
+    const scope = getPlatformScope();
+
+    if (!scope?.tenantSlug || !scope?.tenantId) {
+      throw new Error("Scope inválido: tenant ausente");
     }
-    throw new Error("Sesión inválida: tenant_id ausente");
+
+    return scope;
+  }
+
+  private get tenantSlug() {
+    return this.scope.tenantSlug;
+  }
+
+  private get tenantId() {
+    return this.scope.tenantId;
   }
 
   private getToken(): string {
@@ -331,7 +341,7 @@ class FixService {
   }
 
   private getSucursalId() {
-    return getActiveScope()?.sucursalId ?? '';
+    return this.scope.branchId ?? '';
   }
 
   private getScopeHeaders() {
@@ -914,7 +924,7 @@ class FixService {
 
   public async getProcurementSummary(): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/procurement/summary`,
+      `/api/${this.tenantSlug}/procurement/summary`,
       { method: 'GET' }
     );
     return result.data;
@@ -1085,7 +1095,7 @@ class FixService {
 
   public async receivePurchaseOrder(id: string, payload?: { notes?: string; receivedItems?: Array<{ skuSnapshot?: string; quantity: number }> }): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/purchase-orders/${encodeURIComponent(id)}/receive`,
+      `/api/${this.tenantSlug}/purchase-orders/${encodeURIComponent(id)}/receive`,
       {
         method: 'POST',
         body: JSON.stringify(payload ?? {}),
@@ -1104,7 +1114,7 @@ class FixService {
 
   public async getSecuritySummary(): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/security/summary`,
+      `/api/${this.tenantSlug}/security/summary`,
       { method: 'GET' }
     );
     return result.data;
@@ -1120,7 +1130,7 @@ class FixService {
     if (params.to) search.set('to', params.to);
 
     const result = await this.request<ApiSingleResponse<{ items: AuditLogRecord[]; page: number; pageSize: number; total: number; hasMore: boolean }>>(
-      `/api/${this.tenantId}/security/audit${search.toString() ? `?${search.toString()}` : ''}`,
+      `/api/${this.tenantSlug}/security/audit${search.toString() ? `?${search.toString()}` : ''}`,
       { method: 'GET' }
     );
 
@@ -1135,7 +1145,7 @@ class FixService {
 
   public async getSecuritySessions(): Promise<SecuritySessionRecord[]> {
     const result = await this.request<ApiSingleResponse<SecuritySessionRecord[]>>(
-      `/api/${this.tenantId}/security/sessions`,
+      `/api/${this.tenantSlug}/security/sessions`,
       { method: 'GET' }
     );
     return result.data;
@@ -1143,7 +1153,7 @@ class FixService {
 
   public async revokeSecuritySession(id: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/security/sessions/${encodeURIComponent(id)}`,
+      `/api/${this.tenantSlug}/security/sessions/${encodeURIComponent(id)}`,
       { method: 'DELETE' }
     );
     return result.data;
@@ -1151,7 +1161,7 @@ class FixService {
 
   public async rotateSecurityKeys(confirm = true): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/security/rotate-keys`,
+      `/api/${this.tenantSlug}/security/rotate-keys`,
       {
         method: 'POST',
         body: JSON.stringify({ confirm }),
@@ -1162,7 +1172,7 @@ class FixService {
 
   public async getMfaSetup(): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/security/mfa/setup`,
+      `/api/${this.tenantSlug}/security/mfa/setup`,
       { method: 'GET' }
     );
     return result.data;
@@ -1170,7 +1180,7 @@ class FixService {
 
   public async verifyMfaCode(code: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/security/mfa/verify`,
+      `/api/${this.tenantSlug}/security/mfa/verify`,
       {
         method: 'POST',
         body: JSON.stringify({ code }),
@@ -1181,7 +1191,7 @@ class FixService {
 
   public async setAdminMfaRequirement(enabled: boolean): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
-      `/api/${this.tenantId}/security/mfa/require-admins`,
+      `/api/${this.tenantSlug}/security/mfa/require-admins`,
       {
         method: 'PATCH',
         body: JSON.stringify({ enabled }),
