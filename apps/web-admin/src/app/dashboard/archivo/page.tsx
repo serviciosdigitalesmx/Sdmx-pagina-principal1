@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Archive, RefreshCw, Search, PackageCheck } from "lucide-react";
-import { fixService } from "@/services/fixService";
+import { ordersService } from "@/services/orders/ordersService";
 
 type ArchiveRow = {
   id?: string;
@@ -45,7 +45,7 @@ export default function ArchivoPage() {
     try {
       setLoading(true);
       setError("");
-      const data = await fixService.getOrders();
+      const data = await ordersService.getOrders();
       const archived = (data as Array<Record<string, unknown>>)
         .filter((order) => {
           const status = String(order.status ?? "").toLowerCase();

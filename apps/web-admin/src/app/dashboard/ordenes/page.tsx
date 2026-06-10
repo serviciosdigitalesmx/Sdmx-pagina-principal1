@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Search, RefreshCw, Filter, Grid2X2, List, Clock3, MessageSquare, Eye, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { fixService } from '@/services/fixService';
+import { ordersService } from '@/services/orders/ordersService';
 import type { Order } from '@/types';
 import { OrderCard } from '@/components/tecnico/order-card';
 import { OrderModal } from '@/components/tecnico/order-modal';
@@ -99,7 +99,7 @@ export default function OrdersPage() {
     if (showRefresh) setRefreshing(true);
     try {
       setError(null);
-      const rows = await fixService.getOrders();
+      const rows = await ordersService.getOrders();
       setOrders(rows as unknown as Order[]);
     } catch (loadError) {
       setOrders([]);

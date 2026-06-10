@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Banknote, CircleCheckBig, Clock3, RefreshCw } from 'lucide-react';
 import { financeService } from '@/services/finance/financeService';
-import { fixService } from '@/services/fixService';
+import { ordersService } from '@/services/orders/ordersService';
 import { getActiveScope } from '@/lib/scope';
 import type { FinanceBalance, Order } from '@/types';
 
@@ -41,7 +41,7 @@ export default function FinanzasPage() {
     try {
       const [balance, orderRows] = await Promise.all([
         financeService.getBalance(),
-        fixService.getOrders(),
+        ordersService.getOrders(),
       ]);
 
       setRows((balance as unknown as FinanceBalance[]).map((row) => ({
