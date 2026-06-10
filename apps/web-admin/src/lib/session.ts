@@ -4,19 +4,19 @@ import { readAuthToken } from "@/lib/auth-storage";
 
 export type CurrentSession = {
   token: string;
+  userId: string;
   email: string;
   role: string;
   tenantId: string;
   tenantSlug: string;
-  sucursalId?: string;
+  tenantName: string | null;
+  branchId: string | null;
 };
 
-function decodeJwtPayload(token: string) {
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
     const parts = token.split(".");
-    if (parts.length !== 3) {
-      return null;
-    }
+    if (parts.length !== 3) return null;
 
     const payload = parts[1];
     const decoded = atob(payload.replace(/-/g, "+").replace(/_/g, "/"));
@@ -26,39 +26,41 @@ function decodeJwtPayload(token: string) {
   }
 }
 
-export function getCurrentSession(): CurrentSession | null {
-  if (typeof window === "undefined") {
-    return null;
+function readString(payload: Record<string, unknown>, keys: string[]): string {
+  for (const key of keys) {
+    const value = payload[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
   }
+  return "";
+}
+
+export function getCurrentSession(): CurrentSession | null {
+  if (typeof window === "undefined") return null;
 
   const token = readAuthToken();
+  if (!token) return null;
 
-  if (!token) {
-    return null;
-  }
+  const payload = decodeJwtPayload(token);
+  if (!payload) return null;
 
-  const decoded = decodeJwtPayload(token);
+  const tenantId = readString(payload, ["tenant_id", "tenantId"]);
+  const tenantSlug = readString(payload, ["tenant_slug", "tenantSlug"]);
+  const tenantName = readString(payload, ["tenant_name", "tenantName", "business_name", "businessName"]);
+  const email = readString(payload, ["email"]);
+  const role = readString(payload, ["role"]);
+  const userId = readString(payload, ["user_id", "userId", "sub", "id"]) || email || tenantId;
+  const branchId = readString(payload, ["sucursal_id", "sucursalId", "branch_id", "branchId"]);
 
-  if (!decoded) {
-    return null;
-  }
-
-  const tenantSlug = typeof decoded.tenant_slug === "string" ? decoded.tenant_slug.trim() : "";
-  const tenantId = typeof decoded.tenant_id === "string" ? decoded.tenant_id.trim() : "";
-  const email = typeof decoded.email === "string" ? decoded.email.trim() : "";
-  const role = typeof decoded.role === "string" ? decoded.role.trim() : "";
-  const sucursalId = typeof decoded.sucursal_id === "string" ? decoded.sucursal_id.trim() : "";
-
-  if (!tenantSlug) {
-    return null;
-  }
+  if (!tenantId || !tenantSlug) return null;
 
   return {
     token,
+    userId,
     email,
     role,
     tenantId,
     tenantSlug,
-    sucursalId: sucursalId || undefined,
+    tenantName: tenantName || null,
+    branchId: branchId || null,
   };
 }

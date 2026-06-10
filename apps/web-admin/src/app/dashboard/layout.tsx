@@ -6,8 +6,25 @@ import { Sidebar } from '@/components/dashboard/sidebar';
 import { Header } from '@/components/dashboard/header';
 import { AppShell, ShellContent } from '@/components/base/app-shell';
 import { LoadingState, ErrorState } from '@/components/base/states';
-import { isAuthenticated, getStoredUser } from '@/lib/auth';
+import { isAuthenticated } from '@/lib/auth';
+import { getCurrentSession } from '@/lib/session';
 import { TenantIdentityProvider } from '@/providers/TenantIdentityProvider';
+
+function getSessionUser() {
+  const session = getCurrentSession();
+
+  if (!session) return null;
+
+  return {
+    id: session.userId,
+    email: session.email,
+    name: session.email || 'Usuario activo',
+    role: session.role as any,
+    tenantId: session.tenantId,
+    tenantSlug: session.tenantSlug,
+    sucursalId: session.branchId,
+  };
+}
 
 export default function DashboardLayout({
   children,
@@ -16,7 +33,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState(getStoredUser());
+  const [user, setUser] = useState(getSessionUser());
   const [menuOpen, setMenuOpen] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -25,7 +42,7 @@ export default function DashboardLayout({
       router.push('/login');
       setAuthError('Necesitas iniciar sesión para acceder al panel.');
     } else {
-      setUser(getStoredUser());
+      setUser(getSessionUser());
       setAuthError(null);
     }
   }, [router, pathname]);

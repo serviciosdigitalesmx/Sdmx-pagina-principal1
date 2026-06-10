@@ -1,47 +1,42 @@
-import { getStoredUser, getStoredTenant } from './auth';
+import { getCurrentSession } from './session';
 
 export function getTenantSlug(): string | null {
-  const tenant = getStoredTenant();
-  return tenant?.slug || null;
+  return getCurrentSession()?.tenantSlug ?? null;
 }
 
 export function getTenantId(): string | null {
-  const tenant = getStoredTenant();
-  return tenant?.id || null;
+  return getCurrentSession()?.tenantId ?? null;
 }
 
 export function getCurrentUserSucursalId(): string | null {
-  const user = getStoredUser();
-  return user?.sucursalId || null;
+  return getCurrentSession()?.branchId ?? null;
 }
 
 export function getActiveSucursalId(): string | null {
   if (typeof window === 'undefined') return null;
-  // First check localStorage (user selection)
-  const stored = localStorage.getItem('srf_sucursal_activa');
+
+  const stored = window.localStorage.getItem('srf_sucursal_activa');
   if (stored && stored !== 'GLOBAL') return stored;
 
-  // Then fallback to user's assigned sucursal
   return getCurrentUserSucursalId();
 }
 
 export function setActiveSucursalId(sucursalId: string | null, options?: { skipReload?: boolean }) {
   if (typeof window === 'undefined') return;
+
   if (!sucursalId || sucursalId === 'GLOBAL') {
-    localStorage.removeItem('srf_sucursal_activa');
+    window.localStorage.removeItem('srf_sucursal_activa');
   } else {
-    localStorage.setItem('srf_sucursal_activa', sucursalId);
+    window.localStorage.setItem('srf_sucursal_activa', sucursalId);
   }
 
   if (!options?.skipReload) {
-    // Reload to refresh all queries with new sucursal context
     window.location.reload();
   }
 }
 
 export function canUseConsolidatedView(): boolean {
-  const user = getStoredUser();
-  return user?.role === 'owner';
+  return getCurrentSession()?.role === 'owner';
 }
 
 export function getApiOptions() {

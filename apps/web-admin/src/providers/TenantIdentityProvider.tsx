@@ -1,10 +1,10 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getStoredUser, getStoredTenant } from '@/lib/auth';
-import { getActiveSucursalId, getApiOptions } from '@/lib/tenant';
 import { apiClient } from '@/lib/api-client';
-import type { TenantIdentity } from '@/domain/tenant/Identity';
+import { getCurrentSession } from '@/lib/session';
+import { getActiveSucursalId, getApiOptions } from '@/lib/tenant';
+import type { TenantIdentity, TenantRole } from '@/domain/tenant/Identity';
 import type { Sucursal } from '@/types';
 
 type TenantIdentityContextValue = {
@@ -17,52 +17,90 @@ const TenantIdentityContext = createContext<TenantIdentityContextValue>({
   isLoading: true,
 });
 
+function normalizeRole(role: string): TenantRole {
+  const normalized = String(role || '').toLowerCase();
+
+  if (
+    normalized === 'owner' ||
+    normalized === 'manager' ||
+    normalized === 'technician' ||
+    normalized === 'client'
+  ) {
+    return normalized;
+  }
+
+  return 'manager';
+}
+
+function humanizeSlug(slug: string): string {
+  return slug
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ') || 'Negocio';
+}
+
 export function TenantIdentityProvider({ children }: { children: React.ReactNode }) {
   const [identity, setIdentity] = useState<TenantIdentity | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    let alive = true;
+
     async function loadIdentity() {
       try {
-        const tenant = getStoredTenant();
-        const activeSucursalId = getActiveSucursalId();
-        
-        let branchName = 'Todas las sucursales';
-        let branchCode = 'GLOBAL';
+        const session = getCurrentSession();
 
-        if (activeSucursalId && activeSucursalId !== 'GLOBAL') {
-          // Fetch sucursales to get the name of the active one
-          // Ideally, the active sucursal details should be stored alongside the ID
-          const data = await apiClient.get<{ data: Sucursal[] }>('/sucursales', getApiOptions());
-          const sucursales = data.data || [];
-          const activeSucursal = sucursales.find(s => s.id === activeSucursalId);
-          
+        if (!session) {
+          if (alive) setIdentity(null);
+          return;
+        }
+
+        const activeBranchId = getActiveSucursalId();
+        const branchId = activeBranchId && activeBranchId !== 'GLOBAL' ? activeBranchId : null;
+
+        let branchName: string | null = branchId ? 'Sucursal' : 'Todas las sucursales';
+        let branchCode: string | null = branchId ? null : 'GLOBAL';
+
+        if (branchId) {
+          const response = await apiClient.get<{ data: Sucursal[] }>('/sucursales', getApiOptions());
+          const sucursales = Array.isArray(response.data) ? response.data : [];
+          const activeSucursal = sucursales.find((s) => s.id === branchId);
+
           if (activeSucursal) {
             branchName = activeSucursal.name;
             branchCode = activeSucursal.code || activeSucursal.name.substring(0, 3).toUpperCase();
           }
         }
 
-        setIdentity({
-          tenantName: tenant?.name || tenant?.slug || 'Negocio',
-          branchName,
+        const nextIdentity: TenantIdentity = {
+          tenantId: session.tenantId,
+          tenantSlug: session.tenantSlug,
+          tenantName: session.tenantName || humanizeSlug(session.tenantSlug),
+
+          branchId,
           branchCode,
-        });
+          branchName,
+
+          userId: session.userId,
+          userEmail: session.email,
+          role: normalizeRole(session.role),
+        };
+
+        if (alive) setIdentity(nextIdentity);
       } catch (error) {
         console.error('Failed to load tenant identity:', error);
-        // Fallback
-        const tenant = getStoredTenant();
-        setIdentity({
-          tenantName: tenant?.name || tenant?.slug || 'Negocio',
-          branchName: 'Sucursal',
-          branchCode: '',
-        });
+        if (alive) setIdentity(null);
       } finally {
-        setIsLoading(false);
+        if (alive) setIsLoading(false);
       }
     }
 
     loadIdentity();
+
+    return () => {
+      alive = false;
+    };
   }, []);
 
   return (

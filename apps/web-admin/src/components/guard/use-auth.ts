@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import { useTenant } from '@/components/tenant/tenant-provider';
-import { getCurrentSession } from '@/lib/session';
+import { useMemo } from 'react';
+import { useTenantIdentity } from '@/providers/TenantIdentityProvider';
 import { getActiveScope } from '@/lib/scope';
 
 export type Role = 'owner' | 'manager' | 'technician' | 'client';
@@ -16,55 +15,35 @@ export type AuthState = {
   ready: boolean;
 };
 
+function normalizeRole(role: string | undefined | null): Role {
+  const normalized = String(role || '').toLowerCase();
+
+  if (
+    normalized === 'owner' ||
+    normalized === 'manager' ||
+    normalized === 'technician' ||
+    normalized === 'client'
+  ) {
+    return normalized;
+  }
+
+  return 'manager';
+}
+
 export function useAuth(): AuthState {
-  const tenant = useTenant();
-  const [session, setSession] = useState<ReturnType<typeof getCurrentSession> | null>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    const sessionTimer = window.setTimeout(() => {
-      setSession(getCurrentSession());
-    }, 0);
-
-    return () => {
-      window.clearTimeout(sessionTimer);
-    };
-  }, []);
+  const { identity, isLoading } = useTenantIdentity();
 
   return useMemo(() => {
     const activeScope = getActiveScope();
-    const resolvedSucursalId = activeScope?.sucursalId ?? '';
-
-    if (!mounted) {
-      return {
-        role: tenant.userRole.toLowerCase() as Role,
-        tenantId: tenant.tenantId,
-        tenantSlug: tenant.tenantSlug,
-        sucursalId: resolvedSucursalId,
-        userEmail: tenant.userEmail,
-        ready: false,
-      } satisfies AuthState;
-    }
-
-    if (session) {
-      return {
-        role: (session.role || tenant.userRole).toLowerCase() as Role,
-        tenantId: session.tenantId || tenant.tenantId,
-        tenantSlug: session.tenantSlug,
-        sucursalId: resolvedSucursalId,
-        userEmail: session.email || tenant.userEmail,
-        ready: true,
-      } satisfies AuthState;
-    }
+    const sucursalId = activeScope?.sucursalId ?? identity?.branchId ?? '';
 
     return {
-      role: tenant.userRole.toLowerCase() as Role,
-      tenantId: tenant.tenantId,
-      tenantSlug: tenant.tenantId,
-      sucursalId: resolvedSucursalId,
-      userEmail: tenant.userEmail,
-      ready: false,
+      role: normalizeRole(identity?.role),
+      tenantId: identity?.tenantId ?? '',
+      tenantSlug: identity?.tenantSlug ?? '',
+      sucursalId,
+      userEmail: identity?.userEmail ?? '',
+      ready: !isLoading && Boolean(identity?.tenantId && identity?.tenantSlug),
     } satisfies AuthState;
-  }, [mounted, session, tenant]);
+  }, [identity, isLoading]);
 }
