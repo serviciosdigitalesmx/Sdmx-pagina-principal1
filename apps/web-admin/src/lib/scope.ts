@@ -1,71 +1,68 @@
-export type ScopeMode = 'consolidated' | 'branch';
+import { getCurrentSession } from '@/lib/session';
+import type { PlatformScope } from '@/domain/platform/Scope';
+import { DEFAULT_VERTICAL_CONFIG } from '@/domain/vertical/VerticalConfig';
 
-export type ScopeRole = 'owner' | 'manager' | 'technician' | 'client';
+const ACTIVE_BRANCH_KEY = 'srf_sucursal_activa';
 
-export type DashboardScope = {
-  mode: ScopeMode;
-  tenantId: string;
-  tenantSlug: string;
-  sucursalId: string | null;
-  canUseConsolidatedView: boolean;
-  role: ScopeRole;
-  source: 'query' | 'bootstrap' | 'default';
-};
+export type ScopeContext = PlatformScope;
 
-let activeScope: DashboardScope | null = null;
+export function getActiveBranchId(): string | null {
+  if (typeof window === 'undefined') return null;
 
-function normalizeRole(role: string): ScopeRole {
-  const normalized = String(role ?? '').toLowerCase();
-  if (normalized === 'owner' || normalized === 'manager' || normalized === 'technician' || normalized === 'client') {
-    return normalized;
-  }
-  return 'manager';
+  const stored = window.localStorage.getItem(ACTIVE_BRANCH_KEY);
+  if (stored && stored !== 'GLOBAL') return stored;
+
+  return getCurrentSession()?.branchId ?? null;
 }
 
-export function resolveDashboardScope(input: {
-  role: string;
-  tenantId: string;
-  tenantSlug: string;
-  querySucursalId?: string | null;
-  defaultSucursalId?: string | null;
-}): DashboardScope {
-  const role = normalizeRole(input.role);
-  const querySucursalId = typeof input.querySucursalId === 'string' && input.querySucursalId.trim().length > 0
-    ? input.querySucursalId.trim()
-    : null;
-  const defaultSucursalId = typeof input.defaultSucursalId === 'string' && input.defaultSucursalId.trim().length > 0
-    ? input.defaultSucursalId.trim()
-    : null;
+export function setActiveBranchId(branchId: string | null, options?: { skipReload?: boolean }) {
+  if (typeof window === 'undefined') return;
 
-  if (role === 'owner') {
-    const sucursalId = querySucursalId ?? null;
-    return {
-      mode: sucursalId ? 'branch' : 'consolidated',
-      tenantId: input.tenantId,
-      tenantSlug: input.tenantSlug,
-      sucursalId,
-      canUseConsolidatedView: true,
-      role,
-      source: querySucursalId ? 'query' : defaultSucursalId ? 'bootstrap' : 'default',
-    };
+  if (!branchId || branchId === 'GLOBAL') {
+    window.localStorage.removeItem(ACTIVE_BRANCH_KEY);
+  } else {
+    window.localStorage.setItem(ACTIVE_BRANCH_KEY, branchId);
   }
 
-  const sucursalId = querySucursalId ?? defaultSucursalId ?? null;
+  if (!options?.skipReload) {
+    window.location.reload();
+  }
+}
+
+export function getPlatformScope(): PlatformScope | null {
+  const session = getCurrentSession();
+  if (!session) return null;
+
+  const branchId = getActiveBranchId();
+
   return {
-    mode: 'branch',
-    tenantId: input.tenantId,
-    tenantSlug: input.tenantSlug,
-    sucursalId,
-    canUseConsolidatedView: false,
-    role,
-    source: querySucursalId ? 'query' : defaultSucursalId ? 'bootstrap' : 'default',
+    tenantId: session.tenantId,
+    tenantSlug: session.tenantSlug,
+
+    branchId,
+    sucursalId: branchId,
+    branchLabel: DEFAULT_VERTICAL_CONFIG.labels.branch,
+
+    verticalCode: DEFAULT_VERTICAL_CONFIG.code,
+    verticalName: DEFAULT_VERTICAL_CONFIG.name,
+
+    mode: branchId ? 'branch' : 'tenant',
   };
 }
 
-export function setActiveScope(scope: DashboardScope | null) {
-  activeScope = scope;
+/**
+ * Adapter temporal de nombre viejo.
+ * La fuente real ya es PlatformScope.
+ */
+export function getActiveScope(): ScopeContext | null {
+  return getPlatformScope();
 }
 
-export function getActiveScope() {
-  return activeScope;
+export function setActiveScope(input: {
+  tenantId: string;
+  tenantSlug: string;
+  sucursalId?: string | null;
+  branchId?: string | null;
+}, options?: { skipReload?: boolean }) {
+  setActiveBranchId(input.branchId ?? input.sucursalId ?? null, options);
 }

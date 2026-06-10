@@ -1,4 +1,5 @@
 import { getCurrentSession } from './session';
+import { getActiveBranchId, setActiveBranchId, getPlatformScope } from '@/lib/scope';
 
 export function getTenantSlug(): string | null {
   return getCurrentSession()?.tenantSlug ?? null;
@@ -13,26 +14,11 @@ export function getCurrentUserSucursalId(): string | null {
 }
 
 export function getActiveSucursalId(): string | null {
-  if (typeof window === 'undefined') return null;
-
-  const stored = window.localStorage.getItem('srf_sucursal_activa');
-  if (stored && stored !== 'GLOBAL') return stored;
-
-  return getCurrentUserSucursalId();
+  return getActiveBranchId();
 }
 
 export function setActiveSucursalId(sucursalId: string | null, options?: { skipReload?: boolean }) {
-  if (typeof window === 'undefined') return;
-
-  if (!sucursalId || sucursalId === 'GLOBAL') {
-    window.localStorage.removeItem('srf_sucursal_activa');
-  } else {
-    window.localStorage.setItem('srf_sucursal_activa', sucursalId);
-  }
-
-  if (!options?.skipReload) {
-    window.location.reload();
-  }
+  setActiveBranchId(sucursalId, options);
 }
 
 export function canUseConsolidatedView(): boolean {
@@ -40,8 +26,10 @@ export function canUseConsolidatedView(): boolean {
 }
 
 export function getApiOptions() {
+  const scope = getPlatformScope();
+
   return {
-    tenantSlug: getTenantSlug() || undefined,
-    sucursalId: getActiveSucursalId(),
+    tenantSlug: scope?.tenantSlug,
+    sucursalId: scope?.branchId,
   };
 }
