@@ -1,18 +1,18 @@
-import { fixService } from '../fixService';
+import { apiGateway } from '../apiGateway';
 
 export const usersService = {
-  getUsers: (...args: Parameters<typeof fixService.getUsers>) =>
-    fixService.getUsers(...args),
+  getUsers: (...args: Parameters<typeof apiGateway.getUsers>) =>
+    apiGateway.getUsers(...args),
 
-  inviteUser: (...args: Parameters<typeof fixService.inviteUser>) =>
-    fixService.inviteUser(...args),
+  inviteUser: (...args: Parameters<typeof apiGateway.inviteUser>) =>
+    apiGateway.inviteUser(...args),
 
-  updateUserRole: (...args: Parameters<typeof fixService.updateUserRole>) =>
-    fixService.updateUserRole(...args),
+  updateUserRole: (...args: Parameters<typeof apiGateway.updateUserRole>) =>
+    apiGateway.updateUserRole(...args),
 
-  deactivateUser: (...args: Parameters<typeof fixService.deactivateUser>) =>
-    fixService.deactivateUser(...args),
+  deactivateUser: (...args: Parameters<typeof apiGateway.deactivateUser>) =>
+    apiGateway.deactivateUser(...args),
 
-  getUserPurchaseOrders: (...args: Parameters<typeof fixService.getUserPurchaseOrders>) =>
-    fixService.getUserPurchaseOrders(...args),
+  getUserPurchaseOrders: (...args: Parameters<typeof apiGateway.getUserPurchaseOrders>) =>
+    apiGateway.getUserPurchaseOrders(...args),
 };

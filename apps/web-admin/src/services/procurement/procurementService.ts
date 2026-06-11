@@ -1,45 +1,45 @@
-import { fixService } from '../fixService';
+import { apiGateway } from '../apiGateway';
 
 export const procurementService = {
   getProcurementSummary: () =>
-    fixService.getProcurementSummary(),
+    apiGateway.getProcurementSummary(),
 
-  getSuppliers: (...args: Parameters<typeof fixService.getSuppliers>) =>
-    fixService.getSuppliers(...args),
+  getSuppliers: (...args: Parameters<typeof apiGateway.getSuppliers>) =>
+    apiGateway.getSuppliers(...args),
 
-  getSupplierById: (...args: Parameters<typeof fixService.getSupplierById>) =>
-    fixService.getSupplierById(...args),
+  getSupplierById: (...args: Parameters<typeof apiGateway.getSupplierById>) =>
+    apiGateway.getSupplierById(...args),
 
-  createSupplier: (...args: Parameters<typeof fixService.createSupplier>) =>
-    fixService.createSupplier(...args),
+  createSupplier: (...args: Parameters<typeof apiGateway.createSupplier>) =>
+    apiGateway.createSupplier(...args),
 
-  updateSupplier: (...args: Parameters<typeof fixService.updateSupplier>) =>
-    fixService.updateSupplier(...args),
+  updateSupplier: (...args: Parameters<typeof apiGateway.updateSupplier>) =>
+    apiGateway.updateSupplier(...args),
 
-  updateSupplierStatus: (...args: Parameters<typeof fixService.updateSupplierStatus>) =>
-    fixService.updateSupplierStatus(...args),
+  updateSupplierStatus: (...args: Parameters<typeof apiGateway.updateSupplierStatus>) =>
+    apiGateway.updateSupplierStatus(...args),
 
-  deleteSupplier: (...args: Parameters<typeof fixService.deleteSupplier>) =>
-    fixService.deleteSupplier(...args),
+  deleteSupplier: (...args: Parameters<typeof apiGateway.deleteSupplier>) =>
+    apiGateway.deleteSupplier(...args),
 
-  getPurchaseOrders: (...args: Parameters<typeof fixService.getPurchaseOrders>) =>
-    fixService.getPurchaseOrders(...args),
+  getPurchaseOrders: (...args: Parameters<typeof apiGateway.getPurchaseOrders>) =>
+    apiGateway.getPurchaseOrders(...args),
 
-  getPurchaseOrderById: (...args: Parameters<typeof fixService.getPurchaseOrderById>) =>
-    fixService.getPurchaseOrderById(...args),
+  getPurchaseOrderById: (...args: Parameters<typeof apiGateway.getPurchaseOrderById>) =>
+    apiGateway.getPurchaseOrderById(...args),
 
-  createPurchaseOrder: (...args: Parameters<typeof fixService.createPurchaseOrder>) =>
-    fixService.createPurchaseOrder(...args),
+  createPurchaseOrder: (...args: Parameters<typeof apiGateway.createPurchaseOrder>) =>
+    apiGateway.createPurchaseOrder(...args),
 
-  updatePurchaseOrder: (...args: Parameters<typeof fixService.updatePurchaseOrder>) =>
-    fixService.updatePurchaseOrder(...args),
+  updatePurchaseOrder: (...args: Parameters<typeof apiGateway.updatePurchaseOrder>) =>
+    apiGateway.updatePurchaseOrder(...args),
 
-  updatePurchaseOrderStatus: (...args: Parameters<typeof fixService.updatePurchaseOrderStatus>) =>
-    fixService.updatePurchaseOrderStatus(...args),
+  updatePurchaseOrderStatus: (...args: Parameters<typeof apiGateway.updatePurchaseOrderStatus>) =>
+    apiGateway.updatePurchaseOrderStatus(...args),
 
-  receivePurchaseOrder: (...args: Parameters<typeof fixService.receivePurchaseOrder>) =>
-    fixService.receivePurchaseOrder(...args),
+  receivePurchaseOrder: (...args: Parameters<typeof apiGateway.receivePurchaseOrder>) =>
+    apiGateway.receivePurchaseOrder(...args),
 
-  deletePurchaseOrder: (...args: Parameters<typeof fixService.deletePurchaseOrder>) =>
-    fixService.deletePurchaseOrder(...args),
+  deletePurchaseOrder: (...args: Parameters<typeof apiGateway.deletePurchaseOrder>) =>
+    apiGateway.deletePurchaseOrder(...args),
 };

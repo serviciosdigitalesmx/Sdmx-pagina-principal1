@@ -1,21 +1,21 @@
-import { fixService } from '../fixService';
+import { apiGateway } from '../apiGateway';
 
 export const inventoryService = {
-  getInventory: (...args: Parameters<typeof fixService.getInventory>) =>
-    fixService.getInventory(...args),
+  getInventory: (...args: Parameters<typeof apiGateway.getInventory>) =>
+    apiGateway.getInventory(...args),
 
-  createInventoryItem: (...args: Parameters<typeof fixService.createInventoryItem>) =>
-    fixService.createInventoryItem(...args),
+  createInventoryItem: (...args: Parameters<typeof apiGateway.createInventoryItem>) =>
+    apiGateway.createInventoryItem(...args),
 
-  updateInventoryItem: (...args: Parameters<typeof fixService.updateInventoryItem>) =>
-    fixService.updateInventoryItem(...args),
+  updateInventoryItem: (...args: Parameters<typeof apiGateway.updateInventoryItem>) =>
+    apiGateway.updateInventoryItem(...args),
 
-  getInventoryMovements: (...args: Parameters<typeof fixService.getInventoryMovements>) =>
-    fixService.getInventoryMovements(...args),
+  getInventoryMovements: (...args: Parameters<typeof apiGateway.getInventoryMovements>) =>
+    apiGateway.getInventoryMovements(...args),
 
-  getStockAlerts: (...args: Parameters<typeof fixService.getStockAlerts>) =>
-    fixService.getStockAlerts(...args),
+  getStockAlerts: (...args: Parameters<typeof apiGateway.getStockAlerts>) =>
+    apiGateway.getStockAlerts(...args),
 
-  acknowledgeStockAlert: (...args: Parameters<typeof fixService.acknowledgeStockAlert>) =>
-    fixService.acknowledgeStockAlert(...args),
+  acknowledgeStockAlert: (...args: Parameters<typeof apiGateway.acknowledgeStockAlert>) =>
+    apiGateway.acknowledgeStockAlert(...args),
 };

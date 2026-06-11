@@ -1,6 +1,6 @@
-import { fixService } from '../fixService';
+import { apiGateway } from '../apiGateway';
 
 export const reportsService = {
-  getReportsSummary: (...args: Parameters<typeof fixService.getReportsSummary>) =>
-    fixService.getReportsSummary(...args),
+  getReportsSummary: (...args: Parameters<typeof apiGateway.getReportsSummary>) =>
+    apiGateway.getReportsSummary(...args),
 };

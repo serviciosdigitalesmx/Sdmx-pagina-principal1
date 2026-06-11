@@ -1,27 +1,27 @@
-import { fixService } from '../fixService';
+import { apiGateway } from '../apiGateway';
 
 export const securityService = {
-  getSecuritySummary: (...args: Parameters<typeof fixService.getSecuritySummary>) =>
-    fixService.getSecuritySummary(...args),
+  getSecuritySummary: (...args: Parameters<typeof apiGateway.getSecuritySummary>) =>
+    apiGateway.getSecuritySummary(...args),
 
-  getAuditLogs: (...args: Parameters<typeof fixService.getAuditLogs>) =>
-    fixService.getAuditLogs(...args),
+  getAuditLogs: (...args: Parameters<typeof apiGateway.getAuditLogs>) =>
+    apiGateway.getAuditLogs(...args),
 
-  getSecuritySessions: (...args: Parameters<typeof fixService.getSecuritySessions>) =>
-    fixService.getSecuritySessions(...args),
+  getSecuritySessions: (...args: Parameters<typeof apiGateway.getSecuritySessions>) =>
+    apiGateway.getSecuritySessions(...args),
 
-  revokeSecuritySession: (...args: Parameters<typeof fixService.revokeSecuritySession>) =>
-    fixService.revokeSecuritySession(...args),
+  revokeSecuritySession: (...args: Parameters<typeof apiGateway.revokeSecuritySession>) =>
+    apiGateway.revokeSecuritySession(...args),
 
-  rotateSecurityKeys: (...args: Parameters<typeof fixService.rotateSecurityKeys>) =>
-    fixService.rotateSecurityKeys(...args),
+  rotateSecurityKeys: (...args: Parameters<typeof apiGateway.rotateSecurityKeys>) =>
+    apiGateway.rotateSecurityKeys(...args),
 
-  getMfaSetup: (...args: Parameters<typeof fixService.getMfaSetup>) =>
-    fixService.getMfaSetup(...args),
+  getMfaSetup: (...args: Parameters<typeof apiGateway.getMfaSetup>) =>
+    apiGateway.getMfaSetup(...args),
 
-  verifyMfaCode: (...args: Parameters<typeof fixService.verifyMfaCode>) =>
-    fixService.verifyMfaCode(...args),
+  verifyMfaCode: (...args: Parameters<typeof apiGateway.verifyMfaCode>) =>
+    apiGateway.verifyMfaCode(...args),
 
-  setAdminMfaRequirement: (...args: Parameters<typeof fixService.setAdminMfaRequirement>) =>
-    fixService.setAdminMfaRequirement(...args),
+  setAdminMfaRequirement: (...args: Parameters<typeof apiGateway.setAdminMfaRequirement>) =>
+    apiGateway.setAdminMfaRequirement(...args),
 };

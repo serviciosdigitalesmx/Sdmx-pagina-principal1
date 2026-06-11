@@ -1,36 +1,36 @@
-import { fixService } from '../fixService';
+import { apiGateway } from '../apiGateway';
 
 export const ordersService = {
-  getOrders: (...args: Parameters<typeof fixService.getOrders>) =>
-    fixService.getOrders(...args),
+  getOrders: (...args: Parameters<typeof apiGateway.getOrders>) =>
+    apiGateway.getOrders(...args),
 
-  getOrderById: (...args: Parameters<typeof fixService.getOrderById>) =>
-    fixService.getOrderById(...args),
+  getOrderById: (...args: Parameters<typeof apiGateway.getOrderById>) =>
+    apiGateway.getOrderById(...args),
 
-  createOrder: (...args: Parameters<typeof fixService.createOrder>) =>
-    fixService.createOrder(...args),
+  createOrder: (...args: Parameters<typeof apiGateway.createOrder>) =>
+    apiGateway.createOrder(...args),
 
-  uploadOrderAttachment: (...args: Parameters<typeof fixService.uploadOrderAttachment>) =>
-    fixService.uploadOrderAttachment(...args),
+  uploadOrderAttachment: (...args: Parameters<typeof apiGateway.uploadOrderAttachment>) =>
+    apiGateway.uploadOrderAttachment(...args),
 
-  addOrderNote: (...args: Parameters<typeof fixService.addOrderNote>) =>
-    fixService.addOrderNote(...args),
+  addOrderNote: (...args: Parameters<typeof apiGateway.addOrderNote>) =>
+    apiGateway.addOrderNote(...args),
 
-  updateOrderStatus: (...args: Parameters<typeof fixService.updateOrderStatus>) =>
-    fixService.updateOrderStatus(...args),
+  updateOrderStatus: (...args: Parameters<typeof apiGateway.updateOrderStatus>) =>
+    apiGateway.updateOrderStatus(...args),
 
-  updateOrderFinancials: (...args: Parameters<typeof fixService.updateOrderFinancials>) =>
-    fixService.updateOrderFinancials(...args),
+  updateOrderFinancials: (...args: Parameters<typeof apiGateway.updateOrderFinancials>) =>
+    apiGateway.updateOrderFinancials(...args),
 
-  updateOrderDetails: (...args: Parameters<typeof fixService.updateOrderDetails>) =>
-    fixService.updateOrderDetails(...args),
+  updateOrderDetails: (...args: Parameters<typeof apiGateway.updateOrderDetails>) =>
+    apiGateway.updateOrderDetails(...args),
 
-  getOrderChecklist: (...args: Parameters<typeof fixService.getOrderChecklist>) =>
-    fixService.getOrderChecklist(...args),
+  getOrderChecklist: (...args: Parameters<typeof apiGateway.getOrderChecklist>) =>
+    apiGateway.getOrderChecklist(...args),
 
-  updateOrderChecklist: (...args: Parameters<typeof fixService.updateOrderChecklist>) =>
-    fixService.updateOrderChecklist(...args),
+  updateOrderChecklist: (...args: Parameters<typeof apiGateway.updateOrderChecklist>) =>
+    apiGateway.updateOrderChecklist(...args),
 
-  updateOrderWarranty: (...args: Parameters<typeof fixService.updateOrderWarranty>) =>
-    fixService.updateOrderWarranty(...args),
+  updateOrderWarranty: (...args: Parameters<typeof apiGateway.updateOrderWarranty>) =>
+    apiGateway.updateOrderWarranty(...args),
 };

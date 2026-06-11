@@ -1,21 +1,21 @@
-import { fixService } from '../fixService';
+import { apiGateway } from '../apiGateway';
 
 export const financeService = {
-  getBalance: (...args: Parameters<typeof fixService.getBalance>) =>
-    fixService.getBalance(...args),
+  getBalance: (...args: Parameters<typeof apiGateway.getBalance>) =>
+    apiGateway.getBalance(...args),
 
-  getCashflow: (...args: Parameters<typeof fixService.getCashflow>) =>
-    fixService.getCashflow(...args),
+  getCashflow: (...args: Parameters<typeof apiGateway.getCashflow>) =>
+    apiGateway.getCashflow(...args),
 
-  getExpenses: (...args: Parameters<typeof fixService.getExpenses>) =>
-    fixService.getExpenses(...args),
+  getExpenses: (...args: Parameters<typeof apiGateway.getExpenses>) =>
+    apiGateway.getExpenses(...args),
 
-  getExpense: (...args: Parameters<typeof fixService.getExpense>) =>
-    fixService.getExpense(...args),
+  getExpense: (...args: Parameters<typeof apiGateway.getExpense>) =>
+    apiGateway.getExpense(...args),
 
-  createExpense: (...args: Parameters<typeof fixService.createExpense>) =>
-    fixService.createExpense(...args),
+  createExpense: (...args: Parameters<typeof apiGateway.createExpense>) =>
+    apiGateway.createExpense(...args),
 
-  deleteExpense: (...args: Parameters<typeof fixService.deleteExpense>) =>
-    fixService.deleteExpense(...args),
+  deleteExpense: (...args: Parameters<typeof apiGateway.deleteExpense>) =>
+    apiGateway.deleteExpense(...args),
 };

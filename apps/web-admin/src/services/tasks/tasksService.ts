@@ -1,24 +1,24 @@
-import { fixService } from '../fixService';
+import { apiGateway } from '../apiGateway';
 
 export const tasksService = {
-  getTasks: (...args: Parameters<typeof fixService.getTasks>) =>
-    fixService.getTasks(...args),
+  getTasks: (...args: Parameters<typeof apiGateway.getTasks>) =>
+    apiGateway.getTasks(...args),
 
-  getTaskById: (...args: Parameters<typeof fixService.getTaskById>) =>
-    fixService.getTaskById(...args),
+  getTaskById: (...args: Parameters<typeof apiGateway.getTaskById>) =>
+    apiGateway.getTaskById(...args),
 
-  createTask: (...args: Parameters<typeof fixService.createTask>) =>
-    fixService.createTask(...args),
+  createTask: (...args: Parameters<typeof apiGateway.createTask>) =>
+    apiGateway.createTask(...args),
 
-  updateTask: (...args: Parameters<typeof fixService.updateTask>) =>
-    fixService.updateTask(...args),
+  updateTask: (...args: Parameters<typeof apiGateway.updateTask>) =>
+    apiGateway.updateTask(...args),
 
-  updateTaskStatus: (...args: Parameters<typeof fixService.updateTaskStatus>) =>
-    fixService.updateTaskStatus(...args),
+  updateTaskStatus: (...args: Parameters<typeof apiGateway.updateTaskStatus>) =>
+    apiGateway.updateTaskStatus(...args),
 
-  getTaskHistory: (...args: Parameters<typeof fixService.getTaskHistory>) =>
-    fixService.getTaskHistory(...args),
+  getTaskHistory: (...args: Parameters<typeof apiGateway.getTaskHistory>) =>
+    apiGateway.getTaskHistory(...args),
 
-  deleteTask: (...args: Parameters<typeof fixService.deleteTask>) =>
-    fixService.deleteTask(...args),
+  deleteTask: (...args: Parameters<typeof apiGateway.deleteTask>) =>
+    apiGateway.deleteTask(...args),
 };

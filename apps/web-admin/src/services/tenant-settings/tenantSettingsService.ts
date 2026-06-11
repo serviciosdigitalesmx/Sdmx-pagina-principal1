@@ -1,15 +1,15 @@
-import { fixService } from '../fixService';
+import { apiGateway } from '../apiGateway';
 
 export const tenantSettingsService = {
-  getTenantLandingSettings: (...args: Parameters<typeof fixService.getTenantLandingSettings>) =>
-    fixService.getTenantLandingSettings(...args),
+  getTenantLandingSettings: (...args: Parameters<typeof apiGateway.getTenantLandingSettings>) =>
+    apiGateway.getTenantLandingSettings(...args),
 
-  updateTenantLandingSettings: (...args: Parameters<typeof fixService.updateTenantLandingSettings>) =>
-    fixService.updateTenantLandingSettings(...args),
+  updateTenantLandingSettings: (...args: Parameters<typeof apiGateway.updateTenantLandingSettings>) =>
+    apiGateway.updateTenantLandingSettings(...args),
 
-  getTenantSettings: (...args: Parameters<typeof fixService.getTenantSettings>) =>
-    fixService.getTenantSettings(...args),
+  getTenantSettings: (...args: Parameters<typeof apiGateway.getTenantSettings>) =>
+    apiGateway.getTenantSettings(...args),
 
-  updateTenantSettings: (...args: Parameters<typeof fixService.updateTenantSettings>) =>
-    fixService.updateTenantSettings(...args),
+  updateTenantSettings: (...args: Parameters<typeof apiGateway.updateTenantSettings>) =>
+    apiGateway.updateTenantSettings(...args),
 };
