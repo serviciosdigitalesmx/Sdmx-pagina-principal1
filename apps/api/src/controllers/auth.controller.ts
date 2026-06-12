@@ -3,6 +3,7 @@ import { createHmac, randomUUID } from 'crypto';
 import { z } from 'zod';
 import { supabaseAdmin } from '@white-label/database';
 import { resolveEffectiveUserRole } from '../lib/user-roles';
+import { getRequestIp } from '../lib/request-ip';
 import { resolveTenantJwtSecret } from '../services/security-backoffice';
 
 const registerSchema = z.object({
@@ -556,11 +557,12 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
       userRowId: userRow.id,
       sessionId,
     });
+    const ipAddress = getRequestIp(req.headers, req.ip);
     const { error: sessionInsertError } = await supabaseAdmin.from('security_sessions').insert([{
       tenant_id: tenantSecurity.id,
       user_id: userRow.id,
       session_key: sessionId,
-      ip_address: typeof req.ip === 'string' ? '[REDACTED]' : null,
+      ip_address: ipAddress,
       user_agent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
       last_activity_at: new Date().toISOString(),
     }]);

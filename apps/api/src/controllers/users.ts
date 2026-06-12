@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { supabaseAdmin } from '@white-label/database';
 import { resolveDisplayUserRole, resolveEffectiveUserRole, normalizeStoredUserRole } from '../lib/user-roles';
+import { getRequestIp } from '../lib/request-ip';
 import { writeAuditLog } from '../services/security-backoffice';
 
 const userListQuerySchema = z.object({
@@ -390,7 +391,7 @@ export const updateUserRole = async (req: Request, res: Response) => {
       tenantId,
       userId: req.user?.userId ?? null,
       action: 'users.role.updated',
-      ipAddress: req.ip ?? null,
+      ipAddress: getRequestIp(req.headers, req.ip),
       userAgent: req.headers['user-agent'] ?? null,
       dataBefore: currentUser,
       dataAfter: updatedUser,
@@ -441,7 +442,7 @@ export const deactivateUser = async (req: Request, res: Response) => {
       tenantId,
       userId: req.user?.userId ?? null,
       action: 'users.deactivated',
-      ipAddress: req.ip ?? null,
+      ipAddress: getRequestIp(req.headers, req.ip),
       userAgent: req.headers['user-agent'] ?? null,
       dataAfter: updatedUser,
     });

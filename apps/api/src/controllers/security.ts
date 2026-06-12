@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { supabaseAdmin } from '@white-label/database';
+import { getRequestIp } from '../lib/request-ip';
 import { buildOtpAuthUri, generateTotpSecret, verifyTotp, writeAuditLog } from '../services/security-backoffice';
 
 const inviteUserSchema = z.object({
@@ -204,7 +205,7 @@ export const updateSecurityConfig = async (req: Request, res: Response) => {
       tenantId,
       userId: req.user?.userId ?? null,
       action: 'security.config.updated',
-      ipAddress: req.ip ?? null,
+      ipAddress: getRequestIp(req.headers, req.ip),
       userAgent: req.headers['user-agent'] ?? null,
       dataBefore: beforeRow ?? null,
       dataAfter: { ...parsed.data, require_admin_mfa: nextRequireAdminMfa ?? beforeRow?.require_admin_mfa ?? false },
@@ -463,7 +464,7 @@ export const revokeSession = async (req: Request, res: Response) => {
       tenantId,
       userId: req.user?.userId ?? null,
       action: 'security.session.revoked',
-      ipAddress: req.ip ?? null,
+      ipAddress: getRequestIp(req.headers, req.ip),
       userAgent: req.headers['user-agent'] ?? null,
       dataAfter: { sessionId: data.id, revokedAt: data.revoked_at },
     });
@@ -521,7 +522,7 @@ export const rotateKeys = async (req: Request, res: Response) => {
       tenantId,
       userId: req.user?.userId ?? null,
       action: 'security.keys.rotated',
-      ipAddress: req.ip ?? null,
+      ipAddress: getRequestIp(req.headers, req.ip),
       userAgent: req.headers['user-agent'] ?? null,
       dataBefore: beforeRow ?? null,
       dataAfter: { security_jwt_secret: '[redacted]' },
@@ -632,7 +633,7 @@ export const verifyAdminMfa = async (req: Request, res: Response) => {
       tenantId,
       userId: req.user.userId,
       action: 'security.mfa.enabled',
-      ipAddress: req.ip ?? null,
+      ipAddress: getRequestIp(req.headers, req.ip),
       userAgent: req.headers['user-agent'] ?? null,
       dataAfter: { userId: userRow.id },
     });
@@ -685,7 +686,7 @@ export const updateAdminMfaRequirement = async (req: Request, res: Response) => 
       tenantId,
       userId: req.user?.userId ?? null,
       action: 'security.mfa.requirement.updated',
-      ipAddress: req.ip ?? null,
+      ipAddress: getRequestIp(req.headers, req.ip),
       userAgent: req.headers['user-agent'] ?? null,
       dataBefore: beforeRow ?? null,
       dataAfter: data ?? null,

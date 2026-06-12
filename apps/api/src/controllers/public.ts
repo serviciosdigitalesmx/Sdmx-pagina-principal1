@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { getTenantClient, supabaseAdmin } from '@white-label/database';
+import { getRequestIp } from '../lib/request-ip';
 import { loadTenantRuntimeConfig } from '../services/tenant-config';
 import { getEvidenceMetadata } from '../services/evidence-adapter';
 import { FEATURE_EVIDENCE_MODE } from '../config/feature-flags';
@@ -339,7 +340,7 @@ export async function createPublicQuote(req: Request, res: Response) {
           quoted_total: 0,
           deposit_amount: 0,
           balance_amount: 0,
-          solicitud_origen_ip: req.ip ?? null,
+          solicitud_origen_ip: getRequestIp(req.headers, req.ip),
         },
       ])
       .select()

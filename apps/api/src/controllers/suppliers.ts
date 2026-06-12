@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { getTenantClient } from '@white-label/database';
+import { getRequestIp } from '../lib/request-ip';
 import { writeAuditLog } from '../services/security-backoffice';
 
 const supplierStatusSchema = z.enum(['active', 'inactive']);
@@ -220,7 +221,7 @@ export const createSupplier = async (req: Request, res: Response) => {
       tenantId,
       userId: req.user?.userId ?? null,
       action: 'suppliers.created',
-      ipAddress: req.ip ?? null,
+      ipAddress: getRequestIp(req.headers, req.ip),
       userAgent: req.headers['user-agent'] ?? null,
       dataAfter: data,
     }).catch((auditError) => {
@@ -296,7 +297,7 @@ export const updateSupplier = async (req: Request, res: Response) => {
       tenantId,
       userId: req.user?.userId ?? null,
       action: 'suppliers.updated',
-      ipAddress: req.ip ?? null,
+      ipAddress: getRequestIp(req.headers, req.ip),
       userAgent: req.headers['user-agent'] ?? null,
       dataBefore: existing,
       dataAfter: data,
@@ -357,7 +358,7 @@ export const updateSupplierStatus = async (req: Request, res: Response) => {
       tenantId,
       userId: req.user?.userId ?? null,
       action: body.status === 'active' ? 'suppliers.activated' : 'suppliers.deactivated',
-      ipAddress: req.ip ?? null,
+      ipAddress: getRequestIp(req.headers, req.ip),
       userAgent: req.headers['user-agent'] ?? null,
       dataBefore: existing,
       dataAfter: data,
@@ -460,7 +461,7 @@ export const deleteSupplier = async (req: Request, res: Response) => {
       tenantId,
       userId: req.user?.userId ?? null,
       action: 'suppliers.deactivated',
-      ipAddress: req.ip ?? null,
+      ipAddress: getRequestIp(req.headers, req.ip),
       userAgent: req.headers['user-agent'] ?? null,
       dataBefore: existing,
     }).catch((auditError) => {

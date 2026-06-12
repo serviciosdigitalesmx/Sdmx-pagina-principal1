@@ -1,5 +1,6 @@
 import { createHmac, randomBytes } from 'crypto';
 import { supabaseAdmin } from '@white-label/database';
+import { getRequestIp } from '../lib/request-ip';
 
 function base32Encode(buffer: Buffer) {
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -111,7 +112,7 @@ export async function writeAuditLog(input: {
     tenant_id: input.tenantId,
     user_id: input.userId ?? null,
     action: input.action,
-    ip_address: input.ipAddress ?? null,
+    ip_address: getRequestIp(undefined, input.ipAddress ?? null),
     user_agent: input.userAgent ?? null,
     data_before: input.dataBefore ?? null,
     data_after: input.dataAfter ?? null,
@@ -121,4 +122,3 @@ export async function writeAuditLog(input: {
     throw error;
   }
 }
-
