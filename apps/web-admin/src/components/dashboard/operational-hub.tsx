@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ordersService } from "@/services/orders/ordersService";
 import { reportsService } from "@/services/reports/reportsService";
+import { isModuleEnabled } from "@/lib/module-access";
 
 type OrderRecord = {
   id?: string;

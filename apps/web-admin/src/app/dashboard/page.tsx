@@ -478,3 +478,4 @@ function QuickActionButton({ label, icon, onClick }: QuickActionButtonProps) {
 
 // Importar íconos que faltan
 import { ShoppingCart, BarChart3 } from 'lucide-react';
+import { isModuleEnabled } from '@/lib/module-access';
