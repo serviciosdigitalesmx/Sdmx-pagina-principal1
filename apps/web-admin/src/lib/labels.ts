@@ -67,3 +67,7 @@ export function getCreatedSuccessLabel(options?: { plural?: boolean }) {
 export function getOrderContextLabel() {
   return getOrderLabel().toLowerCase();
 }
+
+export function getSaveOrderCopy(): string {
+  return `Guardar ${getOrderLabel()}`;
+}

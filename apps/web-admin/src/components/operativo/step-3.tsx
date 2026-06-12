@@ -2,7 +2,7 @@
 
 import { Calendar, User, Phone, Mail, Package, DollarSign, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getAssetLabel, getCustomerLabel, getOrderLabel } from '@/lib/labels';
+import { getAssetLabel, getCustomerLabel, getOrderLabel, getSaveOrderCopy } from '@/lib/labels';
 import type { OrderFormData } from '@/app/dashboard/operativo/page';
 
 interface Step3Props {
@@ -28,6 +28,8 @@ export function Step3({ data, onSubmit, onBack, loading }: Step3Props) {
     { label: `${assetLabel} prende`, value: data.checks.prende },
     { label: 'Respaldo', value: data.checks.respaldo },
   ];
+
+  const saveOrderCopy = getSaveOrderCopy();
 
   return (
     <div className="card p-6 space-y-6">
@@ -94,7 +96,7 @@ export function Step3({ data, onSubmit, onBack, loading }: Step3Props) {
               Guardando...
             </>
           ) : (
-            'Guardar Orden'
+            saveOrderCopy
           )}
         </Button>
       </div>
