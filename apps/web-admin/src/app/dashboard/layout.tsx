@@ -9,6 +9,7 @@ import { LoadingState, ErrorState } from '@/components/base/states';
 import { isAuthenticated } from '@/lib/auth';
 import { getCurrentSession } from '@/lib/session';
 import { TenantIdentityProvider } from '@/providers/TenantIdentityProvider';
+import { ModuleRouteGuard } from '@/components/guard/module-route-guard';
 
 function getSessionUser() {
   const session = getCurrentSession();
@@ -72,7 +73,7 @@ export default function DashboardLayout({
             <Header user={user} onMenuClick={() => setMenuOpen(true)} />
             <main className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 lg:px-8">
               <div className="mx-auto w-full max-w-[1800px]">
-                {children}
+                <ModuleRouteGuard>{children}</ModuleRouteGuard>
               </div>
             </main>
           </div>
