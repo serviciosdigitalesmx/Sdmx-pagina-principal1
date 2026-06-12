@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { DASHBOARD_MODULES } from '@/types';
 import { getActiveSucursalId, canUseConsolidatedView } from '@/lib/tenant';
+import { isModuleEnabled, type TenantModuleKey } from '@/lib/module-access';
 import { useTenantIdentity } from '@/providers/TenantIdentityProvider';
 import { platformBrand } from '@/config/branding';
 
@@ -52,6 +53,23 @@ const getIcon = (iconName: string) => {
   return icons[iconName] || LayoutDashboard;
 };
 
+const DASHBOARD_MODULE_ACCESS: Partial<Record<string, TenantModuleKey>> = {
+  operativo: 'orders',
+  tecnico: 'orders',
+  solicitudes: 'requests',
+  archivo: 'archive',
+  clientes: 'customers',
+  tareas: 'tasks',
+  stock: 'inventory',
+  proveedores: 'procurement',
+  compras: 'procurement',
+  gastos: 'finance',
+  finanzas: 'finance',
+  reportes: 'reports',
+  sucursales: 'branches',
+  seguridad: 'security',
+};
+
 export function Sidebar({
   mobileOpen,
   onMobileOpenChange,
@@ -70,6 +88,15 @@ export function Sidebar({
 
   const activeSucursalId = mounted ? getActiveSucursalId() : null;
   const showConsolidated = mounted ? canUseConsolidatedView() : false;
+  const visibleModules = DASHBOARD_MODULES.filter((module) => {
+    if (module.key === 'dashboard' || module.key === 'landing') {
+      return true;
+    }
+
+    const accessKey = DASHBOARD_MODULE_ACCESS[module.key];
+
+    return accessKey ? isModuleEnabled(accessKey) : true;
+  });
 
   const sidebarContent = (
     <div className="flex h-full flex-col">
@@ -130,7 +157,7 @@ export function Sidebar({
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-        {DASHBOARD_MODULES.map((module) => {
+        {visibleModules.map((module) => {
           const Icon = getIcon(module.icon);
           const isActive = pathname === module.href || pathname.startsWith(`${module.href}/`);
 
