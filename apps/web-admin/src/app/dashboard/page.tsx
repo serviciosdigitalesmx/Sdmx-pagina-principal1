@@ -33,6 +33,7 @@ import {
 } from 'recharts';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
+import { getCustomerLabel, getOrderLabel, getTechnicianLabel } from '@/lib/labels';
 import type { ReportsSummary } from '@/types';
 
 // Colores para gráficos
@@ -56,6 +57,10 @@ const STATUS_COLORS = {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const orderLabel = getOrderLabel();
+  const ordersLabel = getOrderLabel({ plural: true });
+  const customersLabel = getCustomerLabel({ plural: true });
+  const technicianLabel = getTechnicianLabel();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [summary, setSummary] = useState<ReportsSummary | null>(null);
@@ -183,13 +188,13 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <SimpleCard
-          title="Órdenes activas"
+          title={`${ordersLabel} activas`}
           value={summary.ordersCount}
           icon={<ClipboardList className="w-5 h-5" />}
           onClick={() => router.push('/dashboard/tecnico')}
         />
         <SimpleCard
-          title="Clientes"
+          title={customersLabel}
           value={summary.customersCount}
           icon={<Users className="w-5 h-5" />}
           onClick={() => router.push('/dashboard/clientes')}
@@ -250,7 +255,7 @@ export default function DashboardPage() {
 
         <div className="card">
           <h3 className="text-sm font-semibold uppercase tracking-wider text-srf-muted mb-4">
-            Órdenes por técnico
+            {ordersLabel} por {technicianLabel.toLowerCase()}
           </h3>
           <div className="h-64">
             {mounted ? (
@@ -349,7 +354,7 @@ export default function DashboardPage() {
       {/* Quick Actions */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <QuickActionButton
-          label="Nueva orden"
+          label={`Nueva ${orderLabel.toLowerCase()}`}
           icon={<ClipboardList className="w-5 h-5" />}
           onClick={() => router.push('/dashboard/operativo')}
         />

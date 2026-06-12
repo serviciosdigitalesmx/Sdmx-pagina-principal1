@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { User, LogOut, ChevronDown, Building2, Menu } from 'lucide-react';
 import { BranchSelector } from './branch-selector';
 import { logout } from '@/lib/auth';
+import { getCustomerLabel } from '@/lib/labels';
 import type { User as UserType } from '@/types';
 import { useTenantIdentity } from '@/providers/TenantIdentityProvider';
 
@@ -18,6 +19,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   const router = useRouter();
   const { identity } = useTenantIdentity();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const customerLabel = getCustomerLabel();
 
   const handleLogout = () => {
     logout();
@@ -28,7 +30,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
     owner: 'Dueño',
     manager: 'Gerente',
     technician: 'Técnico',
-    client: 'Cliente',
+    client: customerLabel,
   };
 
   return (

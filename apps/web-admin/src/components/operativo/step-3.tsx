@@ -2,6 +2,7 @@
 
 import { Calendar, User, Phone, Mail, Package, DollarSign, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getAssetLabel, getCustomerLabel, getOrderLabel } from '@/lib/labels';
 import type { OrderFormData } from '@/app/dashboard/operativo/page';
 
 interface Step3Props {
@@ -12,6 +13,9 @@ interface Step3Props {
 }
 
 export function Step3({ data, onSubmit, onBack, loading }: Step3Props) {
+  const customerLabel = getCustomerLabel();
+  const orderLabel = getOrderLabel();
+  const assetLabel = getAssetLabel();
   const formatDate = (dateStr: string) => {
     if (!dateStr) return 'No especificada';
     const date = new Date(dateStr);
@@ -21,7 +25,7 @@ export function Step3({ data, onSubmit, onBack, loading }: Step3Props) {
   const checklistItems = [
     { label: 'Cargador', value: data.checks.cargador },
     { label: 'Pantalla OK', value: data.checks.pantalla },
-    { label: 'Equipo prende', value: data.checks.prende },
+    { label: `${assetLabel} prende`, value: data.checks.prende },
     { label: 'Respaldo', value: data.checks.respaldo },
   ];
 
@@ -29,12 +33,12 @@ export function Step3({ data, onSubmit, onBack, loading }: Step3Props) {
     <div className="card p-6 space-y-6">
       <h3 className="text-lg font-bold text-srf-primary flex items-center gap-2">
         <CheckCircle className="w-5 h-5" />
-        Confirmar Orden
+        Confirmar {orderLabel}
       </h3>
 
       <div className="bg-srf-bg rounded-lg p-4 space-y-3 border border-srf-primary/30">
         <div className="flex justify-between border-b border-srf-primary/20 pb-2">
-          <span className="text-srf-muted">Cliente:</span>
+          <span className="text-srf-muted">{customerLabel}:</span>
           <span className="font-medium">{data.clienteNombre}</span>
         </div>
         <div className="flex justify-between border-b border-srf-primary/20 pb-2">
@@ -48,7 +52,7 @@ export function Step3({ data, onSubmit, onBack, loading }: Step3Props) {
           </div>
         )}
         <div className="flex justify-between border-b border-srf-primary/20 pb-2">
-          <span className="text-srf-muted">Equipo:</span>
+          <span className="text-srf-muted">{assetLabel}:</span>
           <span>{data.dispositivo} - {data.modelo}</span>
         </div>
         <div className="flex justify-between border-b border-srf-primary/20 pb-2">

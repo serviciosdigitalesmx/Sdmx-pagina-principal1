@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { getAssetLabel } from '@/lib/labels';
 import type { OrderFormData } from '@/app/dashboard/operativo/page';
 
 interface Step2Props {
@@ -16,6 +17,7 @@ interface Step2Props {
 }
 
 export function Step2({ data, onSubmit, onBack, onUpdate }: Step2Props) {
+  const assetLabel = getAssetLabel();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [localData, setLocalData] = useState<OrderFormData>(data);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -93,7 +95,7 @@ export function Step2({ data, onSubmit, onBack, onUpdate }: Step2Props) {
     <form onSubmit={handleSubmit} className="card p-6 space-y-6">
       <h3 className="text-lg font-bold text-srf-primary flex items-center gap-2">
         <FileText className="w-5 h-5" />
-        Información del Equipo
+        Información del {assetLabel}
       </h3>
 
       {/* Device type */}
@@ -194,7 +196,7 @@ export function Step2({ data, onSubmit, onBack, onUpdate }: Step2Props) {
               }}
               className="w-4 h-4 accent-srf-accent"
             />
-            <span className="text-sm">Equipo prende</span>
+            <span className="text-sm">{assetLabel} prende</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input

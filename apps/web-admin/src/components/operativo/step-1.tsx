@@ -5,6 +5,7 @@ import { User, Phone, Mail, Search, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { getCustomerLabel } from '@/lib/labels';
 import type { OrderFormData } from '@/app/dashboard/operativo/page';
 
 interface Step1Props {
@@ -14,6 +15,7 @@ interface Step1Props {
 }
 
 export function Step1({ data, onSubmit, onLoadQuote }: Step1Props) {
+  const customerLabel = getCustomerLabel();
   const [loadingQuote, setLoadingQuote] = useState(false);
   const [folioCotizacion, setFolioCotizacion] = useState(data.folioCotizacion);
   const [localData, setLocalData] = useState<OrderFormData>(data);
@@ -96,11 +98,11 @@ export function Step1({ data, onSubmit, onLoadQuote }: Step1Props) {
       <div className="space-y-4">
         <h3 className="text-lg font-bold text-srf-primary flex items-center gap-2">
           <User className="w-5 h-5" />
-          Datos del Cliente
+          Datos del {customerLabel}
         </h3>
 
         <div>
-          <Label>Nombre completo <span className="text-red-500">*</span></Label>
+          <Label>Nombre completo del {customerLabel.toLowerCase()} <span className="text-red-500">*</span></Label>
           <Input
             value={localData.clienteNombre}
             onChange={(e) => setLocalData((current) => ({ ...current, clienteNombre: e.target.value }))}

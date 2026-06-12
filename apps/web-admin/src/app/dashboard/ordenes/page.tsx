@@ -11,6 +11,7 @@ import { LoadingState, ErrorState } from '@/components/base/states';
 import { EmptyState, MoneyCard } from '@/components/base/cards';
 import { StatusBadge } from '@/components/base/badges';
 import { Button } from '@/components/ui/button';
+import { getOrderLabel } from '@/lib/labels';
 
 type ViewMode = 'kanban' | 'list';
 
@@ -85,6 +86,8 @@ function getRiskTone(order: Order) {
 
 export default function OrdersPage() {
   const router = useRouter();
+  const orderLabel = getOrderLabel();
+  const ordersLabel = getOrderLabel({ plural: true });
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -207,8 +210,8 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-4">
-        <MoneyCard label="Órdenes activas" value={String(activeCount)} helper="No entregadas o canceladas" />
-        <MoneyCard label="Órdenes visibles" value={String(visibleOrders.length)} helper="Filtradas en la vista actual" />
+        <MoneyCard label={`${ordersLabel} activas`} value={String(activeCount)} helper="No entregadas o canceladas" />
+        <MoneyCard label={`${ordersLabel} visibles`} value={String(visibleOrders.length)} helper="Filtradas en la vista actual" />
         <MoneyCard label="Estados activos" value={String(orderedStatusKeys.length)} helper="Estados reales detectados" />
         <MoneyCard label="Valor estimado" value={formatMoney(totalBalance)} helper="Suma de coste estimado/final" accent />
       </div>
@@ -216,7 +219,7 @@ export default function OrdersPage() {
       <div className="card-base space-y-4 p-4 lg:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-srf-text">Órdenes</h1>
+            <h1 className="text-2xl font-black tracking-tight text-srf-text">{ordersLabel}</h1>
             <p className="mt-1 text-sm text-srf-muted">Lista, búsqueda, kanban y detalle con API real.</p>
           </div>
 
@@ -231,7 +234,7 @@ export default function OrdersPage() {
             </Button>
             <Button onClick={() => router.push('/dashboard/operativo')} className="gap-2">
               <Plus className="h-4 w-4" />
-              Nueva orden
+              Nueva {orderLabel.toLowerCase()}
             </Button>
           </div>
         </div>
