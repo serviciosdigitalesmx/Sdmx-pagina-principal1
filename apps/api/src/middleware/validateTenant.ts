@@ -14,17 +14,21 @@ export const validateTenant = (req: Request, res: Response, next: NextFunction) 
   const tokenTenantIdMatchesRoute = Boolean(routeTenantSlug && tokenTenantId && routeTenantSlug === tokenTenantId);
   const tokenTenantSlugMatchesRoute = Boolean(routeTenantSlug && tokenTenantSlug && routeTenantSlug === tokenTenantSlug);
 
-  console.warn('[tenant-guard]', {
-    middlewareName: 'validateTenant',
-    method: req.method,
-    path: req.originalUrl,
-    routeTenantParam: routeTenantSlug ?? null,
-    routeTenantParamType,
-    tokenTenantIdPresent: Boolean(tokenTenantId),
-    tokenTenantSlugPresent: Boolean(tokenTenantSlug),
-    tokenTenantIdMatchesRoute,
-    tokenTenantSlugMatchesRoute,
-  });
+  if (process.env.TENANT_GUARD_DEBUG === '1') {
+    console.warn('[tenant-guard]', {
+      middlewareName: 'validateTenant',
+      method: req.method,
+      originalUrl: req.originalUrl,
+      routeTenantSlug: routeTenantSlug ?? null,
+      routeTenantId: req.params.tenantId ?? null,
+      tokenTenantSlug: tokenTenantSlug ?? null,
+      tokenTenantId: tokenTenantId ?? null,
+      routeTenantParamType,
+      tokenTenantIdMatchesRoute,
+      tokenTenantSlugMatchesRoute,
+      hasUser: Boolean(req.user),
+    });
+  }
 
   if (!tokenTenantSlug) {
     return res.status(401).json({ error: 'Missing tenant_slug in token' });
