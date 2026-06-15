@@ -4,7 +4,6 @@ import '@/styles/globals.css';
 export const metadata: Metadata = {
   title: 'FIXI - Panel de Administración',
   description: 'Plataforma de gestión para talleres de reparación',
-  manifest: '/api/pwa/manifest',
 };
 
 export const viewport = {
