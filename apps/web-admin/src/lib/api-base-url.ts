@@ -1,20 +1,25 @@
 const apiUrlCandidates = [
   process.env.NEXT_PUBLIC_API_URL,
+  process.env.NEXT_PUBLIC_API_BASE_URL,
+  process.env.NEXT_PUBLIC_RENDER_API_URL,
   process.env.API_URL,
 ] as const;
 
 function normalizeBaseUrl(value: string): string {
   const trimmed = value.trim();
+
   if (!trimmed) {
-    throw new Error('Empty API base URL');
+    throw new Error("Empty API base URL");
   }
 
   const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
   const url = new URL(withScheme);
-  url.hash = '';
-  url.search = '';
-  url.pathname = url.pathname === '/' ? '' : url.pathname.replace(/\/$/, '');
-  return url.toString().replace(/\/$/, '');
+
+  url.hash = "";
+  url.search = "";
+  url.pathname = url.pathname === "/" ? "" : url.pathname.replace(/\/$/, "");
+
+  return url.toString().replace(/\/$/, "");
 }
 
 export function resolveAdminApiBaseUrl(): string {
@@ -24,5 +29,7 @@ export function resolveAdminApiBaseUrl(): string {
     }
   }
 
-  throw new Error('Missing required environment variable: NEXT_PUBLIC_API_URL');
+  throw new Error(
+    "Missing required environment variable: NEXT_PUBLIC_API_URL or NEXT_PUBLIC_API_BASE_URL"
+  );
 }
