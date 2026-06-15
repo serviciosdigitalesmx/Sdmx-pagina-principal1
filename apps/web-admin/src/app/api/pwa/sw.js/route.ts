@@ -1,8 +1,15 @@
 import { NextRequest } from "next/server";
 
 function buildFallbackServiceWorker(tenantSlug: string) {
+  const buildId =
+    process.env.VERCEL_GIT_COMMIT_SHA?.trim() ||
+    process.env.VERCEL_DEPLOYMENT_ID?.trim() ||
+    process.env.VERCEL_BUILD_ID?.trim() ||
+    process.env.NEXT_PUBLIC_BUILD_ID?.trim() ||
+    "dev";
+
   return `
-const CACHE_VERSION = 'srfix-web-admin-${tenantSlug}-v2';
+const CACHE_VERSION = 'srfix-web-admin-${tenantSlug}-${buildId}';
 const PRECACHE = [
   '/',
   '/dashboard',

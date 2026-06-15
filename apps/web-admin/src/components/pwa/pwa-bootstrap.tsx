@@ -22,7 +22,8 @@ async function registerServiceWorker(tenantSlug: string) {
     return;
   }
 
-  const swUrl = `/api/pwa/sw.js?tenant=${encodeURIComponent(tenantSlug)}`;
+  const buildId = document.body?.dataset.buildId?.trim() || "dev";
+  const swUrl = `/api/pwa/sw.js?tenant=${encodeURIComponent(tenantSlug)}&build=${encodeURIComponent(buildId)}`;
   try {
     await navigator.serviceWorker.register(swUrl, { scope: "/" });
   } catch {

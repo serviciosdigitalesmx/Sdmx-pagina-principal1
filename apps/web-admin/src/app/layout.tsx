@@ -19,13 +19,15 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const buildId = process.env.VERCEL_GIT_COMMIT_SHA?.trim() || process.env.VERCEL_DEPLOYMENT_ID?.trim() || "dev";
+
   return (
     <html lang="es">
       <head>
         <link rel="icon" href="/favicon.png" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
-      <body>{children}</body>
+      <body data-build-id={buildId}>{children}</body>
     </html>
   );
 }
