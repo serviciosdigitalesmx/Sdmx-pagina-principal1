@@ -38,11 +38,6 @@ export default function OnboardingPage() {
     setError(null);
 
     try {
-      const nativeForm = document.createElement("form");
-      nativeForm.method = "POST";
-      nativeForm.action = getPublicApiPath("/api/auth/register");
-      nativeForm.style.display = "none";
-
       const fields: Record<string, string> = {
         workshopName: form.workshopName.trim(),
         email: form.email.trim(),
@@ -51,16 +46,30 @@ export default function OnboardingPage() {
         origin: window.location.origin,
       };
 
-      for (const [name, value] of Object.entries(fields)) {
-        const input = document.createElement("input");
-        input.type = "hidden";
-        input.name = name;
-        input.value = value;
-        nativeForm.appendChild(input);
+      const response = await fetch(getPublicApiPath("/api/auth/register"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(fields),
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(
+          payload?.error ||
+            payload?.details?.formErrors?.[0] ||
+            payload?.details?.fieldErrors?.workshopName?.[0] ||
+            "Error inesperado al crear la cuenta"
+        );
       }
 
-      document.body.appendChild(nativeForm);
-      nativeForm.submit();
+      if (!payload?.redirectUrl) {
+        throw new Error("La API no devolvió redirectUrl");
+      }
+
+      window.location.assign(payload.redirectUrl);
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : "Error inesperado al crear la cuenta";
       setError(message);
