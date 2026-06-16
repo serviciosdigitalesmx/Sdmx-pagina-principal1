@@ -17,6 +17,44 @@ export type TenantModuleKey =
   | 'branches'
   | 'archive';
 
+const MODULE_KEY_ALIASES: Record<string, TenantModuleKey> = {
+  dashboard: 'orders',
+  customers: 'customers',
+  requests: 'requests',
+  orders: 'orders',
+  appointments: 'orders',
+  assets: 'inventory',
+  stock: 'inventory',
+  suppliers: 'procurement',
+  'purchase-orders': 'procurement',
+  purchases: 'procurement',
+  procurement: 'procurement',
+  expenses: 'finance',
+  gastos: 'finance',
+  finance: 'finance',
+  reports: 'reports',
+  documents: 'settings',
+  portal: 'settings',
+  landing: 'settings',
+  whatsapp: 'settings',
+  warranty: 'settings',
+  billing: 'settings',
+  settings: 'settings',
+  sucursales: 'branches',
+  branches: 'branches',
+  users: 'users',
+  usuarios: 'users',
+  tasks: 'tasks',
+  security: 'security',
+  seguridad: 'security',
+  archive: 'archive',
+  archivo: 'archive',
+};
+
+function normalizeModuleKey(key: string): TenantModuleKey | null {
+  return MODULE_KEY_ALIASES[key] ?? null;
+}
+
 const MODULE_ROUTE_MAP: Record<string, TenantModuleKey> = {
   '/dashboard/ordenes': 'orders',
   '/dashboard/clientes': 'customers',
@@ -37,13 +75,17 @@ const MODULE_ROUTE_MAP: Record<string, TenantModuleKey> = {
 export function getEnabledModules(): string[] {
   const storedActiveModules = getStoredActiveModules();
   if (storedActiveModules.length > 0) {
-    return storedActiveModules;
+    return storedActiveModules
+      .map((moduleKey) => normalizeModuleKey(moduleKey))
+      .filter((moduleKey): moduleKey is TenantModuleKey => Boolean(moduleKey));
   }
 
   const scope = getPlatformScope();
   const vertical = resolveVertical(getStoredIndustryKey() ?? scope?.verticalCode ?? null);
 
-  return vertical.enabledModules ?? [];
+  return (vertical.enabledModules ?? [])
+    .map((moduleKey) => normalizeModuleKey(moduleKey))
+    .filter((moduleKey): moduleKey is TenantModuleKey => Boolean(moduleKey));
 }
 
 export function isModuleEnabled(moduleKey: TenantModuleKey): boolean {
