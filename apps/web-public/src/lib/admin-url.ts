@@ -1,7 +1,8 @@
 import { optionalEnv } from "@white-label/config";
 
 function normalizeHttpsUrl(candidate: string) {
-  const parsed = new URL(candidate);
+  const trimmed = candidate.trim();
+  const parsed = new URL(/^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`);
 
   if (parsed.protocol !== "https:") {
     return null;
