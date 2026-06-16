@@ -59,7 +59,7 @@ const boardColumns: Array<{
   accent: string;
 }> = [
   { key: "recibido", label: "Recibido", accent: "bg-sky-400" },
-  { key: "diagnostico", label: "Diagnóstico", accent: "bg-violet-400" },
+  { key: "diagnostico", label: "Diagnóstico", accent: "bg-sky-400" },
   { key: "reparacion", label: "En reparación", accent: "bg-amber-400" },
   { key: "espera_refaccion", label: "Espera refacción", accent: "bg-orange-400" },
   { key: "listo", label: "Listo para entrega", accent: "bg-emerald-400" },
@@ -106,7 +106,7 @@ function kanbanTone(status: BoardStatus) {
     case "recibido":
       return "border-sky-400/30 bg-sky-400/8";
     case "diagnostico":
-      return "border-violet-400/30 bg-violet-400/8";
+      return "border-sky-400/30 bg-sky-400/8";
     case "reparacion":
       return "border-amber-400/30 bg-amber-400/8";
     case "espera_refaccion":
@@ -119,7 +119,7 @@ function kanbanTone(status: BoardStatus) {
 }
 
 function topMetricTone(index: number) {
-  if (index === 0) return "from-violet-500/30 to-indigo-500/10";
+  if (index === 0) return "from-sky-500/30 to-cyan-500/10";
   if (index === 1) return "from-sky-500/25 to-cyan-500/10";
   if (index === 2) return "from-emerald-500/25 to-green-500/10";
   return "from-amber-500/20 to-orange-500/10";
@@ -254,7 +254,7 @@ export function OperationalHub() {
       <section className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,12,18,0.98),rgba(6,8,14,0.98))] p-4 shadow-[0_24px_90px_rgba(0,0,0,0.3)]">
         <div className="flex flex-col gap-4 border-b border-white/10 px-2 py-3 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.34em] text-violet-300/70">Órdenes de trabajo</p>
+            <p className="text-xs uppercase tracking-[0.34em] text-sky-300/70">Órdenes de trabajo</p>
             <h2 className="mt-2 text-3xl font-black tracking-tight text-zinc-50">Tablero operativo</h2>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -309,7 +309,7 @@ export function OperationalHub() {
         <article className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,12,18,0.98),rgba(6,8,14,0.98))] p-6 shadow-[0_24px_90px_rgba(0,0,0,0.26)]">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-violet-300/70">Resumen del día</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-sky-300/70">Resumen del día</p>
               <h3 className="mt-2 text-2xl font-black tracking-tight text-zinc-50">Lectura inmediata del taller</h3>
             </div>
             <Link href="/dashboard/reportes" className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-semibold text-zinc-100">
@@ -334,7 +334,7 @@ export function OperationalHub() {
         </article>
 
         <article className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(10,12,18,0.98),rgba(6,8,14,0.98))] p-6 shadow-[0_24px_90px_rgba(0,0,0,0.26)]">
-          <p className="text-xs uppercase tracking-[0.3em] text-violet-300/70">Actividad reciente</p>
+          <p className="text-xs uppercase tracking-[0.3em] text-sky-300/70">Actividad reciente</p>
           <h3 className="mt-2 text-2xl font-black tracking-tight text-zinc-50">Últimas señales</h3>
           <div className="mt-5 space-y-3">
             {recentActivity.length === 0 ? (

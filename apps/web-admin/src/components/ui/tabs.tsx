@@ -22,7 +22,7 @@ export function Tabs({
 }
 
 export function TabsList({ className = "", children }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={`flex gap-2 rounded-2xl border border-white/10 bg-white/5 p-1 ${className}`}>{children}</div>;
+  return <div className={`flex gap-2 rounded-2xl border border-slate-800 bg-slate-900/70 p-1 ${className}`}>{children}</div>;
 }
 
 export function TabsTrigger({
@@ -36,7 +36,7 @@ export function TabsTrigger({
     <button
       type="button"
       onClick={() => context?.setValue(value)}
-      className={`rounded-xl px-3 py-1.5 text-sm font-medium transition ${active ? "bg-srf-primary text-white shadow-sm" : "bg-transparent text-srf-muted hover:bg-white/5"} ${className}`}
+      className={`rounded-xl px-3 py-1.5 text-sm font-medium transition ${active ? "bg-sky-500 text-white shadow-sm" : "bg-transparent text-slate-400 hover:bg-white/5 hover:text-slate-100"} ${className}`}
     >
       {children}
     </button>

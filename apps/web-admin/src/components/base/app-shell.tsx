@@ -10,7 +10,7 @@ export function AppShell({
   className?: string;
 }) {
   return (
-    <div className={`shell-surface min-h-screen text-srf-text ${className}`}>
+    <div className={`shell-surface min-h-screen text-slate-100 ${className}`}>
       {children}
     </div>
   );
@@ -25,4 +25,3 @@ export function ShellContent({
 }) {
   return <div className={`mx-auto w-full max-w-[1800px] px-4 py-4 sm:px-6 lg:px-8 ${className}`}>{children}</div>;
 }
-

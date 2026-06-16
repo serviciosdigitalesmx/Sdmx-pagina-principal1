@@ -53,14 +53,14 @@ export function DashboardShell({ children }: { children: React.ReactNode; tenant
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-srf-bg">
+      <div className="flex min-h-screen items-center justify-center bg-slate-950">
         <div className="spinner h-8 w-8" />
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-srf-bg text-srf-text">
+    <div className="flex h-screen bg-slate-950 text-slate-100">
       <Sidebar />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header user={user} />

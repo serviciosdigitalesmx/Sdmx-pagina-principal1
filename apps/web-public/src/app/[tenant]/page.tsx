@@ -193,7 +193,7 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
                   </p>
                   <div className="mt-5 flex flex-wrap gap-3">
                     <CTA href={portalHref}>Ir al panel del cliente</CTA>
-                    <CTA href={`${portalHref}?folio=SRF-00106`} variant="secondary">
+                    <CTA href={`${portalHref}?folio=FIX-00106`} variant="secondary">
                       Abrir ejemplo
                     </CTA>
                   </div>

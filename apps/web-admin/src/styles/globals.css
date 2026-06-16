@@ -1,19 +1,22 @@
 :root {
-  --srf-bg: #1E1E1E;
-  --srf-surface: #2B2B2B;
-  --srf-primary: #1F7EDC;
-  --srf-accent: #FF6A2A;
-  --srf-text: #F2F2F2;
-  --srf-muted: #8A8F95;
-  --srf-wa: #25D366;
+  --srf-bg: #09090b;
+  --srf-surface: #111827;
+  --srf-primary: #60a5fa;
+  --srf-accent: #22d3ee;
+  --srf-text: #f8fafc;
+  --srf-muted: #94a3b8;
+  --srf-wa: #25d366;
   --srf-green: #22c55e;
   --srf-red: #ef4444;
-  --srf-yellow: #eab308;
+  --srf-yellow: #f59e0b;
+  --srf-border: rgba(148, 163, 184, 0.16);
+  --srf-border-strong: rgba(96, 165, 250, 0.24);
+  --srf-glow: rgba(96, 165, 250, 0.16);
 }
 
 @theme inline {
   --font-sans: "Inter", sans-serif;
-  --font-display: "Orbitron", sans-serif;
+  --font-display: "Inter", sans-serif;
 }
 
 * {
@@ -24,18 +27,18 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top, rgba(31, 126, 220, 0.12), transparent 30%),
-    radial-gradient(circle at 80% 0%, rgba(255, 106, 42, 0.08), transparent 22%),
-    linear-gradient(180deg, #161616 0%, #1b1b1b 48%, #141414 100%);
+    radial-gradient(circle at top, rgba(96, 165, 250, 0.16), transparent 28%),
+    radial-gradient(circle at 80% 0%, rgba(34, 211, 238, 0.08), transparent 20%),
+    linear-gradient(180deg, #050608 0%, #09090b 40%, #0f1117 100%);
   color: var(--srf-text);
   font-family: "Inter", sans-serif;
 }
 
 h1, h2, h3, .font-orbitron {
-  font-family: "Orbitron", sans-serif;
+  font-family: "Inter", sans-serif;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: -0.02em;
+  text-transform: none;
 }
 
 .font-rajdhani {
@@ -60,8 +63,16 @@ h1, h2, h3, .font-orbitron {
 .card-rojo,
 .card-amarillo,
 .card-verde,
-.card-gris {
-  transition: all 0.2s ease;
+.card-gris,
+.card-base,
+.shell-surface,
+.shell-panel {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .btn-primary {
@@ -69,16 +80,17 @@ h1, h2, h3, .font-orbitron {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 0.875rem;
-  background: linear-gradient(135deg, var(--srf-accent) 0%, #ff7f4a 100%);
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, var(--srf-primary) 0%, #2563eb 100%);
   color: white;
   font-weight: 700;
   padding: 0.5rem 1rem;
   border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.18);
 }
 
 .btn-primary:hover {
-  background: #E85A1F;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
 }
 
 .btn-secondary {
@@ -86,16 +98,16 @@ h1, h2, h3, .font-orbitron {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 0.875rem;
-  background: linear-gradient(135deg, var(--srf-primary) 0%, #2563eb 100%);
+  border-radius: 0.75rem;
+  background: rgba(15, 23, 42, 0.92);
   color: white;
   font-weight: 700;
   padding: 0.5rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(148, 163, 184, 0.2);
 }
 
 .btn-secondary:hover {
-  background: #1a6ab8;
+  background: rgba(30, 41, 59, 0.96);
 }
 
 .btn-wa {
@@ -103,7 +115,7 @@ h1, h2, h3, .font-orbitron {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 0.875rem;
+  border-radius: 0.75rem;
   background: var(--srf-wa);
   color: white;
   font-weight: 700;
@@ -115,58 +127,50 @@ h1, h2, h3, .font-orbitron {
   background: rgba(255, 255, 255, 0.02);
   color: var(--srf-text);
   font-weight: 500;
-  border-radius: 0.875rem;
+  border-radius: 0.75rem;
   padding: 0.5rem 1rem;
 }
 
 .btn-outline:hover {
-  background: rgba(31, 126, 220, 0.1);
+  background: rgba(148, 163, 184, 0.08);
 }
 
 .btn-ghost {
   color: var(--srf-muted);
-  border-radius: 0.875rem;
+  border-radius: 0.75rem;
   padding: 0.5rem 0.75rem;
 }
 
 .btn-ghost:hover {
-  background: rgba(43, 43, 43, 0.5);
+  background: rgba(148, 163, 184, 0.08);
   color: var(--srf-text);
 }
 
 .card {
-  background:
-    linear-gradient(180deg, rgba(43, 43, 43, 0.96), rgba(34, 34, 34, 0.96)),
-    var(--srf-surface);
-  border: 1px solid rgba(31, 126, 220, 0.18);
-  border-radius: 1rem;
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.96), rgba(15, 23, 42, 0.96));
+  border: 1px solid var(--srf-border);
+  border-radius: 1.25rem;
   padding: 1rem;
-  box-shadow:
-    0 10px 24px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.35);
 }
 
 .card-base {
-  background:
-    linear-gradient(180deg, rgba(43, 43, 43, 0.96), rgba(34, 34, 34, 0.96)),
-    var(--srf-surface);
-  border: 1px solid rgba(31, 126, 220, 0.16);
+  background: linear-gradient(180deg, rgba(17, 24, 39, 0.95), rgba(15, 23, 42, 0.95));
+  border: 1px solid var(--srf-border);
   border-radius: 1.25rem;
-  box-shadow:
-    0 10px 24px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  box-shadow: 0 18px 40px rgba(2, 6, 23, 0.32);
 }
 
 .card-hover:hover {
-  border-color: rgba(31, 126, 220, 0.6);
-  transform: scale(1.01);
+  border-color: rgba(96, 165, 250, 0.45);
+  transform: translateY(-1px);
 }
 
 .input {
   width: 100%;
-  border: 1px solid rgba(31, 126, 220, 0.28);
-  border-radius: 0.875rem;
-  background: rgba(10, 10, 10, 0.32);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 0.75rem;
+  background: rgba(2, 6, 23, 0.45);
   color: var(--srf-text);
   padding: 0.5rem 0.75rem;
   outline: none;
@@ -177,8 +181,8 @@ h1, h2, h3, .font-orbitron {
 }
 
 .input:focus {
-  border-color: var(--srf-accent);
-  box-shadow: 0 0 0 1px var(--srf-accent);
+  border-color: var(--srf-primary);
+  box-shadow: 0 0 0 1px var(--srf-primary);
 }
 
 .badge-recibido,
@@ -197,45 +201,45 @@ h1, h2, h3, .font-orbitron {
 }
 
 .badge-recibido {
-  background: rgba(31, 126, 220, 0.2);
+  background: rgba(96, 165, 250, 0.12);
   color: var(--srf-primary);
-  border: 1px solid rgba(31, 126, 220, 0.4);
+  border: 1px solid rgba(96, 165, 250, 0.24);
 }
 
 .badge-diagnostico {
-  background: rgba(234, 179, 8, 0.2);
-  color: #facc15;
-  border: 1px solid rgba(234, 179, 8, 0.4);
+  background: rgba(245, 158, 11, 0.14);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.24);
 }
 
 .badge-reparacion {
-  background: rgba(249, 115, 22, 0.2);
+  background: rgba(249, 115, 22, 0.14);
   color: #fb923c;
-  border: 1px solid rgba(249, 115, 22, 0.4);
+  border: 1px solid rgba(249, 115, 22, 0.24);
 }
 
 .badge-esperando {
-  background: rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.14);
   color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.4);
+  border: 1px solid rgba(245, 158, 11, 0.24);
 }
 
 .badge-listo {
-  background: rgba(34, 197, 94, 0.2);
+  background: rgba(34, 197, 94, 0.14);
   color: #4ade80;
-  border: 1px solid rgba(34, 197, 94, 0.4);
+  border: 1px solid rgba(34, 197, 94, 0.24);
 }
 
 .badge-entregado {
-  background: rgba(138, 143, 149, 0.2);
+  background: rgba(148, 163, 184, 0.12);
   color: var(--srf-muted);
-  border: 1px solid rgba(138, 143, 149, 0.4);
+  border: 1px solid rgba(148, 163, 184, 0.18);
 }
 
 .badge-cancelado {
-  background: rgba(239, 68, 68, 0.2);
+  background: rgba(239, 68, 68, 0.14);
   color: #f87171;
-  border: 1px solid rgba(239, 68, 68, 0.4);
+  border: 1px solid rgba(239, 68, 68, 0.24);
 }
 
 .badge-neutral {
@@ -245,19 +249,19 @@ h1, h2, h3, .font-orbitron {
   padding: 0.25rem 0.5rem;
   font-size: 0.75rem;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(148, 163, 184, 0.08);
   color: var(--srf-text);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.14);
 }
 
 .card-rojo {
   border-left: 4px solid var(--srf-red);
-  background: linear-gradient(135deg, var(--srf-surface), rgba(127, 29, 29, 0.18));
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(127, 29, 29, 0.14));
 }
 
 .card-amarillo {
   border-left: 4px solid var(--srf-yellow);
-  background: linear-gradient(135deg, var(--srf-surface), rgba(113, 63, 18, 0.18));
+  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(113, 63, 18, 0.14));
 }
 
 .card-verde {

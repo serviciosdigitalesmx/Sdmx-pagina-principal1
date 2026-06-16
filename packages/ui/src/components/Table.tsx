@@ -17,16 +17,16 @@ export function Table<T extends Record<string, unknown>>({
 }) {
   if (!rows.length) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-slate-950/30 p-6 text-sm text-slate-400">
+      <div className="rounded-2xl border border-slate-800/80 bg-slate-950/60 p-6 text-sm text-slate-400">
         {emptyMessage}
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/10">
-      <table className="min-w-full divide-y divide-white/10 text-left text-sm">
-        <thead className="bg-white/5 text-slate-400">
+    <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/60 shadow-[0_18px_50px_rgba(2,6,23,0.28)]">
+      <table className="min-w-full divide-y divide-slate-800 text-left text-sm">
+        <thead className="bg-white/[0.03] text-slate-400">
           <tr>
             {columns.map((column) => (
               <th key={String(column.key)} className="px-4 py-3 font-medium">
@@ -35,9 +35,9 @@ export function Table<T extends Record<string, unknown>>({
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/10">
+        <tbody className="divide-y divide-slate-800">
           {rows.map((row, rowIndex) => (
-            <tr key={rowIndex} className="bg-slate-950/20">
+            <tr key={rowIndex} className="bg-transparent transition-colors hover:bg-white/[0.03]">
               {columns.map((column) => (
                 <td key={String(column.key)} className="px-4 py-3 text-slate-200">
                   {column.render

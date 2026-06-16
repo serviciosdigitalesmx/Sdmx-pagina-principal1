@@ -99,22 +99,22 @@ export function Sidebar({
   });
 
   const sidebarContent = (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-white/10 p-4">
+    <div className="flex h-full flex-col bg-slate-950">
+      <div className="flex items-center justify-between border-b border-slate-800 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(31,126,220,0.95),rgba(255,106,42,0.85))]">
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(96,165,250,0.95),rgba(34,211,238,0.85))]">
             <span className="text-xs font-black text-white">{platformBrand.substring(0, 2).toUpperCase()}</span>
           </div>
           {!collapsed && (
-            <span className="font-orbitron font-bold tracking-[0.16em] text-srf-primary">
-              {platformBrand.substring(0, 2)}<span className="text-srf-accent">{platformBrand.substring(2)}</span>
+            <span className="font-semibold tracking-[0.08em] text-slate-100">
+              {platformBrand.substring(0, 2)}<span className="text-sky-400">{platformBrand.substring(2)}</span>
             </span>
           )}
         </div>
         {!collapsed && (
           <button
             onClick={() => setCollapsed(true)}
-            className="rounded-xl p-1 text-srf-muted hover:bg-white/5"
+            className="rounded-xl p-1 text-slate-400 hover:bg-slate-800"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -122,7 +122,7 @@ export function Sidebar({
         {collapsed && (
           <button
             onClick={() => setCollapsed(false)}
-            className="rounded-xl p-1 text-srf-muted hover:bg-white/5"
+            className="rounded-xl p-1 text-slate-400 hover:bg-slate-800"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -133,10 +133,10 @@ export function Sidebar({
         <div className="px-3 pt-3">
           <Link
             href="/dashboard"
-            className="flex items-center gap-3 rounded-2xl border border-srf-accent/30 bg-srf-accent/10 px-3 py-2.5 text-sm font-medium text-srf-text transition hover:bg-srf-accent/15"
+            className="flex items-center gap-3 rounded-2xl border border-sky-500/20 bg-sky-500/10 px-3 py-2.5 text-sm font-medium text-slate-100 transition hover:bg-sky-500/15"
             title="Volver al hub"
           >
-            <LayoutDashboard className="h-5 w-5 text-srf-accent" />
+            <LayoutDashboard className="h-5 w-5 text-sky-400" />
             <span>Volver al hub</span>
           </Link>
         </div>
@@ -144,13 +144,13 @@ export function Sidebar({
 
       {/* Sucursal indicator */}
       {!collapsed && !isLoading && identity && (
-        <div className="mx-4 mt-4 rounded-2xl border border-white/10 bg-white/5 p-3 text-center">
-          <p className="text-xs text-srf-muted">Sucursal activa</p>
-          <p className="text-sm font-semibold text-srf-primary truncate">
+        <div className="mx-4 mt-4 rounded-2xl border border-slate-800 bg-slate-900/70 p-3 text-center">
+          <p className="text-xs text-slate-400">Sucursal activa</p>
+          <p className="text-sm font-semibold text-sky-400 truncate">
             {identity.branchName}
           </p>
           {showConsolidated && activeSucursalId !== 'GLOBAL' && (
-            <p className="text-xs text-srf-muted mt-1">Vista consolidada disponible</p>
+            <p className="mt-1 text-xs text-slate-400">Vista consolidada disponible</p>
           )}
         </div>
       )}
@@ -168,8 +168,8 @@ export function Sidebar({
               className={`
                 flex items-center gap-3 rounded-2xl border px-3 py-2.5 transition-all duration-200
                 ${isActive
-                  ? 'border-srf-accent/40 bg-srf-accent/15 text-srf-text shadow-[0_12px_30px_rgba(255,106,42,0.12)]'
-                  : 'border-transparent text-srf-muted hover:border-white/10 hover:bg-white/5 hover:text-srf-text'
+                  ? 'border-sky-500/30 bg-sky-500/10 text-slate-100 shadow-[0_12px_30px_rgba(59,130,246,0.12)]'
+                  : 'border-transparent text-slate-400 hover:border-slate-800 hover:bg-slate-900/70 hover:text-slate-100'
                 }
                 ${collapsed ? 'justify-center' : ''}
               `}
@@ -189,7 +189,7 @@ export function Sidebar({
       {/* Mobile menu button */}
       <button
         onClick={() => onMobileOpenChange?.(true)}
-        className="fixed left-4 top-4 z-50 rounded-xl border border-white/10 bg-[rgba(20,20,20,0.92)] p-2 shadow-[0_12px_36px_rgba(0,0,0,0.28)] lg:hidden"
+        className="fixed left-4 top-4 z-50 rounded-xl border border-slate-800 bg-slate-950/95 p-2 shadow-[0_12px_36px_rgba(2,6,23,0.4)] lg:hidden"
       >
         <Menu className="w-5 h-5" />
       </button>
@@ -202,10 +202,10 @@ export function Sidebar({
         `}
       >
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => onMobileOpenChange?.(false)} />
-        <div className="relative h-full w-72 border-r border-white/10 bg-[rgba(18,18,18,0.98)]">
+        <div className="relative h-full w-72 border-r border-slate-800 bg-slate-950/98">
           <button
             onClick={() => onMobileOpenChange?.(false)}
-            className="absolute right-4 top-4 rounded-xl p-1 hover:bg-white/5"
+            className="absolute right-4 top-4 rounded-xl p-1 hover:bg-slate-800"
           >
             <X className="w-5 h-5" />
           </button>
@@ -216,7 +216,7 @@ export function Sidebar({
       {/* Desktop sidebar */}
       <aside
         className={`
-          hidden lg:block border-r border-white/10 transition-all duration-300
+          hidden lg:block border-r border-slate-800 transition-all duration-300 bg-slate-950
           ${collapsed ? 'w-[4.5rem]' : 'w-72'}
         `}
       >

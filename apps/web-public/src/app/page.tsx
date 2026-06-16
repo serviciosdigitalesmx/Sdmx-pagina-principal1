@@ -80,7 +80,7 @@ const pricingPlans = [
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-violet-400/90">{children}</p>
+    <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-sky-400/90">{children}</p>
   );
 }
 
@@ -89,7 +89,7 @@ function CTA({ href, children, variant = "primary" }: { href: string; children: 
     "inline-flex items-center justify-center rounded-2xl px-6 py-4 text-center text-sm font-semibold uppercase tracking-[0.16em] transition duration-200";
   const className =
     variant === "primary"
-      ? `${base} border border-violet-500/50 bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_100%)] text-white shadow-[0_20px_50px_rgba(99,102,241,0.35)] hover:-translate-y-0.5 hover:brightness-110`
+      ? `${base} border border-sky-500/50 bg-[linear-gradient(135deg,#38bdf8_0%,#2563eb_100%)] text-white shadow-[0_20px_50px_rgba(59,130,246,0.28)] hover:-translate-y-0.5 hover:brightness-110`
       : `${base} border border-slate-300 bg-white text-slate-950 hover:-translate-y-0.5 hover:bg-slate-50`;
 
   return (
@@ -121,17 +121,17 @@ function DashboardPreview() {
     <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_24px_90px_rgba(15,23,42,0.12)]">
       <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-violet-500">Panel operativo</p>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-sky-500">Panel operativo</p>
           <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-950">{hubName}</h3>
         </div>
-        <span className="rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">En vivo</span>
+        <span className="rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold text-sky-700">En vivo</span>
       </div>
 
       <div className="mt-5 grid gap-4 lg:grid-cols-[0.82fr_1fr]">
         <div className="rounded-[1.6rem] bg-[radial-gradient(circle_at_top,_rgba(124,58,237,0.25),_transparent_45%),linear-gradient(180deg,#111827_0%,#030712_100%)] p-5 text-white shadow-[0_18px_45px_rgba(15,23,42,0.18)]">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.32em] text-violet-200">Orden activa</p>
+              <p className="text-[11px] uppercase tracking-[0.32em] text-sky-200">Orden activa</p>
               <h4 className="mt-3 text-3xl font-black tracking-tight">FIX-00214</h4>
             </div>
             <span className="rounded-full border border-emerald-400/30 bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-200">En reparación</span>
@@ -174,19 +174,19 @@ function DashboardPreview() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-[0.24em] text-violet-500">Seguimiento</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-sky-500">Seguimiento</p>
             <p className="mt-2 text-sm leading-6 text-slate-600">Portal del cliente, timeline y PDF real en un solo flujo.</p>
           </div>
           <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-[0.24em] text-violet-500">Inventario</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-sky-500">Inventario</p>
             <p className="mt-2 text-sm leading-6 text-slate-600">Refacciones, alertas y entradas ligadas al tenant.</p>
           </div>
           <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-[0.24em] text-violet-500">Cobros</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-sky-500">Cobros</p>
             <p className="mt-2 text-sm leading-6 text-slate-600">Mercado Pago, webhook y estados en Supabase.</p>
           </div>
           <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-[0.24em] text-violet-500">WhatsApp</p>
+            <p className="text-xs uppercase tracking-[0.24em] text-sky-500">WhatsApp</p>
             <p className="mt-2 text-sm leading-6 text-slate-600">El enlace lleva al portal con el folio precargado.</p>
           </div>
         </div>
@@ -199,7 +199,7 @@ function MobilePortalPreview() {
   return (
     <div className="mx-auto w-full max-w-[20rem] rounded-[2.4rem] border-[10px] border-slate-950 bg-slate-950 shadow-[0_30px_80px_rgba(15,23,42,0.24)]">
       <div className="rounded-[1.9rem] bg-white p-4 text-slate-950">
-        <p className="text-xs uppercase tracking-[0.28em] text-violet-500">Portal del cliente</p>
+        <p className="text-xs uppercase tracking-[0.28em] text-sky-500">Portal del cliente</p>
         <h4 className="mt-2 text-xl font-black tracking-tight">Consulta tu reparación</h4>
         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Folio</p>
@@ -212,7 +212,7 @@ function MobilePortalPreview() {
         <div className="mt-4 grid grid-cols-4 gap-2 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
           <div className="rounded-xl bg-emerald-100 px-2 py-2 text-emerald-700">Recibido</div>
           <div className="rounded-xl bg-emerald-100 px-2 py-2 text-emerald-700">Diagnóstico</div>
-          <div className="rounded-xl bg-violet-100 px-2 py-2 text-violet-700">Proceso</div>
+          <div className="rounded-xl bg-sky-100 px-2 py-2 text-sky-700">Proceso</div>
           <div className="rounded-xl bg-slate-100 px-2 py-2">Entrega</div>
         </div>
         <button className="mt-4 w-full rounded-2xl bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_100%)] px-4 py-3 text-sm font-semibold text-white shadow-[0_16px_35px_rgba(99,102,241,0.25)]">
@@ -235,7 +235,7 @@ export default function Home() {
               {brandShort.slice(0, 2)}
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-violet-600/80">SaaS para talleres</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-sky-600/80">SaaS para talleres</p>
               <h1 className="text-2xl font-black tracking-tight text-slate-950">{productName}</h1>
             </div>
           </div>
@@ -253,8 +253,8 @@ export default function Home() {
 
       <section className="mx-auto grid w-full max-w-7xl gap-8 px-4 pb-12 pt-2 sm:px-6 lg:grid-cols-[1.03fr_0.97fr] lg:px-8 lg:pt-8">
         <div className="space-y-8 pt-4 lg:pt-10">
-          <div className="inline-flex items-center gap-3 rounded-full border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-medium text-violet-700 shadow-sm">
-            <span className="h-2 w-2 rounded-full bg-violet-500" />
+          <div className="inline-flex items-center gap-3 rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-sky-500" />
             {hubName} para talleres de reparación
           </div>
 
@@ -276,7 +276,7 @@ export default function Home() {
               "Cobros",
             ].map((item) => (
               <li key={item} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-100 text-violet-700">•</span>
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sky-700">•</span>
                 <span className="font-medium">{item}.</span>
               </li>
             ))}
@@ -300,7 +300,7 @@ export default function Home() {
               "Soporte real por WhatsApp",
             ].map((item) => (
               <div key={item} className="flex items-center gap-2">
-                <span className="text-violet-500">◌</span>
+                <span className="text-sky-500">◌</span>
                 <span>{item}</span>
               </div>
             ))}
@@ -331,7 +331,7 @@ export default function Home() {
                   "Actualizaciones continuas",
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-3">
-                    <span className="text-violet-400">✓</span>
+                    <span className="text-sky-400">✓</span>
                     <span>{item}</span>
                   </li>
                 ))}
@@ -341,7 +341,7 @@ export default function Home() {
             <div className="grid gap-4 sm:grid-cols-2">
               {featureCards.map((card) => (
                 <article key={card.title} className="rounded-[1.6rem] border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-                  <div className="text-3xl text-violet-300">{card.icon}</div>
+                  <div className="text-3xl text-sky-300">{card.icon}</div>
                   <h4 className="mt-4 text-xl font-black text-white">{card.title}</h4>
                   <p className="mt-2 text-sm leading-7 text-slate-300">{card.description}</p>
                 </article>
@@ -367,7 +367,7 @@ export default function Home() {
                 "Más confianza, más clientes",
               ].map((item) => (
                 <li key={item} className="flex items-center gap-3">
-                  <span className="text-violet-500">◌</span>
+              <span className="text-sky-500">◌</span>
                   <span>{item}</span>
                 </li>
               ))}
@@ -395,10 +395,10 @@ export default function Home() {
           {pricingPlans.map((plan) => (
             <article
               key={plan.name}
-              className={`rounded-[2rem] border bg-white p-6 shadow-[0_20px_70px_rgba(15,23,42,0.08)] ${plan.featured ? "border-violet-400 ring-1 ring-violet-200" : "border-slate-200"}`}
+              className={`rounded-[2rem] border bg-white p-6 shadow-[0_20px_70px_rgba(15,23,42,0.08)] ${plan.featured ? "border-sky-400 ring-1 ring-sky-200" : "border-slate-200"}`}
             >
               {plan.featured ? (
-                <span className="inline-flex rounded-full bg-violet-600 px-3 py-1 text-[10px] font-black uppercase tracking-[0.28em] text-white">Más popular</span>
+                <span className="inline-flex rounded-full bg-sky-600 px-3 py-1 text-[10px] font-black uppercase tracking-[0.28em] text-white">Más popular</span>
               ) : null}
               <h4 className="mt-4 text-2xl font-black text-slate-950">{plan.name}</h4>
               <div className="mt-3 flex items-end gap-2 text-slate-950">
@@ -457,7 +457,7 @@ export default function Home() {
               ["WhatsApp", contactPhone || "No configurado"],
             ].map(([label, value]) => (
               <div key={label} className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
-                <p className="text-xs uppercase tracking-[0.24em] text-violet-500">{label}</p>
+                <p className="text-xs uppercase tracking-[0.24em] text-sky-500">{label}</p>
                 <p className="mt-2 text-sm font-semibold text-slate-950">{value}</p>
               </div>
             ))}

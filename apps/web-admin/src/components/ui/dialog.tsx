@@ -15,8 +15,8 @@ export function Dialog({ open, children }: DialogProps) {
 
 export function DialogContent({ className = "", children }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm ${className}`}>
-      <div className="shell-panel max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-[1.5rem]">
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm ${className}`}>
+      <div className="shell-panel max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-[1.5rem] border border-slate-800 bg-slate-950">
         {children}
       </div>
     </div>

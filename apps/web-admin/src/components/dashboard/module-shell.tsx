@@ -54,9 +54,9 @@ export function ModuleShell({
 }: ModuleShellProps) {
   return (
     <div className="space-y-6 text-zinc-100">
-      <header className="flex flex-col gap-4 rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(9,12,20,0.98),rgba(7,10,18,0.92))] p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+      <header className="flex flex-col gap-4 rounded-[2rem] border border-slate-800 bg-[linear-gradient(180deg,rgba(9,12,20,0.98),rgba(7,10,18,0.92))] p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)] backdrop-blur sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-violet-400/20 bg-[linear-gradient(135deg,rgba(124,58,237,0.3),rgba(79,70,229,0.85))] text-lg font-black text-white shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-sky-400/20 bg-[linear-gradient(135deg,rgba(59,130,246,0.28),rgba(14,165,233,0.85))] text-lg font-black text-white shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
             <i className={icon} />
           </div>
           <div>
@@ -96,7 +96,7 @@ export function ModuleShell({
       <section className="grid gap-4 md:grid-cols-3">
         {stats.map((stat) => (
           <div key={stat.label} className="rounded-[1.5rem] border border-white/10 bg-white/[0.03] p-4 shadow-[0_12px_40px_rgba(0,0,0,0.18)]">
-            <div className="text-[11px] uppercase tracking-[0.22em] text-violet-200/60">{stat.label}</div>
+            <div className="text-[11px] uppercase tracking-[0.22em] text-sky-200/60">{stat.label}</div>
             <div className="mt-3 text-2xl font-semibold text-zinc-50">{stat.value}</div>
             <div className="mt-2 text-sm text-zinc-400">{stat.helper}</div>
           </div>
@@ -133,7 +133,7 @@ export function ModuleShell({
           </div>
         ) : showTable ? (
           <div className="flex min-h-[320px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 bg-white/[0.03] px-6 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-black/30 text-xl text-violet-200/80">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-black/30 text-xl text-sky-200/80">
               <i className={icon} />
             </div>
             <h2 className="mt-4 text-lg font-semibold text-zinc-50">{emptyTitle}</h2>

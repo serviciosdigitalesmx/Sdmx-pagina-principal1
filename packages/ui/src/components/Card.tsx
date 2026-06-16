@@ -5,11 +5,11 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function Card({ variant = "bordered", className = "", children, ...props }: CardProps) {
-  const baseStyle = "rounded-xl overflow-hidden bg-bg-dark";
+  const baseStyle = "overflow-hidden rounded-2xl bg-slate-950/80";
   const variantStyle =
     variant === "elevated"
-      ? "shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-border-dark"
-      : "border border-border-dark";
+      ? "border border-slate-800/80 shadow-[0_18px_50px_rgba(2,6,23,0.35)]"
+      : "border border-slate-800/70";
 
   return (
     <div className={`${baseStyle} ${variantStyle} ${className}`} {...props}>
@@ -20,7 +20,7 @@ export function Card({ variant = "bordered", className = "", children, ...props 
 
 export function CardHeader({ className = "", children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`px-5 py-4 border-b border-border-dark ${className}`} {...props}>
+    <div className={`border-b border-slate-800/70 px-5 py-4 ${className}`} {...props}>
       {children}
     </div>
   );
@@ -28,7 +28,7 @@ export function CardHeader({ className = "", children, ...props }: React.HTMLAtt
 
 export function CardTitle({ className = "", children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={`text-lg font-semibold text-text-primary-dark tracking-tight ${className}`} {...props}>
+    <h3 className={`text-lg font-semibold tracking-tight text-slate-50 ${className}`} {...props}>
       {children}
     </h3>
   );

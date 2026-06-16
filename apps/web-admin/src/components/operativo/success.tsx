@@ -19,7 +19,7 @@ export function Success({ folio, customerPhone, onNewOrder }: SuccessProps) {
   };
 
   const openWhatsApp = () => {
-    const message = `Hola, tu equipo ha sido registrado en SrFix con el folio ${folio}. Puedes consultar el estado en el portal del cliente.`;
+    const message = `Hola, tu equipo ha sido registrado en FIXI con el folio ${folio}. Puedes consultar el estado en el portal del cliente.`;
     const url = `https://wa.me/52${customerPhone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };

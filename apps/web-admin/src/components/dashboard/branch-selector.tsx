@@ -49,7 +49,7 @@ export function BranchSelector() {
     return (
       <div className="flex items-center gap-2 px-3 py-2">
         <div className="spinner w-4 h-4" />
-        <span className="text-sm text-srf-muted">Cargando...</span>
+        <span className="text-sm text-slate-400">Cargando...</span>
       </div>
     );
   }
@@ -58,26 +58,26 @@ export function BranchSelector() {
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-2 px-3 py-2 rounded-lg bg-srf-surface/50 hover:bg-srf-surface transition-colors"
+        className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2 transition-colors hover:bg-slate-800"
       >
-        <Building2 className="w-4 h-4 text-srf-primary" />
+        <Building2 className="w-4 h-4 text-sky-400" />
         <span className="text-sm font-medium">{getActiveLabel()}</span>
-        <ChevronDown className="w-4 h-4 text-srf-muted" />
+        <ChevronDown className="w-4 h-4 text-slate-400" />
       </button>
 
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-2 w-64 rounded-lg bg-srf-surface border border-srf-primary/30 shadow-lg z-50 overflow-hidden">
+          <div className="absolute top-full left-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-[0_20px_60px_rgba(2,6,23,0.45)]">
             <div className="p-2">
               {showConsolidated && (
                 <button
                   onClick={() => handleSelect('GLOBAL')}
                   className={`
-                    w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
+                    flex w-full items-center gap-3 rounded-xl px-3 py-2 transition-colors
                     ${activeId === 'GLOBAL'
-                      ? 'bg-srf-accent/20 text-srf-accent'
-                      : 'text-srf-text hover:bg-srf-primary/10'
+                      ? 'bg-sky-500/10 text-sky-300'
+                      : 'text-slate-100 hover:bg-slate-800'
                     }
                   `}
                 >
@@ -87,17 +87,17 @@ export function BranchSelector() {
                 </button>
               )}
 
-              <div className="h-px bg-srf-primary/20 my-2" />
+              <div className="my-2 h-px bg-slate-800" />
 
               {sucursales.map((sucursal) => (
                 <button
                   key={sucursal.id}
                   onClick={() => handleSelect(sucursal.id)}
                   className={`
-                    w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
+                    flex w-full items-center gap-3 rounded-xl px-3 py-2 transition-colors
                     ${activeId === sucursal.id
-                      ? 'bg-srf-accent/20 text-srf-accent'
-                      : 'text-srf-text hover:bg-srf-primary/10'
+                      ? 'bg-sky-500/10 text-sky-300'
+                      : 'text-slate-100 hover:bg-slate-800'
                     }
                   `}
                 >
@@ -108,7 +108,7 @@ export function BranchSelector() {
               ))}
 
               {sucursales.length === 0 && (
-                <p className="text-sm text-srf-muted text-center py-4">
+                <p className="py-4 text-center text-sm text-slate-400">
                   No hay sucursales
                 </p>
               )}
