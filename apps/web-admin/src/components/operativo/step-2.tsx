@@ -92,8 +92,8 @@ export function Step2({ data, onSubmit, onBack, onUpdate }: Step2Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="card p-6 space-y-6">
-      <h3 className="text-lg font-bold text-srf-primary flex items-center gap-2">
+    <form onSubmit={handleSubmit} className="space-y-6 rounded-3xl border border-slate-800 bg-slate-950/70 p-6 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+      <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-50">
         <FileText className="w-5 h-5" />
         Información del {assetLabel}
       </h3>
@@ -156,8 +156,8 @@ export function Step2({ data, onSubmit, onBack, onUpdate }: Step2Props) {
       </div>
 
       {/* Checklist */}
-      <div className="bg-srf-bg border border-srf-primary rounded-lg p-4">
-        <p className="text-sm text-srf-muted mb-3 font-semibold">Checklist de Recepción:</p>
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+        <p className="mb-3 text-sm font-semibold text-slate-400">Checklist de Recepción:</p>
         <div className="grid grid-cols-2 gap-3">
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -168,7 +168,7 @@ export function Step2({ data, onSubmit, onBack, onUpdate }: Step2Props) {
                 setLocalData(next);
                 onUpdate({ checks: next.checks });
               }}
-              className="w-4 h-4 accent-srf-accent"
+              className="h-4 w-4 accent-sky-400"
             />
             <span className="text-sm">Trae cargador</span>
           </label>
@@ -181,7 +181,7 @@ export function Step2({ data, onSubmit, onBack, onUpdate }: Step2Props) {
                 setLocalData(next);
                 onUpdate({ checks: next.checks });
               }}
-              className="w-4 h-4 accent-srf-accent"
+              className="h-4 w-4 accent-sky-400"
             />
             <span className="text-sm">Pantalla OK</span>
           </label>
@@ -194,7 +194,7 @@ export function Step2({ data, onSubmit, onBack, onUpdate }: Step2Props) {
                 setLocalData(next);
                 onUpdate({ checks: next.checks });
               }}
-              className="w-4 h-4 accent-srf-accent"
+              className="h-4 w-4 accent-sky-400"
             />
             <span className="text-sm">{assetLabel} prende</span>
           </label>
@@ -207,7 +207,7 @@ export function Step2({ data, onSubmit, onBack, onUpdate }: Step2Props) {
                 setLocalData(next);
                 onUpdate({ checks: next.checks });
               }}
-              className="w-4 h-4 accent-srf-accent"
+              className="h-4 w-4 accent-sky-400"
             />
             <span className="text-sm">Datos respaldados</span>
           </label>
@@ -215,9 +215,9 @@ export function Step2({ data, onSubmit, onBack, onUpdate }: Step2Props) {
       </div>
 
       {/* Receipt photo */}
-      <div className="bg-srf-bg border border-srf-primary rounded-lg p-4">
-        <Label className="text-srf-muted text-sm flex items-center gap-2">
-          <Camera className="w-4 h-4 text-srf-accent" />
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+        <Label className="flex items-center gap-2 text-sm text-slate-400">
+          <Camera className="h-4 w-4 text-sky-400" />
           Foto del estado en recepción
         </Label>
         <input
@@ -225,11 +225,11 @@ export function Step2({ data, onSubmit, onBack, onUpdate }: Step2Props) {
           type="file"
           accept="image/*"
             onChange={handleFotoChange}
-          className="mt-2 text-sm text-srf-text file:mr-2 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-srf-accent file:text-white hover:file:bg-srf-accent/80"
+          className="mt-2 text-sm text-slate-100 file:mr-2 file:rounded-lg file:border-0 file:bg-sky-500 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-sky-400"
         />
         {data.fotoPreview && (
           <div className="relative mt-3 inline-block">
-            <img src={data.fotoPreview} alt="Preview" className="max-h-48 rounded-lg border border-srf-primary" />
+            <img src={data.fotoPreview} alt="Preview" className="max-h-48 rounded-lg border border-slate-700" />
             <button
               type="button"
               onClick={removeFoto}
@@ -294,10 +294,10 @@ export function Step2({ data, onSubmit, onBack, onUpdate }: Step2Props) {
         <Button type="button" onClick={onBack} variant="outline" className="flex-1">
           Atrás
         </Button>
-        <Button type="submit" className="btn-primary flex-1">
-          Continuar
-          <ArrowRight className="w-4 h-4 ml-2" />
-        </Button>
+      <Button type="submit" className="flex-1">
+        Continuar
+        <ArrowRight className="w-4 h-4 ml-2" />
+      </Button>
       </div>
     </form>
   );

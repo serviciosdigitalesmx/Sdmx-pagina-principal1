@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --srf-bg: #050816;
-  --srf-surface: #0b1220;
-  --srf-primary: #f97316;
-  --srf-accent: #38bdf8;
+  --srf-bg: #020617;
+  --srf-surface: #0f172a;
+  --srf-primary: #60a5fa;
+  --srf-accent: #22d3ee;
   --srf-text: #f8fafc;
   --srf-muted: #94a3b8;
   --srf-wa: #25d366;
   --srf-green: #22c55e;
   --srf-red: #ef4444;
   --srf-yellow: #f59e0b;
-  --srf-border: rgba(148, 163, 184, 0.14);
-  --srf-border-strong: rgba(249, 115, 22, 0.22);
-  --srf-glow: rgba(249, 115, 22, 0.14);
+  --srf-border: rgba(148, 163, 184, 0.16);
+  --srf-border-strong: rgba(96, 165, 250, 0.24);
+  --srf-glow: rgba(96, 165, 250, 0.14);
 }
 
 @theme inline {
@@ -29,9 +29,9 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top, rgba(249, 115, 22, 0.12), transparent 24%),
-    radial-gradient(circle at 80% 0%, rgba(56, 189, 248, 0.08), transparent 22%),
-    linear-gradient(180deg, #050816 0%, #090f1a 42%, #101827 100%);
+    radial-gradient(circle at top, rgba(96, 165, 250, 0.14), transparent 24%),
+    radial-gradient(circle at 80% 0%, rgba(34, 211, 238, 0.1), transparent 22%),
+    linear-gradient(180deg, #020617 0%, #0b1220 42%, #111827 100%);
   color: var(--srf-text);
   font-family: "Inter", sans-serif;
 }
@@ -82,17 +82,17 @@ h1, h2, h3, .font-orbitron {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 0.75rem;
-  background: linear-gradient(135deg, #fb923c 0%, #f97316 55%, #ea580c 100%);
+  border-radius: 0.95rem;
+  background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 60%, #2563eb 100%);
   color: white;
   font-weight: 700;
-  padding: 0.5rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.18);
+  padding: 0.65rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 14px 30px rgba(37, 99, 235, 0.24);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #fdba74 0%, #fb923c 55%, #ea580c 100%);
+  background: linear-gradient(135deg, #93c5fd 0%, #60a5fa 60%, #3b82f6 100%);
 }
 
 .btn-secondary {
@@ -100,16 +100,17 @@ h1, h2, h3, .font-orbitron {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 0.75rem;
-  background: rgba(15, 23, 42, 0.92);
+  border-radius: 0.95rem;
+  background: rgba(15, 23, 42, 0.9);
   color: white;
   font-weight: 700;
-  padding: 0.5rem 1rem;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  padding: 0.65rem 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
 }
 
 .btn-secondary:hover {
-  background: rgba(30, 41, 59, 0.96);
+  background: rgba(30, 41, 59, 0.98);
+  border-color: rgba(148, 163, 184, 0.3);
 }
 
 .btn-wa {
@@ -125,22 +126,23 @@ h1, h2, h3, .font-orbitron {
 }
 
 .btn-outline {
-  border: 1px solid rgba(249, 115, 22, 0.25);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.34);
   color: var(--srf-text);
   font-weight: 500;
-  border-radius: 0.75rem;
-  padding: 0.5rem 1rem;
+  border-radius: 0.95rem;
+  padding: 0.65rem 1rem;
 }
 
 .btn-outline:hover {
-  background: rgba(249, 115, 22, 0.08);
+  background: rgba(96, 165, 250, 0.1);
+  border-color: rgba(96, 165, 250, 0.24);
 }
 
 .btn-ghost {
   color: var(--srf-muted);
-  border-radius: 0.75rem;
-  padding: 0.5rem 0.75rem;
+  border-radius: 0.95rem;
+  padding: 0.65rem 0.85rem;
 }
 
 .btn-ghost:hover {
@@ -149,18 +151,18 @@ h1, h2, h3, .font-orbitron {
 }
 
 .card {
-  background: linear-gradient(180deg, rgba(11, 18, 32, 0.96), rgba(15, 23, 42, 0.96));
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.82));
   border: 1px solid var(--srf-border);
   border-radius: 1.5rem;
   padding: 1.1rem;
-  box-shadow: 0 24px 70px rgba(2, 6, 23, 0.42);
+  box-shadow: 0 24px 70px rgba(2, 6, 23, 0.34);
 }
 
 .card-base {
-  background: linear-gradient(180deg, rgba(11, 18, 32, 0.95), rgba(15, 23, 42, 0.95));
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(15, 23, 42, 0.88));
   border: 1px solid var(--srf-border);
   border-radius: 1.5rem;
-  box-shadow: 0 24px 70px rgba(2, 6, 23, 0.38);
+  box-shadow: 0 24px 70px rgba(2, 6, 23, 0.3);
 }
 
 .card-hover:hover {
@@ -170,11 +172,11 @@ h1, h2, h3, .font-orbitron {
 
 .input {
   width: 100%;
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 0.95rem;
-  background: rgba(2, 6, 23, 0.52);
+  background: rgba(2, 6, 23, 0.42);
   color: var(--srf-text);
-  padding: 0.65rem 0.9rem;
+  padding: 0.75rem 0.95rem;
   outline: none;
 }
 
@@ -184,7 +186,7 @@ h1, h2, h3, .font-orbitron {
 
 .input:focus {
   border-color: var(--srf-primary);
-  box-shadow: 0 0 0 1px var(--srf-primary), 0 0 0 4px rgba(249, 115, 22, 0.12);
+  box-shadow: 0 0 0 1px var(--srf-primary), 0 0 0 4px rgba(96, 165, 250, 0.12);
 }
 
 .badge-recibido,
@@ -258,12 +260,12 @@ h1, h2, h3, .font-orbitron {
 
 .card-rojo {
   border-left: 4px solid var(--srf-red);
-  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(127, 29, 29, 0.14));
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(127, 29, 29, 0.16));
 }
 
 .card-amarillo {
   border-left: 4px solid var(--srf-yellow);
-  background: linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(113, 63, 18, 0.14));
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(113, 63, 18, 0.16));
 }
 
 .card-verde {
@@ -274,27 +276,27 @@ h1, h2, h3, .font-orbitron {
 .card-gris {
   border-left: 4px solid var(--srf-muted);
   background: linear-gradient(135deg, var(--srf-surface), rgba(31, 41, 55, 0.18));
-  opacity: 0.72;
+  opacity: 0.82;
 }
 
 .shell-surface {
   background:
-    linear-gradient(180deg, rgba(18, 18, 18, 0.96), rgba(16, 16, 16, 0.94)),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.88)),
     var(--srf-bg);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.07);
   box-shadow:
-    0 24px 90px rgba(0, 0, 0, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    0 24px 90px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .shell-panel {
   background:
-    linear-gradient(180deg, rgba(43, 43, 43, 0.92), rgba(35, 35, 35, 0.94)),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.96)),
     var(--srf-surface);
-  border: 1px solid rgba(31, 126, 220, 0.16);
+  border: 1px solid rgba(96, 165, 250, 0.16);
   box-shadow:
-    0 16px 60px rgba(0, 0, 0, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    0 16px 60px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 @keyframes spin {
@@ -305,7 +307,7 @@ h1, h2, h3, .font-orbitron {
 .spinner {
   width: 1.25rem;
   height: 1.25rem;
-  border: 2px solid rgba(31, 126, 220, 0.3);
+  border: 2px solid rgba(96, 165, 250, 0.3);
   border-top-color: var(--srf-accent);
   border-radius: 9999px;
   animation: spin 1s linear infinite;

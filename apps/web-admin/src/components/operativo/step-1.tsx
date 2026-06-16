@@ -52,14 +52,14 @@ export function Step1({ data, onSubmit, onLoadQuote }: Step1Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="card p-6 space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 rounded-3xl border border-slate-800 bg-slate-950/70 p-6 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
       {/* Quote loader */}
-      <div className="bg-srf-bg border border-srf-primary rounded-lg p-4">
-        <Label className="text-srf-muted text-sm flex items-center gap-1">
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+        <Label className="flex items-center gap-1 text-sm text-slate-400">
           <Search className="w-4 h-4" />
           Cargar por folio de cotización
         </Label>
-        <p className="text-xs text-srf-muted mt-1 mb-3">
+        <p className="mb-3 mt-1 text-xs text-slate-400">
           Puedes ingresar el folio en mayúsculas o minúsculas. Ej: COT-00001
         </p>
         <div className="flex gap-2">
@@ -88,7 +88,7 @@ export function Step1({ data, onSubmit, onLoadQuote }: Step1Props) {
           </Button>
         </div>
         {data.folioCotizacion && (
-          <p className="text-xs text-green-500 mt-2">
+          <p className="mt-2 text-xs text-emerald-400">
             Solicitud {data.folioCotizacion} cargada
           </p>
         )}
@@ -96,24 +96,24 @@ export function Step1({ data, onSubmit, onLoadQuote }: Step1Props) {
 
       {/* Customer form */}
       <div className="space-y-4">
-        <h3 className="text-lg font-bold text-srf-primary flex items-center gap-2">
+        <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-50">
           <User className="w-5 h-5" />
           Datos del {customerLabel}
         </h3>
 
         <div>
-          <Label>Nombre completo del {customerLabel.toLowerCase()} <span className="text-red-500">*</span></Label>
+          <Label>Nombre completo del {customerLabel.toLowerCase()} <span className="text-rose-400">*</span></Label>
           <Input
             value={localData.clienteNombre}
             onChange={(e) => setLocalData((current) => ({ ...current, clienteNombre: e.target.value }))}
             placeholder="Ej: Juan Pérez"
             className={errors.clienteNombre ? 'border-red-500' : ''}
           />
-          {errors.clienteNombre && <p className="text-red-500 text-xs mt-1">{errors.clienteNombre}</p>}
+          {errors.clienteNombre && <p className="mt-1 text-xs text-rose-400">{errors.clienteNombre}</p>}
         </div>
 
         <div>
-          <Label>WhatsApp <span className="text-red-500">*</span> <span className="text-xs text-srf-muted">(Se ajustará a 10 dígitos)</span></Label>
+          <Label>WhatsApp <span className="text-rose-400">*</span> <span className="text-xs text-slate-400">(Se ajustará a 10 dígitos)</span></Label>
           <Input
             value={localData.clienteTelefono}
             onChange={(e) => {
@@ -136,11 +136,11 @@ export function Step1({ data, onSubmit, onLoadQuote }: Step1Props) {
             maxLength={15}
             className={`font-mono ${errors.clienteTelefono ? 'border-red-500' : ''}`}
           />
-          {errors.clienteTelefono && <p className="text-red-500 text-xs mt-1">{errors.clienteTelefono}</p>}
+          {errors.clienteTelefono && <p className="mt-1 text-xs text-rose-400">{errors.clienteTelefono}</p>}
         </div>
 
         <div>
-          <Label>Email <span className="text-srf-muted">(opcional)</span></Label>
+          <Label>Email <span className="text-slate-400">(opcional)</span></Label>
           <Input
             value={localData.clienteEmail}
             onChange={(e) => setLocalData((current) => ({ ...current, clienteEmail: e.target.value }))}
@@ -150,7 +150,7 @@ export function Step1({ data, onSubmit, onLoadQuote }: Step1Props) {
         </div>
       </div>
 
-      <Button type="submit" className="btn-primary w-full py-3">
+      <Button type="submit" className="w-full py-3">
         Continuar
         <ArrowRight className="w-4 h-4 ml-2" />
       </Button>

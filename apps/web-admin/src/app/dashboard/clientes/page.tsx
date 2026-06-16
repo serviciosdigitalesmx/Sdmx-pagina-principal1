@@ -19,7 +19,10 @@ export default function ClientesPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyCustomer, setHistoryCustomer] = useState<Customer | null>(null);
-  const [duplicates, setDuplicates] = useState<string[]>([]);
+  const [duplicatePhones, setDuplicatePhones] = useState<string[]>([]);
+  const [duplicateNames, setDuplicateNames] = useState<string[]>([]);
+
+  const getCustomerDisplayName = (customer: Customer) => customer.full_name || customer.name;
 
   const loadCustomers = async () => {
     setLoading(true);
@@ -27,20 +30,30 @@ export default function ClientesPage() {
       const data = await apiClient.get<{ data: Customer[] }>('/customers', getApiOptions());
       const customersList = data.data || [];
 
-      // Detectar teléfonos duplicados
+      // Detectar teléfonos y nombres duplicados
       const phoneMap = new Map<string, number>();
+      const nameMap = new Map<string, number>();
       customersList.forEach((c) => {
         if (c.phone) {
-          phoneMap.set(c.phone, (phoneMap.get(c.phone) || 0) + 1);
+          const normalizedPhone = c.phone.replace(/\D/g, '');
+          phoneMap.set(normalizedPhone, (phoneMap.get(normalizedPhone) || 0) + 1);
+        }
+        const normalizedName = getCustomerDisplayName(c).trim().toLowerCase();
+        if (normalizedName) {
+          nameMap.set(normalizedName, (nameMap.get(normalizedName) || 0) + 1);
         }
       });
       const dupPhones = Array.from(phoneMap.entries())
         .filter(([_, count]) => count > 1)
         .map(([phone]) => phone);
+      const dupNames = Array.from(nameMap.entries())
+        .filter(([_, count]) => count > 1)
+        .map(([name]) => name);
 
       setCustomers(customersList);
       setFilteredCustomers(customersList);
-      setDuplicates(dupPhones);
+      setDuplicatePhones(dupPhones);
+      setDuplicateNames(dupNames);
     } catch (error) {
       console.error('Failed to load customers:', error);
     } finally {
@@ -57,7 +70,7 @@ export default function ClientesPage() {
       const term = searchTerm.toLowerCase();
       const filtered = customers.filter(
         (c) =>
-          c.name.toLowerCase().includes(term) ||
+          getCustomerDisplayName(c).toLowerCase().includes(term) ||
           c.phone.includes(term) ||
           (c.email && c.email.toLowerCase().includes(term))
       );
@@ -80,7 +93,7 @@ export default function ClientesPage() {
   const handleNewOrder = (customer: Customer) => {
     // Guardar en localStorage y redirigir a recepción
     const draft = {
-      clienteNombre: customer.name,
+      clienteNombre: getCustomerDisplayName(customer),
       clienteTelefono: customer.phone,
       clienteEmail: customer.email || '',
       equipoTipo: '',
@@ -105,8 +118,13 @@ export default function ClientesPage() {
   };
 
   const getCustomerBadge = (customer: Customer) => {
-    if (duplicates.includes(customer.phone)) {
+    const normalizedPhone = customer.phone.replace(/\D/g, '');
+    const normalizedName = getCustomerDisplayName(customer).trim().toLowerCase();
+    if (duplicatePhones.includes(normalizedPhone)) {
       return <span className="badge-recibido text-xs">Posible duplicado</span>;
+    }
+    if (duplicateNames.includes(normalizedName)) {
+      return <span className="badge-diagnostico text-xs">Nombre repetido</span>;
     }
     return null;
   };
@@ -114,7 +132,7 @@ export default function ClientesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="spinner w-8 h-8" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-500/25 border-t-sky-400" />
       </div>
     );
   }
@@ -124,9 +142,10 @@ export default function ClientesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-orbitron font-bold text-srf-primary">Clientes</h1>
-          <p className="text-srf-muted text-sm mt-1">
-            {filteredCustomers.length} clientes · {duplicates.length} teléfonos duplicados
+          <p className="text-xs uppercase tracking-[0.28em] text-sky-400/70">CRM</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-50">Clientes</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            {filteredCustomers.length} clientes · {duplicatePhones.length} teléfonos duplicados · {duplicateNames.length} nombres repetidos
           </p>
         </div>
         <div className="flex gap-2">
@@ -143,7 +162,7 @@ export default function ClientesPage() {
               setSelectedCustomer(null);
               setModalOpen(true);
             }}
-            className="btn-primary gap-2"
+            className="gap-2"
           >
             <Plus className="w-4 h-4" />
             Nuevo cliente
@@ -152,16 +171,17 @@ export default function ClientesPage() {
       </div>
 
       {/* Duplicates alert */}
-      {duplicates.length > 0 && (
-        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 text-sm text-yellow-300">
+      {(duplicatePhones.length > 0 || duplicateNames.length > 0) && (
+        <div className="rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-200">
           <strong>Atención:</strong> Teléfonos repetidos detectados:{' '}
-          {duplicates.map((phone) => formatPhone(phone)).join(', ')}
+          {duplicatePhones.map((phone) => formatPhone(phone)).join(', ')}
+          {duplicateNames.length > 0 ? ` · Nombres repetidos: ${duplicateNames.join(', ')}` : ''}
         </div>
       )}
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-srf-muted" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <Input
           placeholder="Buscar por nombre, teléfono o email..."
           value={searchTerm}
@@ -173,28 +193,28 @@ export default function ClientesPage() {
       {/* Customers table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-srf-surface border-b border-srf-primary/30">
+          <thead className="border-b border-slate-800 bg-slate-950/70">
             <tr>
-              <th className="text-left py-3 px-4 text-srf-muted font-semibold">Cliente</th>
-              <th className="text-left py-3 px-4 text-srf-muted font-semibold">Contacto</th>
-              <th className="text-left py-3 px-4 text-srf-muted font-semibold">Teléfono</th>
-              <th className="text-left py-3 px-4 text-srf-muted font-semibold">Email</th>
-              <th className="text-left py-3 px-4 text-srf-muted font-semibold">Acciones</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-400">Cliente</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-400">Contacto</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-400">Teléfono</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-400">Email</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-400">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {filteredCustomers.map((customer) => (
               <tr
                 key={customer.id}
-                className="border-b border-srf-primary/20 hover:bg-srf-surface/50 transition-colors"
+                className="border-b border-slate-800/80 transition-colors hover:bg-slate-900/50"
               >
                 <td className="py-3 px-4">
                   <div>
-                    <span className="font-medium">{customer.name}</span>
+                    <span className="font-medium text-slate-100">{getCustomerDisplayName(customer)}</span>
                     {getCustomerBadge(customer)}
                   </div>
                 </td>
-                <td className="py-3 px-4 text-srf-muted">
+                <td className="py-3 px-4 text-slate-400">
                   {formatPhone(customer.phone)}
                 </td>
                 <td className="py-3 px-4">
@@ -202,34 +222,34 @@ export default function ClientesPage() {
                     href={`https://wa.me/52${customer.phone.replace(/\D/g, '')}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-green-500 hover:text-green-400 flex items-center gap-1"
+                    className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300"
                   >
                     <Phone className="w-3 h-3" />
                     WhatsApp
                   </a>
                 </td>
-                <td className="py-3 px-4 text-srf-muted">
+                <td className="py-3 px-4 text-slate-400">
                   {customer.email || '—'}
                 </td>
                 <td className="py-3 px-4">
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleEdit(customer)}
-                      className="p-1 rounded hover:bg-srf-primary/20 text-srf-primary"
+                      className="rounded p-1 text-sky-300 hover:bg-sky-500/10"
                       title="Editar"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleViewHistory(customer)}
-                      className="p-1 rounded hover:bg-srf-primary/20 text-srf-primary"
+                      className="rounded p-1 text-sky-300 hover:bg-sky-500/10"
                       title="Historial"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleNewOrder(customer)}
-                      className="p-1 rounded hover:bg-srf-accent/20 text-srf-accent"
+                      className="rounded p-1 text-cyan-300 hover:bg-cyan-500/10"
                       title="Nueva orden"
                     >
                       <Wrench className="w-4 h-4" />
@@ -242,8 +262,8 @@ export default function ClientesPage() {
         </table>
 
         {filteredCustomers.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-srf-muted">No hay clientes con esos filtros</p>
+          <div className="py-12 text-center">
+            <p className="text-slate-400">No hay clientes con esos filtros</p>
           </div>
         )}
       </div>

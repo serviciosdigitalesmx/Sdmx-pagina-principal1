@@ -32,52 +32,52 @@ export function Step3({ data, onSubmit, onBack, loading }: Step3Props) {
   const saveOrderCopy = getSaveOrderCopy();
 
   return (
-    <div className="card p-6 space-y-6">
-      <h3 className="text-lg font-bold text-srf-primary flex items-center gap-2">
+    <div className="space-y-6 rounded-3xl border border-slate-800 bg-slate-950/70 p-6 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+      <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-50">
         <CheckCircle className="w-5 h-5" />
         Confirmar {orderLabel}
       </h3>
 
-      <div className="bg-srf-bg rounded-lg p-4 space-y-3 border border-srf-primary/30">
-        <div className="flex justify-between border-b border-srf-primary/20 pb-2">
-          <span className="text-srf-muted">{customerLabel}:</span>
-          <span className="font-medium">{data.clienteNombre}</span>
+      <div className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+        <div className="flex justify-between border-b border-slate-800 pb-2">
+          <span className="text-slate-400">{customerLabel}:</span>
+          <span className="font-medium text-slate-100">{data.clienteNombre}</span>
         </div>
-        <div className="flex justify-between border-b border-srf-primary/20 pb-2">
-          <span className="text-srf-muted">Teléfono:</span>
-          <span>{data.clienteTelefono}</span>
+        <div className="flex justify-between border-b border-slate-800 pb-2">
+          <span className="text-slate-400">Teléfono:</span>
+          <span className="text-slate-100">{data.clienteTelefono}</span>
         </div>
         {data.clienteEmail && (
-          <div className="flex justify-between border-b border-srf-primary/20 pb-2">
-            <span className="text-srf-muted">Email:</span>
-            <span>{data.clienteEmail}</span>
+          <div className="flex justify-between border-b border-slate-800 pb-2">
+            <span className="text-slate-400">Email:</span>
+            <span className="text-slate-100">{data.clienteEmail}</span>
           </div>
         )}
-        <div className="flex justify-between border-b border-srf-primary/20 pb-2">
-          <span className="text-srf-muted">{assetLabel}:</span>
-          <span>{data.dispositivo} - {data.modelo}</span>
+        <div className="flex justify-between border-b border-slate-800 pb-2">
+          <span className="text-slate-400">{assetLabel}:</span>
+          <span className="text-slate-100">{data.dispositivo} - {data.modelo}</span>
         </div>
-        <div className="flex justify-between border-b border-srf-primary/20 pb-2">
-          <span className="text-srf-muted">Falla:</span>
-          <span className="text-right max-w-[60%]">{data.falla}</span>
+        <div className="flex justify-between border-b border-slate-800 pb-2">
+          <span className="text-slate-400">Falla:</span>
+          <span className="max-w-[60%] text-right text-slate-100">{data.falla}</span>
         </div>
-        <div className="flex justify-between border-b border-srf-primary/20 pb-2">
-          <span className="text-srf-muted">Checklist:</span>
-          <span className="text-xs text-right">
+        <div className="flex justify-between border-b border-slate-800 pb-2">
+          <span className="text-slate-400">Checklist:</span>
+          <span className="text-right text-xs text-slate-100">
             {checklistItems.filter(i => i.value).map(i => i.label).join(' • ') || 'Ninguno'}
           </span>
         </div>
-        <div className="flex justify-between border-b border-srf-primary/20 pb-2">
-          <span className="text-srf-muted">Foto recepción:</span>
-          <span>{data.fotoPreview ? 'Adjunta' : 'Sin foto'}</span>
+        <div className="flex justify-between border-b border-slate-800 pb-2">
+          <span className="text-slate-400">Foto recepción:</span>
+          <span className="text-slate-100">{data.fotoPreview ? 'Adjunta' : 'Sin foto'}</span>
         </div>
-        <div className="flex justify-between border-b border-srf-primary/20 pb-2">
-          <span className="text-srf-muted">Entrega prometida:</span>
-          <span className="text-srf-accent font-bold">{formatDate(data.fechaPromesa)}</span>
+        <div className="flex justify-between border-b border-slate-800 pb-2">
+          <span className="text-slate-400">Entrega prometida:</span>
+          <span className="font-bold text-sky-300">{formatDate(data.fechaPromesa)}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-srf-muted">Costo estimado:</span>
-          <span>${data.costo.toFixed(2)}</span>
+          <span className="text-slate-400">Costo estimado:</span>
+          <span className="text-slate-100">${data.costo.toFixed(2)}</span>
         </div>
       </div>
 
@@ -85,14 +85,10 @@ export function Step3({ data, onSubmit, onBack, loading }: Step3Props) {
         <Button type="button" onClick={onBack} variant="outline" className="flex-1">
           Corregir
         </Button>
-        <Button
-          onClick={onSubmit}
-          disabled={loading}
-          className="btn-primary flex-1"
-        >
+        <Button onClick={onSubmit} disabled={loading} className="flex-1">
           {loading ? (
             <>
-              <div className="spinner w-4 h-4 mr-2" />
+              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/25 border-t-white" />
               Guardando...
             </>
           ) : (

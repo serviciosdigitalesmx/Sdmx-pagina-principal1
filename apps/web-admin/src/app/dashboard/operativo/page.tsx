@@ -196,20 +196,21 @@ export default function OperativoPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="mx-auto max-w-2xl">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-orbitron font-bold text-srf-primary">Recepción</h1>
-        <p className="text-srf-muted text-sm mt-1">{newOrderLabel} de servicio</p>
+        <p className="text-xs uppercase tracking-[0.28em] text-sky-400/70">Recepción</p>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-50">Recepción</h1>
+        <p className="mt-1 text-sm text-slate-400">{newOrderLabel} de servicio</p>
       </div>
 
       {/* Steps indicator */}
       <div className="flex justify-center mb-8">
         <div className="flex items-center gap-2">
           <StepIndicator number={1} label={customerLabel} active={step === 1} completed={step > 1} />
-          <div className={`w-12 h-0.5 ${step > 1 ? 'bg-srf-accent' : 'bg-srf-muted/30'}`} />
+          <div className={`h-0.5 w-12 ${step > 1 ? 'bg-sky-400' : 'bg-slate-700'}`} />
           <StepIndicator number={2} label={assetLabel} active={step === 2} completed={step > 2} />
-          <div className={`w-12 h-0.5 ${step > 2 ? 'bg-srf-accent' : 'bg-srf-muted/30'}`} />
+          <div className={`h-0.5 w-12 ${step > 2 ? 'bg-sky-400' : 'bg-slate-700'}`} />
           <StepIndicator number={3} label="Confirmar" active={step === 3} completed={step > 3} />
         </div>
       </div>
@@ -292,14 +293,14 @@ function StepIndicator({
       <div
         className={`
           w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all
-          ${active ? 'bg-srf-accent text-white shadow-lg' : ''}
+          ${active ? 'bg-sky-400 text-white shadow-lg' : ''}
           ${completed ? 'bg-green-500 text-white' : ''}
-          ${!active && !completed ? 'bg-srf-surface text-srf-muted border border-srf-primary/30' : ''}
+          ${!active && !completed ? 'bg-slate-900 text-slate-400 border border-slate-700' : ''}
         `}
       >
         {completed ? <CheckCircle className="w-5 h-5" /> : number}
       </div>
-      <span className={`text-xs ${active ? 'text-srf-accent font-semibold' : 'text-srf-muted'}`}>
+      <span className={`text-xs ${active ? 'font-semibold text-sky-400' : 'text-slate-400'}`}>
         {label}
       </span>
     </div>

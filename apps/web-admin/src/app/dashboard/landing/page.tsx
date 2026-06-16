@@ -215,35 +215,36 @@ export default function LandingSettingsPage() {
   }
 
   if (loading) {
-    return <div className="flex h-full items-center justify-center"><div className="spinner w-8 h-8" /></div>;
+    return <div className="flex h-full items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-500/25 border-t-sky-400" /></div>;
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-orbitron font-bold text-srf-primary">Landing</h1>
-          <p className="mt-1 text-sm text-srf-muted">Configura la landing pública del tenant {settings?.tenant.name ?? tenantSlug}.</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-sky-400/70">Marketing SaaS</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-50">Landing</h1>
+          <p className="mt-1 text-sm text-slate-400">Configura la landing pública del tenant {settings?.tenant.name ?? tenantSlug}.</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => void load()} className="btn-outline inline-flex items-center gap-2">
+          <button onClick={() => void load()} className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-sky-400/30 hover:bg-slate-800/80">
             <RefreshCw className="w-4 h-4" />
             Recargar
           </button>
-          <button onClick={() => void handleSave()} className="btn-primary inline-flex items-center gap-2" disabled={saving}>
+          <button onClick={() => void handleSave()} className="inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:opacity-60" disabled={saving}>
             <Save className="w-4 h-4" />
             {saving ? "Guardando..." : "Guardar"}
           </button>
         </div>
       </div>
 
-      {error ? <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</div> : null}
-      {success ? <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-300">{success}</div> : null}
+      {error ? <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{error}</div> : null}
+      {success ? <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200">{success}</div> : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(360px,1fr)]">
         <div className="space-y-6">
-          <div className="card space-y-4">
-            <div className="flex items-center gap-2 text-srf-primary"><Globe className="w-5 h-5" /><h2 className="text-lg font-semibold">Hero</h2></div>
+          <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+            <div className="flex items-center gap-2 text-sky-300"><Globe className="w-5 h-5" /><h2 className="text-lg font-semibold text-slate-50">Hero</h2></div>
             <div className="grid gap-4 md:grid-cols-2">
               <input value={landingContent.heroTitle} onChange={(e) => updateField("heroTitle", e.target.value)} className="input" placeholder="Título principal" />
               <input value={landingContent.heroSubtitle} onChange={(e) => updateField("heroSubtitle", e.target.value)} className="input" placeholder="Subtítulo" />
@@ -251,8 +252,8 @@ export default function LandingSettingsPage() {
             </div>
           </div>
 
-          <div className="card space-y-4">
-            <h2 className="text-lg font-semibold text-srf-primary">CTAs y SEO</h2>
+          <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+            <h2 className="text-lg font-semibold text-slate-50">CTAs y SEO</h2>
             <div className="grid gap-4 md:grid-cols-2">
               <input value={landingContent.primaryCtaLabel} onChange={(e) => updateField("primaryCtaLabel", e.target.value)} className="input" placeholder="CTA primario" />
               <input value={landingContent.primaryCtaHref} onChange={(e) => updateField("primaryCtaHref", e.target.value)} className="input" placeholder="/cotizar" />
@@ -265,14 +266,14 @@ export default function LandingSettingsPage() {
             </div>
           </div>
 
-          <div className="card space-y-4">
+          <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-srf-primary">Servicios</h2>
-              <button onClick={addService} className="btn-outline">Agregar servicio</button>
+              <h2 className="text-lg font-semibold text-slate-50">Servicios</h2>
+              <button onClick={addService} className="rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-sky-400/30 hover:bg-slate-800/80">Agregar servicio</button>
             </div>
             <div className="space-y-4">
               {landingContent.services.map((service, index) => (
-                <div key={`${service.title}-${index}`} className="grid gap-3 rounded-xl border border-srf-primary/20 bg-black/20 p-4">
+                <div key={`${service.title}-${index}`} className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
                   <input value={service.title} onChange={(e) => updateService(index, "title", e.target.value)} className="input" placeholder="Título del servicio" />
                   <textarea value={service.description} onChange={(e) => updateService(index, "description", e.target.value)} className="input min-h-20" placeholder="Descripción" />
                 </div>
@@ -280,17 +281,17 @@ export default function LandingSettingsPage() {
             </div>
           </div>
 
-          <div className="card space-y-4">
+          <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-srf-primary">Redes y perfil</h2>
-              <button onClick={addSocial} className="btn-outline">Agregar enlace</button>
+              <h2 className="text-lg font-semibold text-slate-50">Redes y perfil</h2>
+              <button onClick={addSocial} className="rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-sky-400/30 hover:bg-slate-800/80">Agregar enlace</button>
             </div>
             <select value={industryKey} onChange={(e) => setIndustryKey(e.target.value)} className="input">
               {(settings?.availableIndustries ?? []).map((industry) => <option key={industry.key} value={industry.key}>{industry.label}</option>)}
             </select>
             <div className="space-y-4">
               {landingContent.socialLinks.map((link, index) => (
-                <div key={`${link.label}-${index}`} className="grid gap-3 rounded-xl border border-srf-primary/20 bg-black/20 p-4 md:grid-cols-2">
+                <div key={`${link.label}-${index}`} className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-900/50 p-4 md:grid-cols-2">
                   <input value={link.label} onChange={(e) => updateSocial(index, "label", e.target.value)} className="input" placeholder="Instagram, WhatsApp..." />
                   <input value={link.href} onChange={(e) => updateSocial(index, "href", e.target.value)} className="input" placeholder="https://..." />
                 </div>
@@ -299,28 +300,28 @@ export default function LandingSettingsPage() {
           </div>
         </div>
 
-        <div className="card space-y-5">
-          <div className="flex items-center gap-2 text-srf-primary">
+        <div className="space-y-5 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <div className="flex items-center gap-2 text-sky-300">
             <Eye className="w-5 h-5" />
-            <h2 className="text-lg font-semibold">Preview</h2>
+            <h2 className="text-lg font-semibold text-slate-50">Preview</h2>
           </div>
-          <div className="rounded-[1.5rem] border border-srf-primary/20 bg-black/30 p-6">
-            <div className="text-xs uppercase tracking-[0.25em] text-srf-accent">{tenantSlug || "tenant"}</div>
-            <h3 className="mt-3 text-2xl font-orbitron font-bold text-srf-primary">{landingContent.heroTitle}</h3>
-            <p className="mt-2 text-sm text-srf-text">{landingContent.heroSubtitle}</p>
-            <p className="mt-4 text-sm text-srf-muted">{landingContent.heroDescription}</p>
+          <div className="rounded-[1.5rem] border border-slate-800 bg-slate-900/50 p-6">
+            <div className="text-xs uppercase tracking-[0.25em] text-sky-400">{tenantSlug || "tenant"}</div>
+            <h3 className="mt-3 text-2xl font-semibold tracking-tight text-slate-50">{landingContent.heroTitle}</h3>
+            <p className="mt-2 text-sm text-slate-200">{landingContent.heroSubtitle}</p>
+            <p className="mt-4 text-sm text-slate-400">{landingContent.heroDescription}</p>
             <div className="mt-5 flex flex-wrap gap-2">
-              <a href={preview.primaryHref} className="btn-primary">{landingContent.primaryCtaLabel}</a>
-              <a href={preview.secondaryHref} className="btn-outline">{landingContent.secondaryCtaLabel}</a>
+              <a href={preview.primaryHref} className="inline-flex items-center justify-center rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-400">{landingContent.primaryCtaLabel}</a>
+              <a href={preview.secondaryHref} className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-sky-400/30 hover:bg-slate-800/80">{landingContent.secondaryCtaLabel}</a>
             </div>
-            <div className="mt-4 text-xs text-srf-muted">
-              Contacto: <a href={preview.contactHref} className="text-srf-accent">{landingContent.contactLabel}</a>
+            <div className="mt-4 text-xs text-slate-400">
+              Contacto: <a href={preview.contactHref} className="text-sky-300">{landingContent.contactLabel}</a>
             </div>
             <div className="mt-6 space-y-3">
               {landingContent.services.map((service, index) => (
-                <div key={`${service.title}-${index}`} className="rounded-xl border border-srf-primary/20 bg-srf-surface/40 p-4">
-                  <div className="font-semibold text-srf-text">{service.title || "Servicio"}</div>
-                  <div className="mt-1 text-sm text-srf-muted">{service.description || "Descripción pendiente."}</div>
+                <div key={`${service.title}-${index}`} className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                  <div className="font-semibold text-slate-100">{service.title || "Servicio"}</div>
+                  <div className="mt-1 text-sm text-slate-400">{service.description || "Descripción pendiente."}</div>
                 </div>
               ))}
             </div>

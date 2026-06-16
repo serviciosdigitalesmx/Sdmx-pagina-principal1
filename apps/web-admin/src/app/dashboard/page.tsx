@@ -34,6 +34,7 @@ import {
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
 import { getCustomerLabel, getOrderLabel, getTechnicianLabel } from '@/lib/labels';
+import { useTenantIdentity } from '@/providers/TenantIdentityProvider';
 import type { ReportsSummary } from '@/types';
 
 // Colores para gráficos
@@ -61,6 +62,7 @@ export default function DashboardPage() {
   const ordersLabel = getOrderLabel({ plural: true });
   const customersLabel = getCustomerLabel({ plural: true });
   const technicianLabel = getTechnicianLabel();
+  const { identity } = useTenantIdentity();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [summary, setSummary] = useState<ReportsSummary | null>(null);
@@ -89,19 +91,25 @@ export default function DashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (identity?.role === 'technician') {
+      router.replace('/dashboard/tecnico');
+    }
+  }, [identity, router]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="spinner w-8 h-8" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-500/25 border-t-sky-400" />
       </div>
     );
   }
 
   if (!summary) {
     return (
-      <div className="text-center py-12">
-        <p className="text-srf-muted">No se pudieron cargar los datos del dashboard</p>
-        <button onClick={() => loadData()} className="btn-secondary mt-4">
+      <div className="py-12 text-center">
+        <p className="text-slate-400">No se pudieron cargar los datos del dashboard</p>
+        <button onClick={() => loadData()} className="mt-4 inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-sky-400/30 hover:bg-slate-800/80">
           Reintentar
         </button>
       </div>
@@ -131,25 +139,26 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-orbitron font-bold text-srf-primary">
+          <p className="text-xs uppercase tracking-[0.28em] text-sky-400/70">Hub operativo</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-50">
             Panel de Control
           </h1>
-          <p className="text-srf-muted text-sm mt-1">
+          <p className="mt-1 text-sm text-slate-400">
             Resumen operativo del taller en tiempo real
           </p>
         </div>
         <div className="flex items-center gap-3">
           {lastUpdated && (
-            <span className="text-xs text-srf-muted">
+            <span className="text-xs text-slate-400">
               Última actualización: {lastUpdated.toLocaleTimeString()}
             </span>
           )}
           <button
             onClick={() => loadData(true)}
             disabled={refreshing}
-            className="btn-outline py-2"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-sky-400/30 hover:bg-slate-800/80 disabled:opacity-60"
           >
-            <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             Actualizar
           </button>
         </div>
@@ -216,8 +225,8 @@ export default function DashboardPage() {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-srf-muted mb-4">
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
             Distribución por estado
           </h3>
           <div className="h-64">
@@ -246,15 +255,15 @@ export default function DashboardPage() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex h-full items-center justify-center text-sm text-srf-muted">
+              <div className="flex h-full items-center justify-center text-sm text-slate-400">
                 Cargando gráfico...
               </div>
             )}
           </div>
         </div>
 
-        <div className="card">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-srf-muted mb-4">
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
             {ordersLabel} por {technicianLabel.toLowerCase()}
           </h3>
           <div className="h-64">
@@ -272,7 +281,7 @@ export default function DashboardPage() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex h-full items-center justify-center text-sm text-srf-muted">
+              <div className="flex h-full items-center justify-center text-sm text-slate-400">
                 Cargando gráfico...
               </div>
             )}
@@ -282,43 +291,43 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Products Used */}
-        <div className="card">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-srf-muted mb-4">
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
             Productos más utilizados
           </h3>
           <div className="space-y-3">
             {topProducts.map((product, index) => (
               <div key={product.productId} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-srf-muted w-6">{index + 1}.</span>
+                  <span className="w-6 text-sm font-medium text-slate-400">{index + 1}.</span>
                   <span className="text-sm truncate max-w-[200px]">{product.name}</span>
                 </div>
-                <span className="text-sm font-semibold text-srf-primary">{product.quantity} uds</span>
+                <span className="text-sm font-semibold text-sky-300">{product.quantity} uds</span>
               </div>
             ))}
             {topProducts.length === 0 && (
-              <p className="text-sm text-srf-muted text-center py-4">Sin datos suficientes</p>
+              <p className="py-4 text-center text-sm text-slate-400">Sin datos suficientes</p>
             )}
           </div>
         </div>
 
         {/* Inventory Valuation */}
-        <div className="card">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-srf-muted mb-4">
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
             Valor del inventario
           </h3>
           <div className="text-center py-6">
-            <p className="text-4xl font-bold text-srf-primary">
+            <p className="text-4xl font-bold text-sky-300">
               ${summary.inventoryValuation.toLocaleString()}
             </p>
-            <p className="text-sm text-srf-muted mt-2">
+            <p className="mt-2 text-sm text-slate-400">
               {summary.inventoryCount} productos activos
             </p>
           </div>
-          <div className="mt-4 pt-4 border-t border-srf-primary/20">
+          <div className="mt-4 border-t border-slate-800 pt-4">
             <div className="flex justify-between text-sm">
-              <span className="text-srf-muted">Stock crítico</span>
-              <span className="font-semibold text-srf-red">{summary.lowStockCount}</span>
+              <span className="text-slate-400">Stock crítico</span>
+              <span className="font-semibold text-rose-400">{summary.lowStockCount}</span>
             </div>
           </div>
         </div>
@@ -326,10 +335,10 @@ export default function DashboardPage() {
 
       {/* Overdue Orders */}
       {overdueOrders.length > 0 && (
-        <div className="card border-l-4 border-l-srf-red">
+        <div className="rounded-3xl border border-rose-500/20 bg-rose-500/5 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
           <div className="flex items-center gap-2 mb-4">
-            <AlertTriangle className="w-5 h-5 text-srf-red" />
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-srf-red">
+            <AlertTriangle className="h-5 w-5 text-rose-400" />
+            <h3 className="text-xs font-semibold uppercase tracking-[0.24em] text-rose-300">
               Órdenes atrasadas ({overdueOrders.length})
             </h3>
           </div>
@@ -337,14 +346,14 @@ export default function DashboardPage() {
             {overdueOrders.map((order) => (
               <div
                 key={order.id}
-                className="flex items-center justify-between p-3 rounded-lg bg-srf-red/10 hover:bg-srf-red/20 cursor-pointer transition-colors"
+                className="flex cursor-pointer items-center justify-between rounded-2xl border border-rose-500/15 bg-rose-500/10 p-3 transition-colors hover:bg-rose-500/15"
                 onClick={() => router.push(`/dashboard/tecnico?order=${order.id}`)}
               >
                 <div>
-                  <p className="text-sm font-semibold">{order.folio || order.id.slice(0, 8)}</p>
-                  <p className="text-xs text-srf-muted">Prometido: {order.promisedDate}</p>
+                  <p className="text-sm font-semibold text-slate-100">{order.folio || order.id.slice(0, 8)}</p>
+                  <p className="text-xs text-slate-400">Prometido: {order.promisedDate}</p>
                 </div>
-                <ArrowRight className="w-4 h-4 text-srf-muted" />
+                <ArrowRight className="h-4 w-4 text-slate-400" />
               </div>
             ))}
           </div>
@@ -403,17 +412,17 @@ function KPICard({ title, value, icon, trend, color = 'default' }: KPICardProps)
     success: 'text-green-400',
     danger: 'text-red-400',
     warning: 'text-yellow-400',
-    default: 'text-srf-primary',
+    default: 'text-sky-300',
   };
 
   return (
-    <div className="card">
+    <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wider text-srf-muted">{title}</p>
+          <p className="text-xs uppercase tracking-[0.24em] text-slate-400">{title}</p>
           <p className={`text-2xl font-bold mt-1 ${colorClasses[color]}`}>{value}</p>
         </div>
-        <div className={`p-2 rounded-lg bg-srf-primary/10 ${colorClasses[color]}`}>
+        <div className={`rounded-xl bg-sky-500/10 p-2 ${colorClasses[color]}`}>
           {icon}
         </div>
       </div>
@@ -424,7 +433,7 @@ function KPICard({ title, value, icon, trend, color = 'default' }: KPICardProps)
           ) : (
             <TrendingDown className="w-3 h-3 text-red-400" />
           )}
-          <span className="text-srf-muted">vs mes anterior</span>
+          <span className="text-slate-400">vs mes anterior</span>
         </div>
       )}
     </div>
@@ -441,23 +450,23 @@ interface SimpleCardProps {
 
 function SimpleCard({ title, value, icon, variant = 'default', onClick }: SimpleCardProps) {
   const variantClasses = {
-    default: 'border-srf-primary/30',
+    default: 'border-slate-800',
     warning: 'border-yellow-500/50 bg-yellow-500/10',
   };
 
   return (
     <div
-      className={`card ${variantClasses[variant]} cursor-pointer hover:scale-[1.02] transition-transform`}
+      className={`rounded-3xl border bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)] transition-transform hover:scale-[1.02] ${variantClasses[variant]}`}
       onClick={onClick}
     >
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-wider text-srf-muted">{title}</p>
+          <p className="text-xs uppercase tracking-[0.24em] text-slate-400">{title}</p>
           <p className={`text-2xl font-bold mt-1 ${variant === 'warning' ? 'text-yellow-400' : ''}`}>
             {value}
           </p>
         </div>
-        <div className="p-2 rounded-lg bg-srf-primary/10 text-srf-primary">{icon}</div>
+        <div className="rounded-xl bg-sky-500/10 p-2 text-sky-300">{icon}</div>
       </div>
     </div>
   );
@@ -473,7 +482,7 @@ function QuickActionButton({ label, icon, onClick }: QuickActionButtonProps) {
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center gap-2 p-3 rounded-lg bg-srf-surface/50 hover:bg-srf-surface transition-colors border border-srf-primary/20"
+      className="flex flex-col items-center gap-2 rounded-2xl border border-slate-800 bg-slate-950/60 p-3 transition-colors hover:bg-slate-900/80"
     >
       {icon}
       <span className="text-xs font-medium">{label}</span>
