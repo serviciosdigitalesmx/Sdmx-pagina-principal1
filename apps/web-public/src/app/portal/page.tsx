@@ -4,7 +4,7 @@ export default function PortalEntryPage() {
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(180,83,9,0.14),_transparent_26%),linear-gradient(180deg,#050505_0%,#0f0f10_50%,#141210_100%)] px-4 py-8 text-zinc-50">
       <section className="mx-auto w-full max-w-4xl rounded-[2rem] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-8 shadow-[0_20px_80px_rgba(0,0,0,0.28)]">
-        <p className="text-xs uppercase tracking-[0.35em] text-amber-100/70">Portal del cliente</p>
+        <p className="text-xs uppercase tracking-[0.35em] text-amber-100/70">Seguimiento público</p>
         <h1 className="mt-3 text-4xl font-bold tracking-tight text-zinc-50 [font-family:var(--font-cormorant)]">
           Consulta pública por folio
         </h1>

@@ -101,7 +101,7 @@ function resolveWhatsappHref(phone?: string | null) {
 export function PublicPortalLookup({
   initialTenantSlug = "",
   initialFolio = "",
-  title = "Portal del cliente",
+  title = "Seguimiento público",
   subtitle = "Consulta el folio de tu servicio con datos reales del taller.",
   showTenantInput = true,
 }: {
@@ -241,7 +241,7 @@ export function PublicPortalLookup({
               <div className="rounded-[1.75rem] border border-zinc-800 bg-zinc-900/60 p-6">
                 <div className="flex min-h-[370px] flex-col items-center justify-center rounded-[1.5rem] border border-zinc-800 bg-zinc-950 px-6 py-10 text-center">
                   <div className="mb-5 rounded-full border border-sky-400/40 bg-sky-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-sky-200">
-                    Portal del cliente
+                    Seguimiento público
                   </div>
                   <h2 className="text-3xl font-black uppercase tracking-tight text-sky-300 sm:text-4xl">Ver estado</h2>
                   <p className="mt-3 max-w-lg text-sm leading-7 text-zinc-400">

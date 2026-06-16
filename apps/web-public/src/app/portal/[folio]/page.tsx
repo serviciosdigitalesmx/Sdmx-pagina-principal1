@@ -7,7 +7,7 @@ export default async function PortalFolioPage({ params, searchParams }: { params
     <PublicPortalLookup
       initialFolio={folio}
       initialTenantSlug={tenant ?? ""}
-      title="Portal del cliente"
+      title="Seguimiento público"
       subtitle="Consulta por folio los documentos, timeline y estado de tu servicio."
       showTenantInput
     />
