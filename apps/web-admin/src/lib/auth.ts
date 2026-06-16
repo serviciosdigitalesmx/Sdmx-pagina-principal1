@@ -3,7 +3,6 @@ import { saveAuthToken, clearAuthToken, readAuthToken } from '@/lib/auth-storage
 import { getCurrentSession } from '@/lib/session';
 import { resolveAdminApiBaseUrl } from '@/lib/api-base-url';
 import { extractTenantRuntimeConfig, saveTenantRuntimeConfig } from '@/lib/tenant-runtime-config';
-import { tenantSettingsService } from '@/services/tenant-settings/tenantSettingsService';
 import type { User, Tenant } from '@/types';
 
 interface LoginResponse {
@@ -49,9 +48,22 @@ export async function loginWithSupabase(accessToken: string): Promise<LoginRespo
   saveTenantRuntimeConfig(extractTenantRuntimeConfig({ tenant }));
 
   try {
-    const tenantSettings = await tenantSettingsService.getTenantSettings();
-    if (tenantSettings) {
-      saveTenantRuntimeConfig(extractTenantRuntimeConfig(tenantSettings));
+    if (tenant?.slug) {
+      const apiUrl = resolveAdminApiBaseUrl();
+      const response = await fetch(`${apiUrl}/api/auth/tenant/${encodeURIComponent(tenant.slug)}/settings`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const tenantSettings = await response.json().catch(() => null);
+        if (tenantSettings) {
+          saveTenantRuntimeConfig(extractTenantRuntimeConfig(tenantSettings));
+        }
+      }
     }
   } catch {
     // If the settings request fails, keep the session alive with the exchange payload.
