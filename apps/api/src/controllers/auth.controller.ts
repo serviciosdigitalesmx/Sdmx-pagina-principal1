@@ -50,6 +50,10 @@ function isAllowedRedirectUrl(candidate: string) {
 }
 
 function resolveAppUrl(requestOrigin: string | undefined) {
+  if (requestOrigin && isAllowedRedirectUrl(requestOrigin)) {
+    return requestOrigin;
+  }
+
   const allowedPublicOrigin = Array.from(getAllowedAppOrigins()).find((origin) => {
     try {
       const parsed = new URL(origin);
@@ -81,10 +85,6 @@ function resolveAppUrl(requestOrigin: string | undefined) {
 
   if (configuredAppUrl && isAllowedRedirectUrl(configuredAppUrl)) {
     return configuredAppUrl;
-  }
-
-  if (requestOrigin && isAllowedRedirectUrl(requestOrigin)) {
-    return requestOrigin;
   }
 
   const fallbackOrigin = Array.from(getAllowedAppOrigins()).find((origin) => isAllowedRedirectUrl(origin));

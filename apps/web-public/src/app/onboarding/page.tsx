@@ -4,6 +4,7 @@ import { useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { ShellBadge, StatCard, srFixTheme } from "@/components/srfix-theme";
 import { optionalEnv } from "@white-label/config";
+import { resolveAdminUrl } from "@/lib/admin-url";
 import { getPublicApiPath } from "@/lib/public-api";
 
 type RegisterState = {
@@ -43,7 +44,7 @@ export default function OnboardingPage() {
         email: form.email.trim(),
         password: form.password,
         phone: form.phone.trim(),
-        origin: window.location.origin,
+        origin: resolveAdminUrl() ?? window.location.origin,
       };
 
       const response = await fetch(getPublicApiPath("/api/auth/register"), {
