@@ -179,7 +179,7 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
               <div className="flex items-center justify-between">
                 <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/30 bg-sky-500/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-sky-200">
                   <span className="text-base">◉</span>
-                  Portal y cotizador
+                  Seguimiento y cotizador
                 </div>
                 <div className="rounded-full border border-orange-400/50 bg-orange-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-orange-200">
                   En vivo
@@ -192,7 +192,7 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
                     Consulta el estado de tu reparación en tiempo real.
                   </p>
                   <div className="mt-5 flex flex-wrap gap-3">
-                    <CTA href={portalHref}>Ir al panel del cliente</CTA>
+                    <CTA href={portalHref}>Ir al seguimiento</CTA>
                     <CTA href={`${portalHref}?folio=FIX-00106`} variant="secondary">
                       Abrir ejemplo
                     </CTA>
@@ -201,7 +201,7 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rounded-[1.4rem] border border-zinc-800 bg-zinc-950/80 p-4">
                     <p className="text-xs uppercase tracking-[0.24em] text-sky-200">Ver estado</p>
-                    <p className="mt-2 text-sm leading-6 text-zinc-400">Lleva al portal del cliente para consultar por folio.</p>
+                    <p className="mt-2 text-sm leading-6 text-zinc-400">Lleva al seguimiento público para consultar por folio.</p>
                   </div>
                   <div className="rounded-[1.4rem] border border-zinc-800 bg-zinc-950/80 p-4">
                     <p className="text-xs uppercase tracking-[0.24em] text-sky-200">Cotización</p>
@@ -337,7 +337,7 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
               Cotizar
             </Link>
             <Link href={`/t/${tenant}/portal`} className="text-sky-300 transition hover:text-sky-200">
-              Portal del cliente
+              Seguimiento
             </Link>
           </div>
         </footer>

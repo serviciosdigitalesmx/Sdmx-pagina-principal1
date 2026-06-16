@@ -186,7 +186,7 @@ export function StorefrontClient({
           </div>
           <nav className="mt-4 flex flex-wrap items-center gap-3 text-sm font-medium text-zinc-300 lg:mt-0">
             <Link href="/portal" className="rounded-full px-4 py-2 transition hover:bg-white/10 hover:text-white">
-              Portal
+              Seguimiento
             </Link>
             <Link href={adminLoginUrl} className="rounded-full px-4 py-2 transition hover:bg-white/10 hover:text-white">
               Entrar
