@@ -1,4 +1,4 @@
-import { optionalEnv } from "@white-label/config";
+import { optionalEnv, resolveBaseDomain } from "@white-label/config";
 
 function normalizeHttpsUrl(candidate: string) {
   const trimmed = candidate.trim();
@@ -17,15 +17,20 @@ export function resolveAdminUrl() {
     optionalEnv("NEXT_PUBLIC_APP_URL") ??
     optionalEnv("NEXT_PUBLIC_WEB_PUBLIC_URL");
 
-  if (!candidate) {
-    return null;
+  if (candidate) {
+    try {
+      return normalizeHttpsUrl(candidate);
+    } catch {
+      return null;
+    }
   }
 
-  try {
-    return normalizeHttpsUrl(candidate);
-  } catch {
-    return null;
+  const baseDomain = resolveBaseDomain();
+  if (baseDomain) {
+    return `https://app.${baseDomain}`;
   }
+
+  return null;
 }
 
 export function resolveAdminBridgeUrl(token: string, tenant?: string | null) {
