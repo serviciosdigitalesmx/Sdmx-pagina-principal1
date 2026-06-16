@@ -20,7 +20,7 @@ const plans: Array<{
     name: "Plan Essential",
     price: "$300",
     description: "Para talleres que necesitan control de recepción y seguimiento.",
-    features: ["Recepción", "Portal del cliente", "Base operativa"],
+    features: ["Recepción", "Seguimiento público", "Base operativa"],
   },
   {
     code: "pro",

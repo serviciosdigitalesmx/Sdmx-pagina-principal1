@@ -41,7 +41,7 @@ const featureCards = [
   },
   {
     title: "WhatsApp",
-    description: "Notificaciones y enlaces directos al portal del cliente.",
+    description: "Notificaciones y enlaces directos al seguimiento público.",
     icon: "✆",
   },
   {
@@ -56,8 +56,8 @@ const pricingPlans = [
     name: "Básico",
     price: "$300",
     period: "MXN / mes",
-    description: "Para talleres que quieren arrancar con recepción, portal y seguimiento.",
-    features: ["Órdenes ilimitadas", "Portal del cliente", "WhatsApp integrado"],
+    description: "Para talleres que quieren arrancar con recepción y seguimiento público.",
+    features: ["Órdenes ilimitadas", "Seguimiento público", "WhatsApp integrado"],
     featured: false,
   },
   {
@@ -152,7 +152,7 @@ function DashboardPreview() {
               </div>
               <div>
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Canal</p>
-                <p className="mt-1 font-semibold text-white">WhatsApp + portal</p>
+                <p className="mt-1 font-semibold text-white">WhatsApp + seguimiento</p>
               </div>
             </div>
           </div>
@@ -175,7 +175,7 @@ function DashboardPreview() {
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs uppercase tracking-[0.24em] text-sky-500">Seguimiento</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Portal del cliente, timeline y PDF real en un solo flujo.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Seguimiento público, timeline y PDF real en un solo flujo.</p>
           </div>
           <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs uppercase tracking-[0.24em] text-sky-500">Inventario</p>
@@ -187,7 +187,7 @@ function DashboardPreview() {
           </div>
           <div className="rounded-[1.4rem] border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs uppercase tracking-[0.24em] text-sky-500">WhatsApp</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">El enlace lleva al portal con el folio precargado.</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">El enlace lleva al seguimiento con el folio precargado.</p>
           </div>
         </div>
       </div>
@@ -199,7 +199,7 @@ function MobilePortalPreview() {
   return (
     <div className="mx-auto w-full max-w-[20rem] rounded-[2.4rem] border-[10px] border-slate-950 bg-slate-950 shadow-[0_30px_80px_rgba(15,23,42,0.24)]">
       <div className="rounded-[1.9rem] bg-white p-4 text-slate-950">
-        <p className="text-xs uppercase tracking-[0.28em] text-sky-500">Portal del cliente</p>
+        <p className="text-xs uppercase tracking-[0.28em] text-sky-500">Seguimiento público</p>
         <h4 className="mt-2 text-xl font-black tracking-tight">Consulta tu reparación</h4>
         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Folio</p>
@@ -243,7 +243,7 @@ export default function Home() {
           <nav className="flex flex-wrap items-center gap-4 text-sm font-medium text-slate-600">
             <Link href="#funciones" className="transition hover:text-slate-950">Funciones</Link>
             <Link href="#precios" className="transition hover:text-slate-950">Precios</Link>
-            <Link href="#portal" className="transition hover:text-slate-950">Portal</Link>
+            <Link href="#seguimiento" className="transition hover:text-slate-950">Seguimiento</Link>
             <Link href="#contacto" className="transition hover:text-slate-950">Contacto</Link>
             <Link href={adminLoginUrl} className="rounded-full px-4 py-2 transition hover:bg-slate-100 hover:text-slate-950">Iniciar sesión</Link>
             <CTA href={adminOnboardingUrl}>Probar {trialDays} días gratis</CTA>
@@ -287,7 +287,7 @@ export default function Home() {
           <div className="flex flex-wrap gap-4">
             <CTA href={adminOnboardingUrl}>Probar {trialDays} días gratis</CTA>
             <GoogleCTA href="/auth/google">Continuar con Google</GoogleCTA>
-            <Link href="#portal" className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-slate-900 transition hover:-translate-y-0.5 hover:bg-slate-50">
+            <Link href="#seguimiento" className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-slate-900 transition hover:-translate-y-0.5 hover:bg-slate-50">
               Ver demostración
             </Link>
           </div>
@@ -351,13 +351,13 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="portal" className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <section id="seguimiento" className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
           <div className="space-y-5 rounded-[2.2rem] border border-slate-200 bg-white p-6 shadow-[0_20px_70px_rgba(15,23,42,0.08)] lg:p-8">
             <SectionLabel>Tus clientes siempre informados</SectionLabel>
-            <h3 className="text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">Portal del cliente sin complicaciones.</h3>
+            <h3 className="text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">Seguimiento público sin complicaciones.</h3>
             <p className="max-w-xl text-base leading-8 text-slate-600">
-              El cliente consulta el estatus de su reparación con su número de folio, sin registro y sin apps extra. El portal usa datos reales del backend.
+              El cliente consulta el estatus de su reparación con su número de folio, sin registro y sin apps extra. El seguimiento usa datos reales del backend.
             </p>
             <ul className="space-y-3 text-slate-700">
               {[
@@ -467,7 +467,7 @@ export default function Home() {
 
       <section className="mx-auto w-full max-w-7xl px-4 pb-12 pt-2 sm:px-6 lg:px-8">
         <PublicPortalLookup
-          title="Portal del cliente"
+          title="Seguimiento público"
           subtitle="Consulta el folio real de una reparación para ver el estado actualizado, documentos y timeline."
           showTenantInput={true}
         />
