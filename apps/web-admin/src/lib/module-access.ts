@@ -1,6 +1,6 @@
 import { getPlatformScope } from '@/lib/scope';
 import { resolveVertical } from '@/domain/vertical/VerticalRegistry';
-import { getStoredIndustryKey } from '@/lib/tenant-runtime-config';
+import { getStoredActiveModules, getStoredIndustryKey } from '@/lib/tenant-runtime-config';
 
 export type TenantModuleKey =
   | 'orders'
@@ -35,6 +35,11 @@ const MODULE_ROUTE_MAP: Record<string, TenantModuleKey> = {
 };
 
 export function getEnabledModules(): string[] {
+  const storedActiveModules = getStoredActiveModules();
+  if (storedActiveModules.length > 0) {
+    return storedActiveModules;
+  }
+
   const scope = getPlatformScope();
   const vertical = resolveVertical(getStoredIndustryKey() ?? scope?.verticalCode ?? null);
 

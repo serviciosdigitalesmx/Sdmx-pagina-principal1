@@ -1,6 +1,7 @@
 export type TenantRuntimeConfig = {
   industryKey: string | null;
   industryLabel: string | null;
+  activeModules: string[];
 };
 
 const STORAGE_KEY = 'srf_tenant_runtime_config';
@@ -13,6 +14,8 @@ export function saveTenantRuntimeConfig(input: TenantRuntimeConfig): void {
   if (input.industryKey) {
     window.localStorage.setItem('srf_industry_key', input.industryKey);
   }
+
+  window.localStorage.setItem('srf_active_modules', JSON.stringify(Array.isArray(input.activeModules) ? input.activeModules : []));
 }
 
 export function getTenantRuntimeConfig(): TenantRuntimeConfig | null {
@@ -27,14 +30,25 @@ export function getTenantRuntimeConfig(): TenantRuntimeConfig | null {
     return {
       industryKey: typeof parsed.industryKey === 'string' ? parsed.industryKey : null,
       industryLabel: typeof parsed.industryLabel === 'string' ? parsed.industryLabel : null,
+      activeModules: Array.isArray((parsed as { activeModules?: unknown }).activeModules)
+        ? ((parsed as { activeModules?: unknown }).activeModules as unknown[]).filter((item): item is string => typeof item === 'string')
+        : [],
     };
   } catch {
-    return null;
+    return {
+      industryKey: null,
+      industryLabel: null,
+      activeModules: [],
+    };
   }
 }
 
 export function getStoredIndustryKey(): string | null {
   return getTenantRuntimeConfig()?.industryKey ?? null;
+}
+
+export function getStoredActiveModules(): string[] {
+  return getTenantRuntimeConfig()?.activeModules ?? [];
 }
 
 export function extractTenantRuntimeConfig(payload: unknown): TenantRuntimeConfig {
@@ -62,5 +76,15 @@ export function extractTenantRuntimeConfig(payload: unknown): TenantRuntimeConfi
         : typeof profile?.industryLabel === 'string'
           ? profile.industryLabel
           : null,
+
+    activeModules: Array.isArray(root?.data?.capabilities?.active_modules)
+      ? (root.data.capabilities.active_modules as unknown[]).filter((item): item is string => typeof item === 'string')
+      : Array.isArray(root?.capabilities?.active_modules)
+        ? (root.capabilities.active_modules as unknown[]).filter((item): item is string => typeof item === 'string')
+        : Array.isArray(root?.data?.active_modules)
+          ? (root.data.active_modules as unknown[]).filter((item): item is string => typeof item === 'string')
+          : Array.isArray(root?.active_modules)
+            ? (root.active_modules as unknown[]).filter((item): item is string => typeof item === 'string')
+            : [],
   };
 }
