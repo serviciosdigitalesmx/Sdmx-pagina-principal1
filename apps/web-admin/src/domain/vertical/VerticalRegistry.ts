@@ -2,6 +2,96 @@ import type { VerticalConfig } from './VerticalConfig';
 import { DEFAULT_VERTICAL_CONFIG } from './VerticalConfig';
 
 export const VERTICALS: Record<string, VerticalConfig> = {
+  electronics_repair: {
+    code: 'electronics_repair',
+    name: 'Reparación de electrónicos',
+    labels: {
+      branch: 'Sucursal',
+      order: 'Orden',
+      customer: 'Cliente',
+      technician: 'Técnico',
+      asset: 'Dispositivo',
+    },
+    enabledModules: [
+      'orders',
+      'customers',
+      'inventory',
+      'tasks',
+      'procurement',
+      'finance',
+      'reports',
+      'security',
+      'users',
+      'branches',
+      'requests',
+    ],
+    workflowStatuses: [
+      { key: 'received', label: 'Recibido', tone: 'neutral', isDefault: true },
+      { key: 'diagnosing', label: 'Diagnóstico', tone: 'info' },
+      { key: 'repairing', label: 'En reparación', tone: 'warning' },
+      { key: 'awaiting_parts', label: 'Esperando piezas', tone: 'warning' },
+      { key: 'ready', label: 'Listo', tone: 'success' },
+      { key: 'delivered', label: 'Entregado', tone: 'success', isTerminal: true },
+      { key: 'cancelled', label: 'Cancelado', tone: 'danger', isTerminal: true },
+    ],
+    statusOptions: {
+      orders: [
+        { key: 'received', label: 'Recibido', tone: 'neutral', isDefault: true },
+        { key: 'diagnosing', label: 'Diagnóstico', tone: 'info' },
+        { key: 'repairing', label: 'En reparación', tone: 'warning' },
+        { key: 'awaiting_parts', label: 'Esperando piezas', tone: 'warning' },
+        { key: 'ready', label: 'Listo', tone: 'success' },
+        { key: 'delivered', label: 'Entregado', tone: 'success', isTerminal: true },
+        { key: 'cancelled', label: 'Cancelado', tone: 'danger', isTerminal: true },
+      ],
+    },
+  },
+
+  electronica: {
+    code: 'electronica',
+    name: 'Electrónica',
+    labels: {
+      branch: 'Sucursal',
+      order: 'Orden',
+      customer: 'Cliente',
+      technician: 'Técnico',
+      asset: 'Dispositivo',
+    },
+    enabledModules: [
+      'orders',
+      'customers',
+      'inventory',
+      'tasks',
+      'procurement',
+      'finance',
+      'reports',
+      'security',
+      'users',
+      'branches',
+      'requests',
+    ],
+    workflowStatuses: [
+      { key: 'received', label: 'Recibido', tone: 'neutral', isDefault: true },
+      { key: 'diagnosing', label: 'Diagnóstico', tone: 'info' },
+      { key: 'repairing', label: 'En reparación', tone: 'warning' },
+      { key: 'awaiting_parts', label: 'Esperando piezas', tone: 'warning' },
+      { key: 'ready', label: 'Listo', tone: 'success' },
+      { key: 'delivered', label: 'Entregado', tone: 'success', isTerminal: true },
+      { key: 'cancelled', label: 'Cancelado', tone: 'danger', isTerminal: true },
+    ],
+    statusOptions: {
+      orders: [
+        { key: 'received', label: 'Recibido', tone: 'neutral', isDefault: true },
+        { key: 'diagnosing', label: 'Diagnóstico', tone: 'info' },
+        { key: 'repairing', label: 'En reparación', tone: 'warning' },
+        { key: 'awaiting_parts', label: 'Esperando piezas', tone: 'warning' },
+        { key: 'ready', label: 'Listo', tone: 'success' },
+        { key: 'delivered', label: 'Entregado', tone: 'success', isTerminal: true },
+        { key: 'cancelled', label: 'Cancelado', tone: 'danger', isTerminal: true },
+      ],
+    },
+  },
+
   talleres: {
     code: 'talleres',
     name: 'Taller de Reparación',
@@ -137,38 +227,6 @@ export const VERTICALS: Record<string, VerticalConfig> = {
     },
   },
 
-  electronica: {
-    code: 'electronica',
-    name: 'Electrónica',
-    labels: {
-      branch: 'Sucursal',
-      order: 'Orden',
-      customer: 'Cliente',
-      technician: 'Técnico',
-      asset: 'Dispositivo',
-    },
-    enabledModules: ['orders', 'customers', 'inventory', 'tasks', 'procurement', 'reports'],
-    workflowStatuses: [
-      { key: 'received', label: 'Recibido', tone: 'neutral', isDefault: true },
-      { key: 'diagnosing', label: 'Diagnóstico', tone: 'info' },
-      { key: 'repairing', label: 'En reparación', tone: 'warning' },
-      { key: 'awaiting_parts', label: 'Esperando piezas', tone: 'warning' },
-      { key: 'ready', label: 'Listo', tone: 'success' },
-      { key: 'delivered', label: 'Entregado', tone: 'success', isTerminal: true },
-      { key: 'cancelled', label: 'Cancelado', tone: 'danger', isTerminal: true },
-    ],
-    statusOptions: {
-      orders: [
-        { key: 'received', label: 'Recibido', tone: 'neutral', isDefault: true },
-        { key: 'diagnosing', label: 'Diagnóstico', tone: 'info' },
-        { key: 'repairing', label: 'En reparación', tone: 'warning' },
-        { key: 'awaiting_parts', label: 'Esperando piezas', tone: 'warning' },
-        { key: 'ready', label: 'Listo', tone: 'success' },
-        { key: 'delivered', label: 'Entregado', tone: 'success', isTerminal: true },
-        { key: 'cancelled', label: 'Cancelado', tone: 'danger', isTerminal: true },
-      ],
-    },
-  },
 };
 
 export function resolveVertical(
