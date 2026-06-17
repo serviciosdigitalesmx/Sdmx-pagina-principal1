@@ -66,11 +66,12 @@ export default function OnboardingPage() {
         );
       }
 
-      if (!payload?.redirectUrl) {
-        throw new Error("La API no devolvió redirectUrl");
-      }
+      const fallbackRedirectUrl =
+        payload?.tenant?.slug && payload?.token
+          ? `${resolveAdminUrl() ?? window.location.origin}/onboarding/success?tenant=${encodeURIComponent(payload.tenant.slug)}&token=${encodeURIComponent(payload.token)}`
+          : null;
 
-      window.location.assign(payload.redirectUrl);
+      window.location.assign(payload?.redirectUrl || fallbackRedirectUrl || "/onboarding?error=redirect_missing");
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : "Error inesperado al crear la cuenta";
       setError(message);

@@ -5,6 +5,7 @@ import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { saveAuthToken } from "@/lib/auth-storage";
 import { ShellBadge, srFixTheme } from "@/components/srfix-theme";
 import { getPublicApiPath } from "@/lib/public-api";
+import { resolveAdminUrl } from "@/lib/admin-url";
 
 type GoogleSessionState = {
   email: string;
@@ -130,8 +131,13 @@ export default function GoogleCallbackPage() {
         saveAuthToken(payload.token);
       }
 
-      if (payload?.redirectUrl) {
-        window.location.assign(payload.redirectUrl);
+      const fallbackRedirectUrl =
+        payload?.tenant?.slug && payload?.token
+          ? `${resolveAdminUrl() ?? window.location.origin}/onboarding/success?tenant=${encodeURIComponent(payload.tenant.slug)}&token=${encodeURIComponent(payload.token)}`
+          : null;
+
+      if (payload?.redirectUrl || fallbackRedirectUrl) {
+        window.location.assign(payload.redirectUrl || fallbackRedirectUrl);
         return;
       }
 

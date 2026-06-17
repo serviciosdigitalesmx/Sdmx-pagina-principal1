@@ -72,6 +72,21 @@ export function resolveApiBaseUrl(): string {
       return `https://api.${baseDomain}`;
     }
 
+    if (typeof window !== "undefined") {
+      const host = window.location.hostname;
+      const port = window.location.port;
+
+      if (host === "localhost" || host === "127.0.0.1" || host === "::1") {
+        if (port === "3000") {
+          return "http://127.0.0.1:3001";
+        }
+
+        if (port === "3001") {
+          return window.location.origin.replace(/\/$/, "");
+        }
+      }
+    }
+
     return fail("API_URL");
   }
 
