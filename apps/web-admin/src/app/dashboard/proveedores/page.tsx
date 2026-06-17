@@ -192,15 +192,35 @@ export default function ProveedoresPage() {
   }
 
   if (loading) {
-    return <div className="flex h-full items-center justify-center"><div className="spinner w-8 h-8" /></div>;
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-400 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (error && rows.length === 0) {
+    return (
+      <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-6 text-center text-sm text-rose-100">
+        <p className="font-semibold">No se pudieron cargar los proveedores</p>
+        <p className="mt-2 text-rose-100/80">{error}</p>
+        <button
+          type="button"
+          onClick={() => void loadSuppliers()}
+          className="mt-4 rounded-2xl border border-rose-500/20 bg-slate-950/70 px-4 py-2 font-semibold text-rose-100"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-orbitron font-bold text-srf-primary">Proveedores</h1>
-          <p className="mt-1 text-sm text-srf-muted">{filtered.length} visibles · {activeCount} activos</p>
+          <h1 className="text-2xl font-semibold text-slate-50">Proveedores</h1>
+          <p className="mt-1 text-sm text-slate-400">{filtered.length} visibles · {activeCount} activos</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => void loadSuppliers()} className="btn-outline gap-2 inline-flex items-center">
@@ -214,13 +234,13 @@ export default function ProveedoresPage() {
         </div>
       </div>
 
-      {error ? <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</div> : null}
+      {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{error}</div> : null}
 
       {showForm ? (
         <form onSubmit={submitSupplier} className="card space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-srf-primary">{editing ? 'Editar proveedor' : 'Nuevo proveedor'}</h2>
-            <button type="button" onClick={() => setShowForm(false)} className="btn-ghost inline-flex items-center gap-2 text-srf-muted">
+            <h2 className="text-lg font-semibold text-slate-50">{editing ? 'Editar proveedor' : 'Nuevo proveedor'}</h2>
+            <button type="button" onClick={() => setShowForm(false)} className="btn-ghost inline-flex items-center gap-2 text-slate-400">
               <X className="w-4 h-4" />
               Cerrar
             </button>
@@ -243,7 +263,7 @@ export default function ProveedoresPage() {
       ) : null}
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 w-4 h-4 -translate-y-1/2 text-srf-muted" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <input value={search} onChange={(e) => setSearch(e.target.value)} className="input pl-9" placeholder="Buscar por nombre, RFC, categoria o contacto..." />
       </div>
 
@@ -252,27 +272,27 @@ export default function ProveedoresPage() {
           <div key={supplier.id} className="card card-hover space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-lg font-semibold text-srf-primary">{supplierName(supplier)}</h3>
-                <p className="text-xs text-srf-muted">{supplier.rfc || 'RFC sin capturar'}</p>
+                <h3 className="text-lg font-semibold text-slate-50">{supplierName(supplier)}</h3>
+                <p className="text-xs text-slate-400">{supplier.rfc || 'RFC sin capturar'}</p>
               </div>
               <span className={isActive(supplier) ? 'badge-listo' : 'badge-cancelado'}>{isActive(supplier) ? 'Activo' : 'Inactivo'}</span>
             </div>
 
-            <div className="grid gap-2 text-sm text-srf-muted">
-              <div className="flex items-center gap-2"><Truck className="w-4 h-4 text-srf-primary" /><span>{supplier.categories || 'Sin categorias'}</span></div>
-              <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-srf-primary" /><span>{supplierPhone(supplier) || 'Sin telefono'}</span></div>
-              <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-srf-primary" /><span>{supplier.email || 'Sin email'}</span></div>
+            <div className="grid gap-2 text-sm text-slate-400">
+              <div className="flex items-center gap-2"><Truck className="w-4 h-4 text-sky-300" /><span>{supplier.categories || 'Sin categorias'}</span></div>
+              <div className="flex items-center gap-2"><Phone className="w-4 h-4 text-sky-300" /><span>{supplierPhone(supplier) || 'Sin telefono'}</span></div>
+              <div className="flex items-center gap-2"><Mail className="w-4 h-4 text-sky-300" /><span>{supplier.email || 'Sin email'}</span></div>
             </div>
 
-            <div className="rounded-lg border border-srf-primary/20 bg-srf-bg/40 p-3 text-sm">
-              <div className="text-srf-muted">Terminos de pago</div>
-              <div className="mt-1 text-srf-text">{paymentTerms(supplier)}</div>
+            <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-3 text-sm">
+              <div className="text-slate-400">Terminos de pago</div>
+              <div className="mt-1 text-slate-200">{paymentTerms(supplier)}</div>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-xs text-srf-muted">{supplier.address ?? supplier.direccion ?? 'Direccion no capturada'}</div>
+              <div className="text-xs text-slate-400">{supplier.address ?? supplier.direccion ?? 'Direccion no capturada'}</div>
               <div className="flex flex-wrap gap-2">
-                <button className="btn-ghost inline-flex items-center gap-2 text-srf-primary" onClick={() => openEdit(supplier)}>
+                <button className="btn-ghost inline-flex items-center gap-2 text-sky-300" onClick={() => openEdit(supplier)}>
                   <Edit2 className="w-4 h-4" />
                   Editar
                 </button>
@@ -291,7 +311,7 @@ export default function ProveedoresPage() {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center py-12 text-srf-muted">No hay proveedores con esos filtros.</div>
+        <div className="text-center py-12 text-slate-400">No hay proveedores con esos filtros.</div>
       ) : null}
     </div>
   );

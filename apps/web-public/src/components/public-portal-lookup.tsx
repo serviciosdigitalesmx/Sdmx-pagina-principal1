@@ -222,7 +222,7 @@ export function PublicPortalLookup({
               {error ? <p className="mt-4 rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">{error}</p> : null}
               <button
                 disabled={loading}
-                className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-orange-500 px-6 py-4 text-sm font-black uppercase tracking-[0.2em] text-white shadow-[0_16px_45px_rgba(249,115,22,0.32)] transition hover:-translate-y-0.5 hover:bg-orange-400 disabled:opacity-60"
+                className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-sky-500 px-6 py-4 text-sm font-black uppercase tracking-[0.2em] text-white shadow-[0_16px_45px_rgba(249,115,22,0.32)] transition hover:-translate-y-0.5 hover:bg-sky-400 disabled:opacity-60"
               >
                 {loading ? "Consultando..." : "Consultar"}
               </button>

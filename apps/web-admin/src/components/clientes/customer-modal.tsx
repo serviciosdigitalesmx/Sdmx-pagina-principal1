@@ -23,6 +23,7 @@ interface CustomerModalProps {
 
 export function CustomerModal({ open, onOpenChange, customer, onCustomerSaved }: CustomerModalProps) {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -32,7 +33,7 @@ export function CustomerModal({ open, onOpenChange, customer, onCustomerSaved }:
   useEffect(() => {
     if (customer) {
       setFormData({
-        name: customer.name,
+        name: customer.full_name || customer.name,
         phone: customer.phone,
         email: customer.email || '',
       });
@@ -49,6 +50,7 @@ export function CustomerModal({ open, onOpenChange, customer, onCustomerSaved }:
     }
 
     setLoading(true);
+    setError(null);
     try {
       if (customer) {
         // Update existing customer
@@ -61,7 +63,7 @@ export function CustomerModal({ open, onOpenChange, customer, onCustomerSaved }:
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to save customer:', error);
-      alert('Error al guardar el cliente');
+      setError(error instanceof Error ? error.message : 'Error al guardar el cliente');
     } finally {
       setLoading(false);
     }
@@ -69,12 +71,19 @@ export function CustomerModal({ open, onOpenChange, customer, onCustomerSaved }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-srf-surface border-srf-primary/40">
+      <DialogContent className="max-w-md border border-slate-800 bg-slate-950/95 text-slate-100">
         <DialogHeader>
-          <DialogTitle className="text-srf-primary">
+          <DialogTitle className="text-slate-50">
             {customer ? 'Editar cliente' : 'Nuevo cliente'}
           </DialogTitle>
         </DialogHeader>
+
+        {error ? (
+          <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">
+            <p className="font-semibold">No se pudo guardar el cliente</p>
+            <p className="mt-1 text-rose-100/80">{error}</p>
+          </div>
+        ) : null}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -96,7 +105,7 @@ export function CustomerModal({ open, onOpenChange, customer, onCustomerSaved }:
               maxLength={10}
               required
             />
-            <p className="text-xs text-srf-muted mt-1">10 dígitos, solo números</p>
+            <p className="mt-1 text-xs text-slate-400">10 dígitos, solo números</p>
           </div>
 
           <div>

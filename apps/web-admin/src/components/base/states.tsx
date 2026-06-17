@@ -8,9 +8,9 @@ export function LoadingState({
   label?: string;
 }) {
   return (
-    <div className="flex min-h-[240px] items-center justify-center rounded-3xl border border-slate-800 bg-white/5">
+    <div className="flex min-h-[240px] items-center justify-center rounded-3xl border border-slate-800 bg-slate-950/70">
       <div className="flex items-center gap-3 text-slate-400">
-        <div className="spinner h-5 w-5" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-sky-400 border-t-transparent" />
         <span className="text-sm">{label}</span>
       </div>
     </div>

@@ -15,6 +15,7 @@ import type { Sucursal } from '@/types';
 export default function SucursalesPage() {
   const auth = useAuth();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
   const [filteredSucursales, setFilteredSucursales] = useState<Sucursal[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,12 +26,14 @@ export default function SucursalesPage() {
 
   const loadSucursales = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await apiClient.get<{ data: Sucursal[] }>('/sucursales', getApiOptions());
       setSucursales(data.data || []);
       setActiveSucursalIdLocal(getActiveSucursalId());
     } catch (error) {
       console.error('Failed to load sucursales:', error);
+      setLoadError(error instanceof Error ? error.message : 'No se pudieron cargar las sucursales');
     } finally {
       setLoading(false);
     }
@@ -79,6 +82,22 @@ export default function SucursalesPage() {
     );
   }
 
+  if (loadError && sucursales.length === 0) {
+    return (
+      <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-6 text-center text-sm text-rose-100">
+        <p className="font-semibold">No se pudieron cargar las sucursales</p>
+        <p className="mt-2 text-rose-100/80">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => loadSucursales()}
+          className="mt-4 rounded-2xl border border-rose-500/20 bg-slate-950/70 px-4 py-2 font-semibold text-rose-100"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
+  }
+
   const activeCount = sucursales.filter((s) => s.is_active).length;
 
   return (
@@ -120,6 +139,7 @@ export default function SucursalesPage() {
       </div>
 
       {/* Search */}
+      {loadError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{loadError}</div> : null}
       <div className="relative">
         <Input
           placeholder="Buscar sucursal..."

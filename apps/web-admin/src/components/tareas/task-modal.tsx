@@ -90,9 +90,9 @@ export function TaskModal({ open, onOpenChange, task, onTaskSaved }: TaskModalPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md bg-srf-surface border-srf-primary/40">
+      <DialogContent className="max-w-md border border-slate-800 bg-slate-950/95 text-slate-100">
         <DialogHeader>
-          <DialogTitle className="text-srf-primary">
+          <DialogTitle className="text-slate-50">
             {task ? 'Editar tarea' : 'Nueva tarea'}
           </DialogTitle>
         </DialogHeader>

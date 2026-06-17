@@ -133,8 +133,24 @@ export default function GastosPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="spinner w-8 h-8" />
+      <div className="flex h-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-400 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (error && expenses.length === 0) {
+    return (
+      <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-6 text-center text-sm text-rose-100">
+        <p className="font-semibold">No se pudieron cargar los gastos</p>
+        <p className="mt-2 text-rose-100/80">{error}</p>
+        <button
+          type="button"
+          onClick={() => void loadExpenses()}
+          className="mt-4 rounded-2xl border border-rose-500/20 bg-slate-950/70 px-4 py-2 font-semibold text-rose-100"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }
@@ -143,27 +159,27 @@ export default function GastosPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-orbitron font-bold text-srf-primary">Gastos</h1>
-          <p className="text-srf-muted text-sm mt-1">
-            Total: <span className="font-bold text-srf-accent">${totalAmount.toFixed(2)}</span>
+          <h1 className="text-2xl font-semibold text-slate-50">Gastos</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            Total: <span className="font-bold text-sky-300">${totalAmount.toFixed(2)}</span>
           </p>
         </div>
         <button
           onClick={() => setShowForm((value) => !value)}
-          className="btn-primary gap-2 inline-flex items-center"
+          className="btn-primary inline-flex items-center gap-2"
         >
           <Plus className="w-4 h-4" />
           Nuevo gasto
         </button>
       </div>
 
-      {error ? <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</div> : null}
+      {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{error}</div> : null}
 
       {showForm ? (
         <form onSubmit={submitExpense} className="card space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-srf-primary">Registrar gasto</h2>
-            <button type="button" onClick={() => setShowForm(false)} className="btn-ghost inline-flex items-center gap-2 text-srf-muted">
+            <h2 className="text-lg font-semibold text-slate-50">Registrar gasto</h2>
+            <button type="button" onClick={() => setShowForm(false)} className="btn-ghost inline-flex items-center gap-2 text-slate-400">
               <X className="w-4 h-4" />
               Cerrar
             </button>
@@ -183,7 +199,7 @@ export default function GastosPage() {
 
       <div className="flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-srf-muted" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             placeholder="Buscar por concepto o categoría..."
             value={searchTerm}
@@ -214,7 +230,7 @@ export default function GastosPage() {
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-srf-surface border-b border-srf-primary/30">
+          <thead className="border-b border-slate-800 bg-slate-950/70">
             <tr>
               <th className="text-left py-3 px-4">Fecha</th>
               <th className="text-left py-3 px-4">Categoría</th>
@@ -225,13 +241,13 @@ export default function GastosPage() {
           </thead>
           <tbody>
             {filteredExpenses.map((expense) => (
-              <tr key={expense.id} className="border-b border-srf-primary/20 hover:bg-srf-surface/50">
+              <tr key={expense.id} className="border-b border-slate-800/80 hover:bg-slate-900/40">
                 <td className="py-3 px-4">{formatDate(expense.expense_date ?? expense.created_at)}</td>
                 <td className="py-3 px-4">{expense.category ?? 'operativo'}</td>
                 <td className="py-3 px-4">
                   <div className="font-medium">{expense.description ?? expense.concept ?? 'Gasto'}</div>
                 </td>
-                <td className="py-3 px-4 text-right font-semibold text-srf-accent">
+                <td className="py-3 px-4 text-right font-semibold text-sky-300">
                   ${Number(expense.expense ?? expense.amount ?? 0).toFixed(2)}
                 </td>
                 <td className="py-3 px-4">
@@ -249,7 +265,7 @@ export default function GastosPage() {
 
         {filteredExpenses.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-srf-muted">No hay gastos con esos filtros</p>
+            <p className="text-slate-400">No hay gastos con esos filtros</p>
           </div>
         )}
       </div>

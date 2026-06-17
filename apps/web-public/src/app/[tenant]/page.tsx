@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { notFound } from "next/navigation";
 import { srFixTheme } from "@/components/srfix-theme";
 import { resolveApiBaseUrl as getApiBaseUrl } from "@white-label/config";
 
@@ -50,12 +51,12 @@ function resolveWhatsappHref(phone?: string | null) {
   return digits.length > 0 ? `https://wa.me/${digits}` : undefined;
 }
 
-async function getTenantLanding(tenant: string): Promise<LandingResponse["data"]> {
+async function getTenantLanding(tenant: string): Promise<LandingResponse["data"] | null> {
   const apiBaseUrl = getApiBaseUrl();
   const response = await fetch(`${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenant)}/landing`, { cache: "no-store" });
   const payload = (await response.json().catch(() => null)) as LandingResponse | { error?: string } | null;
   if (!response.ok || !payload || !("success" in payload)) {
-    throw new Error((payload && "error" in payload && payload.error) || "No pudimos cargar la landing del tenant");
+    return null;
   }
   return payload.data;
 }
@@ -66,7 +67,7 @@ function CTA({ href, children, variant = "primary" }: { href: string; children: 
   const className =
     variant === "primary"
       ? `${base} border border-sky-400/70 bg-sky-500 text-white shadow-[0_0_0_1px_rgba(96,165,250,0.18),0_18px_45px_rgba(59,130,246,0.35)] hover:-translate-y-0.5 hover:bg-sky-400`
-      : `${base} border border-orange-400/80 bg-zinc-50 text-zinc-950 shadow-[0_18px_45px_rgba(249,115,22,0.22)] hover:-translate-y-0.5 hover:bg-zinc-100`;
+      : `${base} border border-sky-400/80 bg-sky-50 text-slate-950 shadow-[0_18px_45px_rgba(59,130,246,0.22)] hover:-translate-y-0.5 hover:bg-sky-100`;
   return (
     <Link href={href} className={className}>
       {children}
@@ -77,6 +78,9 @@ function CTA({ href, children, variant = "primary" }: { href: string; children: 
 export default async function TenantLandingPage({ params }: { params: Promise<{ tenant: string }> }) {
   const { tenant } = await params;
   const data = await getTenantLanding(tenant);
+  if (!data) {
+    notFound();
+  }
   const landing = data.landingContent;
   const templateLanding = data.tenant.config?.templates?.landing ?? {};
   const labels = data.tenant.config?.labels ?? {};
@@ -96,9 +100,9 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
   const trackingHref = `/${tenant}/tracking`;
 
   return (
-    <main className="min-h-screen text-zinc-100" style={{ background: srFixTheme.background }}>
+    <main className="min-h-screen text-slate-100" style={{ background: srFixTheme.background }}>
       <section className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-        <header className="flex flex-col gap-4 rounded-[2rem] border border-zinc-800/70 bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(10,10,12,0.96))] px-5 py-4 shadow-[0_20px_70px_rgba(0,0,0,0.24)] backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between">
+        <header className="flex flex-col gap-4 rounded-[2rem] border border-slate-800/70 bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(10,10,12,0.96))] px-5 py-4 shadow-[0_20px_70px_rgba(0,0,0,0.24)] backdrop-blur-xl lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-4">
             <div className="rounded-2xl border border-sky-400/25 bg-white p-2 shadow-[0_0_0_1px_rgba(96,165,250,0.15)]">
               {data.tenant.branding?.logoUrl ? (
@@ -110,19 +114,19 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.35em] text-sky-100/75">FIXI</p>
-              <h1 className="text-2xl font-black tracking-tight text-zinc-50 sm:text-3xl">{data.tenant.name}</h1>
-              <p className="text-sm text-zinc-400">{heroSubtitle}</p>
+              <h1 className="text-2xl font-black tracking-tight text-slate-50 sm:text-3xl">{data.tenant.name}</h1>
+              <p className="text-sm text-slate-400">{heroSubtitle}</p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <Link href="#inicio" className="rounded-full px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-zinc-300 transition hover:bg-white/5">
+            <Link href="#inicio" className="rounded-full px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-300 transition hover:bg-white/5">
               Inicio
             </Link>
-            <Link href={quoteHref} className="rounded-full px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-zinc-300 transition hover:bg-white/5">
+            <Link href={quoteHref} className="rounded-full px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-300 transition hover:bg-white/5">
               Cotizar
             </Link>
-            <Link href={portalHref} className="rounded-full px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-zinc-300 transition hover:bg-white/5">
+            <Link href={portalHref} className="rounded-full px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-300 transition hover:bg-white/5">
               Estado
             </Link>
             {socialLinks.slice(0, 2).map((link) => (
@@ -131,7 +135,7 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
                 href={link.href}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-full px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-zinc-300 transition hover:bg-white/5"
+                className="rounded-full px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] text-slate-300 transition hover:bg-white/5"
               >
                 {link.label}
               </a>
@@ -147,12 +151,12 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
             </div>
 
             <div className="space-y-4">
-              <h2 className="max-w-xl text-5xl font-black uppercase leading-[0.92] tracking-tight text-zinc-50 sm:text-7xl">
-                <span className="block text-zinc-100">{heroTitle.split(" ").slice(0, 1).join(" ") || heroTitle}</span>
-                <span className="block text-orange-400">{heroTitle.split(" ").slice(1, 2).join(" ") || heroTitle}</span>
-                <span className="block text-zinc-100">{heroTitle.split(" ").slice(2).join(" ") || heroTitle}</span>
+              <h2 className="max-w-xl text-5xl font-black uppercase leading-[0.92] tracking-tight text-slate-50 sm:text-7xl">
+                <span className="block text-slate-100">{heroTitle.split(" ").slice(0, 1).join(" ") || heroTitle}</span>
+                <span className="block text-sky-300">{heroTitle.split(" ").slice(1, 2).join(" ") || heroTitle}</span>
+                <span className="block text-slate-100">{heroTitle.split(" ").slice(2).join(" ") || heroTitle}</span>
               </h2>
-              <p className="max-w-2xl text-lg leading-8 text-zinc-400 sm:text-xl">{heroDescription}</p>
+              <p className="max-w-2xl text-lg leading-8 text-slate-400 sm:text-xl">{heroDescription}</p>
             </div>
 
             <div className="flex flex-wrap gap-4">
@@ -181,13 +185,13 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
                   <span className="text-base">◉</span>
                   Seguimiento y cotizador
                 </div>
-                <div className="rounded-full border border-orange-400/50 bg-orange-400/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-orange-200">
+                <div className="rounded-full border border-sky-400/50 bg-sky-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-200">
                   En vivo
                 </div>
               </div>
               <div className="mt-6 grid gap-4 rounded-[1.75rem] border border-slate-700/70 bg-black/25 p-5">
-                <div className="rounded-[1.5rem] border border-slate-700 bg-zinc-950 p-5">
-                  <p className="text-xs uppercase tracking-[0.28em] text-zinc-400">¿Ya dejaste tu equipo?</p>
+                <div className="rounded-[1.5rem] border border-slate-700 bg-slate-950 p-5">
+                  <p className="text-xs uppercase tracking-[0.28em] text-slate-400">¿Ya dejaste tu equipo?</p>
                   <p className="mt-3 text-2xl font-black uppercase leading-tight text-sky-100 sm:text-3xl">
                     Consulta el estado de tu reparación en tiempo real.
                   </p>
@@ -199,13 +203,13 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
                   </div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-[1.4rem] border border-zinc-800 bg-zinc-950/80 p-4">
+                  <div className="rounded-[1.4rem] border border-slate-800 bg-slate-950/80 p-4">
                     <p className="text-xs uppercase tracking-[0.24em] text-sky-200">Ver estado</p>
-                    <p className="mt-2 text-sm leading-6 text-zinc-400">Lleva al seguimiento público para consultar por folio.</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-400">Lleva al seguimiento público para consultar por folio.</p>
                   </div>
-                  <div className="rounded-[1.4rem] border border-zinc-800 bg-zinc-950/80 p-4">
+                  <div className="rounded-[1.4rem] border border-slate-800 bg-slate-950/80 p-4">
                     <p className="text-xs uppercase tracking-[0.24em] text-sky-200">Cotización</p>
-                    <p className="mt-2 text-sm leading-6 text-zinc-400">Solicita una cotización y recibe folio real.</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-400">Solicita una cotización y recibe folio real.</p>
                   </div>
                 </div>
               </div>
@@ -215,60 +219,60 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
 
         <section className="grid gap-5 py-8 md:grid-cols-3" aria-label="Servicios">
           {services.map((service) => (
-            <article key={service.title} className="rounded-[1.5rem] border border-zinc-700/80 bg-white/4 p-6 shadow-[0_14px_55px_rgba(0,0,0,0.18)]">
+            <article key={service.title} className="rounded-[1.5rem] border border-slate-800 bg-slate-950/70 p-6 shadow-[0_14px_55px_rgba(0,0,0,0.18)]">
               <div className="mb-8 text-4xl text-sky-400">▣</div>
-              <h3 className="text-xl font-black uppercase tracking-[0.08em] text-zinc-50">{service.title}</h3>
-              <p className="mt-4 text-sm leading-7 text-zinc-400">{service.description}</p>
+              <h3 className="text-xl font-black uppercase tracking-[0.08em] text-slate-50">{service.title}</h3>
+              <p className="mt-4 text-sm leading-7 text-slate-400">{service.description}</p>
             </article>
           ))}
         </section>
 
         <section className="grid gap-8 py-10 lg:grid-cols-[1fr_0.95fr] lg:items-start">
           <div className="space-y-5">
-            <h2 className="text-4xl font-black uppercase tracking-tight text-zinc-50 sm:text-5xl">{labels.quote ?? "Cotizar"}</h2>
-            <p className="max-w-2xl text-lg leading-8 text-zinc-400">
+            <h2 className="text-4xl font-black uppercase tracking-tight text-slate-50 sm:text-5xl">{labels.quote ?? "Cotizar"}</h2>
+            <p className="max-w-2xl text-lg leading-8 text-slate-400">
               Sección visible para capturar el problema y disparar el flujo de recepción real.
             </p>
             <div className="grid gap-4">
-              <div className="rounded-[1.5rem] border border-zinc-700 bg-zinc-900/75 p-5">
+              <div className="rounded-[1.5rem] border border-slate-800 bg-slate-950/75 p-5">
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-300">Problema detallado</p>
-                <p className="mt-3 text-sm leading-7 text-zinc-400">
+                <p className="mt-3 text-sm leading-7 text-slate-400">
                   El cliente describe la falla, urgencia y equipo. Esto prepara la solicitud para recepción.
                 </p>
               </div>
-              <div className="rounded-[1.5rem] border border-zinc-700 bg-zinc-900/75 p-5">
+              <div className="rounded-[1.5rem] border border-slate-800 bg-slate-950/75 p-5">
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-sky-300">Ver estado</p>
-                <p className="mt-3 text-sm leading-7 text-zinc-400">
+                <p className="mt-3 text-sm leading-7 text-slate-400">
                   Folio real, estado, fechas importantes, seguimiento y PDF listo para imprimir o guardar.
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-[2rem] border border-zinc-700 bg-zinc-950/70 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.26)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-400">Lo que sigue</p>
+          <div className="rounded-[2rem] border border-slate-700 bg-slate-950/70 p-6 shadow-[0_16px_70px_rgba(0,0,0,0.26)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Lo que sigue</p>
             <div className="mt-5 space-y-4">
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4">
-                <p className="text-sm font-semibold text-zinc-100">1. Cotizar</p>
-                <p className="mt-1 text-sm leading-6 text-zinc-400">El usuario llena datos del equipo y la falla.</p>
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                <p className="text-sm font-semibold text-slate-100">1. Cotizar</p>
+                <p className="mt-1 text-sm leading-6 text-slate-400">El usuario llena datos del equipo y la falla.</p>
               </div>
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4">
-                <p className="text-sm font-semibold text-zinc-100">2. Ver estado</p>
-                <p className="mt-1 text-sm leading-6 text-zinc-400">Consulta el portal con el folio real.</p>
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                <p className="text-sm font-semibold text-slate-100">2. Ver estado</p>
+                <p className="mt-1 text-sm leading-6 text-slate-400">Consulta el portal con el folio real.</p>
               </div>
-              <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4">
-                <p className="text-sm font-semibold text-zinc-100">3. Imprimir / PDF</p>
-                <p className="mt-1 text-sm leading-6 text-zinc-400">Se abre el PDF real de la cotización o reparación.</p>
+              <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                <p className="text-sm font-semibold text-slate-100">3. Imprimir / PDF</p>
+                <p className="mt-1 text-sm leading-6 text-slate-400">Se abre el PDF real de la cotización o reparación.</p>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="grid gap-6 rounded-[2rem] border border-zinc-800 bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(10,10,12,0.95))] p-6 lg:grid-cols-[1fr_0.92fr] lg:p-10">
+        <section className="grid gap-6 rounded-[2rem] border border-slate-800 bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(10,10,12,0.95))] p-6 lg:grid-cols-[1fr_0.92fr] lg:p-10">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.28em] text-sky-300">Contacto</p>
-            <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-zinc-50 sm:text-4xl">Atención del taller sin inventar datos</h2>
-            <p className="mt-4 max-w-xl text-base leading-7 text-zinc-400">
+            <h2 className="mt-3 text-3xl font-black uppercase tracking-tight text-slate-50 sm:text-4xl">Atención del taller sin inventar datos</h2>
+            <p className="mt-4 max-w-xl text-base leading-7 text-slate-400">
               La ubicación, teléfono y enlaces salen de la configuración real del tenant. Si no hay mapa configurado, mostramos contacto directo.
             </p>
             <div className="mt-6 space-y-4">
@@ -280,7 +284,7 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
               ].map(([title, value]) => (
                 <div key={title} className="rounded-[1.4rem] border border-sky-400/25 bg-white/4 px-5 py-4">
                   <p className="text-sm font-semibold uppercase tracking-[0.22em] text-sky-300">{title}</p>
-                  <p className="mt-2 text-sm leading-7 text-zinc-400">{value}</p>
+                  <p className="mt-2 text-sm leading-7 text-slate-400">{value}</p>
                 </div>
               ))}
             </div>
@@ -297,7 +301,7 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-[1.8rem] border border-sky-500/60 bg-zinc-950 shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
+          <div className="overflow-hidden rounded-[1.8rem] border border-sky-500/60 bg-slate-950 shadow-[0_20px_70px_rgba(0,0,0,0.35)]">
             {landing.showMap && landing.mapEmbedUrl ? (
               <iframe
                 title={`${data.tenant.name} ubicación`}
@@ -309,16 +313,16 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
             ) : (
               <div className="flex h-[420px] flex-col justify-between p-6">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-400">Mapa no configurado</p>
-                  <p className="mt-4 text-3xl font-black uppercase leading-tight text-zinc-50">
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-slate-400">Mapa no configurado</p>
+                  <p className="mt-4 text-3xl font-black uppercase leading-tight text-slate-50">
                     Publica la ubicación real del taller desde el panel del tenant.
                   </p>
                 </div>
                 <div className="grid gap-3">
-                  <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4 text-sm leading-6 text-zinc-400">
+                  <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm leading-6 text-slate-400">
                     Sin mapa embebido no mostramos una dirección inventada.
                   </div>
-                  <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4 text-sm leading-6 text-zinc-400">
+                  <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-sm leading-6 text-slate-400">
                     Configura `landing_content.mapEmbedUrl` o publica enlaces externos reales.
                   </div>
                 </div>
@@ -327,7 +331,7 @@ export default async function TenantLandingPage({ params }: { params: Promise<{ 
           </div>
         </section>
 
-        <footer className="flex flex-col items-center justify-between gap-4 border-t border-zinc-800 py-8 text-center text-sm text-zinc-500 md:flex-row md:text-left">
+        <footer className="flex flex-col items-center justify-between gap-4 border-t border-slate-800 py-8 text-center text-sm text-slate-500 md:flex-row md:text-left">
           <p>© 2026 FIXI. Todos los derechos reservados.</p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link href={trackingHref} className="text-sky-300 transition hover:text-sky-200">
@@ -350,6 +354,9 @@ export async function generateMetadata({ params }: { params: Promise<{ tenant: s
   const { tenant } = await params;
   try {
     const data = await getTenantLanding(tenant);
+    if (!data) {
+      return { title: tenant, description: "Landing pública del taller." };
+    }
     return {
       title: data.landingContent.seoTitle || data.tenant.name,
       description: data.landingContent.seoDescription || `Landing pública del taller ${data.tenant.name}.`,

@@ -26,6 +26,7 @@ export default function TecnicoPage() {
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [kpis, setKpis] = useState<KPI>({ urgentes: 0, atencion: 0, aTiempo: 0, total: 0 });
@@ -40,6 +41,7 @@ export default function TecnicoPage() {
 
   const loadOrders = async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
+    setLoadError(null);
     try {
       const data = await apiClient.get<{ data: Order[] }>('/orders', getApiOptions());
       const ordersList = data.data || [];
@@ -83,6 +85,7 @@ export default function TecnicoPage() {
       setKpis({ urgentes, atencion, aTiempo, total: activeOrders.length });
     } catch (error) {
       console.error('Failed to load orders:', error);
+      setLoadError(error instanceof Error ? error.message : 'No se pudieron cargar las órdenes');
     } finally {
       setLoading(false);
       if (showRefresh) setRefreshing(false);
@@ -175,6 +178,22 @@ export default function TecnicoPage() {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-500/25 border-t-sky-400" />
+      </div>
+    );
+  }
+
+  if (loadError && filteredOrders.length === 0) {
+    return (
+      <div className="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-6 text-center text-sm text-rose-100">
+        <p className="font-semibold">No se pudo cargar el panel técnico</p>
+        <p className="mt-2 text-rose-100/80">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => loadOrders()}
+          className="mt-4 rounded-2xl border border-rose-500/20 bg-slate-950/70 px-4 py-2 font-semibold text-rose-100"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }

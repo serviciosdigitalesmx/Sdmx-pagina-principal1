@@ -70,6 +70,13 @@ const DASHBOARD_MODULE_ACCESS: Partial<Record<string, TenantModuleKey>> = {
   seguridad: 'security',
 };
 
+const ROLE_ALLOWED_MODULES: Record<'owner' | 'manager' | 'technician' | 'client', string[] | null> = {
+  owner: null,
+  manager: null,
+  technician: ['dashboard', 'tecnico', 'operativo', 'solicitudes', 'clientes', 'tareas', 'archivo'],
+  client: ['dashboard', 'landing'],
+};
+
 export function Sidebar({
   mobileOpen,
   onMobileOpenChange,
@@ -89,6 +96,12 @@ export function Sidebar({
   const activeSucursalId = mounted ? getActiveSucursalId() : null;
   const showConsolidated = mounted ? canUseConsolidatedView() : false;
   const visibleModules = DASHBOARD_MODULES.filter((module) => {
+    const role = identity?.role ?? 'manager';
+    const allowedByRole = ROLE_ALLOWED_MODULES[role as keyof typeof ROLE_ALLOWED_MODULES];
+    if (allowedByRole && !allowedByRole.includes(module.key)) {
+      return false;
+    }
+
     if (module.key === 'dashboard' || module.key === 'landing') {
       return true;
     }

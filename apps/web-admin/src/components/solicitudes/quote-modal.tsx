@@ -133,9 +133,9 @@ export function QuoteModal({ open, onOpenChange, request, onQuoteConverted }: Qu
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-srf-surface border-srf-primary/40">
+      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border border-slate-800 bg-slate-950/95 text-slate-100">
         <DialogHeader>
-          <DialogTitle className="text-srf-primary flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-slate-50">
             <FileText className="w-5 h-5" />
             Cotización - {request.folio}
           </DialogTitle>
@@ -145,27 +145,27 @@ export function QuoteModal({ open, onOpenChange, request, onQuoteConverted }: Qu
           {/* Customer summary */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-srf-muted">Cliente:</p>
+              <p className="text-slate-400">Cliente:</p>
               <p className="font-semibold">{request.customer_name}</p>
             </div>
             <div>
-              <p className="text-srf-muted">Teléfono:</p>
+              <p className="text-slate-400">Teléfono:</p>
               <p>{request.customer_phone}</p>
             </div>
             <div>
-              <p className="text-srf-muted">Equipo:</p>
+              <p className="text-slate-400">Equipo:</p>
               <p>{request.device_type} {request.device_model}</p>
             </div>
             <div>
-              <p className="text-srf-muted">Urgencia:</p>
+              <p className="text-slate-400">Urgencia:</p>
               <p>{request.urgency}</p>
             </div>
           </div>
 
           {/* Quote items */}
-          <div className="border border-srf-primary/30 rounded-lg p-4">
+          <div className="rounded-lg border border-slate-800 p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-srf-primary">Conceptos de cotización</h3>
+              <h3 className="font-semibold text-sky-300">Conceptos de cotización</h3>
               <Button onClick={addItem} size="sm" variant="outline">
                 <Plus className="w-4 h-4 mr-1" />
                 Agregar
@@ -225,30 +225,30 @@ export function QuoteModal({ open, onOpenChange, request, onQuoteConverted }: Qu
               />
             </div>
 
-            <div className="bg-srf-bg border border-srf-primary/30 rounded-lg p-4 space-y-2">
+            <div className="rounded-lg border border-slate-800 bg-slate-950/70 p-4 space-y-2">
               <label className="flex items-center justify-between">
-                <span className="text-srf-muted">Aplicar IVA (16%)</span>
+                <span className="text-slate-400">Aplicar IVA (16%)</span>
                 <input
                   type="checkbox"
                   checked={aplicaIva}
                   onChange={(e) => setAplicaIva(e.target.checked)}
-                  className="accent-srf-accent"
+                  className="accent-sky-400"
                 />
               </label>
               <div className="flex justify-between">
-                <span className="text-srf-muted">Subtotal</span>
+                <span className="text-slate-400">Subtotal</span>
                 <span>${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-srf-muted">{aplicaIva ? 'IVA (16%)' : 'IVA'}</span>
+                <span className="text-slate-400">{aplicaIva ? 'IVA (16%)' : 'IVA'}</span>
                 <span>${iva.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between font-bold text-srf-primary">
+              <div className="flex justify-between font-bold text-slate-50">
                 <span>Total</span>
                 <span>${total.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between items-center pt-2 border-t border-srf-primary/30">
-                <span className="text-srf-muted">Anticipo</span>
+              <div className="flex items-center justify-between border-t border-slate-800 pt-2">
+                <span className="text-slate-400">Anticipo</span>
                 <Input
                   type="number"
                   min="0"
@@ -259,8 +259,8 @@ export function QuoteModal({ open, onOpenChange, request, onQuoteConverted }: Qu
                 />
               </div>
               <div className="flex justify-between font-semibold">
-                <span className="text-srf-muted">Saldo</span>
-                <span className={saldo > 0 ? 'text-srf-accent' : 'text-green-500'}>
+                <span className="text-slate-400">Saldo</span>
+                <span className={saldo > 0 ? 'text-sky-300' : 'text-emerald-400'}>
                   ${saldo.toFixed(2)}
                 </span>
               </div>
@@ -268,16 +268,16 @@ export function QuoteModal({ open, onOpenChange, request, onQuoteConverted }: Qu
           </div>
 
           {/* Actions */}
-          <div className="flex flex-wrap gap-3 justify-end pt-4 border-t border-srf-primary/30">
+          <div className="flex flex-wrap justify-end gap-3 border-t border-slate-800 pt-4">
             <Button onClick={handlePrintPDF} variant="outline" className="gap-2">
               <Printer className="w-4 h-4" />
               Generar PDF
             </Button>
-            <Button onClick={handleSendWhatsApp} className="bg-green-600 hover:bg-green-700 gap-2">
+            <Button onClick={handleSendWhatsApp} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
               <Send className="w-4 h-4" />
               Enviar por WhatsApp
             </Button>
-            <Button onClick={handleConvert} disabled={saving} className="bg-srf-primary hover:bg-srf-primary/80 gap-2">
+            <Button onClick={handleConvert} disabled={saving} className="gap-2 bg-sky-500 hover:bg-sky-600">
               <ArrowRightCircle className="w-4 h-4" />
               {saving ? 'Convirtiendo...' : 'Convertir a orden'}
             </Button>

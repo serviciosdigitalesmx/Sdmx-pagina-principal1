@@ -19,7 +19,7 @@ export function Success({ folio, customerPhone, onNewOrder }: SuccessProps) {
   };
 
   const openWhatsApp = () => {
-    const message = `Hola, tu equipo ha sido registrado en FIXI con el folio ${folio}. Puedes consultar el estado en el portal del cliente.`;
+    const message = `Hola, tu equipo ha sido registrado en FIXI con el folio ${folio}. Puedes consultar el estado en el seguimiento público.`;
     const url = `https://wa.me/52${customerPhone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
@@ -30,16 +30,16 @@ export function Success({ folio, customerPhone, onNewOrder }: SuccessProps) {
   };
 
   return (
-    <div className="text-center py-8">
-      <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+    <div className="py-8 text-center">
+      <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500">
         <CheckCircle className="w-10 h-10 text-white" />
       </div>
 
-      <h2 className="text-2xl font-bold text-srf-primary mb-2">¡{createdLabel}!</h2>
-      <p className="text-srf-muted mb-4">El folio generado es:</p>
+      <h2 className="mb-2 text-2xl font-bold text-slate-50">¡{createdLabel}!</h2>
+      <p className="mb-4 text-slate-400">El folio generado es:</p>
 
-      <div className="card border-2 border-srf-accent rounded-xl p-6 max-w-xs mx-auto mb-6">
-        <span className="text-3xl font-mono font-bold text-srf-accent tracking-wider">{folio}</span>
+      <div className="card mx-auto mb-6 max-w-xs rounded-2xl border-2 border-sky-400/40 p-6">
+        <span className="text-3xl font-mono font-bold tracking-wider text-sky-300">{folio}</span>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
@@ -47,21 +47,21 @@ export function Success({ folio, customerPhone, onNewOrder }: SuccessProps) {
           <Copy className="w-4 h-4" />
           Copiar folio
         </Button>
-        <Button onClick={openWhatsApp} className="bg-green-600 hover:bg-green-700 gap-2">
+        <Button onClick={openWhatsApp} className="gap-2 bg-emerald-600 hover:bg-emerald-700">
           <MessageCircle className="w-4 h-4" />
           Enviar por WhatsApp
         </Button>
-        <Button onClick={downloadPDF} className="bg-srf-primary hover:bg-srf-primary/80 gap-2">
+        <Button onClick={downloadPDF} className="gap-2 bg-sky-500 hover:bg-sky-600">
           <Download className="w-4 h-4" />
-          Descargar PDF
+          Ver PDF
         </Button>
       </div>
 
-      <p className="text-sm text-srf-muted mb-6">
+      <p className="mb-6 text-sm text-slate-400">
         Comparte este folio con el cliente para que pueda consultar el estado.
       </p>
 
-      <Button onClick={onNewOrder} className="btn-primary gap-2 mx-auto">
+      <Button onClick={onNewOrder} className="btn-primary mx-auto gap-2">
         <Plus className="w-4 h-4" />
         {newOrderLabel}
       </Button>

@@ -11,12 +11,14 @@ import type { ServiceRequest } from '@/types';
 export default function SolicitudesPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   const loadRequests = async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
+    setLoadError(null);
     try {
       const data = await apiClient.get<{ data: ServiceRequest[] }>('/requests', getApiOptions());
       // Filtrar solo pendientes
@@ -24,6 +26,7 @@ export default function SolicitudesPage() {
       setRequests(pending);
     } catch (error) {
       console.error('Failed to load requests:', error);
+      setLoadError(error instanceof Error ? error.message : 'No se pudieron cargar las solicitudes');
     } finally {
       setLoading(false);
       if (showRefresh) setRefreshing(false);
@@ -55,8 +58,24 @@ export default function SolicitudesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="spinner w-8 h-8" />
+      <div className="flex h-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-400 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (loadError && requests.length === 0) {
+    return (
+      <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-6 text-center text-sm text-rose-100">
+        <p className="font-semibold">No se pudieron cargar las solicitudes</p>
+        <p className="mt-2 text-rose-100/80">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => loadRequests()}
+          className="mt-4 rounded-2xl border border-rose-500/20 bg-slate-950/70 px-4 py-2 font-semibold text-rose-100"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }
@@ -66,9 +85,9 @@ export default function SolicitudesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-orbitron font-bold text-srf-primary">Solicitudes</h1>
-          <p className="text-srf-muted text-sm mt-1">
-            Pendientes: <span className="font-bold text-srf-accent">{requests.length}</span>
+          <h1 className="text-2xl font-semibold text-slate-50">Solicitudes</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            Pendientes: <span className="font-bold text-sky-300">{requests.length}</span>
           </p>
         </div>
         <button
@@ -82,9 +101,10 @@ export default function SolicitudesPage() {
       </div>
 
       {/* Requests grid */}
+      {loadError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{loadError}</div> : null}
       {requests.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-srf-muted">No hay solicitudes pendientes</p>
+          <p className="text-slate-400">No hay solicitudes pendientes</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

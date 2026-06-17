@@ -66,33 +66,33 @@ export function MovementModal({ open, onOpenChange, product, onMovementSaved }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl border-srf-primary/40 bg-srf-surface">
+      <DialogContent className="max-w-3xl border border-slate-800 bg-slate-950/95 text-slate-100">
         <DialogHeader>
-          <DialogTitle className="text-srf-primary">
+          <DialogTitle className="text-slate-50">
             Kardex real - {product.sku}
           </DialogTitle>
         </DialogHeader>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-xl border border-srf-primary/20 bg-srf-bg/60 p-4">
-            <div className="text-xs uppercase tracking-[0.2em] text-srf-muted">Stock actual</div>
-            <div className="mt-2 text-2xl font-semibold text-srf-primary">{Number(product.stock_current ?? 0)}</div>
+          <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
+            <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Stock actual</div>
+            <div className="mt-2 text-2xl font-semibold text-slate-50">{Number(product.stock_current ?? 0)}</div>
           </div>
-          <div className="rounded-xl border border-srf-primary/20 bg-srf-bg/60 p-4">
-            <div className="text-xs uppercase tracking-[0.2em] text-srf-muted">Entradas</div>
+          <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
+            <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Entradas</div>
             <div className="mt-2 text-2xl font-semibold text-emerald-400">{totalIn}</div>
           </div>
-          <div className="rounded-xl border border-srf-primary/20 bg-srf-bg/60 p-4">
-            <div className="text-xs uppercase tracking-[0.2em] text-srf-muted">Salidas</div>
+          <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
+            <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Salidas</div>
             <div className="mt-2 text-2xl font-semibold text-rose-400">{totalOut}</div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-srf-primary/20 bg-srf-bg/60 p-4">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="text-sm font-semibold text-srf-primary">Historial de movimientos</div>
-              <div className="text-xs text-srf-muted">
+              <div className="text-sm font-semibold text-slate-50">Historial de movimientos</div>
+              <div className="text-xs text-slate-400">
                 {product.name} · {product.location || 'Sin ubicación'} · mínimo {Number(product.minimum_stock ?? 0)}
               </div>
             </div>
@@ -129,16 +129,16 @@ export function MovementModal({ open, onOpenChange, product, onMovementSaved }: 
 
           <div className="mt-4 max-h-[420px] space-y-3 overflow-auto pr-1">
             {loading && (
-              <div className="flex items-center justify-center py-10 text-sm text-srf-muted">
+              <div className="flex items-center justify-center py-10 text-sm text-slate-400">
                 Cargando kardex real...
               </div>
             )}
 
             {!loading && movements.length === 0 && (
-              <div className="rounded-xl border border-dashed border-srf-primary/20 px-4 py-10 text-center">
-                <Package className="mx-auto h-8 w-8 text-srf-muted" />
-                <div className="mt-3 text-sm font-medium text-srf-primary">Sin movimientos reales</div>
-                <div className="mt-1 text-xs text-srf-muted">
+              <div className="rounded-xl border border-dashed border-slate-800 px-4 py-10 text-center">
+                <Package className="mx-auto h-8 w-8 text-slate-400" />
+                <div className="mt-3 text-sm font-medium text-slate-50">Sin movimientos reales</div>
+                <div className="mt-1 text-xs text-slate-400">
                   El backend no devolvió movimientos para este producto.
                 </div>
               </div>
@@ -149,7 +149,7 @@ export function MovementModal({ open, onOpenChange, product, onMovementSaved }: 
               const Icon = meta.icon;
 
               return (
-                <div key={movement.id} className="rounded-xl border border-srf-primary/15 bg-srf-bg/80 p-4">
+                <div key={movement.id} className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
                       <div className={`flex h-10 w-10 items-center justify-center rounded-full border ${meta.tone}`}>
@@ -157,31 +157,31 @@ export function MovementModal({ open, onOpenChange, product, onMovementSaved }: 
                       </div>
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-medium text-srf-primary">{meta.label}</span>
-                          <span className="rounded-full border border-srf-primary/20 px-2 py-0.5 text-xs text-srf-muted">
+                          <span className="font-medium text-sky-300">{meta.label}</span>
+                          <span className="rounded-full border border-slate-800 px-2 py-0.5 text-xs text-slate-400">
                             {movement.movement_type}
                           </span>
                           {movement.service_order_id && (
-                            <span className="rounded-full border border-srf-primary/20 px-2 py-0.5 text-xs text-srf-muted">
+                            <span className="rounded-full border border-slate-800 px-2 py-0.5 text-xs text-slate-400">
                               Orden {movement.service_order_id}
                             </span>
                           )}
                           {movement.purchase_order_id && (
-                            <span className="rounded-full border border-srf-primary/20 px-2 py-0.5 text-xs text-srf-muted">
+                            <span className="rounded-full border border-slate-800 px-2 py-0.5 text-xs text-slate-400">
                               Compra {movement.purchase_order_id}
                             </span>
                           )}
                         </div>
-                        <div className="mt-1 text-sm text-srf-muted">{movement.reference || 'Sin referencia'}</div>
-                        {movement.notes && <div className="mt-1 text-sm text-srf-muted">{movement.notes}</div>}
+                        <div className="mt-1 text-sm text-slate-400">{movement.reference || 'Sin referencia'}</div>
+                        {movement.notes && <div className="mt-1 text-sm text-slate-400">{movement.notes}</div>}
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-sm font-semibold text-srf-primary">
+                      <div className="text-sm font-semibold text-slate-50">
                         {Number(movement.quantity ?? 0) > 0 ? '+' : ''}
                         {Number(movement.quantity ?? 0)}
                       </div>
-                      <div className="text-xs text-srf-muted">
+                      <div className="text-xs text-slate-400">
                         {movement.created_at ? new Date(movement.created_at).toLocaleString() : 'Sin fecha'}
                       </div>
                     </div>

@@ -145,19 +145,19 @@ export default function GoogleCallbackPage() {
   };
 
   return (
-    <main className="min-h-screen px-6 py-10 text-zinc-100" style={{ background: srFixTheme.background }}>
+    <main className="min-h-screen px-6 py-10 text-slate-100" style={{ background: srFixTheme.background }}>
       <section className={`${srFixTheme.surface} mx-auto grid w-full max-w-4xl gap-8 p-8`}>
         <div>
           <ShellBadge>Google conectado</ShellBadge>
-          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-stone-50">Completa los datos del taller</h1>
-          <p className="mt-4 text-lg leading-8 text-stone-300">
+          <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-50">Completa los datos del taller</h1>
+          <p className="mt-4 text-lg leading-8 text-slate-300">
             La cuenta de Google ya fue validada. Falta el nombre del taller y el teléfono para crear tu espacio de trabajo.
           </p>
         </div>
 
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div>
-            <label className="mb-2 block text-sm font-medium text-stone-300" htmlFor="email">
+            <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="email">
               Email de Google
             </label>
             <input
@@ -165,12 +165,12 @@ export default function GoogleCallbackPage() {
               name="email"
               value={form.email}
               readOnly
-              className="w-full rounded-2xl border border-stone-700 bg-white/5 px-4 py-3 text-stone-300 outline-none"
+              className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-slate-300 outline-none"
             />
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-stone-300" htmlFor="workshopName">
+            <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="workshopName">
               Nombre del taller
             </label>
             <input
@@ -180,13 +180,13 @@ export default function GoogleCallbackPage() {
               onChange={handleChange}
               required
               disabled={loadingSession}
-              className="w-full rounded-2xl border border-stone-700 bg-white/5 px-4 py-3 outline-none transition focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/15 disabled:bg-white/10"
+              className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 outline-none transition focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15 disabled:bg-slate-900/80"
             />
-            <p className="mt-1 text-xs text-stone-400">Nombre comercial del taller que se va a registrar.</p>
+            <p className="mt-1 text-xs text-slate-400">Nombre comercial del taller que se va a registrar.</p>
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-stone-300" htmlFor="phone">
+            <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="phone">
               Teléfono
             </label>
             <input
@@ -196,9 +196,9 @@ export default function GoogleCallbackPage() {
               onChange={handleChange}
               required
               disabled={loadingSession}
-              className="w-full rounded-2xl border border-stone-700 bg-white/5 px-4 py-3 outline-none transition focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/15 disabled:bg-white/10"
+              className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 outline-none transition focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15 disabled:bg-slate-900/80"
             />
-            <p className="mt-1 text-xs text-stone-400">Número de contacto principal del taller.</p>
+            <p className="mt-1 text-xs text-slate-400">Número de contacto principal del taller.</p>
           </div>
 
           {error ? (
@@ -216,7 +216,7 @@ export default function GoogleCallbackPage() {
           <button
             type="submit"
             disabled={loadingSession || loadingSubmit}
-            className="w-full rounded-full bg-amber-50 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-full bg-sky-50 px-6 py-3 font-semibold text-slate-950 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loadingSubmit ? "Creando tenant…" : loadingSession ? "Validando Google…" : "Completar registro"}
           </button>

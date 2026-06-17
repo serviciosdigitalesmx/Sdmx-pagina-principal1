@@ -120,35 +120,52 @@ export default function ComprasPage() {
   }
 
   if (loading) {
-    return <div className="flex h-full items-center justify-center"><div className="spinner w-8 h-8" /></div>;
+    return <div className="flex h-full items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-500/25 border-t-sky-400" /></div>;
+  }
+
+  if (error && orders.length === 0 && suppliers.length === 0) {
+    return (
+      <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-6 text-center text-sm text-rose-100">
+        <p className="font-semibold">No se pudieron cargar las compras</p>
+        <p className="mt-2 text-rose-100/80">{error}</p>
+        <button
+          type="button"
+          onClick={() => void loadData()}
+          className="mt-4 rounded-2xl border border-rose-500/20 bg-slate-950/70 px-4 py-2 font-semibold text-rose-100"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-orbitron font-bold text-srf-primary">Compras</h1>
-          <p className="mt-1 text-sm text-srf-muted">{orders.length} órdenes de compra · {suppliers.length} proveedores</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-sky-400/70">Procurement</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-50">Compras</h1>
+          <p className="mt-1 text-sm text-slate-400">{orders.length} órdenes de compra · {suppliers.length} proveedores</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => void loadData()} className="btn-outline gap-2 inline-flex items-center">
+          <button onClick={() => void loadData()} className="btn-outline inline-flex items-center gap-2">
             <RefreshCw className="w-4 h-4" />
             Actualizar
           </button>
-          <button onClick={() => setShowForm((value) => !value)} className="btn-primary gap-2 inline-flex items-center">
+          <button onClick={() => setShowForm((value) => !value)} className="btn-primary inline-flex items-center gap-2">
             <Plus className="w-4 h-4" />
             Nueva compra
           </button>
         </div>
       </div>
 
-      {error ? <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</div> : null}
+      {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{error}</div> : null}
 
       {showForm ? (
-        <form onSubmit={submitPurchase} className="card space-y-4">
+        <form onSubmit={submitPurchase} className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-srf-primary">Crear orden de compra</h2>
-            <button type="button" onClick={() => setShowForm(false)} className="btn-ghost inline-flex items-center gap-2 text-srf-muted">
+            <h2 className="text-lg font-semibold text-slate-50">Crear orden de compra</h2>
+            <button type="button" onClick={() => setShowForm(false)} className="btn-ghost inline-flex items-center gap-2 text-slate-400">
               <X className="w-4 h-4" />
               Cerrar
             </button>
@@ -175,27 +192,27 @@ export default function ComprasPage() {
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="card">
-          <div className="text-xs uppercase tracking-[0.2em] text-srf-muted">Órdenes</div>
-          <div className="mt-3 text-3xl font-bold text-srf-primary">{orders.length}</div>
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Órdenes</div>
+          <div className="mt-3 text-3xl font-bold text-sky-300">{orders.length}</div>
         </div>
-        <div className="card">
-          <div className="text-xs uppercase tracking-[0.2em] text-srf-muted">Proveedores</div>
-          <div className="mt-3 text-3xl font-bold text-srf-primary">{suppliers.length}</div>
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Proveedores</div>
+          <div className="mt-3 text-3xl font-bold text-sky-300">{suppliers.length}</div>
         </div>
-        <div className="card">
-          <div className="text-xs uppercase tracking-[0.2em] text-srf-muted">Total visible</div>
-          <div className="mt-3 text-3xl font-bold text-srf-accent">{currency(orders.reduce((sum, order) => sum + Number(order.total ?? 0), 0))}</div>
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Total visible</div>
+          <div className="mt-3 text-3xl font-bold text-cyan-300">{currency(orders.reduce((sum, order) => sum + Number(order.total ?? 0), 0))}</div>
         </div>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
         {orders.map((order) => (
-          <div key={order.id} className="card card-hover">
+          <div key={order.id} className="card-hover rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-lg font-semibold text-srf-primary">{order.folio || order.id}</div>
-                <div className="text-xs text-srf-muted">{order.expected_date ? new Date(order.expected_date).toLocaleDateString('es-MX') : 'Sin fecha estimada'}</div>
+                <div className="text-lg font-semibold text-sky-300">{order.folio || order.id}</div>
+                <div className="text-xs text-slate-400">{order.expected_date ? new Date(order.expected_date).toLocaleDateString('es-MX') : 'Sin fecha estimada'}</div>
               </div>
               <span className={`px-2 py-1 rounded text-xs font-semibold
                 ${order.status === 'recibida' ? 'bg-green-500/20 text-green-500 border border-green-500/30' : ''}
@@ -208,10 +225,10 @@ export default function ComprasPage() {
               </span>
             </div>
 
-            <div className="mt-4 space-y-2 text-sm text-srf-muted">
-              <div className="flex items-center gap-2"><Truck className="w-4 h-4 text-srf-primary" /><span>{supplierMap.get(order.supplier_id) || order.supplier_id || 'Sin proveedor'}</span></div>
-              <div className="flex items-center gap-2"><Package className="w-4 h-4 text-srf-primary" /><span>Total: {currency(order.total)}</span></div>
-              <div className="flex items-center gap-2"><ShoppingCart className="w-4 h-4 text-srf-primary" /><span>Estado: {order.status || 'borrador'}</span></div>
+            <div className="mt-4 space-y-2 text-sm text-slate-400">
+              <div className="flex items-center gap-2"><Truck className="w-4 h-4 text-sky-300" /><span>{supplierMap.get(order.supplier_id) || order.supplier_id || 'Sin proveedor'}</span></div>
+              <div className="flex items-center gap-2"><Package className="w-4 h-4 text-sky-300" /><span>Total: {currency(order.total)}</span></div>
+              <div className="flex items-center gap-2"><ShoppingCart className="w-4 h-4 text-sky-300" /><span>Estado: {order.status || 'borrador'}</span></div>
             </div>
 
             <div className="mt-4 flex justify-end">
@@ -228,7 +245,7 @@ export default function ComprasPage() {
         ))}
       </div>
 
-      {orders.length === 0 ? <div className="py-12 text-center text-srf-muted">No hay órdenes de compra registradas.</div> : null}
+      {orders.length === 0 ? <div className="py-12 text-center text-slate-400">No hay órdenes de compra registradas.</div> : null}
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { DynamicFields, type DynamicFieldDefinition } from "@white-label/ui";
 import { getPublicApiPath } from "@/lib/public-api";
 
 const fieldClassName =
-  "w-full rounded-2xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-zinc-50 outline-none transition placeholder:text-zinc-500 focus:border-slate-400/60 focus:ring-2 focus:ring-slate-400/20";
+  "w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/20";
 
 type QuotePayload = {
   fullName: string;
@@ -190,30 +190,30 @@ export default function TenantQuotePage() {
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(180,83,9,0.14),_transparent_26%),linear-gradient(180deg,#050505_0%,#0f0f10_50%,#141210_100%)] px-4 py-8 text-zinc-50">
-      <section className="mx-auto grid w-full max-w-5xl gap-8 rounded-[2rem] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-8 shadow-[0_20px_80px_rgba(0,0,0,0.28)]">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.12),_transparent_26%),radial-gradient(circle_at_80%_10%,_rgba(14,165,233,0.08),_transparent_24%),linear-gradient(180deg,#020617_0%,#050b16_48%,#0b1220_100%)] px-4 py-8 text-slate-50">
+      <section className="mx-auto grid w-full max-w-5xl gap-8 rounded-[2rem] border border-slate-800 bg-[linear-gradient(180deg,rgba(9,14,26,0.96),rgba(11,18,32,0.98))] p-8 shadow-[0_20px_80px_rgba(0,0,0,0.28)]">
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
           <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-amber-100/70">Cotizador</p>
-            <h1 className="mt-3 text-4xl font-bold tracking-tight text-zinc-50 [font-family:var(--font-cormorant)]">
+            <p className="text-xs uppercase tracking-[0.35em] text-sky-300/80">Cotizador</p>
+            <h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-50 [font-family:var(--font-cormorant)]">
               {tenantLabels.request ?? "Cuéntanos la falla y te generamos una solicitud real"}
             </h1>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-zinc-300">
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-300">
               Captura el caso, liga el activo al tenant actual y deja lista la entrada para que recepción lo convierta en servicio.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link href={`/${tenant}`} className="rounded-full border border-stone-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-white/5">
+              <Link href={`/${tenant}`} className="rounded-full border border-slate-700 px-5 py-3 font-semibold text-slate-100 transition hover:bg-white/5">
                 Volver al taller
               </Link>
-              <Link href={`/${tenant}/tracking`} className="rounded-full border border-stone-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-white/5">
+              <Link href={`/${tenant}/tracking`} className="rounded-full border border-slate-700 px-5 py-3 font-semibold text-slate-100 transition hover:bg-white/5">
                 Ver estatus
               </Link>
             </div>
           </div>
 
-          <aside className="rounded-[1.75rem] border border-amber-700/15 bg-black/20 p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/70">Qué ocurre al enviar</p>
-            <ul className="mt-4 space-y-3 text-sm leading-7 text-zinc-300">
+          <aside className="rounded-[1.75rem] border border-slate-800 bg-slate-950/70 p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-300/80">Qué ocurre al enviar</p>
+            <ul className="mt-4 space-y-3 text-sm leading-7 text-slate-300">
               <li>• La solicitud se envía para registrarse.</li>
               <li>• Se asocia al taller actual.</li>
               <li>• Recepción recibe marca, modelo, serie y urgencia para abrir el caso.</li>
@@ -222,7 +222,7 @@ export default function TenantQuotePage() {
           </aside>
         </div>
 
-        <form onSubmit={submit} className="grid gap-4 rounded-[1.5rem] border border-stone-700/70 bg-white/4 p-6">
+        <form onSubmit={submit} className="grid gap-4 rounded-[1.5rem] border border-slate-800 bg-slate-950/70 p-6">
           {[
             ["Nombre", "fullName", "text", "Nombre completo del cliente.", true],
             ["WhatsApp", "phone", "tel", "Número de teléfono de contacto.", true],
@@ -235,7 +235,7 @@ export default function TenantQuotePage() {
             ["PIN / contraseña", "passwordOrPin", "password", "Clave o patrón de desbloqueo (opcional y confidencial).", false],
           ].map(([label, key, type, helperText, isRequired]) => (
             <div key={key as string}>
-              <label className="mb-2 block text-sm font-medium text-zinc-300">{label}</label>
+              <label className="mb-2 block text-sm font-medium text-slate-300">{label}</label>
               <input
                 type={type as string}
                 value={(form as Record<string, string>)[key as string]}
@@ -243,12 +243,12 @@ export default function TenantQuotePage() {
                 className={fieldClassName}
                 required={isRequired as boolean}
               />
-              <p className="mt-1 text-xs text-zinc-500">{helperText as string}</p>
+              <p className="mt-1 text-xs text-slate-500">{helperText as string}</p>
             </div>
           ))}
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-zinc-300">{tenantLabels.diagnosis ?? "Problema"}</label>
+            <label className="mb-2 block text-sm font-medium text-slate-300">{tenantLabels.diagnosis ?? "Problema"}</label>
             <textarea
               value={form.issue}
               onChange={(e) => setForm((current) => ({ ...current, issue: e.target.value }))}
@@ -256,7 +256,7 @@ export default function TenantQuotePage() {
               rows={4}
               required
             />
-            <p className="mt-1 text-xs text-zinc-500">Describe detalladamente la falla o desperfecto del equipo.</p>
+            <p className="mt-1 text-xs text-slate-500">Describe detalladamente la falla o desperfecto del equipo.</p>
           </div>
 
           {dynamicFieldDefinitions.length > 0 ? (
@@ -265,26 +265,26 @@ export default function TenantQuotePage() {
               definitions={dynamicFieldDefinitions}
               values={dynamicFieldValues}
               onChange={(fieldKey, value) => setDynamicFieldValues((current) => ({ ...current, [fieldKey]: value }))}
-              className="grid gap-4 rounded-[1.5rem] border border-stone-700/70 bg-white/4 p-6"
+              className="grid gap-4 rounded-[1.5rem] border border-slate-800 bg-slate-950/70 p-6"
             />
           ) : null}
 
           {error ? <p className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">{error}</p> : null}
           {message ? <p className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{message}</p> : null}
           {folio ? (
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 px-4 py-4 text-sm text-zinc-300">
-              <div className="font-semibold text-zinc-50">Folio real: {folio}</div>
-              <Link href={buildTrackingHref(tenant, folio)} className="mt-2 inline-flex font-semibold text-amber-100">
+            <div className="rounded-2xl border border-slate-800 bg-slate-950 px-4 py-4 text-sm text-slate-300">
+              <div className="font-semibold text-slate-50">Folio real: {folio}</div>
+              <Link href={buildTrackingHref(tenant, folio)} className="mt-2 inline-flex font-semibold text-sky-100">
                 Ir al tracking
               </Link>
             </div>
           ) : null}
 
           <div className="flex flex-wrap items-center gap-3">
-            <button disabled={loading} className="rounded-full bg-amber-50 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-amber-100 disabled:opacity-60">
+            <button disabled={loading} className="rounded-full bg-sky-50 px-6 py-3 font-semibold text-slate-950 transition hover:bg-sky-100 disabled:opacity-60">
               {loading ? "Enviando..." : "Enviar solicitud"}
             </button>
-            <p className="text-sm leading-6 text-zinc-400">
+            <p className="text-sm leading-6 text-slate-400">
               La solicitud queda ligada al taller actual.
             </p>
           </div>

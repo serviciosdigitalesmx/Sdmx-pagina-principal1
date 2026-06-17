@@ -82,18 +82,20 @@ type Props = {
   onArchive: () => void;
 };
 
-function buildPortalUrl(customerPortalUrl?: string | null, folio?: string | null) {
+function buildTrackingUrl(customerPortalUrl?: string | null, folio?: string | null) {
   if (!customerPortalUrl) return "";
-  const separator = customerPortalUrl.includes("?") ? "&" : "?";
-  return `${customerPortalUrl}${folio ? `${separator}folio=${encodeURIComponent(folio)}` : ""}`;
+  const trimmed = customerPortalUrl.replace(/\/$/, "");
+  const trackingUrl = trimmed.endsWith("/portal") ? trimmed.replace(/\/portal$/, "/tracking") : trimmed;
+  const separator = trackingUrl.includes("?") ? "&" : "?";
+  return `${trackingUrl}${folio ? `${separator}folio=${encodeURIComponent(folio)}` : ""}`;
 }
 
 function whatsappLink(phone?: string | null, folio?: string | null, customerPortalUrl?: string | null) {
   if (!phone) return null;
   const normalized = phone.replace(/\D/g, "");
   if (!normalized) return null;
-  const portalUrl = buildPortalUrl(customerPortalUrl, folio);
-  const message = encodeURIComponent(`Bienvenido a Marca Blanca. Aquí puedes consultar el estatus de tu equipo: ${portalUrl}`);
+  const portalUrl = buildTrackingUrl(customerPortalUrl, folio);
+  const message = encodeURIComponent(`Bienvenido a FIXI. Aquí puedes consultar el estatus de tu equipo: ${portalUrl}`);
   return `https://wa.me/${normalized}?text=${message}`;
 }
 
@@ -209,7 +211,7 @@ export function OrderDetailDrawer({
   const phone = (order?.device_info as { customer_phone?: string } | undefined)?.customer_phone ?? null;
   const waLink = whatsappLink(phone, order?.folio, customerPortalUrl);
   const pdfUrl = order?.receipt_url ?? data?.documents?.find((document) => document.file_type === "receipt_pdf" && document.public_url)?.public_url ?? null;
-  const portalUrl = buildPortalUrl(customerPortalUrl, order?.folio);
+  const portalUrl = buildTrackingUrl(customerPortalUrl, order?.folio);
   const metadataEntries = Object.entries((order?.metadata as Record<string, unknown> | undefined) ?? {}).filter(([, value]) => value !== undefined && value !== null && value !== "");
   const operationalRisk = order?.operational_risk ?? null;
 
@@ -579,11 +581,11 @@ export function OrderDetailDrawer({
                     rel="noreferrer"
                     aria-disabled={!waLink}
                     className={`rounded-full px-4 py-2 text-sm font-semibold ${
-                      waLink ? "bg-amber-500/10 text-amber-100" : "pointer-events-none bg-zinc-800 text-zinc-500"
+                      waLink ? "bg-sky-500/10 text-sky-100" : "pointer-events-none bg-zinc-800 text-zinc-500"
                     }`}
                     >
                       Enviar enlace por WhatsApp
-                    </a>
+                  </a>
                   {portalUrl ? (
                     <a
                       href={portalUrl}
@@ -591,7 +593,7 @@ export function OrderDetailDrawer({
                       rel="noreferrer"
                       className="rounded-full border border-sky-500/40 px-4 py-2 text-sm font-semibold text-sky-100"
                     >
-                      Abrir portal cliente
+                      Abrir seguimiento público
                     </a>
                   ) : null}
                   {pdfUrl ? (
@@ -601,7 +603,7 @@ export function OrderDetailDrawer({
                         onClick={onOpenPdf}
                         className="rounded-full bg-zinc-950 px-4 py-2 text-sm font-semibold text-white"
                       >
-                        Ver cotización PDF
+                        Ver PDF
                       </button>
                       <button
                         type="button"

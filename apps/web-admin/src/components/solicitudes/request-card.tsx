@@ -23,7 +23,7 @@ export function RequestCard({ request, onQuote, onConvert }: RequestCardProps) {
     urgente: { label: 'Urgente', color: 'text-red-400' },
   };
 
-  const urgency = urgencyLabels[request.urgency] || { label: request.urgency, color: 'text-srf-muted' };
+  const urgency = urgencyLabels[request.urgency] || { label: request.urgency, color: 'text-slate-400' };
 
   return (
     <div className="card p-4 space-y-3">
@@ -31,8 +31,8 @@ export function RequestCard({ request, onQuote, onConvert }: RequestCardProps) {
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h3 className="font-bold text-srf-primary">{request.folio}</h3>
-            <span className="text-xs text-srf-muted">{formatDate(request.created_at)}</span>
+            <h3 className="font-bold text-slate-50">{request.folio}</h3>
+            <span className="text-xs text-slate-400">{formatDate(request.created_at)}</span>
           </div>
           <div className="flex items-center gap-2 mt-1">
             <span className={`text-xs font-semibold ${urgency.color}`}>
@@ -45,23 +45,23 @@ export function RequestCard({ request, onQuote, onConvert }: RequestCardProps) {
 
       {/* Customer info */}
       <div className="space-y-1 text-sm">
-        <div className="flex items-center gap-2 text-srf-muted">
+        <div className="flex items-center gap-2 text-slate-400">
           <User className="w-3 h-3" />
           <span>{request.customer_name}</span>
         </div>
-        <div className="flex items-center gap-2 text-srf-muted">
+        <div className="flex items-center gap-2 text-slate-400">
           <Phone className="w-3 h-3" />
           <span>{request.customer_phone}</span>
         </div>
-        <div className="flex items-center gap-2 text-srf-muted">
+        <div className="flex items-center gap-2 text-slate-400">
           <Package className="w-3 h-3" />
           <span>{request.device_type} {request.device_model}</span>
         </div>
       </div>
 
       {/* Issue preview */}
-      <div className="bg-srf-bg rounded-lg p-2 text-sm">
-        <p className="text-srf-muted text-xs mb-1">Problema:</p>
+      <div className="rounded-lg border border-slate-800 bg-slate-950/60 p-2 text-sm">
+        <p className="mb-1 text-xs text-slate-400">Problema:</p>
         <p className="line-clamp-2">{request.issue_description}</p>
       </div>
 
@@ -69,7 +69,7 @@ export function RequestCard({ request, onQuote, onConvert }: RequestCardProps) {
       <div className="flex gap-2 pt-2">
         <Button
           onClick={onQuote}
-          className="flex-1 bg-srf-primary hover:bg-srf-primary/80 text-sm"
+          className="flex-1 bg-sky-500 text-sm hover:bg-sky-600"
         >
           <FileText className="w-4 h-4 mr-1" />
           Cotizar

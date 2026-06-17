@@ -1,4 +1,4 @@
-import { optionalEnv, resolveBaseDomain } from "@white-label/config";
+import { resolveBaseDomain } from "@white-label/config";
 
 function normalizeHttpsUrl(candidate: string) {
   const trimmed = candidate.trim();
@@ -13,10 +13,7 @@ function normalizeHttpsUrl(candidate: string) {
 
 export function resolveAdminUrl() {
   // Production resolves the admin URL from explicit env first so onboarding never falls back to the public landing.
-  const candidate =
-    process.env.NEXT_PUBLIC_WEB_ADMIN_URL ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.NEXT_PUBLIC_WEB_PUBLIC_URL;
+  const candidate = process.env.NEXT_PUBLIC_WEB_ADMIN_URL;
 
   if (candidate) {
     try {

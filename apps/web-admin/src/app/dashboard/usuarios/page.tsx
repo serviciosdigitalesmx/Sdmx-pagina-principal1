@@ -167,15 +167,19 @@ export default function UsuariosPage() {
   const activeUsers = useMemo(() => users.filter((user) => user.activo).length, [users]);
 
   if (loading && users.length === 0) {
-    return <div className="flex h-full items-center justify-center"><div className="spinner w-8 h-8" /></div>;
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-400 border-t-transparent" />
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-orbitron font-bold text-srf-primary">Usuarios</h1>
-          <p className="mt-1 text-sm text-srf-muted">{users.length} visibles · {activeUsers} activos</p>
+          <h1 className="text-2xl font-semibold text-slate-50">Usuarios</h1>
+          <p className="mt-1 text-sm text-slate-400">{users.length} visibles · {activeUsers} activos</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => void loadUsers()} className="btn-outline inline-flex items-center gap-2">
@@ -194,7 +198,7 @@ export default function UsuariosPage() {
       <div className="grid gap-4 lg:grid-cols-4">
         <div className="card">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 w-4 h-4 -translate-y-1/2 text-srf-muted" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input value={query} onChange={(event) => setQuery(event.target.value)} className="input pl-9" placeholder="Buscar nombre o correo..." />
           </div>
         </div>
@@ -209,15 +213,15 @@ export default function UsuariosPage() {
           <input value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)} className="input" placeholder="Filtrar por rol..." />
         </div>
         <div className="card text-center">
-          <Shield className="mx-auto w-5 h-5 text-srf-primary" />
-          <div className="mt-3 text-3xl font-bold text-srf-primary">{activeUsers}</div>
-          <div className="text-xs text-srf-muted">Usuarios activos</div>
+          <Shield className="mx-auto h-5 w-5 text-sky-300" />
+          <div className="mt-3 text-3xl font-bold text-slate-50">{activeUsers}</div>
+          <div className="text-xs text-slate-400">Usuarios activos</div>
         </div>
       </div>
 
       {showInvite ? (
         <form onSubmit={submitInvite} className="card space-y-4">
-          <div className="text-lg font-semibold text-srf-primary">Invitar usuario</div>
+          <div className="text-lg font-semibold text-slate-50">Invitar usuario</div>
           <div className="grid gap-4 md:grid-cols-2">
             <input value={invite.name} onChange={(event) => setInvite((current) => ({ ...current, name: event.target.value }))} className="input" placeholder="Nombre" required />
             <input value={invite.email} onChange={(event) => setInvite((current) => ({ ...current, email: event.target.value }))} className="input" placeholder="Correo" type="email" required />
@@ -238,9 +242,9 @@ export default function UsuariosPage() {
       ) : null}
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(340px,1fr)]">
-        <div className="overflow-hidden rounded-[1.5rem] border border-srf-primary/20 bg-srf-surface/40">
+        <div className="overflow-hidden rounded-[1.5rem] border border-slate-800 bg-slate-950/70">
           <table className="w-full text-sm">
-            <thead className="border-b border-srf-primary/20 bg-black/20 text-srf-muted">
+            <thead className="border-b border-slate-800 bg-slate-950/70 text-slate-400">
               <tr>
                 <th className="px-4 py-3 text-left">Usuario</th>
                 <th className="px-4 py-3 text-left">Rol</th>
@@ -251,21 +255,21 @@ export default function UsuariosPage() {
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr key={user.id} className="border-b border-srf-primary/10 hover:bg-white/[0.03]">
+                <tr key={user.id} className="border-b border-slate-800/80 hover:bg-slate-900/40">
                   <td className="px-4 py-3">
-                    <div className="font-medium text-srf-text">{user.name}</div>
-                    <div className="text-xs text-srf-muted">{user.email}</div>
+                    <div className="font-medium text-slate-200">{user.name}</div>
+                    <div className="text-xs text-slate-400">{user.email}</div>
                   </td>
                   <td className="px-4 py-3"><span className="badge-diagnostico">{roleLabel(user.role)}</span></td>
                   <td className="px-4 py-3"><span className={user.activo ? "badge-listo" : "badge-cancelado"}>{user.activo ? "Activo" : "Inactivo"}</span></td>
-                  <td className="px-4 py-3 text-srf-muted">{formatDate(user.ultimo_acceso ?? user.last_login_at)}</td>
+                  <td className="px-4 py-3 text-slate-400">{formatDate(user.ultimo_acceso ?? user.last_login_at)}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
-                      <button className="btn-ghost inline-flex items-center gap-2 text-srf-primary" onClick={() => setHistoryUser(user)}>
+                      <button className="btn-ghost inline-flex items-center gap-2 text-sky-300" onClick={() => setHistoryUser(user)}>
                         <History className="w-4 h-4" />
                         Historial
                       </button>
-                      <button className="btn-ghost inline-flex items-center gap-2 text-srf-primary" onClick={() => void changeRole(user, user.role === "tecnico" ? "operador" : "tecnico")}>
+                      <button className="btn-ghost inline-flex items-center gap-2 text-sky-300" onClick={() => void changeRole(user, user.role === "tecnico" ? "operador" : "tecnico")}>
                         <Shield className="w-4 h-4" />
                         Cambiar rol
                       </button>
@@ -279,30 +283,30 @@ export default function UsuariosPage() {
               ))}
             </tbody>
           </table>
-          {users.length === 0 ? <div className="py-12 text-center text-srf-muted">No hay usuarios con esos filtros.</div> : null}
+          {users.length === 0 ? <div className="py-12 text-center text-slate-400">No hay usuarios con esos filtros.</div> : null}
         </div>
 
         <div className="card">
-          <div className="mb-4 flex items-center gap-2 text-srf-primary">
+          <div className="mb-4 flex items-center gap-2 text-sky-300">
             <History className="w-5 h-5" />
             <h2 className="text-lg font-semibold">{historyUser ? `Historial de ${historyUser.name}` : "Historial de actividad"}</h2>
           </div>
-          {historyLoading ? <div className="py-12 text-center"><div className="spinner mx-auto w-8 h-8" /></div> : null}
-          {!historyLoading && !historyUser ? <div className="text-sm text-srf-muted">Selecciona un usuario para ver su historial relacionado.</div> : null}
+          {historyLoading ? <div className="py-12 text-center"><div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-sky-400 border-t-transparent" /></div> : null}
+          {!historyLoading && !historyUser ? <div className="text-sm text-slate-400">Selecciona un usuario para ver su historial relacionado.</div> : null}
           {!historyLoading && historyUser ? (
             <div className="space-y-3">
               {historyRows.length > 0 ? historyRows.map((row) => (
-                <div key={row.id} className="rounded-xl border border-srf-primary/20 bg-black/20 p-4">
+                <div key={row.id} className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="font-medium text-srf-text">{row.folio ?? row.reference ?? row.id}</div>
+                    <div className="font-medium text-slate-200">{row.folio ?? row.reference ?? row.id}</div>
                     <span className="badge-recibido">{row.status ?? "Sin estado"}</span>
                   </div>
-                  <div className="mt-2 text-xs text-srf-muted">
+                  <div className="mt-2 text-xs text-slate-400">
                     {row.created_at ? new Date(row.created_at).toLocaleString("es-MX") : "Fecha no disponible"}
                     {row.expected_date ? ` · Esperada ${new Date(row.expected_date).toLocaleDateString("es-MX")}` : ""}
                   </div>
                 </div>
-              )) : <div className="text-sm text-srf-muted">No hay historial asociado para este usuario.</div>}
+              )) : <div className="text-sm text-slate-400">No hay historial asociado para este usuario.</div>}
             </div>
           ) : null}
         </div>

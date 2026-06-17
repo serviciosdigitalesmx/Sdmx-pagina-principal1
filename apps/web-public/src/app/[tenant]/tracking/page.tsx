@@ -6,7 +6,89 @@ import { useParams } from "next/navigation";
 import { getPublicApiPath } from "@/lib/public-api";
 
 const fieldClassName =
-  "w-full rounded-2xl border border-stone-700 bg-zinc-950 px-4 py-3 text-zinc-50 outline-none transition placeholder:text-zinc-500 focus:border-amber-400/60 focus:ring-2 focus:ring-amber-400/20";
+  "w-full rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-50 outline-none transition placeholder:text-slate-500 focus:border-sky-400/60 focus:ring-2 focus:ring-sky-400/20";
+
+type PublicPortalOrderResponse = {
+  success: true;
+  tenant: {
+    slug: string;
+    name: string;
+    contact_phone?: string | null;
+    contactPhone?: string | null;
+    config?: {
+      statusLabels?: Record<string, string>;
+      templates?: { portal?: Record<string, unknown> | null };
+    } | null;
+  };
+  data: {
+    order: {
+      folio: string;
+      status: string;
+      created_at?: string;
+      updated_at?: string;
+      problem_description?: string;
+      serial_number?: string;
+      receipt_url?: string | null;
+    };
+    orderStatusLabel: string;
+    timeline: Array<{ label: string; status: "completado" | "actual" | "pendiente"; note: string }>;
+    pdf_attachment: {
+      type: "receipt_pdf";
+      label: string;
+      url: string;
+      fileName: string | null;
+      mimeType: string;
+      source: "stored_url" | "inline_data_url";
+    } | null;
+    attachments: Array<{
+      type: "receipt_pdf";
+      label: string;
+      url: string;
+      fileName: string | null;
+      mimeType: string;
+      source: "stored_url" | "inline_data_url";
+    }>;
+    documents: Array<{
+      id: string;
+      file_name: string;
+      file_type: string;
+      public_url: string | null;
+      mime_type: string;
+      created_at: string;
+      source: string;
+    }>;
+    events: Array<{
+      id: string;
+      event_type: string;
+      previous_status: string | null;
+      new_status: string | null;
+      note: string | null;
+      actor_name: string | null;
+      created_at: string;
+    }>;
+    messages: Array<{
+      id: string;
+      note: string | null;
+      actor_name: string | null;
+      created_at: string;
+    }>;
+  };
+};
+
+function resolveWhatsappHref(phone?: string | null, folio?: string | null) {
+  if (!phone) return undefined;
+  const digits = phone.replace(/\D/g, "");
+  if (!digits) return undefined;
+
+  const message = encodeURIComponent(`Hola, quiero consultar mi folio ${folio ?? ""}.`);
+  return `https://wa.me/${digits}?text=${message}`;
+}
+
+function formatDate(value?: string | null) {
+  if (!value) return "Sin fecha";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString("es-MX", { dateStyle: "medium", timeStyle: "short" });
+}
 
 export default function TenantTrackingPage() {
   const params = useParams<{ tenant: string }>();
@@ -16,33 +98,29 @@ export default function TenantTrackingPage() {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [portalTemplate, setPortalTemplate] = useState<Record<string, unknown> | null>(null);
+  const [result, setResult] = useState<PublicPortalOrderResponse["data"] | null>(null);
+  const [tenantInfo, setTenantInfo] = useState<PublicPortalOrderResponse["tenant"] | null>(null);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
     setError(null);
     setStatus(null);
+    setResult(null);
+    setTenantInfo(null);
 
     try {
-      const url = new URL(getPublicApiPath("/api/public/tracking"), window.location.origin);
-      url.searchParams.set("tenantSlug", tenant);
-      url.searchParams.set("folio", folio.trim());
-      if (email.trim()) {
-        url.searchParams.set("email", email.trim());
+      const url = getPublicApiPath(`/api/public/tenant/${encodeURIComponent(tenant)}/orders/${encodeURIComponent(folio.trim())}`);
+      const response = await fetch(url);
+      const payload = (await response.json().catch(() => null)) as PublicPortalOrderResponse | { error?: string } | null;
+
+      if (!response.ok || !payload || !("success" in payload) || !payload.success) {
+        throw new Error((payload as { error?: string } | null)?.error ?? "No se pudo consultar el estatus");
       }
 
-      const response = await fetch(url.toString());
-      const payload = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(payload?.error ?? "No se pudo consultar el estatus");
-      }
-
-      const statusKey = String(payload?.data?.status ?? "").toLowerCase();
-      const statusLabel = payload?.tenant?.config?.statusLabels?.[statusKey] ?? payload?.data?.status ?? "Sin estado";
-      setStatus(`${statusLabel} · ${payload.data.problem_description}`);
-      setPortalTemplate(payload?.tenant?.config?.templates?.portal ?? null);
+      setTenantInfo(payload.tenant);
+      setResult(payload.data);
+      setStatus(`${payload.data.orderStatusLabel} · ${payload.data.order.problem_description ?? "Sin descripción"}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error inesperado");
     } finally {
@@ -50,31 +128,34 @@ export default function TenantTrackingPage() {
     }
   };
 
+  const pdfAttachment = result?.pdf_attachment ?? result?.attachments?.[0] ?? null;
+  const whatsappHref = resolveWhatsappHref(tenantInfo?.contact_phone ?? tenantInfo?.contactPhone ?? null, result?.order.folio ?? null);
+
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(180,83,9,0.14),_transparent_26%),linear-gradient(180deg,#050505_0%,#0f0f10_50%,#141210_100%)] px-4 py-8 text-zinc-50">
-      <section className="mx-auto grid w-full max-w-5xl gap-8 rounded-[2rem] border border-amber-700/15 bg-[linear-gradient(180deg,rgba(16,14,12,0.96),rgba(22,18,14,0.98))] p-8 shadow-[0_20px_80px_rgba(0,0,0,0.28)]">
+    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.12),_transparent_26%),radial-gradient(circle_at_80%_10%,_rgba(14,165,233,0.08),_transparent_24%),linear-gradient(180deg,#020617_0%,#050b16_48%,#0b1220_100%)] px-4 py-8 text-slate-50">
+      <section className="mx-auto grid w-full max-w-5xl gap-8 rounded-[2rem] border border-slate-800 bg-[linear-gradient(180deg,rgba(9,14,26,0.96),rgba(11,18,32,0.98))] p-8 shadow-[0_20px_80px_rgba(0,0,0,0.28)]">
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-start">
           <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-amber-100/70">Panel del cliente</p>
-            <h1 className="mt-3 text-4xl font-bold tracking-tight text-zinc-50 [font-family:var(--font-cormorant)]">
-              {String(portalTemplate?.heroTitle ?? "Ver estatus de tu servicio")}
+            <p className="text-xs uppercase tracking-[0.35em] text-sky-300/80">Panel del cliente</p>
+            <h1 className="mt-3 text-4xl font-bold tracking-tight text-slate-50 [font-family:var(--font-cormorant)]">
+              Ver estatus de tu servicio
             </h1>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-zinc-300">
-              {String(portalTemplate?.heroDescription ?? `Consulta el avance de tu servicio con el folio generado en recepción para el taller ${tenant}.`)}
+            <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-300">
+              Consulta el avance de tu servicio con el folio generado en recepción para el taller {tenant}.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link href={`/${params.tenant}`} className="rounded-full border border-stone-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-white/5">
+              <Link href={`/${tenant}`} className="rounded-full border border-slate-700 px-5 py-3 font-semibold text-slate-100 transition hover:bg-white/5">
                 Volver al taller
               </Link>
-              <Link href={`/${params.tenant}/cotizar`} className="rounded-full border border-stone-700 px-5 py-3 font-semibold text-zinc-100 transition hover:bg-white/5">
+              <Link href={`/${tenant}/cotizar`} className="rounded-full border border-slate-700 px-5 py-3 font-semibold text-slate-100 transition hover:bg-white/5">
                 Solicitar cotización
               </Link>
             </div>
           </div>
 
-          <aside className="rounded-[1.75rem] border border-amber-700/15 bg-black/20 p-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-amber-100/70">Antes de consultar</p>
-            <ul className="mt-4 space-y-3 text-sm leading-7 text-zinc-300">
+          <aside className="rounded-[1.75rem] border border-slate-800 bg-slate-950/70 p-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-300/80">Antes de consultar</p>
+            <ul className="mt-4 space-y-3 text-sm leading-7 text-slate-300">
               <li>• Ten a la mano el folio de servicio.</li>
               <li>• El correo es opcional, pero ayuda a validar la consulta.</li>
               <li>• Si ya tienes sesión, puedes entrar al panel privado.</li>
@@ -82,40 +163,143 @@ export default function TenantTrackingPage() {
           </aside>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid gap-4 rounded-[1.5rem] border border-stone-700/70 bg-white/4 p-6">
+        <form onSubmit={handleSubmit} className="grid gap-4 rounded-[1.5rem] border border-slate-800 bg-slate-950/70 p-6">
           <div>
-            <label className="mb-2 block text-sm font-medium text-zinc-300">Folio</label>
+            <label className="mb-2 block text-sm font-medium text-slate-300">Folio</label>
             <input
               value={folio}
               onChange={(e) => setFolio(e.target.value)}
               className={fieldClassName}
               required
             />
-            <p className="mt-1 text-xs text-zinc-400">El número de folio de tu orden de servicio.</p>
+            <p className="mt-1 text-xs text-slate-400">El número de folio de tu orden de servicio.</p>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-zinc-300">Correo opcional</label>
+            <label className="mb-2 block text-sm font-medium text-slate-300">Correo opcional</label>
             <input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className={fieldClassName}
               type="email"
             />
-            <p className="mt-1 text-xs text-zinc-400">El correo electrónico asociado a la orden.</p>
+            <p className="mt-1 text-xs text-slate-400">El correo electrónico asociado a la orden.</p>
           </div>
 
           {error ? <p className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">{error}</p> : null}
           {status ? <p className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{status}</p> : null}
 
           <div className="flex flex-wrap items-center gap-3">
-            <button disabled={loading} className="rounded-full bg-amber-50 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-amber-100 disabled:opacity-60">
-              {loading ? "Consultando..." : String(portalTemplate?.primaryCtaLabel ?? "Ver estatus")}
+            <button disabled={loading} className="rounded-full bg-sky-50 px-6 py-3 font-semibold text-slate-950 transition hover:bg-sky-100 disabled:opacity-60">
+              {loading ? "Consultando..." : "Ver estatus"}
             </button>
-            <p className="text-sm leading-6 text-zinc-400">
+            <p className="text-sm leading-6 text-slate-400">
               La consulta se hace sobre el API real y devuelve el avance del servicio.
             </p>
           </div>
         </form>
+
+        {result ? (
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <section className="rounded-[1.75rem] border border-slate-800 bg-slate-950/70 p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-300">Resultado</p>
+                  <h2 className="mt-2 text-3xl font-black uppercase tracking-tight text-slate-50">{result.order.folio}</h2>
+                </div>
+                <span className="rounded-full bg-sky-500/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-200">
+                  {result.orderStatusLabel}
+                </span>
+              </div>
+
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-200">Información del servicio</p>
+                  <dl className="mt-4 space-y-3 text-sm text-slate-300">
+                    <div>
+                      <dt className="text-xs uppercase tracking-[0.2em] text-slate-500">Problema</dt>
+                      <dd className="mt-1">{result.order.problem_description ?? "Sin descripción"}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs uppercase tracking-[0.2em] text-slate-500">Serie</dt>
+                      <dd className="mt-1">{result.order.serial_number ?? "Sin serie"}</dd>
+                    </div>
+                  </dl>
+                </div>
+
+                <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-200">Documentos</p>
+                  <div className="mt-4 space-y-3 text-sm text-slate-300">
+                    {pdfAttachment ? (
+                      <a href={pdfAttachment.url} target="_blank" rel="noreferrer" className="block rounded-2xl border border-sky-500/20 bg-sky-500/10 px-4 py-3 font-semibold text-sky-100 transition hover:bg-sky-500/20">
+                        Ver PDF de recepción
+                      </a>
+                    ) : (
+                      <p className="rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-slate-400">Todavía no hay PDF disponible.</p>
+                    )}
+                    {result.documents.length > 0 ? (
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">{result.documents.length} documento(s) vinculados</p>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-sky-200">Seguimiento detallado</p>
+                <div className="mt-4 space-y-3">
+                  {result.timeline.map((step) => (
+                    <div key={step.label} className="flex items-start justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3">
+                      <div>
+                        <p className="font-semibold text-slate-100">{step.label}</p>
+                        <p className="mt-1 text-sm text-slate-400">{step.note}</p>
+                      </div>
+                      <span className="rounded-full bg-white px-3 py-1 text-xs uppercase tracking-[0.18em] text-slate-500">{step.status}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </section>
+
+            <aside className="space-y-4">
+              <section className="rounded-[1.75rem] border border-slate-800 bg-slate-950/70 p-6">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Estado actual</p>
+                <p className="mt-2 text-2xl font-black text-slate-50">{result.orderStatusLabel}</p>
+                <p className="mt-2 text-sm text-slate-400">{formatDate(result.order.updated_at ?? result.order.created_at ?? null)}</p>
+              </section>
+
+              <section className="rounded-[1.75rem] border border-slate-800 bg-slate-950/70 p-6">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Acciones del cliente</p>
+                <div className="mt-4 space-y-3">
+                  {whatsappHref ? (
+                    <a href={whatsappHref} target="_blank" rel="noreferrer" className="block rounded-full bg-emerald-500 px-4 py-3 text-center font-semibold text-white transition hover:bg-emerald-600">
+                      Continuar por WhatsApp
+                    </a>
+                  ) : null}
+                  {pdfAttachment?.url ? (
+                    <a href={pdfAttachment.url} target="_blank" rel="noreferrer" className="block rounded-full border border-slate-700 px-4 py-3 text-center font-semibold text-slate-100 transition hover:bg-white/5">
+                      Abrir PDF
+                    </a>
+                  ) : null}
+                </div>
+              </section>
+
+              <section className="rounded-[1.75rem] border border-slate-800 bg-slate-950/70 p-6">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Fotografías y evidencias</p>
+                <div className="mt-4 space-y-3">
+                  {result.documents.length > 0 ? (
+                    result.documents.map((document) => (
+                      <a key={document.id} href={document.public_url ?? "#"} target="_blank" rel="noreferrer" className="block rounded-2xl border border-slate-800 bg-slate-950/80 px-4 py-3 text-sm text-slate-200 transition hover:bg-slate-900">
+                        <div className="font-semibold">{document.file_name}</div>
+                        <div className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">{document.file_type}</div>
+                      </a>
+                    ))
+                  ) : (
+                    <p className="rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3 text-sm text-slate-400">Aún no hay evidencias visibles.</p>
+                  )}
+                </div>
+              </section>
+            </aside>
+          </div>
+        ) : null}
       </section>
     </main>
   );

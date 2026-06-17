@@ -87,14 +87,14 @@ export default function OnboardingPage() {
   };
 
   return (
-    <main className="min-h-screen px-6 py-10 text-zinc-100" style={{ background: srFixTheme.background }}>
+    <main className="min-h-screen px-6 py-10 text-slate-100" style={{ background: srFixTheme.background }}>
       <section className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[1fr_1.05fr]">
         <div className={`${srFixTheme.surface} p-8`}>
           <ShellBadge>Prueba gratuita</ShellBadge>
-          <h1 className="mt-5 text-4xl font-semibold tracking-tight text-stone-50 sm:text-5xl [font-family:var(--font-display)]">
+          <h1 className="mt-5 text-4xl font-semibold tracking-tight text-slate-50 sm:text-5xl [font-family:var(--font-display)]">
             Empieza a operar con FIXI hoy mismo.
           </h1>
-          <p className="mt-4 max-w-xl text-base leading-7 text-stone-300">
+          <p className="mt-4 max-w-xl text-base leading-7 text-slate-300">
             Regístrate para obtener tu entorno seguro y aislado. Toma el control total de tu taller con el sistema de nueva generación.
           </p>
 
@@ -108,9 +108,9 @@ export default function OnboardingPage() {
               ["Datos separados", "Tu información y la de tus clientes viven aisladas por tenant_id."],
               ["Alta real", "El alta se valida con tu API y Supabase, sin simulaciones."],
             ].map(([title, desc]) => (
-              <div key={title} className="rounded-2xl border border-stone-700 bg-white/5 p-4">
-                <p className="text-sm font-semibold text-stone-100">{title}</p>
-                <p className="mt-1 text-sm text-stone-400">{desc}</p>
+              <div key={title} className="rounded-2xl border border-slate-700 bg-slate-950/70 p-4">
+                <p className="text-sm font-semibold text-slate-100">{title}</p>
+                <p className="mt-1 text-sm text-slate-400">{desc}</p>
               </div>
             ))}
           </div>
@@ -119,7 +119,7 @@ export default function OnboardingPage() {
         <div className={`${srFixTheme.surface} p-8`}>
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div>
-              <label className="mb-2 block text-sm font-medium text-stone-300" htmlFor="workshopName">
+              <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="workshopName">
                 Nombre del Taller
               </label>
               <input
@@ -131,13 +131,13 @@ export default function OnboardingPage() {
                 onChange={handleChange}
                 required
                 minLength={2}
-                className="w-full rounded-2xl border border-stone-700 bg-white/5 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-stone-500 focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/15"
+                className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15"
               />
-              <p className="mt-1 text-xs text-stone-400">El nombre comercial de tu taller.</p>
+              <p className="mt-1 text-xs text-slate-400">El nombre comercial de tu taller.</p>
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-stone-300" htmlFor="phone">
+              <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="phone">
                 Teléfono
               </label>
               <input
@@ -149,13 +149,13 @@ export default function OnboardingPage() {
                 onChange={handleChange}
                 required
                 minLength={7}
-                className="w-full rounded-2xl border border-stone-700 bg-white/5 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-stone-500 focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/15"
+                className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15"
               />
-              <p className="mt-1 text-xs text-stone-400">Número de contacto principal.</p>
+              <p className="mt-1 text-xs text-slate-400">Número de contacto principal.</p>
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-stone-300" htmlFor="email">
+              <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="email">
                 Correo Electrónico
               </label>
               <input
@@ -166,13 +166,13 @@ export default function OnboardingPage() {
                 value={form.email}
                 onChange={handleChange}
                 required
-                className="w-full rounded-2xl border border-stone-700 bg-white/5 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-stone-500 focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/15"
+                className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15"
               />
-              <p className="mt-1 text-xs text-stone-400">Correo del administrador de la cuenta.</p>
+              <p className="mt-1 text-xs text-slate-400">Correo del administrador de la cuenta.</p>
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-stone-300" htmlFor="password">
+              <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="password">
                 Contraseña
               </label>
               <input
@@ -184,9 +184,9 @@ export default function OnboardingPage() {
                 onChange={handleChange}
                 required
                 minLength={8}
-                className="w-full rounded-2xl border border-stone-700 bg-white/5 px-4 py-3 text-zinc-100 outline-none transition placeholder:text-stone-500 focus:border-amber-500/40 focus:ring-2 focus:ring-amber-500/15"
+                className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15"
               />
-              <p className="mt-1 text-xs text-stone-400">Debe contener al menos 8 caracteres.</p>
+              <p className="mt-1 text-xs text-slate-400">Debe contener al menos 8 caracteres.</p>
             </div>
 
             {error ? (
@@ -198,22 +198,22 @@ export default function OnboardingPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 w-full rounded-full bg-amber-50 px-6 py-3 font-semibold text-zinc-950 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-2 w-full rounded-full bg-sky-50 px-6 py-3 font-semibold text-slate-950 transition hover:bg-sky-100 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Creando cuenta..." : "Comenzar Prueba Gratuita"}
             </button>
 
             <div className="relative my-4 flex items-center">
-              <div className="flex-grow border-t border-stone-700"></div>
-              <span className="mx-4 text-xs font-medium uppercase tracking-widest text-stone-500">o</span>
-              <div className="flex-grow border-t border-stone-700"></div>
+              <div className="flex-grow border-t border-slate-700"></div>
+              <span className="mx-4 text-xs font-medium uppercase tracking-widest text-slate-500">o</span>
+              <div className="flex-grow border-t border-slate-700"></div>
             </div>
 
             <button
               type="button"
               onClick={handleGoogleRegister}
               disabled={loading}
-              className="flex w-full items-center justify-center gap-3 rounded-full border border-stone-700 bg-white/5 px-6 py-3 font-semibold text-zinc-100 transition hover:border-amber-500/30 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-3 rounded-full border border-slate-700 bg-slate-950/70 px-6 py-3 font-semibold text-slate-100 transition hover:border-sky-500/30 hover:bg-slate-900/80 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">
                 <path d="M12.0003 4.75C13.7703 4.75 15.3553 5.36002 16.6053 6.54998L20.0303 3.125C17.9502 1.19 15.2353 0 12.0003 0C7.31028 0 3.25527 2.69 1.28027 6.60998L5.27028 9.70498C6.21525 6.86002 8.87028 4.75 12.0003 4.75Z" fill="#EA4335" />
@@ -224,9 +224,9 @@ export default function OnboardingPage() {
               Continuar con Google
             </button>
 
-            <p className="mt-6 text-center text-xs text-stone-400">
+            <p className="mt-6 text-center text-xs text-slate-400">
               ¿Ya tienes cuenta?{" "}
-              <Link href="/login" className="font-semibold text-amber-200 transition hover:text-amber-100">
+              <Link href="/login" className="font-semibold text-sky-200 transition hover:text-sky-100">
                 Inicia sesión aquí
               </Link>
             </p>

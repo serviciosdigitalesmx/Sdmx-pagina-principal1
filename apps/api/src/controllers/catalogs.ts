@@ -9,6 +9,103 @@ const createCustomerSchema = z.object({
   email: z.string().email().optional().or(z.literal('')),
 });
 
+const updateCustomerSchema = createCustomerSchema.partial().refine((value) => Boolean(value.name || value.phone || value.email), {
+  message: 'At least one field is required',
+});
+
+type CustomerHistoryOrderRow = {
+  id: string;
+  folio: string;
+  status: string | null;
+  device_info: {
+    type?: string | null;
+    brand?: string | null;
+    model?: string | null;
+    customer_name?: string | null;
+    customer_phone?: string | null;
+    customer_email?: string | null;
+  } | null;
+  problem_description: string | null;
+  final_cost: number | null;
+  estimated_cost: number | null;
+  promised_date: string | null;
+  created_at: string;
+  updated_at: string;
+  receipt_url: string | null;
+  internal_notes: string | null;
+  metadata: Record<string, unknown> | null;
+};
+
+type CustomerHistoryRequestRow = {
+  id: string;
+  folio: string;
+  status: string | null;
+  device_type: string | null;
+  device_model: string | null;
+  issue_description: string | null;
+  quoted_total: number | null;
+  created_at: string;
+  metadata: Record<string, unknown> | null;
+};
+
+function normalizeCustomerName(name?: string | null, fullName?: string | null) {
+  return String(name ?? fullName ?? '').trim();
+}
+
+function normalizeCustomerHistoryStatus(status?: string | null) {
+  const value = String(status ?? '').toLowerCase();
+  if (value.includes('conv')) return 'convertida';
+  if (value.includes('rech')) return 'rechazada';
+  if (value.includes('cot')) return 'cotizada';
+  if (value.includes('diag')) return 'diagnostico';
+  if (value.includes('repar')) return 'reparacion';
+  if (value.includes('list')) return 'listo';
+  if (value.includes('entreg')) return 'entregado';
+  return 'pendiente';
+}
+
+async function findMatchingCustomer(
+  supabase: ReturnType<typeof getTenantClient>,
+  tenantId: string,
+  name: string,
+  phone: string,
+) {
+  if (phone) {
+    const { data } = await supabase
+      .from('customers')
+      .select('id, tenant_id, sucursal_id, name, full_name, phone, email, created_at')
+      .eq('tenant_id', tenantId)
+      .eq('phone', phone)
+      .maybeSingle();
+    if (data) return data;
+  }
+
+  const normalizedName = name.trim();
+  if (!normalizedName) {
+    return null;
+  }
+
+  const { data: exactName } = await supabase
+    .from('customers')
+    .select('id, tenant_id, sucursal_id, name, full_name, phone, email, created_at')
+    .eq('tenant_id', tenantId)
+    .or(`name.ilike.${normalizedName},full_name.ilike.${normalizedName}`)
+    .limit(1)
+    .maybeSingle();
+
+  if (exactName) return exactName;
+
+  const { data: partialName } = await supabase
+    .from('customers')
+    .select('id, tenant_id, sucursal_id, name, full_name, phone, email, created_at')
+    .eq('tenant_id', tenantId)
+    .or(`name.ilike.%${normalizedName}%,full_name.ilike.%${normalizedName}%`)
+    .limit(1)
+    .maybeSingle();
+
+  return partialName ?? null;
+}
+
 const createInventorySchema = z.object({
   sku: z.string().min(1),
   description: z.string().min(1),
@@ -21,6 +118,15 @@ const updateInventorySchema = z.object({
   stock: z.number().int().nonnegative().optional(),
   sucursalId: z.string().min(1).optional().nullable(),
   note: z.string().optional().or(z.literal('')),
+});
+
+const transferInventorySchema = z.object({
+  sku: z.string().min(1),
+  sucursalOrigen: z.string().uuid(),
+  sucursalDestino: z.string().uuid(),
+  cantidad: z.coerce.number().int().positive(),
+  motivo: z.string().optional().or(z.literal('')),
+  notas: z.string().optional().or(z.literal('')),
 });
 
 function isUuid(value: unknown) {
@@ -162,7 +268,7 @@ export const listCustomers = async (req: Request, res: Response) => {
     const supabase = getTenantClient(tenantId);
     let query = supabase
       .from('customers')
-      .select('id, tenant_id, sucursal_id, name, phone, email, created_at')
+      .select('id, tenant_id, sucursal_id, name, full_name, phone, email, created_at')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(100);
@@ -174,7 +280,12 @@ export const listCustomers = async (req: Request, res: Response) => {
 
     const { data, error } = await query;
     if (error) return res.status(502).json({ error: 'Failed to fetch customers', details: error.message });
-    return res.json({ success: true, data });
+    const normalized = (data ?? []).map((row) => ({
+      ...row,
+      name: normalizeCustomerName((row as { name?: string | null }).name, (row as { full_name?: string | null }).full_name),
+      full_name: normalizeCustomerName((row as { full_name?: string | null }).full_name, (row as { name?: string | null }).name),
+    }));
+    return res.json({ success: true, data: normalized });
   } catch (error) {
     console.error('Error listing customers:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
@@ -188,18 +299,231 @@ export const createCustomer = async (req: Request, res: Response) => {
     const body = createCustomerSchema.parse(req.body);
     const scope = req.scope;
     const supabase = getTenantClient(tenantId);
+    const existingCustomer = await findMatchingCustomer(supabase, tenantId, body.name, body.phone);
+
+    if (existingCustomer) {
+      const { data, error } = await supabase
+        .from('customers')
+        .update({
+          name: body.name || existingCustomer.name || existingCustomer.full_name || '',
+          full_name: body.name || existingCustomer.full_name || existingCustomer.name || '',
+          phone: body.phone || existingCustomer.phone || '',
+          email: body.email === undefined ? existingCustomer.email ?? null : body.email || null,
+          sucursal_id: scope?.sucursalId ?? existingCustomer.sucursal_id ?? null,
+        })
+        .eq('tenant_id', tenantId)
+        .eq('id', existingCustomer.id)
+        .select('id, tenant_id, sucursal_id, name, full_name, phone, email, created_at')
+        .single();
+
+      if (error) return res.status(502).json({ error: 'Failed to update customer', details: error.message });
+      return res.status(200).json({
+        success: true,
+        data: {
+          ...data,
+          name: normalizeCustomerName((data as { name?: string | null }).name, (data as { full_name?: string | null }).full_name),
+          full_name: normalizeCustomerName((data as { full_name?: string | null }).full_name, (data as { name?: string | null }).name),
+        },
+      });
+    }
+
     const { data, error } = await supabase.from('customers').insert([{
       tenant_id: tenantId,
       sucursal_id: scope?.sucursalId ?? null,
       name: body.name,
+      full_name: body.name,
       phone: body.phone,
       email: body.email || null,
-    }]).select('id, tenant_id, sucursal_id, name, phone, email, created_at').single();
+    }]).select('id, tenant_id, sucursal_id, name, full_name, phone, email, created_at').single();
     if (error) return res.status(502).json({ error: 'Failed to create customer', details: error.message });
-    return res.status(201).json({ success: true, data });
+    return res.status(201).json({
+      success: true,
+      data: {
+        ...data,
+        name: normalizeCustomerName((data as { name?: string | null }).name, (data as { full_name?: string | null }).full_name),
+        full_name: normalizeCustomerName((data as { full_name?: string | null }).full_name, (data as { name?: string | null }).name),
+      },
+    });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: 'Invalid payload', details: error.errors });
     console.error('Error creating customer:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const updateCustomer = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
+    const customerId = req.params.id;
+    if (!customerId) return res.status(400).json({ error: 'Customer id is required' });
+
+    const body = updateCustomerSchema.parse(req.body);
+    const scope = req.scope;
+    const supabase = getTenantClient(tenantId);
+    const { data: existingCustomer, error: existingError } = await supabase
+      .from('customers')
+      .select('id, tenant_id, sucursal_id, name, full_name, phone, email')
+      .eq('tenant_id', tenantId)
+      .eq('id', customerId)
+      .maybeSingle();
+
+    if (existingError) {
+      return res.status(502).json({ error: 'Failed to load customer', details: existingError.message });
+    }
+
+    if (!existingCustomer) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    const nextData = {
+      name: body.name ?? existingCustomer.name ?? existingCustomer.full_name ?? '',
+      full_name: body.name ?? existingCustomer.full_name ?? existingCustomer.name ?? '',
+      phone: body.phone ?? existingCustomer.phone ?? '',
+      email: body.email === undefined ? existingCustomer.email ?? null : body.email || null,
+      sucursal_id: scope?.mode === 'branch' && scope.sucursalId ? scope.sucursalId : existingCustomer.sucursal_id ?? null,
+    };
+
+    const { data, error } = await supabase
+      .from('customers')
+      .update(nextData)
+      .eq('tenant_id', tenantId)
+      .eq('id', customerId)
+      .select('id, tenant_id, sucursal_id, name, full_name, phone, email, created_at')
+      .single();
+
+    if (error) return res.status(502).json({ error: 'Failed to update customer', details: error.message });
+    return res.json({
+      success: true,
+      data: {
+        ...data,
+        name: normalizeCustomerName((data as { name?: string | null }).name, (data as { full_name?: string | null }).full_name),
+        full_name: normalizeCustomerName((data as { full_name?: string | null }).full_name, (data as { name?: string | null }).name),
+      },
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json({ error: 'Invalid payload', details: error.errors });
+    console.error('Error updating customer:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const getCustomerHistory = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    const customerId = req.params.id;
+
+    if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
+    if (!customerId) return res.status(400).json({ error: 'Customer id is required' });
+
+    const scope = req.scope;
+    const supabase = getTenantClient(tenantId);
+
+    const { data: customerRow, error: customerError } = await supabase
+      .from('customers')
+      .select('id, tenant_id, sucursal_id, name, full_name, phone, email, created_at')
+      .eq('tenant_id', tenantId)
+      .eq('id', customerId)
+      .maybeSingle();
+
+    if (customerError) {
+      return res.status(502).json({ error: 'Failed to load customer', details: customerError.message });
+    }
+
+    if (!customerRow) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    let ordersQuery = supabase
+      .from('service_orders')
+      .select('id, folio, status, device_info, problem_description, final_cost, estimated_cost, promised_date, created_at, updated_at, receipt_url, internal_notes, metadata')
+      .eq('tenant_id', tenantId)
+      .eq('customer_id', customerId)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (scope?.mode === 'branch' && scope.sucursalId) {
+      ordersQuery = ordersQuery.eq('sucursal_id', scope.sucursalId);
+    }
+
+    const { data: ordersData, error: ordersError } = await ordersQuery;
+    if (ordersError) {
+      return res.status(502).json({ error: 'Failed to load customer orders', details: ordersError.message });
+    }
+
+    const { data: requestsData, error: requestsError } = await supabase
+      .from('service_requests')
+      .select('id, folio, status, device_type, device_model, issue_description, quoted_total, created_at, metadata')
+      .eq('tenant_id', tenantId)
+      .eq('customer_id', customerId)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (requestsError) {
+      return res.status(502).json({ error: 'Failed to load customer quotations', details: requestsError.message });
+    }
+
+    const orders = (ordersData ?? []) as CustomerHistoryOrderRow[];
+    const requests = (requestsData ?? []) as CustomerHistoryRequestRow[];
+    const equipos = orders.map((order) => ({
+      FOLIO: order.folio,
+      TIPO: String(order.device_info?.type ?? ''),
+      MODELO: String(order.device_info?.model ?? order.device_info?.brand ?? ''),
+      FALLA: String(order.problem_description ?? ''),
+      DIAGNOSTICO: String((order.metadata?.diagnosis ?? order.metadata?.diagnostico ?? order.internal_notes ?? '') || ''),
+      ESTADO: String(order.status ?? 'recibido'),
+      FECHA_INGRESO: order.created_at,
+      FECHA_ENTREGA: order.status === 'entregado' ? order.updated_at : null,
+      COSTO_ESTIMADO: Number(order.final_cost ?? order.estimated_cost ?? 0),
+    }));
+
+    const cotizaciones = requests.map((request) => ({
+      folio: request.folio,
+      dispositivo: String(request.device_type ?? ''),
+      modelo: String(request.device_model ?? ''),
+      descripcion: String(request.issue_description ?? ''),
+      problemas: String(request.issue_description ?? ''),
+      total: Number(request.quoted_total ?? 0),
+      estado: normalizeCustomerHistoryStatus(request.status),
+    }));
+
+    const totalEquipos = equipos.length;
+    const totalReparaciones = orders.filter((order) => {
+      const normalized = normalizeCustomerHistoryStatus(order.status);
+      return normalized !== 'pendiente' && normalized !== 'cotizada';
+    }).length;
+    const totalCotizaciones = cotizaciones.length;
+    const combinedAmounts = [
+      ...orders.map((order) => Number(order.final_cost ?? order.estimated_cost ?? 0)),
+      ...requests.map((request) => Number(request.quoted_total ?? 0)),
+    ].filter((value) => Number.isFinite(value) && value > 0);
+    const ticketPromedio = combinedAmounts.length > 0
+      ? combinedAmounts.reduce((sum, value) => sum + value, 0) / combinedAmounts.length
+      : 0;
+    const historyDates = [
+      ...orders.map((order) => order.created_at),
+      ...requests.map((request) => request.created_at),
+    ].filter(Boolean).sort();
+
+    return res.json({
+      success: true,
+      data: {
+        customer: {
+          ...customerRow,
+          name: normalizeCustomerName((customerRow as { name?: string | null }).name, (customerRow as { full_name?: string | null }).full_name),
+          full_name: normalizeCustomerName((customerRow as { full_name?: string | null }).full_name, (customerRow as { name?: string | null }).name),
+        },
+        totalEquipos,
+        totalReparaciones,
+        totalCotizaciones,
+        ticketPromedio,
+        ultimaVisita: historyDates.length > 0 ? historyDates[historyDates.length - 1] : null,
+        equipos,
+        cotizaciones,
+      },
+    });
+  } catch (error) {
+    console.error('Error getting customer history:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
@@ -470,6 +794,148 @@ export const listInventoryMovements = async (req: Request, res: Response) => {
     return res.json({ success: true, data: data ?? [] });
   } catch (error) {
     console.error('Error listing inventory movements:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const transferInventoryItem = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
+
+    if (req.user?.role !== 'owner' && req.user?.role !== 'manager') {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    const body = transferInventorySchema.parse(req.body);
+    const supabase = getTenantClient(tenantId);
+    const scope = req.scope;
+
+    const { data: productRow, error: productError } = await supabase
+      .from('products')
+      .select('id, tenant_id, sku, name')
+      .eq('tenant_id', tenantId)
+      .eq('sku', body.sku)
+      .maybeSingle();
+
+    if (productError || !productRow) {
+      return res.status(404).json({ error: 'Product not found', details: productError?.message ?? 'Not found' });
+    }
+
+    const [{ data: originProduct, error: originProductError }, { data: destinationProduct, error: destinationProductError }] = await Promise.all([
+      supabase
+        .from('sucursal_inventory')
+        .select('id, tenant_id, sucursal_id, product_id, stock_current')
+        .eq('tenant_id', tenantId)
+        .eq('sucursal_id', body.sucursalOrigen)
+        .eq('product_id', productRow.id)
+        .maybeSingle(),
+      supabase
+        .from('sucursal_inventory')
+        .select('id, tenant_id, sucursal_id, product_id, stock_current')
+        .eq('tenant_id', tenantId)
+        .eq('sucursal_id', body.sucursalDestino)
+        .eq('product_id', productRow.id)
+        .maybeSingle(),
+    ]);
+
+    if (originProductError) {
+      return res.status(502).json({ error: 'Failed to load origin inventory', details: originProductError.message });
+    }
+    if (destinationProductError) {
+      return res.status(502).json({ error: 'Failed to load destination inventory', details: destinationProductError.message });
+    }
+
+    if (!originProduct) {
+      return res.status(404).json({ error: 'Origin inventory item not found' });
+    }
+
+    if (Number(originProduct.stock_current ?? 0) < body.cantidad) {
+      return res.status(409).json({ error: 'Insufficient stock at origin' });
+    }
+
+    const originNextStock = Number(originProduct.stock_current ?? 0) - body.cantidad;
+    const destinationBaseStock = Number(destinationProduct?.stock_current ?? 0);
+    const destinationNextStock = destinationBaseStock + body.cantidad;
+    const reference = body.motivo?.trim() || `transfer_${body.sku}`;
+    const notes = body.notas?.trim() || null;
+    const changedBy = req.user?.userId ?? req.user?.sub ?? null;
+
+    const { error: originUpdateError } = await supabase
+      .from('sucursal_inventory')
+      .update({ stock_current: originNextStock })
+      .eq('tenant_id', tenantId)
+      .eq('id', originProduct.id);
+
+    if (originUpdateError) {
+      return res.status(502).json({ error: 'Failed to update origin stock', details: originUpdateError.message });
+    }
+
+    const { data: destinationRow, error: destinationUpsertError } = await supabase
+      .from('sucursal_inventory')
+      .upsert([{
+        tenant_id: tenantId,
+        sucursal_id: body.sucursalDestino,
+        product_id: productRow.id,
+        stock_current: destinationNextStock,
+      }], { onConflict: 'tenant_id,sucursal_id,product_id' })
+      .select('id, tenant_id, sucursal_id, product_id, stock_current, created_at, updated_at')
+      .single();
+
+    if (destinationUpsertError || !destinationRow) {
+      return res.status(502).json({ error: 'Failed to update destination stock', details: destinationUpsertError?.message ?? 'Unable to persist transfer' });
+    }
+
+    const movementRows = [
+      {
+        tenant_id: tenantId,
+        sucursal_id: body.sucursalOrigen,
+        product_id: productRow.id,
+        movement_type: 'transfer_out',
+        quantity: -body.cantidad,
+        unit_cost: 0,
+        reference,
+        notes,
+        created_by: changedBy,
+      },
+      {
+        tenant_id: tenantId,
+        sucursal_id: body.sucursalDestino,
+        product_id: productRow.id,
+        movement_type: 'transfer_in',
+        quantity: body.cantidad,
+        unit_cost: 0,
+        reference,
+        notes,
+        created_by: changedBy,
+      },
+    ];
+
+    const { error: movementError } = await supabase.from('inventory_movements').insert(movementRows);
+    if (movementError) {
+      return res.status(502).json({ error: 'Failed to persist transfer movements', details: movementError.message });
+    }
+
+    await refreshInventoryAlert(tenantId, productRow.id, body.sucursalOrigen, originNextStock);
+    await refreshInventoryAlert(tenantId, productRow.id, body.sucursalDestino, destinationNextStock);
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        product: productRow,
+        origin: originProduct,
+        destination: destinationRow,
+        moved: body.cantidad,
+        reference,
+        notes,
+        scope: scope?.mode ?? null,
+      },
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid payload', details: error.errors });
+    }
+    console.error('Error transferring inventory item:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };

@@ -112,7 +112,8 @@ export function OrderIntakeModal({
   const portalUrl = useMemo(() => {
     if (!successSummary?.folio || !tenantSlug) return "";
     const base = customerPortalBase.replace(/\/$/, "");
-    return `${base}/t/${encodeURIComponent(tenantSlug)}/portal?folio=${encodeURIComponent(successSummary.folio)}`;
+    const trackingBase = base.endsWith("/portal") ? base.replace(/\/portal$/, "/tracking") : base;
+    return `${trackingBase}/${encodeURIComponent(tenantSlug)}/tracking?folio=${encodeURIComponent(successSummary.folio)}`;
   }, [customerPortalBase, successSummary?.folio, tenantSlug]);
 
   const whatsappUrl = useMemo(() => {
@@ -223,7 +224,7 @@ export function OrderIntakeModal({
                     </div>
 
                     <div className="flex justify-end">
-                      <button type="button" disabled={!stepOneComplete} onClick={() => setStep(2)} className="rounded-2xl bg-orange-500 px-8 py-4 text-lg font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">
+                      <button type="button" disabled={!stepOneComplete} onClick={() => setStep(2)} className="rounded-2xl bg-sky-500 px-8 py-4 text-lg font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">
                         Continuar →
                       </button>
                     </div>
@@ -325,7 +326,7 @@ export function OrderIntakeModal({
                       <button type="button" onClick={() => setStep(1)} className="rounded-2xl border border-zinc-700 bg-slate-950 px-8 py-4 text-lg font-semibold text-zinc-100">
                         Atrás
                       </button>
-                      <button type="button" disabled={!stepTwoComplete} onClick={() => setStep(3)} className="rounded-2xl bg-orange-500 px-8 py-4 text-lg font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">
+                      <button type="button" disabled={!stepTwoComplete} onClick={() => setStep(3)} className="rounded-2xl bg-sky-500 px-8 py-4 text-lg font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">
                         Continuar →
                       </button>
                     </div>
@@ -375,7 +376,7 @@ export function OrderIntakeModal({
                         type="button"
                         disabled={!stepThreeComplete || !estimatedCostValid || saving}
                         onClick={onSubmit}
-                        className="rounded-2xl bg-orange-500 px-8 py-4 text-lg font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-2xl bg-sky-500 px-8 py-4 text-lg font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {saving ? "Guardando..." : `Guardar ${newOrderLabel.replace(/^Nueva\s+/u, '')}`}
                       </button>
@@ -394,7 +395,7 @@ export function OrderIntakeModal({
               <div className="flex h-24 w-24 items-center justify-center rounded-full bg-emerald-500/80 text-5xl text-white">✓</div>
               <h3 className="mt-8 text-3xl font-semibold text-sky-400">¡{createdLabel}!</h3>
               <p className="mt-3 text-zinc-400">El folio generado es:</p>
-              <div className="mt-5 rounded-2xl border-2 border-orange-400 px-8 py-6 text-4xl font-bold tracking-[0.08em] text-orange-400">{successSummary.folio}</div>
+              <div className="mt-5 rounded-2xl border-2 border-sky-400 px-8 py-6 text-4xl font-bold tracking-[0.08em] text-sky-300">{successSummary.folio}</div>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <button type="button" onClick={() => onCopy(successSummary.folio, "Folio")} className="rounded-2xl bg-sky-500 px-5 py-3 font-semibold text-white">Copiar folio</button>
                 {whatsappUrl ? (
@@ -404,12 +405,12 @@ export function OrderIntakeModal({
                 ) : null}
                 {successSummary.pdfUrl ? (
                   <a href={successSummary.pdfUrl} target="_blank" rel="noreferrer" className="rounded-2xl bg-sky-500 px-5 py-3 font-semibold text-white">
-                    Descargar PDF
+                    Ver PDF
                   </a>
                 ) : null}
               </div>
               <p className="mt-6 text-sm text-zinc-400">Comparte este folio con el cliente para que pueda consultar el estado.</p>
-              <button type="button" onClick={onResetFlow} className="mt-8 rounded-2xl bg-orange-500 px-8 py-4 text-lg font-semibold text-white">{newOrderLabel}</button>
+              <button type="button" onClick={onResetFlow} className="mt-8 rounded-2xl bg-sky-500 px-8 py-4 text-lg font-semibold text-white">{newOrderLabel}</button>
             </div>
           )}
 

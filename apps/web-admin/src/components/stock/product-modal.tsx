@@ -114,9 +114,9 @@ export function ProductModal({ open, onOpenChange, product, onProductSaved }: Pr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-srf-surface border-srf-primary/40">
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto border border-slate-800 bg-slate-950/95 text-slate-100">
         <DialogHeader>
-          <DialogTitle className="text-srf-primary">
+          <DialogTitle className="text-slate-50">
             {product ? 'Editar producto' : 'Nuevo producto'}
           </DialogTitle>
         </DialogHeader>
@@ -242,7 +242,7 @@ export function ProductModal({ open, onOpenChange, product, onProductSaved }: Pr
               type="checkbox"
               checked={formData.is_active}
               onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-              className="accent-srf-accent"
+              className="accent-sky-400"
             />
             <span className="text-sm">Producto activo</span>
           </label>

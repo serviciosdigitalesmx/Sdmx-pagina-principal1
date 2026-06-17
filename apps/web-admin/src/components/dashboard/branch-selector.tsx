@@ -48,7 +48,7 @@ export function BranchSelector() {
   if (loading) {
     return (
       <div className="flex items-center gap-2 px-3 py-2">
-        <div className="spinner w-4 h-4" />
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-sky-400 border-t-transparent" />
         <span className="text-sm text-slate-400">Cargando...</span>
       </div>
     );

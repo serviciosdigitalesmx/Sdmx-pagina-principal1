@@ -226,26 +226,26 @@ function MobilePortalPreview() {
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-[#f5f4ef] text-slate-950">
+    <main className="min-h-screen bg-[#020617] text-slate-100">
       <RootAuthHashRedirect />
       <section className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-        <header className="flex flex-col gap-4 rounded-[2rem] border border-slate-200 bg-white px-5 py-4 shadow-[0_18px_60px_rgba(15,23,42,0.08)] backdrop-blur lg:flex-row lg:items-center lg:justify-between">
+        <header className="flex flex-col gap-4 rounded-[2rem] border border-slate-800 bg-slate-950/90 px-5 py-4 shadow-[0_18px_60px_rgba(2,6,23,0.45)] backdrop-blur lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_100%)] text-lg font-black text-white shadow-[0_18px_40px_rgba(99,102,241,0.22)]">
               {brandShort.slice(0, 2)}
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-sky-600/80">SaaS para talleres</p>
-              <h1 className="text-2xl font-black tracking-tight text-slate-950">{productName}</h1>
-            </div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.35em] text-sky-400/80">SaaS para talleres</p>
+            <h1 className="text-2xl font-black tracking-tight text-slate-50">{productName}</h1>
           </div>
+        </div>
 
-          <nav className="flex flex-wrap items-center gap-4 text-sm font-medium text-slate-600">
-            <Link href="#funciones" className="transition hover:text-slate-950">Funciones</Link>
-            <Link href="#precios" className="transition hover:text-slate-950">Precios</Link>
-            <Link href="#seguimiento" className="transition hover:text-slate-950">Seguimiento</Link>
-            <Link href="#contacto" className="transition hover:text-slate-950">Contacto</Link>
-            <Link href={adminLoginUrl} className="rounded-full px-4 py-2 transition hover:bg-slate-100 hover:text-slate-950">Iniciar sesión</Link>
+          <nav className="flex flex-wrap items-center gap-4 text-sm font-medium text-slate-300">
+            <Link href="#funciones" className="transition hover:text-white">Funciones</Link>
+            <Link href="#precios" className="transition hover:text-white">Precios</Link>
+            <Link href="#seguimiento" className="transition hover:text-white">Seguimiento</Link>
+            <Link href="#contacto" className="transition hover:text-white">Contacto</Link>
+            <Link href={adminLoginUrl} className="rounded-full px-4 py-2 transition hover:bg-white/5 hover:text-white">Iniciar sesión</Link>
             <CTA href={adminOnboardingUrl}>Probar {trialDays} días gratis</CTA>
           </nav>
         </header>
@@ -253,46 +253,46 @@ export default function Home() {
 
       <section className="mx-auto grid w-full max-w-7xl gap-8 px-4 pb-12 pt-2 sm:px-6 lg:grid-cols-[1.03fr_0.97fr] lg:px-8 lg:pt-8">
         <div className="space-y-8 pt-4 lg:pt-10">
-          <div className="inline-flex items-center gap-3 rounded-full border border-sky-200 bg-sky-50 px-4 py-2 text-sm font-medium text-sky-700 shadow-sm">
+          <div className="inline-flex items-center gap-3 rounded-full border border-sky-400/20 bg-sky-500/10 px-4 py-2 text-sm font-medium text-sky-200 shadow-sm">
             <span className="h-2 w-2 rounded-full bg-sky-500" />
             {hubName} para talleres de reparación
           </div>
 
           <div className="space-y-5">
-            <h2 className="max-w-xl text-5xl font-black tracking-tight text-slate-950 sm:text-6xl lg:text-7xl">
+            <h2 className="max-w-xl text-5xl font-black tracking-tight text-slate-50 sm:text-6xl lg:text-7xl">
               Controla tu taller
               <span className="block bg-[linear-gradient(135deg,#7c3aed_0%,#4f46e5_100%)] bg-clip-text text-transparent">sin perder tiempo.</span>
             </h2>
-            <p className="max-w-xl text-lg leading-8 text-slate-600">
+            <p className="max-w-xl text-lg leading-8 text-slate-300">
               Órdenes, clientes, inventario, evidencias, WhatsApp y cobros conectados a un SaaS real multi-tenant. Todo en un solo lugar para operar sin improvisar.
             </p>
           </div>
 
-          <ul className="grid gap-3 text-slate-800 sm:grid-cols-2">
+          <ul className="grid gap-3 text-slate-200 sm:grid-cols-2">
             {[
               "Clientes",
               "Reparaciones",
               "Inventario",
               "Cobros",
             ].map((item) => (
-              <li key={item} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-100 text-sky-700">•</span>
+              <li key={item} className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3 shadow-[0_10px_30px_rgba(2,6,23,0.28)]">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/10 text-sky-300">•</span>
                 <span className="font-medium">{item}.</span>
               </li>
             ))}
           </ul>
 
-          <p className="text-lg text-slate-700">Todo en un solo lugar.</p>
+          <p className="text-lg text-slate-300">Todo en un solo lugar.</p>
 
           <div className="flex flex-wrap gap-4">
             <CTA href={adminOnboardingUrl}>Probar {trialDays} días gratis</CTA>
             <GoogleCTA href="/auth/google">Continuar con Google</GoogleCTA>
-            <Link href="#seguimiento" className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-slate-900 transition hover:-translate-y-0.5 hover:bg-slate-50">
+            <Link href="#seguimiento" className="inline-flex items-center justify-center rounded-2xl border border-slate-700 bg-slate-950 px-6 py-4 text-sm font-semibold uppercase tracking-[0.16em] text-slate-100 transition hover:-translate-y-0.5 hover:bg-slate-900">
               Ver demostración
             </Link>
           </div>
 
-          <div className="flex flex-wrap gap-6 text-sm text-slate-500">
+          <div className="flex flex-wrap gap-6 text-sm text-slate-400">
             {[
               "Sin tarjeta de crédito",
               "Sin instalación",
@@ -313,7 +313,7 @@ export default function Home() {
       </section>
 
       <section id="funciones" className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="rounded-[2.6rem] bg-[#0b1020] px-5 py-8 text-white shadow-[0_30px_120px_rgba(15,23,42,0.28)] sm:px-8 lg:px-10">
+            <div className="rounded-[2.6rem] border border-slate-800 bg-[#0b1020] px-5 py-8 text-white shadow-[0_30px_120px_rgba(2,6,23,0.45)] sm:px-8 lg:px-10">
           <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
             <div className="space-y-6">
               <SectionLabel>Diseñado para talleres modernos</SectionLabel>
@@ -353,13 +353,13 @@ export default function Home() {
 
       <section id="seguimiento" className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-          <div className="space-y-5 rounded-[2.2rem] border border-slate-200 bg-white p-6 shadow-[0_20px_70px_rgba(15,23,42,0.08)] lg:p-8">
+          <div className="space-y-5 rounded-[2.2rem] border border-slate-800 bg-slate-950/90 p-6 shadow-[0_20px_70px_rgba(2,6,23,0.45)] lg:p-8">
             <SectionLabel>Tus clientes siempre informados</SectionLabel>
-            <h3 className="text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">Seguimiento público sin complicaciones.</h3>
-            <p className="max-w-xl text-base leading-8 text-slate-600">
+            <h3 className="text-4xl font-black tracking-tight text-slate-50 sm:text-5xl">Seguimiento público sin complicaciones.</h3>
+            <p className="max-w-xl text-base leading-8 text-slate-300">
               El cliente consulta el estatus de su reparación con su número de folio, sin registro y sin apps extra. El seguimiento usa datos reales del backend.
             </p>
-            <ul className="space-y-3 text-slate-700">
+            <ul className="space-y-3 text-slate-200">
               {[
                 "Consulta en tiempo real",
                 "Fotos de cada etapa",
@@ -374,7 +374,7 @@ export default function Home() {
             </ul>
           </div>
 
-          <div className="rounded-[2.2rem] border border-slate-200 bg-white p-5 shadow-[0_20px_70px_rgba(15,23,42,0.08)] sm:p-6">
+          <div className="rounded-[2.2rem] border border-slate-800 bg-slate-950/90 p-5 shadow-[0_20px_70px_rgba(2,6,23,0.45)] sm:p-6">
             <MobilePortalPreview />
           </div>
         </div>
@@ -384,9 +384,9 @@ export default function Home() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <SectionLabel>Planes simples, precios justos</SectionLabel>
-            <h3 className="mt-3 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">Elige el plan ideal para tu taller</h3>
+            <h3 className="mt-3 text-4xl font-black tracking-tight text-slate-50 sm:text-5xl">Elige el plan ideal para tu taller</h3>
           </div>
-          <p className="max-w-xl text-sm leading-7 text-slate-600">
+          <p className="max-w-xl text-sm leading-7 text-slate-300">
             Los planes abajo reflejan la estructura operativa disponible en la plataforma. El cobro real pasa por Mercado Pago y el backend confirma el estado.
           </p>
         </div>
@@ -395,18 +395,18 @@ export default function Home() {
           {pricingPlans.map((plan) => (
             <article
               key={plan.name}
-              className={`rounded-[2rem] border bg-white p-6 shadow-[0_20px_70px_rgba(15,23,42,0.08)] ${plan.featured ? "border-sky-400 ring-1 ring-sky-200" : "border-slate-200"}`}
+              className={`rounded-[2rem] border bg-slate-950/90 p-6 shadow-[0_20px_70px_rgba(2,6,23,0.45)] ${plan.featured ? "border-sky-400 ring-1 ring-sky-400/20" : "border-slate-800"}`}
             >
               {plan.featured ? (
-                <span className="inline-flex rounded-full bg-sky-600 px-3 py-1 text-[10px] font-black uppercase tracking-[0.28em] text-white">Más popular</span>
+                <span className="inline-flex rounded-full bg-sky-500 px-3 py-1 text-[10px] font-black uppercase tracking-[0.28em] text-white">Más popular</span>
               ) : null}
-              <h4 className="mt-4 text-2xl font-black text-slate-950">{plan.name}</h4>
-              <div className="mt-3 flex items-end gap-2 text-slate-950">
+              <h4 className="mt-4 text-2xl font-black text-slate-50">{plan.name}</h4>
+              <div className="mt-3 flex items-end gap-2 text-slate-50">
                 <span className="text-5xl font-black tracking-tight">{plan.price}</span>
-                <span className="pb-1 text-sm font-medium text-slate-500">{plan.period}</span>
+                <span className="pb-1 text-sm font-medium text-slate-400">{plan.period}</span>
               </div>
-              <p className="mt-4 text-sm leading-7 text-slate-600">{plan.description}</p>
-              <ul className="mt-6 space-y-3 text-sm text-slate-700">
+              <p className="mt-4 text-sm leading-7 text-slate-300">{plan.description}</p>
+              <ul className="mt-6 space-y-3 text-sm text-slate-200">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-center gap-3">
                     <span className="text-emerald-500">✓</span>
@@ -431,9 +431,9 @@ export default function Home() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">{trialDays} días gratis</div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">Sin instalación</div>
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-200">Activación en minutos</div>
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-200">{trialDays} días gratis</div>
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-200">Sin instalación</div>
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/70 px-4 py-3 text-sm text-slate-200">Activación en minutos</div>
             <CTA href={adminOnboardingUrl}>Crear mi taller ahora</CTA>
             <GoogleCTA href="/auth/google">Crear con Google</GoogleCTA>
           </div>
@@ -441,11 +441,11 @@ export default function Home() {
       </section>
 
       <section id="contacto" className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid gap-5 rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_20px_70px_rgba(15,23,42,0.08)] lg:grid-cols-[1fr_1fr]">
+        <div className="grid gap-5 rounded-[2rem] border border-slate-800 bg-slate-950/90 p-6 shadow-[0_20px_70px_rgba(2,6,23,0.45)] lg:grid-cols-[1fr_1fr]">
           <div>
             <SectionLabel>Contacto</SectionLabel>
-            <h3 className="mt-3 text-3xl font-black tracking-tight text-slate-950">Todo listo para venderse y operar</h3>
-            <p className="mt-4 max-w-xl text-base leading-8 text-slate-600">
+            <h3 className="mt-3 text-3xl font-black tracking-tight text-slate-50">Todo listo para venderse y operar</h3>
+            <p className="mt-4 max-w-xl text-base leading-8 text-slate-300">
               El marketing y la operación usan el mismo backend real. Si necesitas hablar con soporte, usa los contactos configurados del tenant o del SaaS.
             </p>
           </div>
@@ -456,9 +456,9 @@ export default function Home() {
               ["Correo", contactEmail || "No configurado"],
               ["WhatsApp", contactPhone || "No configurado"],
             ].map(([label, value]) => (
-              <div key={label} className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
+              <div key={label} className="rounded-[1.5rem] border border-slate-800 bg-slate-900/70 p-4">
                 <p className="text-xs uppercase tracking-[0.24em] text-sky-500">{label}</p>
-                <p className="mt-2 text-sm font-semibold text-slate-950">{value}</p>
+                <p className="mt-2 text-sm font-semibold text-slate-50">{value}</p>
               </div>
             ))}
           </div>

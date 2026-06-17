@@ -219,8 +219,8 @@ export default function OrdersPage() {
       <div className="card-base space-y-4 p-4 lg:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-srf-text">{ordersLabel}</h1>
-            <p className="mt-1 text-sm text-srf-muted">Lista, búsqueda, kanban y detalle con API real.</p>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-50">{ordersLabel}</h1>
+            <p className="mt-1 text-sm text-slate-400">Lista, búsqueda, kanban y detalle con API real.</p>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -241,7 +241,7 @@ export default function OrdersPage() {
 
         <div className="grid gap-3 lg:grid-cols-[1fr_260px_200px]">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-srf-muted" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -251,7 +251,7 @@ export default function OrdersPage() {
           </div>
 
           <div className="relative">
-            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-srf-muted" />
+            <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="input pl-9">
               <option value="all">Todos los estados</option>
               {orderedStatusKeys.map((status) => (
@@ -262,9 +262,9 @@ export default function OrdersPage() {
             </select>
           </div>
 
-          <div className="rounded-2xl border border-white/8 bg-white/4 px-4 py-3 text-xs text-srf-muted">
-            <div className="flex items-center gap-2 font-semibold text-srf-text">
-              <Clock3 className="h-4 w-4 text-srf-primary" />
+          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-xs text-slate-400">
+            <div className="flex items-center gap-2 font-semibold text-slate-200">
+              <Clock3 className="h-4 w-4 text-sky-300" />
               Estados reales
             </div>
             <div className="mt-1">Se muestran solo estados detectados en los datos.</div>
@@ -296,7 +296,7 @@ export default function OrdersPage() {
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <StatusBadge tone={STATUS_TONES[status] ?? 'neutral'}>{STATUS_LABELS[status] ?? status}</StatusBadge>
-                    <span className="text-xs text-srf-muted">{items.length} órdenes</span>
+                    <span className="text-xs text-slate-400">{items.length} órdenes</span>
                   </div>
                 </div>
                 <div className="mt-4 grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">

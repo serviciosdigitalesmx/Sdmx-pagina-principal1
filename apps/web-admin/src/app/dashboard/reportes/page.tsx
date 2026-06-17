@@ -62,15 +62,35 @@ export default function ReportesPage() {
   }, [summary?.ordersByTechnician]);
 
   if (loading) {
-    return <div className="flex h-full items-center justify-center"><div className="spinner w-8 h-8" /></div>;
+    return (
+      <div className="flex h-full items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-400 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (error && !summary) {
+    return (
+      <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-6 text-center text-sm text-rose-100">
+        <p className="font-semibold">No se pudieron cargar los reportes</p>
+        <p className="mt-2 text-rose-100/80">{error}</p>
+        <button
+          type="button"
+          onClick={() => void load()}
+          className="mt-4 rounded-2xl border border-rose-500/20 bg-slate-950/70 px-4 py-2 font-semibold text-rose-100"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-orbitron font-bold text-srf-primary">Reportes</h1>
-          <p className="mt-1 text-sm text-srf-muted">Resumen operativo real del tenant y de la sucursal activa.</p>
+          <h1 className="text-2xl font-semibold text-slate-50">Reportes</h1>
+          <p className="mt-1 text-sm text-slate-400">Resumen operativo real del tenant y de la sucursal activa.</p>
         </div>
         <button onClick={() => void load()} className="btn-outline inline-flex items-center gap-2">
           <RefreshCw className="w-4 h-4" />
@@ -78,79 +98,79 @@ export default function ReportesPage() {
         </button>
       </div>
 
-      {error ? <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</div> : null}
+      {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{error}</div> : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="card text-center">
-          <BarChart3 className="mx-auto w-5 h-5 text-srf-primary" />
-          <div className="mt-3 text-3xl font-bold text-srf-primary">{summary?.ordersCount ?? 0}</div>
-          <div className="text-xs text-srf-muted">Órdenes</div>
+          <BarChart3 className="mx-auto h-5 w-5 text-sky-300" />
+          <div className="mt-3 text-3xl font-bold text-slate-50">{summary?.ordersCount ?? 0}</div>
+          <div className="text-xs text-slate-400">Órdenes</div>
         </div>
         <div className="card text-center">
-          <Users className="mx-auto w-5 h-5 text-srf-primary" />
-          <div className="mt-3 text-3xl font-bold text-srf-primary">{summary?.customersCount ?? 0}</div>
-          <div className="text-xs text-srf-muted">Clientes</div>
+          <Users className="mx-auto h-5 w-5 text-sky-300" />
+          <div className="mt-3 text-3xl font-bold text-slate-50">{summary?.customersCount ?? 0}</div>
+          <div className="text-xs text-slate-400">Clientes</div>
         </div>
         <div className="card text-center">
-          <Package className="mx-auto w-5 h-5 text-srf-accent" />
-          <div className="mt-3 text-3xl font-bold text-srf-accent">{summary?.inventoryCount ?? 0}</div>
-          <div className="text-xs text-srf-muted">Items de inventario</div>
+          <Package className="mx-auto h-5 w-5 text-sky-300" />
+          <div className="mt-3 text-3xl font-bold text-sky-300">{summary?.inventoryCount ?? 0}</div>
+          <div className="text-xs text-slate-400">Items de inventario</div>
         </div>
         <div className="card text-center">
-          <Wallet className="mx-auto w-5 h-5 text-srf-accent" />
-          <div className="mt-3 text-3xl font-bold text-srf-accent">{currency(summary?.totalBalance ?? 0)}</div>
-          <div className="text-xs text-srf-muted">Balance visible</div>
+          <Wallet className="mx-auto h-5 w-5 text-sky-300" />
+          <div className="mt-3 text-3xl font-bold text-sky-300">{currency(summary?.totalBalance ?? 0)}</div>
+          <div className="text-xs text-slate-400">Balance visible</div>
         </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
         <div className="card">
-          <div className="mb-4 flex items-center gap-2 text-srf-primary">
-            <LineChart className="w-5 h-5" />
+          <div className="mb-4 flex items-center gap-2 text-sky-300">
+            <LineChart className="h-5 w-5" />
             <h2 className="text-lg font-semibold">Estados de órdenes</h2>
           </div>
           <div className="space-y-3">
             {statusRows.length > 0 ? statusRows.map(([status, count]) => (
-              <div key={status} className="flex items-center justify-between rounded-xl border border-srf-primary/20 bg-black/20 px-4 py-3">
-                <span className="text-sm text-srf-text">{status}</span>
+              <div key={status} className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3">
+                <span className="text-sm text-slate-200">{status}</span>
                 <span className="badge-recibido">{count}</span>
               </div>
-            )) : <div className="text-sm text-srf-muted">Sin datos de estados todavía.</div>}
+            )) : <div className="text-sm text-slate-400">Sin datos de estados todavía.</div>}
           </div>
         </div>
 
         <div className="card">
-          <div className="mb-4 flex items-center gap-2 text-srf-primary">
-            <Users className="w-5 h-5" />
+          <div className="mb-4 flex items-center gap-2 text-sky-300">
+            <Users className="h-5 w-5" />
             <h2 className="text-lg font-semibold">Órdenes por técnico</h2>
           </div>
           <div className="space-y-3">
             {technicianRows.length > 0 ? technicianRows.map(([name, count]) => (
-              <div key={name} className="flex items-center justify-between rounded-xl border border-srf-primary/20 bg-black/20 px-4 py-3">
-                <span className="text-sm text-srf-text">{name}</span>
+              <div key={name} className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3">
+                <span className="text-sm text-slate-200">{name}</span>
                 <span className="badge-diagnostico">{count}</span>
               </div>
-            )) : <div className="text-sm text-srf-muted">No hay técnicos asignados todavía.</div>}
+            )) : <div className="text-sm text-slate-400">No hay técnicos asignados todavía.</div>}
           </div>
         </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-4">
         <div className="card">
-          <div className="text-xs uppercase tracking-[0.2em] text-srf-muted">Productividad</div>
-          <div className="mt-3 text-2xl font-bold text-srf-primary">{Math.round(Number(summary?.productivity ?? 0))}%</div>
+          <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Productividad</div>
+          <div className="mt-3 text-2xl font-bold text-slate-50">{Math.round(Number(summary?.productivity ?? 0))}%</div>
         </div>
         <div className="card">
-          <div className="text-xs uppercase tracking-[0.2em] text-srf-muted">Valuación</div>
-          <div className="mt-3 text-2xl font-bold text-srf-primary">{currency(summary?.inventoryValuation ?? 0)}</div>
+          <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Valuación</div>
+          <div className="mt-3 text-2xl font-bold text-slate-50">{currency(summary?.inventoryValuation ?? 0)}</div>
         </div>
         <div className="card">
-          <div className="text-xs uppercase tracking-[0.2em] text-srf-muted">Cuentas por cobrar</div>
-          <div className="mt-3 text-2xl font-bold text-srf-primary">{currency(summary?.accountsReceivable ?? 0)}</div>
+          <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Cuentas por cobrar</div>
+          <div className="mt-3 text-2xl font-bold text-slate-50">{currency(summary?.accountsReceivable ?? 0)}</div>
         </div>
         <div className="card">
-          <div className="text-xs uppercase tracking-[0.2em] text-srf-muted">Última actualización</div>
-          <div className="mt-3 text-sm font-semibold text-srf-text">
+          <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Última actualización</div>
+          <div className="mt-3 text-sm font-semibold text-slate-200">
             {mounted && summary?.lastUpdatedAt ? new Date(summary.lastUpdatedAt).toLocaleString("es-MX") : "No disponible"}
           </div>
         </div>

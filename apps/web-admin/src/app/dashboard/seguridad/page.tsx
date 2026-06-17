@@ -13,6 +13,7 @@ import type { SecurityUser, SecurityConfig, AuditLog, SecuritySession } from '@/
 
 export default function SeguridadPage() {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [users, setUsers] = useState<SecurityUser[]>([]);
   const [config, setConfig] = useState<SecurityConfig | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -26,6 +27,7 @@ export default function SeguridadPage() {
 
   const loadData = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [usersData, configData, auditData, sessionsData] = await Promise.all([
         apiClient.get<{ data: { items: SecurityUser[] } }>('/users', getApiOptions()),
@@ -40,6 +42,7 @@ export default function SeguridadPage() {
       setSessions(sessionsData.data || []);
     } catch (error) {
       console.error('Failed to load security data:', error);
+      setLoadError(error instanceof Error ? error.message : 'No se pudieron cargar los datos de seguridad');
     } finally {
       setLoading(false);
     }
@@ -131,6 +134,22 @@ export default function SeguridadPage() {
     );
   }
 
+  if (loadError && !users.length && !sessions.length && !auditLogs.length) {
+    return (
+      <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-6 text-center text-sm text-rose-100">
+        <p className="font-semibold">No se pudo cargar la seguridad</p>
+        <p className="mt-2 text-rose-100/80">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => loadData()}
+          className="mt-4 rounded-2xl border border-rose-500/20 bg-slate-950/70 px-4 py-2 font-semibold text-rose-100"
+        >
+          Reintentar
+        </button>
+      </div>
+    );
+  }
+
   return (
     <RequireRole allowed={['owner']}>
     <div className="space-y-6">
@@ -142,6 +161,7 @@ export default function SeguridadPage() {
       </div>
 
       {/* KPIs */}
+      {loadError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{loadError}</div> : null}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 text-center shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
           <div className="text-2xl font-bold text-sky-300">{users.length}</div>

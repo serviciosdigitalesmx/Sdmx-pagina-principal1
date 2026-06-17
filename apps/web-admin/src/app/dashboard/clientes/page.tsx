@@ -12,6 +12,7 @@ import type { Customer } from '@/types';
 
 export default function ClientesPage() {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -26,6 +27,7 @@ export default function ClientesPage() {
 
   const loadCustomers = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await apiClient.get<{ data: Customer[] }>('/customers', getApiOptions());
       const customersList = data.data || [];
@@ -56,6 +58,7 @@ export default function ClientesPage() {
       setDuplicateNames(dupNames);
     } catch (error) {
       console.error('Failed to load customers:', error);
+      setLoadError(error instanceof Error ? error.message : 'No se pudieron cargar los clientes');
     } finally {
       setLoading(false);
     }
@@ -133,6 +136,22 @@ export default function ClientesPage() {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-500/25 border-t-sky-400" />
+      </div>
+    );
+  }
+
+  if (loadError && customers.length === 0) {
+    return (
+      <div className="rounded-3xl border border-rose-500/20 bg-rose-500/10 p-6 text-center text-sm text-rose-100">
+        <p className="font-semibold">No se pudieron cargar los clientes</p>
+        <p className="mt-2 text-rose-100/80">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => loadCustomers()}
+          className="mt-4 rounded-2xl border border-rose-500/20 bg-slate-950/70 px-4 py-2 font-semibold text-rose-100"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }

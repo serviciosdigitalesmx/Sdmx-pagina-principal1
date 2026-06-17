@@ -12,6 +12,7 @@ import type { Product, StockAlert } from '@/types';
 
 export default function StockPage() {
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [alerts, setAlerts] = useState<StockAlert[]>([]);
@@ -35,6 +36,7 @@ export default function StockPage() {
 
   const loadProducts = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await apiClient.get<{ data: Product[] }>('/inventory', getApiOptions());
       const productsList = data.data || [];
@@ -67,6 +69,7 @@ export default function StockPage() {
       setCategories(uniqueCategories);
     } catch (error) {
       console.error('Failed to load products:', error);
+      setLoadError(error instanceof Error ? error.message : 'No se pudieron cargar los productos');
     } finally {
       setLoading(false);
     }
@@ -126,7 +129,26 @@ export default function StockPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="spinner w-8 h-8" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-500/25 border-t-sky-400" />
+      </div>
+    );
+  }
+
+  if (loadError && products.length === 0) {
+    return (
+      <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-6 text-center text-sm text-rose-100">
+        <p className="font-semibold">No se pudo cargar el inventario</p>
+        <p className="mt-2 text-rose-100/80">{loadError}</p>
+        <button
+          type="button"
+          onClick={() => {
+            loadProducts();
+            loadAlerts();
+          }}
+          className="mt-4 rounded-2xl border border-rose-500/20 bg-slate-950/70 px-4 py-2 font-semibold text-rose-100"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }
@@ -136,8 +158,9 @@ export default function StockPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-orbitron font-bold text-srf-primary">Stock</h1>
-          <p className="text-srf-muted text-sm mt-1">
+          <p className="text-xs uppercase tracking-[0.28em] text-sky-400/70">Inventario</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-50">Stock</h1>
+          <p className="mt-1 text-sm text-slate-400">
             {stats.totalProducts} productos · {stats.lowStock} con stock bajo · {stats.outOfStock} agotados
           </p>
         </div>
@@ -146,7 +169,7 @@ export default function StockPage() {
             setSelectedProduct(null);
             setProductModalOpen(true);
           }}
-          className="btn-primary gap-2"
+          className="gap-2"
         >
           <Plus className="w-4 h-4" />
           Nuevo producto
@@ -155,39 +178,40 @@ export default function StockPage() {
 
       {/* KPI cards */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-srf-primary/20 bg-srf-surface p-4 shadow-soft">
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-srf-muted">Productos activos</div>
-            <Layers3 className="h-5 w-5 text-srf-accent" />
+            <div className="text-sm text-slate-400">Productos activos</div>
+            <Layers3 className="h-5 w-5 text-sky-400" />
           </div>
-          <div className="mt-3 text-3xl font-semibold text-srf-primary">{stats.totalProducts}</div>
+          <div className="mt-3 text-3xl font-semibold text-sky-300">{stats.totalProducts}</div>
         </div>
-        <div className="rounded-2xl border border-srf-primary/20 bg-srf-surface p-4 shadow-soft">
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-srf-muted">Stock bajo</div>
+            <div className="text-sm text-slate-400">Stock bajo</div>
             <AlertTriangle className="h-5 w-5 text-amber-400" />
           </div>
           <div className="mt-3 text-3xl font-semibold text-amber-400">{stats.lowStock}</div>
         </div>
-        <div className="rounded-2xl border border-srf-primary/20 bg-srf-surface p-4 shadow-soft">
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-srf-muted">Agotados</div>
+            <div className="text-sm text-slate-400">Agotados</div>
             <Package className="h-5 w-5 text-rose-400" />
           </div>
           <div className="mt-3 text-3xl font-semibold text-rose-400">{stats.outOfStock}</div>
         </div>
-        <div className="rounded-2xl border border-srf-primary/20 bg-srf-surface p-4 shadow-soft">
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-srf-muted">Valor inventario</div>
+            <div className="text-sm text-slate-400">Valor inventario</div>
             <ArrowUpDown className="h-5 w-5 text-emerald-400" />
           </div>
-          <div className="mt-3 text-3xl font-semibold text-srf-primary">
+          <div className="mt-3 text-3xl font-semibold text-sky-300">
             ${stats.stockValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
         </div>
       </div>
 
       {/* Alert banner */}
+      {loadError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{loadError}</div> : null}
       {stats.lowStock > 0 && (
         <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-3 text-sm text-yellow-300 flex items-center gap-2">
           <AlertTriangle className="w-5 h-5" />
@@ -196,9 +220,9 @@ export default function StockPage() {
       )}
 
       {/* Filters */}
-      <div className="flex flex-col gap-3 rounded-2xl border border-srf-primary/20 bg-srf-surface p-4 shadow-soft lg:flex-row lg:items-center">
+      <div className="flex flex-col gap-3 rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-[0_24px_70px_rgba(2,6,23,0.32)] lg:flex-row lg:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-srf-muted" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input
             placeholder="Buscar por SKU, nombre, marca..."
             value={searchTerm}
@@ -216,12 +240,12 @@ export default function StockPage() {
             <option key={cat} value={cat}>{cat}</option>
           ))}
         </select>
-        <label className="flex items-center gap-2 px-3 py-2 rounded-lg border border-srf-primary/30">
+        <label className="flex items-center gap-2 rounded-lg border border-slate-700 px-3 py-2">
           <input
             type="checkbox"
             checked={showAlertsOnly}
             onChange={(e) => setShowAlertsOnly(e.target.checked)}
-            className="accent-srf-accent"
+            className="accent-sky-400"
           />
           <span className="text-sm flex items-center gap-2"><Filter className="h-4 w-4" /> Solo alertas</span>
         </label>
@@ -239,9 +263,9 @@ export default function StockPage() {
       </div>
 
       {/* Products table */}
-      <div className="overflow-x-auto rounded-2xl border border-srf-primary/20 bg-srf-surface shadow-soft">
+      <div className="overflow-x-auto rounded-3xl border border-slate-800 bg-slate-950/70 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
         <table className="w-full text-sm">
-          <thead className="bg-srf-bg/60 border-b border-srf-primary/30">
+          <thead className="border-b border-slate-800 bg-slate-900/70">
             <tr>
               <th className="text-left py-3 px-4">SKU</th>
               <th className="text-left py-3 px-4">Producto</th>
@@ -259,15 +283,15 @@ export default function StockPage() {
             {filteredProducts.map((product) => (
               <tr
                 key={product.id}
-                className={`border-b border-srf-primary/20 hover:bg-srf-surface/50 transition-colors ${
+                className={`border-b border-slate-800/80 transition-colors hover:bg-slate-900/50 ${
                   product.alerta_stock ? 'bg-red-500/5' : ''
                 }`}
               >
-                <td className="py-3 px-4 font-mono text-srf-primary">{product.sku}</td>
+                <td className="py-3 px-4 font-mono text-sky-300">{product.sku}</td>
                 <td className="py-3 px-4">
                   <div className="font-medium">{product.name}</div>
                   {(product as Product & { proveedor?: string }).proveedor && (
-                    <div className="text-xs text-srf-muted">{(product as Product & { proveedor?: string }).proveedor}</div>
+                    <div className="text-xs text-slate-400">{(product as Product & { proveedor?: string }).proveedor}</div>
                   )}
                 </td>
                 <td className="py-3 px-4">{product.category || '—'}</td>
@@ -275,7 +299,7 @@ export default function StockPage() {
                 <td className={`py-3 px-4 text-right font-semibold ${product.alerta_stock ? 'text-yellow-500' : ''}`}>
                   {product.stock_current || 0}
                 </td>
-                <td className="py-3 px-4 text-right text-srf-muted">{product.minimum_stock || 0}</td>
+                <td className="py-3 px-4 text-right text-slate-400">{product.minimum_stock || 0}</td>
                 <td className="py-3 px-4 text-right">${(product.cost || 0).toFixed(2)}</td>
                 <td className="py-3 px-4 text-right">${(product.sale_price || 0).toFixed(2)}</td>
                 <td className="py-3 px-4">{getAlertBadge(product)}</td>
@@ -286,7 +310,7 @@ export default function StockPage() {
                         setSelectedProduct(product);
                         setProductModalOpen(true);
                       }}
-                      className="p-1 rounded hover:bg-srf-primary/20 text-srf-primary"
+                      className="rounded p-1 text-sky-300 hover:bg-sky-500/10"
                       title="Editar"
                     >
                       <Edit2 className="w-4 h-4" />
@@ -296,7 +320,7 @@ export default function StockPage() {
                         setMovementProduct(product);
                         setMovementModalOpen(true);
                       }}
-                      className="p-1 rounded hover:bg-srf-accent/20 text-srf-accent"
+                      className="rounded p-1 text-cyan-300 hover:bg-cyan-500/10"
                       title="Ver Kardex"
                     >
                       <ArrowUpDown className="w-4 h-4" />
@@ -309,9 +333,9 @@ export default function StockPage() {
         </table>
 
         {filteredProducts.length === 0 && (
-          <div className="text-center py-12">
-            <Package className="mx-auto h-8 w-8 text-srf-muted" />
-            <p className="mt-3 text-srf-primary font-medium">No hay productos con esos filtros</p>
+          <div className="py-12 text-center">
+            <Package className="mx-auto h-8 w-8 text-slate-400" />
+            <p className="mt-3 font-medium text-slate-300">No hay productos con esos filtros</p>
           </div>
         )}
       </div>

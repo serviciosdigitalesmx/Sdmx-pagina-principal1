@@ -118,7 +118,23 @@ export default function FinanzasPage() {
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="spinner w-8 h-8" />
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-500/25 border-t-sky-400" />
+      </div>
+    );
+  }
+
+  if (error && rows.length === 0 && orders.length === 0) {
+    return (
+      <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-6 text-center text-sm text-rose-100">
+        <p className="font-semibold">No se pudieron cargar las finanzas</p>
+        <p className="mt-2 text-rose-100/80">{error}</p>
+        <button
+          type="button"
+          onClick={() => void refresh()}
+          className="mt-4 rounded-2xl border border-rose-500/20 bg-slate-950/70 px-4 py-2 font-semibold text-rose-100"
+        >
+          Reintentar
+        </button>
       </div>
     );
   }
@@ -127,8 +143,9 @@ export default function FinanzasPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-orbitron font-bold text-srf-primary">Caja y finanzas</h1>
-          <p className="mt-1 text-sm text-srf-muted">Balance real del tenant, flujo por sucursal y validación visual de cobros de órdenes</p>
+          <p className="text-xs uppercase tracking-[0.28em] text-sky-400/70">Finanzas</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-50">Caja y finanzas</h1>
+          <p className="mt-1 text-sm text-slate-400">Balance real del tenant, flujo por sucursal y validación visual de cobros de órdenes</p>
         </div>
         <button onClick={() => void refresh()} className="btn-outline inline-flex items-center gap-2">
           <RefreshCw className="h-4 w-4" />
@@ -137,56 +154,56 @@ export default function FinanzasPage() {
       </div>
 
       {error ? (
-        <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">
+        <div className="flex items-center gap-2 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">
           <AlertTriangle className="h-4 w-4" />
           {error}
         </div>
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="card">
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
           <div className="flex items-center justify-between">
-            <span className="text-srf-muted">Ingresos</span>
+            <span className="text-slate-400">Ingresos</span>
             <ArrowUpRight className="h-5 w-5 text-emerald-400" />
           </div>
           <div className="mt-3 text-3xl font-bold text-emerald-400">{currency(summary.income)}</div>
-          <div className="mt-2 text-xs text-srf-muted">Fuente: balance real del backend</div>
+          <div className="mt-2 text-xs text-slate-400">Fuente: balance real del backend</div>
         </div>
-        <div className="card">
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
           <div className="flex items-center justify-between">
-            <span className="text-srf-muted">Egresos</span>
+            <span className="text-slate-400">Egresos</span>
             <ArrowDownRight className="h-5 w-5 text-rose-400" />
           </div>
           <div className="mt-3 text-3xl font-bold text-rose-400">{currency(summary.expense)}</div>
-          <div className="mt-2 text-xs text-srf-muted">Gastos y salidas reales</div>
+          <div className="mt-2 text-xs text-slate-400">Gastos y salidas reales</div>
         </div>
-        <div className="card">
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
           <div className="flex items-center justify-between">
-            <span className="text-srf-muted">Balance</span>
-            <Banknote className="h-5 w-5 text-srf-accent" />
+            <span className="text-slate-400">Balance</span>
+            <Banknote className="h-5 w-5 text-sky-400" />
           </div>
-          <div className="mt-3 text-3xl font-bold text-srf-accent">{currency(summary.balance)}</div>
-          <div className="mt-2 text-xs text-srf-muted">No se calcula con datos inventados</div>
+          <div className="mt-3 text-3xl font-bold text-sky-300">{currency(summary.balance)}</div>
+          <div className="mt-2 text-xs text-slate-400">No se calcula con datos inventados</div>
         </div>
-        <div className="card">
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
           <div className="flex items-center justify-between">
-            <span className="text-srf-muted">Órdenes con cobro</span>
+            <span className="text-slate-400">Órdenes con cobro</span>
             <CircleCheckBig className="h-5 w-5 text-cyan-400" />
           </div>
           <div className="mt-3 text-3xl font-bold text-cyan-400">{summary.validatedOrders}</div>
-          <div className="mt-2 text-xs text-srf-muted">{summary.pendingOrders} pendientes de validación visual</div>
+          <div className="mt-2 text-xs text-slate-400">{summary.pendingOrders} pendientes de validación visual</div>
         </div>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
-        <div className="card">
+        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-srf-primary">Movimientos de caja</h2>
-            <span className="text-xs text-srf-muted">Solo lectura desde API real</span>
+            <h2 className="text-lg font-semibold text-slate-50">Movimientos de caja</h2>
+            <span className="text-xs text-slate-400">Solo lectura desde API real</span>
           </div>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="border-b border-srf-primary/20 text-srf-muted">
+              <thead className="border-b border-slate-800 text-slate-400">
                 <tr>
                   <th className="px-4 py-3 text-left">Fecha</th>
                   <th className="px-4 py-3 text-left">Tipo</th>
@@ -197,12 +214,12 @@ export default function FinanzasPage() {
               </thead>
               <tbody>
                 {cashMovements.map((row) => (
-                  <tr key={row.id ?? `${row.type}-${row.created_at}`} className="border-b border-srf-primary/10">
+                  <tr key={row.id ?? `${row.type}-${row.created_at}`} className="border-b border-slate-800/80">
                     <td className="px-4 py-3">{row.created_at ? new Date(row.created_at).toLocaleString('es-MX') : 'Sin fecha'}</td>
                     <td className="px-4 py-3">{row.type || 'summary'}</td>
                     <td className="px-4 py-3 text-right text-emerald-400">{currency(row.income)}</td>
                     <td className="px-4 py-3 text-right text-rose-400">{currency(row.expense)}</td>
-                    <td className="px-4 py-3 text-right text-srf-primary">{currency(row.balance)}</td>
+                    <td className="px-4 py-3 text-right text-sky-300">{currency(row.balance)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -211,30 +228,30 @@ export default function FinanzasPage() {
         </div>
 
         <div className="space-y-4">
-          <div className="card">
-            <h2 className="text-lg font-semibold text-srf-primary">Validación de cobros</h2>
+          <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+            <h2 className="text-lg font-semibold text-slate-50">Validación de cobros</h2>
             <div className="mt-3 space-y-3">
               {recentOrders.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-srf-primary/20 px-4 py-6 text-sm text-srf-muted">
+                <div className="rounded-lg border border-dashed border-slate-700 px-4 py-6 text-sm text-slate-400">
                   No hay órdenes con importe para validar.
                 </div>
               ) : (
                 recentOrders.map((order) => {
                   const state = paymentState(order);
                   return (
-                    <div key={order.id} className="rounded-xl border border-srf-primary/15 bg-srf-bg/60 p-3">
+                    <div key={order.id} className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <div className="font-medium text-srf-primary">{order.folio}</div>
-                          <div className="text-xs text-srf-muted">{order.device_info?.customer_name || 'Cliente sin nombre'}</div>
+                          <div className="font-medium text-sky-300">{order.folio}</div>
+                          <div className="text-xs text-slate-400">{order.device_info?.customer_name || 'Cliente sin nombre'}</div>
                         </div>
                         <span className={`rounded-full border px-2 py-0.5 text-xs ${state.tone}`}>{state.label}</span>
                       </div>
                       <div className="mt-2 flex items-center justify-between text-sm">
-                        <span className="text-srf-muted">Importe</span>
-                        <span className="font-semibold text-srf-primary">{currency(order.final_cost || order.estimated_cost || 0)}</span>
+                        <span className="text-slate-400">Importe</span>
+                        <span className="font-semibold text-sky-300">{currency(order.final_cost || order.estimated_cost || 0)}</span>
                       </div>
-                      <div className="mt-1 flex items-center justify-between text-xs text-srf-muted">
+                      <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
                         <span>{order.receipt_url ? 'Recibo disponible' : 'Sin comprobante'}</span>
                         <span>{order.status}</span>
                       </div>
@@ -245,11 +262,11 @@ export default function FinanzasPage() {
             </div>
           </div>
 
-          <div className="card">
-            <h2 className="text-lg font-semibold text-srf-primary">Flujo por sucursal</h2>
+          <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+            <h2 className="text-lg font-semibold text-slate-50">Flujo por sucursal</h2>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="border-b border-srf-primary/20 text-srf-muted">
+                <thead className="border-b border-slate-800 text-slate-400">
                   <tr>
                     <th className="px-4 py-3 text-left">Fecha</th>
                     <th className="px-4 py-3 text-right">Ingreso</th>
@@ -259,11 +276,11 @@ export default function FinanzasPage() {
                 </thead>
                 <tbody>
                   {cashflow.map((row) => (
-                    <tr key={row.id ?? `${row.created_at}-flow`} className="border-b border-srf-primary/10">
+                    <tr key={row.id ?? `${row.created_at}-flow`} className="border-b border-slate-800/80">
                       <td className="px-4 py-3">{row.created_at ? new Date(row.created_at).toLocaleDateString('es-MX') : 'Sin fecha'}</td>
                       <td className="px-4 py-3 text-right text-emerald-400">{currency(row.income)}</td>
                       <td className="px-4 py-3 text-right text-rose-400">{currency(row.expense)}</td>
-                      <td className="px-4 py-3 text-right text-srf-primary">{currency(row.balance)}</td>
+                      <td className="px-4 py-3 text-right text-sky-300">{currency(row.balance)}</td>
                     </tr>
                   ))}
                 </tbody>

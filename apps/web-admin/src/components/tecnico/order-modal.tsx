@@ -41,6 +41,8 @@ interface OrderModalProps {
 export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderModalProps) {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [checklist, setChecklist] = useState<OrderChecklist | null>(null);
   const [documents, setDocuments] = useState<OrderDocument[]>([]);
   const [events, setEvents] = useState<OrderEvent[]>([]);
@@ -77,6 +79,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderM
   const loadOrderDetails = async () => {
     if (!order) return;
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await apiClient.get<{
         order: Order;
@@ -116,6 +119,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderM
       setEvents(data.events || []);
     } catch (error) {
       console.error('Failed to load order details:', error);
+      setLoadError(error instanceof Error ? error.message : 'No se pudieron cargar los detalles de la orden');
     } finally {
       setLoading(false);
     }
@@ -124,6 +128,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderM
   const handleSave = async () => {
     if (!order) return;
     setSaving(true);
+    setSaveError(null);
     try {
       // Update order details
       await apiClient.patch(`/orders/${order.id}/details`, {
@@ -175,6 +180,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderM
       loadOrderDetails();
     } catch (error) {
       console.error('Failed to save order:', error);
+      setSaveError(error instanceof Error ? error.message : 'No se pudo guardar la orden');
     } finally {
       setSaving(false);
     }
@@ -185,6 +191,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderM
     if (!confirm('¿Marcar esta orden como entregada? Esta acción no se puede deshacer.')) return;
 
     setSaving(true);
+    setSaveError(null);
     try {
       await apiClient.patch(`/orders/${order.id}/status`, {
         status: 'entregado',
@@ -194,6 +201,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderM
       loadOrderDetails();
     } catch (error) {
       console.error('Failed to deliver order:', error);
+      setSaveError(error instanceof Error ? error.message : 'No se pudo entregar la orden');
     } finally {
       setSaving(false);
     }
@@ -217,6 +225,20 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderM
           </div>
         ) : (
           <>
+            {loadError ? (
+              <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">
+                <p className="font-semibold">No se pudieron cargar los detalles</p>
+                <p className="mt-1 text-rose-100/80">{loadError}</p>
+                <Button variant="outline" size="sm" onClick={() => void loadOrderDetails()} className="mt-3 gap-2">
+                  Reintentar
+                </Button>
+              </div>
+            ) : null}
+            {saveError ? (
+              <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">
+                {saveError}
+              </div>
+            ) : null}
             <div className="mt-4">
               <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="border border-slate-800 bg-slate-900/70">
@@ -317,7 +339,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderM
                       type="checkbox"
                       checked={hasCharger}
                       onChange={(e) => setHasCharger(e.target.checked)}
-                      className="w-4 h-4 accent-srf-accent"
+                      className="w-4 h-4 accent-sky-400"
                     />
                     <span>Trae cargador</span>
                   </label>
@@ -326,7 +348,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderM
                       type="checkbox"
                       checked={powersOn}
                       onChange={(e) => setPowersOn(e.target.checked)}
-                      className="w-4 h-4 accent-srf-accent"
+                      className="w-4 h-4 accent-sky-400"
                     />
                     <span>Equipo prende</span>
                   </label>
@@ -335,7 +357,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderM
                       type="checkbox"
                       checked={backupRequired}
                       onChange={(e) => setBackupRequired(e.target.checked)}
-                      className="w-4 h-4 accent-srf-accent"
+                      className="w-4 h-4 accent-sky-400"
                     />
                     <span>Requiere respaldo de datos</span>
                   </label>
