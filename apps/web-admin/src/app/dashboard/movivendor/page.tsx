@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, BadgeCheck, Banknote, ClipboardList, Gift, RefreshCw, ShieldAlert, Sparkles, Ticket, Wallet, RadioTower } from "lucide-react";
+import { Badge, SurfaceCard } from "@white-label/ui";
 import { apiClient } from "@/lib/api-client";
 import { getApiOptions } from "@/lib/tenant";
 import { useTenantIdentity } from "@/providers/TenantIdentityProvider";
@@ -172,7 +173,7 @@ export default function MovivendorPage() {
 
   return (
     <div className="space-y-6">
-      <header className="rounded-[2rem] border border-slate-800 bg-[linear-gradient(180deg,rgba(9,12,20,0.98),rgba(7,10,18,0.92))] p-6 shadow-[0_16px_70px_rgba(0,0,0,0.24)]">
+      <SurfaceCard elevated className="p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-sky-400/70">Movivendor</p>
@@ -189,14 +190,14 @@ export default function MovivendorPage() {
           <span className="rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-slate-200">Backend only</span>
           <span className="rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-slate-200">Tenant ID: {identity?.tenantSlug}</span>
         </div>
-      </header>
+      </SurfaceCard>
 
       {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-200">{error}</div> : null}
       {success ? <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-200">{success}</div> : null}
 
       {!status?.account?.status || status.account.status !== "active" ? (
         <section className="grid gap-6 lg:grid-cols-2">
-          <div className="rounded-[1.75rem] border border-slate-800 bg-slate-950/70 p-6">
+          <SurfaceCard elevated className="p-6">
             <div className="flex items-center gap-3">
               <Sparkles className="h-5 w-5 text-sky-400" />
               <h2 className="text-xl font-semibold text-slate-50">Activa Recargas, Servicios y Gift Cards para tu negocio</h2>
@@ -217,10 +218,10 @@ export default function MovivendorPage() {
                 <li>La cuenta se valida backend-only al guardar credenciales.</li>
               </ul>
             </div>
-          </div>
+          </SurfaceCard>
 
           {canAdminister ? (
-            <div className="rounded-[1.75rem] border border-slate-800 bg-slate-950/70 p-6">
+            <SurfaceCard elevated className="p-6">
               <div className="flex items-center gap-3">
                 <ShieldAlert className="h-5 w-5 text-amber-300" />
                 <h2 className="text-xl font-semibold text-slate-50">Configuración interna</h2>
@@ -232,13 +233,13 @@ export default function MovivendorPage() {
                 <input className="w-full rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-slate-100" placeholder="Identificador" value={account.movivendorIdent} onChange={(e) => setAccount((c) => ({ ...c, movivendorIdent: e.target.value }))} />
                 <input className="w-full rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-slate-100" placeholder="Terminal" value={account.movivendorTerminal} onChange={(e) => setAccount((c) => ({ ...c, movivendorTerminal: e.target.value }))} />
                 <button onClick={saveAccount} className="rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white">Guardar y validar</button>
-              </div>
             </div>
+          </SurfaceCard>
           ) : null}
         </section>
       ) : (
         <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-          <div className="space-y-6 rounded-[1.75rem] border border-slate-800 bg-slate-950/70 p-6">
+          <SurfaceCard elevated className="space-y-6 p-6">
             <div className="flex items-center gap-3">
               <Ticket className="h-5 w-5 text-sky-400" />
               <h2 className="text-xl font-semibold text-slate-50">Nueva Venta</h2>
@@ -255,28 +256,28 @@ export default function MovivendorPage() {
               <button onClick={() => void runSale("/movivendor/services")} className="rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white">Pago de Servicios</button>
             </div>
             <p className="text-xs text-slate-500">Si Movivendor responde 504, el backend marca `checking` y hace polling a `POST /v1/check/tx`.</p>
-          </div>
+          </SurfaceCard>
 
           <div className="space-y-6">
-            <div className="rounded-[1.75rem] border border-slate-800 bg-slate-950/70 p-6">
+            <SurfaceCard elevated className="p-6">
               <div className="flex items-center gap-3">
                 <Wallet className="h-5 w-5 text-emerald-300" />
                 <h3 className="text-lg font-semibold text-slate-50">Saldo</h3>
               </div>
               <pre className="mt-4 overflow-auto rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-xs text-slate-300">{JSON.stringify(balance, null, 2)}</pre>
-            </div>
-            <div className="rounded-[1.75rem] border border-slate-800 bg-slate-950/70 p-6">
+            </SurfaceCard>
+            <SurfaceCard elevated className="p-6">
               <div className="flex items-center gap-3">
                 <RadioTower className="h-5 w-5 text-sky-400" />
                 <h3 className="text-lg font-semibold text-slate-50">Productos</h3>
               </div>
               <pre className="mt-4 max-h-64 overflow-auto rounded-2xl border border-slate-800 bg-slate-900/60 p-4 text-xs text-slate-300">{JSON.stringify(products.slice(0, 10), null, 2)}</pre>
-            </div>
+            </SurfaceCard>
           </div>
         </section>
       )}
 
-      <section className="rounded-[1.75rem] border border-slate-800 bg-slate-950/70 p-6">
+      <SurfaceCard elevated className="p-6">
         <div className="flex items-center gap-3">
           <ClipboardList className="h-5 w-5 text-sky-400" />
           <h2 className="text-xl font-semibold text-slate-50">Historial de transacciones</h2>
@@ -310,10 +311,10 @@ export default function MovivendorPage() {
             </tbody>
           </table>
         </div>
-      </section>
+      </SurfaceCard>
 
       {isOwner ? (
-        <section className="rounded-[1.75rem] border border-slate-800 bg-slate-950/70 p-6">
+        <SurfaceCard elevated className="p-6">
           <div className="flex items-center gap-3">
             <BadgeCheck className="h-5 w-5 text-emerald-300" />
             <h2 className="text-xl font-semibold text-slate-50">Admin → Movivendor → Solicitudes</h2>
@@ -361,7 +362,7 @@ export default function MovivendorPage() {
               </tbody>
             </table>
           </div>
-        </section>
+        </SurfaceCard>
       ) : null}
     </div>
   );

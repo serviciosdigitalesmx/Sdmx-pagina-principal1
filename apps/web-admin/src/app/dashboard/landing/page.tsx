@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Globe, RefreshCw, Save, Eye, Copy, ExternalLink } from "lucide-react";
+import { SurfaceCard } from "@white-label/ui";
 import { apiGateway } from "@/services/apiGateway";
 import { tenantSettingsService } from "@/services/tenant-settings/tenantSettingsService";
 
@@ -276,7 +277,7 @@ export default function LandingSettingsPage() {
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(360px,1fr)]">
         <div className="space-y-6">
-          <div className="rounded-3xl border border-sky-500/15 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <SurfaceCard elevated className="p-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-slate-50">URL pública del tenant</h2>
@@ -307,9 +308,9 @@ export default function LandingSettingsPage() {
             <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-3 text-sm text-sky-300 break-all">
               {tenantPublicUrl || "URL pública no disponible"}
             </div>
-          </div>
+          </SurfaceCard>
 
-          <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <SurfaceCard elevated className="space-y-4 p-5">
             <h2 className="text-lg font-semibold text-slate-50">Branding del tenant</h2>
             <p className="text-sm text-slate-400">Sube logo, favicon y piezas visuales para la landing del cliente.</p>
 
@@ -395,18 +396,18 @@ export default function LandingSettingsPage() {
               {branding?.logoUrl ? <img src={branding.logoUrl} alt="Logo actual" className="h-24 w-full rounded-2xl border border-slate-800 bg-slate-900/60 object-contain p-3" /> : null}
               {branding?.heroImageUrl ? <img src={branding.heroImageUrl} alt="Imagen hero actual" className="h-24 w-full rounded-2xl border border-slate-800 bg-slate-900/60 object-cover" /> : null}
             </div>
-          </div>
+          </SurfaceCard>
 
-          <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <SurfaceCard elevated className="space-y-4 p-5">
             <div className="flex items-center gap-2 text-sky-300"><Globe className="w-5 h-5" /><h2 className="text-lg font-semibold text-slate-50">Hero</h2></div>
             <div className="grid gap-4 md:grid-cols-2">
               <input value={landingContent.heroTitle} onChange={(e) => updateField("heroTitle", e.target.value)} className="input" placeholder="Título principal" />
               <input value={landingContent.heroSubtitle} onChange={(e) => updateField("heroSubtitle", e.target.value)} className="input" placeholder="Subtítulo" />
               <textarea value={landingContent.heroDescription} onChange={(e) => updateField("heroDescription", e.target.value)} className="input min-h-28 md:col-span-2" placeholder="Descripción principal" />
             </div>
-          </div>
+          </SurfaceCard>
 
-          <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <SurfaceCard elevated className="space-y-4 p-5">
             <h2 className="text-lg font-semibold text-slate-50">CTAs y SEO</h2>
             <div className="grid gap-4 md:grid-cols-2">
               <input value={landingContent.primaryCtaLabel} onChange={(e) => updateField("primaryCtaLabel", e.target.value)} className="input" placeholder="CTA primario" />
@@ -418,9 +419,9 @@ export default function LandingSettingsPage() {
               <input value={landingContent.seoTitle} onChange={(e) => updateField("seoTitle", e.target.value)} className="input md:col-span-2" placeholder="SEO title" />
               <textarea value={landingContent.seoDescription} onChange={(e) => updateField("seoDescription", e.target.value)} className="input min-h-24 md:col-span-2" placeholder="SEO description" />
             </div>
-          </div>
+          </SurfaceCard>
 
-          <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <SurfaceCard elevated className="space-y-4 p-5">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-50">Servicios</h2>
               <button onClick={addService} className="rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-sky-400/30 hover:bg-slate-800/80">Agregar servicio</button>
@@ -433,9 +434,9 @@ export default function LandingSettingsPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </SurfaceCard>
 
-          <div className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <SurfaceCard elevated className="space-y-4 p-5">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-50">Redes y perfil</h2>
               <button onClick={addSocial} className="rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-sky-400/30 hover:bg-slate-800/80">Agregar enlace</button>
@@ -451,10 +452,10 @@ export default function LandingSettingsPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </SurfaceCard>
         </div>
 
-        <div className="space-y-5 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        <SurfaceCard elevated className="space-y-5 p-5">
           <div className="flex items-center gap-2 text-sky-300">
             <Eye className="w-5 h-5" />
             <h2 className="text-lg font-semibold text-slate-50">Preview</h2>
@@ -480,7 +481,7 @@ export default function LandingSettingsPage() {
               ))}
             </div>
           </div>
-        </div>
+        </SurfaceCard>
       </div>
     </div>
   );

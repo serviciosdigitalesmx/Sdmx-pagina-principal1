@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Search, Filter, RefreshCw, Eye } from 'lucide-react';
+import { Badge, SurfaceCard } from '@white-label/ui';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
 import { OrderCard } from '@/components/tecnico/order-card';
@@ -208,7 +209,7 @@ export default function TecnicoPage() {
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <KPIBox label="Críticos (≤2 días)" value={kpis.urgentes} color="red" />
         <KPIBox label="Atención (3-4 días)" value={kpis.atencion} color="yellow" />
         <KPIBox label="A tiempo (≥5 días)" value={kpis.aTiempo} color="green" />
@@ -216,7 +217,7 @@ export default function TecnicoPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+      <SurfaceCard elevated className="p-4">
         <div className="flex flex-col md:flex-row gap-3">
           {/* Search */}
           <div className="relative flex-1">
@@ -284,7 +285,7 @@ export default function TecnicoPage() {
           Última actualización: {new Date().toLocaleTimeString()}
           {refreshing && <span className="ml-2 text-sky-400">Actualizando...</span>}
         </div>
-      </div>
+      </SurfaceCard>
 
       {/* Orders Grid */}
       {filteredOrders.length === 0 ? (
@@ -330,9 +331,9 @@ function KPIBox({ label, value, color }: { label: string; value: number; color: 
   };
 
   return (
-    <div className={`rounded-3xl border p-5 text-center shadow-[0_24px_70px_rgba(2,6,23,0.32)] ${colorClasses[color]}`}>
+    <SurfaceCard elevated className={`p-5 text-center ${colorClasses[color]}`}>
       <div className={`text-3xl font-bold ${textColors[color]}`}>{value}</div>
       <div className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400">{label}</div>
-    </div>
+    </SurfaceCard>
   );
 }

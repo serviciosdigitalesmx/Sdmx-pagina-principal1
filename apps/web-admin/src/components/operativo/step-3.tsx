@@ -2,6 +2,7 @@
 
 import { Calendar, User, Phone, Mail, Package, DollarSign, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SurfaceCard } from '@white-label/ui';
 import { getAssetLabel, getCustomerLabel, getOrderLabel, getSaveOrderCopy } from '@/lib/labels';
 import type { OrderFormData } from '@/app/dashboard/operativo/page';
 
@@ -32,7 +33,7 @@ export function Step3({ data, onSubmit, onBack, loading }: Step3Props) {
   const saveOrderCopy = getSaveOrderCopy();
 
   return (
-    <div className="space-y-6 rounded-3xl border border-slate-800 bg-slate-950/70 p-6 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+    <SurfaceCard elevated className="space-y-6 p-6">
       <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-50">
         <CheckCircle className="w-5 h-5" />
         Confirmar {orderLabel}
@@ -96,6 +97,6 @@ export function Step3({ data, onSubmit, onBack, loading }: Step3Props) {
           )}
         </Button>
       </div>
-    </div>
+    </SurfaceCard>
   );
 }

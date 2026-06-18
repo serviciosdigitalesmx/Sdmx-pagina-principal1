@@ -221,9 +221,7 @@ export default function SeguridadPage() {
                     <Badge variant="primary">{user.role}</Badge>
                   </td>
                   <td className="py-2">
-                    <span className={user.activo ? 'badge-listo text-xs' : 'badge-cancelado text-xs'}>
-                      {user.activo ? 'Activo' : 'Inactivo'}
-                    </span>
+                    <Badge variant={user.activo ? 'success' : 'danger'}>{user.activo ? 'Activo' : 'Inactivo'}</Badge>
                   </td>
                   <td className="py-2">
                     <button

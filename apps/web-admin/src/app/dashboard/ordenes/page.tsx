@@ -10,6 +10,7 @@ import { OrderModal } from '@/components/tecnico/order-modal';
 import { LoadingState, ErrorState } from '@/components/base/states';
 import { EmptyState, MoneyCard } from '@/components/base/cards';
 import { StatusBadge } from '@/components/base/badges';
+import { SurfaceCard } from '@white-label/ui';
 import { Button } from '@/components/ui/button';
 import { getOrderLabel } from '@/lib/labels';
 
@@ -215,8 +216,7 @@ export default function OrdersPage() {
         <MoneyCard label="Estados activos" value={String(orderedStatusKeys.length)} helper="Estados reales detectados" />
         <MoneyCard label="Valor estimado" value={formatMoney(totalBalance)} helper="Suma de coste estimado/final" accent />
       </div>
-
-      <div className="card-base space-y-4 p-4 lg:p-5">
+      <SurfaceCard elevated className="space-y-4 p-4 lg:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-slate-50">{ordersLabel}</h1>
@@ -272,7 +272,7 @@ export default function OrdersPage() {
         </div>
 
         {error ? <ErrorState message={error} /> : null}
-      </div>
+      </SurfaceCard>
 
       {visibleOrders.length === 0 ? (
         <EmptyState
@@ -292,7 +292,7 @@ export default function OrdersPage() {
             const items = groupedOrders.get(status) ?? [];
             if (items.length === 0) return null;
             return (
-              <section key={status} className="card-base p-4">
+              <SurfaceCard key={status} elevated className="p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <StatusBadge tone={STATUS_TONES[status] ?? 'neutral'}>{STATUS_LABELS[status] ?? status}</StatusBadge>
@@ -321,7 +321,7 @@ export default function OrdersPage() {
                     </div>
                   ))}
                 </div>
-              </section>
+              </SurfaceCard>
             );
           })}
         </div>

@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Plus, Search, RefreshCw, Trash2, Calendar, DollarSign, X } from 'lucide-react';
+import { Badge, SurfaceCard } from '@white-label/ui';
 import { financeService } from '@/services/finance/financeService';
 import { getActiveSucursalId } from '@/lib/tenant';
 
@@ -176,7 +177,8 @@ export default function GastosPage() {
       {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{error}</div> : null}
 
       {showForm ? (
-        <form onSubmit={submitExpense} className="card space-y-4">
+        <SurfaceCard elevated className="space-y-4 p-4">
+          <form onSubmit={submitExpense} className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-50">Registrar gasto</h2>
             <button type="button" onClick={() => setShowForm(false)} className="btn-ghost inline-flex items-center gap-2 text-slate-400">
@@ -194,7 +196,8 @@ export default function GastosPage() {
             <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Guardando...' : 'Guardar gasto'}</button>
             <button type="button" className="btn-outline" onClick={() => setShowForm(false)}>Cancelar</button>
           </div>
-        </form>
+          </form>
+        </SurfaceCard>
       ) : null}
 
       <div className="flex flex-wrap gap-3">
@@ -228,7 +231,7 @@ export default function GastosPage() {
         </button>
       </div>
 
-      <div className="overflow-x-auto">
+      <SurfaceCard elevated className="overflow-hidden p-0">
         <table className="w-full text-sm">
           <thead className="border-b border-slate-800 bg-slate-950/70">
             <tr>
@@ -268,7 +271,7 @@ export default function GastosPage() {
             <p className="text-slate-400">No hay gastos con esos filtros</p>
           </div>
         )}
-      </div>
+      </SurfaceCard>
     </div>
   );
 }

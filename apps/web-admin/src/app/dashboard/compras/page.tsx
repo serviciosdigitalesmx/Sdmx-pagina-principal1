@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Plus, RefreshCw, ShoppingCart, Package, Truck, CheckCircle2, X } from 'lucide-react';
+import { Badge, SurfaceCard } from '@white-label/ui';
 import { procurementService } from '@/services/procurement/procurementService';
 
 type PurchaseOrderRow = {
@@ -162,7 +163,8 @@ export default function ComprasPage() {
       {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{error}</div> : null}
 
       {showForm ? (
-        <form onSubmit={submitPurchase} className="space-y-4 rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        <SurfaceCard elevated className="space-y-4 p-5">
+          <form onSubmit={submitPurchase} className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-50">Crear orden de compra</h2>
             <button type="button" onClick={() => setShowForm(false)} className="btn-ghost inline-flex items-center gap-2 text-slate-400">
@@ -188,41 +190,36 @@ export default function ComprasPage() {
             <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Guardando...' : 'Crear orden'}</button>
             <button type="button" className="btn-outline" onClick={() => setShowForm(false)}>Cancelar</button>
           </div>
-        </form>
+          </form>
+        </SurfaceCard>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        <SurfaceCard elevated className="p-5">
           <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Órdenes</div>
           <div className="mt-3 text-3xl font-bold text-sky-300">{orders.length}</div>
-        </div>
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-5">
           <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Proveedores</div>
           <div className="mt-3 text-3xl font-bold text-sky-300">{suppliers.length}</div>
-        </div>
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-5">
           <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Total visible</div>
           <div className="mt-3 text-3xl font-bold text-cyan-300">{currency(orders.reduce((sum, order) => sum + Number(order.total ?? 0), 0))}</div>
-        </div>
+        </SurfaceCard>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-2">
         {orders.map((order) => (
-          <div key={order.id} className="card-hover rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <SurfaceCard key={order.id} elevated className="space-y-4 p-5">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-lg font-semibold text-sky-300">{order.folio || order.id}</div>
                 <div className="text-xs text-slate-400">{order.expected_date ? new Date(order.expected_date).toLocaleDateString('es-MX') : 'Sin fecha estimada'}</div>
               </div>
-              <span className={`px-2 py-1 rounded text-xs font-semibold
-                ${order.status === 'recibida' ? 'bg-green-500/20 text-green-500 border border-green-500/30' : ''}
-                ${order.status === 'recepcion_parcial' ? 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30' : ''}
-                ${order.status === 'emitida' ? 'bg-blue-500/20 text-blue-500 border border-blue-500/30' : ''}
-                ${!order.status || order.status === 'borrador' ? 'bg-gray-500/20 text-gray-400 border border-gray-500/30' : ''}
-                ${order.status === 'cancelada' ? 'bg-red-500/20 text-red-500 border border-red-500/30' : ''}
-              `}>
+              <Badge variant={order.status === 'recibida' ? 'success' : order.status === 'recepcion_parcial' ? 'warning' : order.status === 'cancelada' ? 'danger' : order.status === 'emitida' ? 'primary' : 'neutral'}>
                 {(order.status || 'borrador').toUpperCase().replace('_', ' ')}
-              </span>
+              </Badge>
             </div>
 
             <div className="mt-4 space-y-2 text-sm text-slate-400">
@@ -241,7 +238,7 @@ export default function ComprasPage() {
                 {receivingId === order.id ? 'Recibiendo...' : order.status === 'recibida' ? 'Recibida' : 'Recibir'}
               </button>
             </div>
-          </div>
+          </SurfaceCard>
         ))}
       </div>
 

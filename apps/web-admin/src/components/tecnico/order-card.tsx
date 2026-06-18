@@ -9,18 +9,8 @@ interface OrderCardProps {
   onClick: () => void;
 }
 
-const statusBadgeClasses: Record<string, string> = {
-  recibido: 'badge-recibido',
-  diagnostico: 'badge-diagnostico',
-  reparacion: 'badge-reparacion',
-  listo: 'badge-listo',
-  entregado: 'badge-entregado',
-  cancelado: 'badge-cancelado',
-};
-
 export function OrderCard({ order, onClick }: OrderCardProps) {
   const { color, diasRestantes, status } = order;
-  const cardClass = color === 'rojo' ? 'card-rojo' : color === 'amarillo' ? 'card-amarillo' : color === 'verde' ? 'card-verde' : 'card-gris';
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return 'Sin fecha';
@@ -36,7 +26,7 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
   return (
     <SurfaceCard
       elevated
-      className={`cursor-pointer p-5 transition-transform duration-200 hover:scale-[1.01] ${cardClass}`}
+      className={`cursor-pointer p-5 transition-transform duration-200 hover:scale-[1.01] ${color === 'rojo' ? 'border-rose-400/20' : color === 'amarillo' ? 'border-amber-400/20' : color === 'verde' ? 'border-emerald-400/20' : ''}`}
       onClick={onClick}
     >
       {/* Header */}

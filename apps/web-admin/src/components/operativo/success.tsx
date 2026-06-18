@@ -2,6 +2,7 @@
 
 import { CheckCircle, Copy, Download, Plus, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SurfaceCard } from '@white-label/ui';
 import { getCreatedSuccessLabel, getNewEntityLabel } from '@/lib/labels';
 import { getTenantSlug } from '@/lib/tenant';
 
@@ -47,9 +48,9 @@ export function Success({ folio, customerPhone, pdfUrl, trackingUrl, onNewOrder 
       <h2 className="mb-2 text-2xl font-bold text-slate-50">¡{createdLabel}!</h2>
       <p className="mb-4 text-slate-400">El folio generado es:</p>
 
-      <div className="card mx-auto mb-6 max-w-xs rounded-2xl border-2 border-sky-400/40 p-6">
+      <SurfaceCard elevated className="mx-auto mb-6 max-w-xs p-6 text-center">
         <span className="text-3xl font-mono font-bold tracking-wider text-sky-300">{folio}</span>
-      </div>
+      </SurfaceCard>
 
       <div className="flex flex-col sm:flex-row gap-3 justify-center mb-6">
         <Button onClick={copyFolio} variant="outline" className="gap-2">

@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Calendar, DollarSign, FileText, Camera, X } from 'lucide-react';
+import { SurfaceCard } from '@white-label/ui';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -94,7 +95,8 @@ export function Step2({ data, onSubmit, onBack, onUpdate }: Step2Props) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 rounded-3xl border border-slate-800 bg-slate-950/70 p-6 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+    <SurfaceCard elevated className="space-y-6 p-6">
+      <form onSubmit={handleSubmit}>
       <h3 className="flex items-center gap-2 text-lg font-semibold text-slate-50">
         <FileText className="w-5 h-5" />
         Información del {assetLabel}
@@ -301,7 +303,8 @@ export function Step2({ data, onSubmit, onBack, onUpdate }: Step2Props) {
         <ArrowRight className="w-4 h-4 ml-2" />
       </Button>
       </div>
-    </form>
+      </form>
+    </SurfaceCard>
   );
 }
 
