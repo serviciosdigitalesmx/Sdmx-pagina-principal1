@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, RefreshCw, Edit2, Trash2, Building2, Phone, Mail, MapPin, ArrowRightLeft, Search } from 'lucide-react';
+import { Badge, SurfaceCard } from '@white-label/ui';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions, getActiveSucursalId, setActiveSucursalId } from '@/lib/tenant';
 import { Button } from '@/components/ui/button';
@@ -140,7 +141,7 @@ export default function SucursalesPage() {
 
       {/* Search */}
       {loadError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{loadError}</div> : null}
-      <div className="relative">
+      <SurfaceCard elevated className="relative p-4">
         <Input
           placeholder="Buscar sucursal..."
           value={searchTerm}
@@ -148,12 +149,12 @@ export default function SucursalesPage() {
           className="pl-9"
         />
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-      </div>
+      </SurfaceCard>
 
       {/* Sucursales grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredSucursales.map((sucursal) => (
-          <div key={sucursal.id} className="space-y-3 rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <SurfaceCard key={sucursal.id} elevated className="space-y-3 p-4">
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2">
@@ -205,9 +206,9 @@ export default function SucursalesPage() {
             )}
 
             <div className="flex items-center justify-between border-t border-slate-800 pt-2">
-              <span className={`text-xs px-2 py-0.5 rounded-full ${sucursal.is_active ? 'badge-listo' : 'badge-cancelado'}`}>
+              <Badge variant={sucursal.is_active ? 'success' : 'danger'}>
                 {sucursal.is_active ? 'Activa' : 'Inactiva'}
-              </span>
+              </Badge>
               <button
                 onClick={() => handleSetActive(sucursal.id)}
                 className={`text-xs px-3 py-1 rounded-lg transition-colors ${
@@ -219,7 +220,7 @@ export default function SucursalesPage() {
                 {activeSucursalId === sucursal.id ? 'Activa' : 'Usar'}
               </button>
             </div>
-          </div>
+          </SurfaceCard>
         ))}
       </div>
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { Plus, Search, RefreshCw, Edit2, Trash2, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Badge, SurfaceCard } from '@white-label/ui';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
 import { Button } from '@/components/ui/button';
@@ -151,18 +152,18 @@ export default function TareasPage() {
       {/* KPIs */}
       {loadError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{loadError}</div> : null}
       <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-center">
+        <SurfaceCard elevated className="p-4 text-center">
           <div className="text-2xl font-bold text-sky-300">{kpi.pendientes}</div>
           <div className="text-xs text-slate-400">Pendientes / En proceso</div>
-        </div>
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-center">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-4 text-center">
           <div className="text-2xl font-bold text-rose-300">{kpi.urgentes}</div>
           <div className="text-xs text-slate-400">Urgentes</div>
-        </div>
-        <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 text-center">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-4 text-center">
           <div className="text-2xl font-bold text-emerald-300">{kpi.completadas}</div>
           <div className="text-xs text-slate-400">Completadas</div>
-        </div>
+        </SurfaceCard>
       </div>
 
       {/* Filters */}
@@ -203,9 +204,9 @@ export default function TareasPage() {
           <p className="text-slate-400">No hay tareas con esos filtros</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredTasks.map((task) => (
-            <div key={task.id} className="card p-4 space-y-3">
+            <SurfaceCard key={task.id} elevated className="space-y-3 p-4">
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
@@ -213,9 +214,9 @@ export default function TareasPage() {
                     <span className="text-xs text-slate-400">
                       {priorityLabels[task.priority as TaskPriority]?.label}
                     </span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${statusLabels[task.status as TaskStatus]?.color}`}>
+                    <Badge variant={task.status === 'hecha' ? 'success' : task.status === 'bloqueada' ? 'danger' : task.status === 'en_proceso' ? 'primary' : 'warning'}>
                       {statusLabels[task.status as TaskStatus]?.label}
-                    </span>
+                    </Badge>
                   </div>
                   <h3 className="font-semibold mt-1">{task.title}</h3>
                 </div>
@@ -253,7 +254,7 @@ export default function TareasPage() {
                   </div>
                 )}
               </div>
-            </div>
+            </SurfaceCard>
           ))}
         </div>
       )}

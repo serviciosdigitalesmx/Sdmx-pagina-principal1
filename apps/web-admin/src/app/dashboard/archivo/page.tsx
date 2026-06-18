@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Archive, RefreshCw, Search, PackageCheck } from "lucide-react";
+import { Badge, SurfaceCard } from "@white-label/ui";
 import { ordersService } from "@/services/orders/ordersService";
 
 type ArchiveRow = {
@@ -24,14 +25,6 @@ function normalizeStatus(value: string) {
 function resolveCloseDate(order: Record<string, unknown>) {
   const date = String(order.updated_at ?? order.created_at ?? "");
   return date ? new Date(date).toLocaleDateString("es-MX") : "No disponible";
-}
-
-function badgeClass(status: string) {
-  const lower = status.toLowerCase();
-  if (lower.includes("cancel")) return "badge-cancelado";
-  if (lower.includes("entreg")) return "badge-listo";
-  if (lower.includes("list")) return "badge-diagnostico";
-  return "badge-recibido";
 }
 
 export default function ArchivoPage() {
@@ -129,17 +122,17 @@ export default function ArchivoPage() {
       {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{error}</div> : null}
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <div className="card text-center">
+        <SurfaceCard elevated className="p-4 text-center">
           <Archive className="mx-auto h-5 w-5 text-sky-300" />
           <div className="mt-3 text-3xl font-bold text-slate-50">{filtered.length}</div>
           <div className="text-xs text-slate-400">Órdenes en archivo</div>
-        </div>
-        <div className="card text-center">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-4 text-center">
           <PackageCheck className="mx-auto h-5 w-5 text-sky-300" />
           <div className="mt-3 text-3xl font-bold text-sky-300">{deliveredCount}</div>
           <div className="text-xs text-slate-400">Entregadas</div>
-        </div>
-        <div className="card">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
@@ -149,10 +142,10 @@ export default function ArchivoPage() {
               placeholder="Buscar por folio, cliente o estado..."
             />
           </div>
-        </div>
+        </SurfaceCard>
       </div>
 
-      <div className="overflow-hidden rounded-[1.5rem] border border-slate-800 bg-slate-950/70">
+      <SurfaceCard elevated className="overflow-hidden p-0">
         <table className="w-full text-sm">
           <thead className="border-b border-slate-800 bg-slate-950/70 text-slate-400">
             <tr>
@@ -168,7 +161,7 @@ export default function ArchivoPage() {
                 <td className="px-4 py-3 font-mono text-sky-300">{row.folio}</td>
                 <td className="px-4 py-3 text-slate-200">{row.client}</td>
                 <td className="px-4 py-3 text-slate-400">{row.cierre}</td>
-                <td className="px-4 py-3"><span className={badgeClass(row.estado)}>{row.estado}</span></td>
+                <td className="px-4 py-3"><Badge variant={row.estado.toLowerCase().includes("entreg") ? "success" : row.estado.toLowerCase().includes("cancel") ? "danger" : row.estado.toLowerCase().includes("list") ? "warning" : "primary"}>{row.estado}</Badge></td>
               </tr>
             ))}
           </tbody>
@@ -176,7 +169,7 @@ export default function ArchivoPage() {
         {filtered.length === 0 ? (
           <div className="py-12 text-center text-slate-400">No hay órdenes cerradas o entregadas para mostrar.</div>
         ) : null}
-      </div>
+      </SurfaceCard>
     </div>
   );
 }

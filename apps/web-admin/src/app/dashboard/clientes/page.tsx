@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Search, RefreshCw, Edit2, Eye, Trash2, Phone, MessageSquare, Wrench } from 'lucide-react';
+import { Badge, SurfaceCard } from '@white-label/ui';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
 import { Button } from '@/components/ui/button';
@@ -133,10 +134,10 @@ export default function ClientesPage() {
     const normalizedPhone = customer.phone.replace(/\D/g, '');
     const normalizedName = getCustomerDisplayName(customer).trim().toLowerCase();
     if (duplicatePhones.includes(normalizedPhone)) {
-      return <span className="badge-recibido text-xs">Posible duplicado</span>;
+      return <Badge variant="warning">Posible duplicado</Badge>;
     }
     if (duplicateNames.includes(normalizedName)) {
-      return <span className="badge-diagnostico text-xs">Nombre repetido</span>;
+      return <Badge variant="primary">Nombre repetido</Badge>;
     }
     return null;
   };
@@ -212,7 +213,7 @@ export default function ClientesPage() {
       )}
 
       {/* Search */}
-      <div className="relative">
+      <SurfaceCard elevated className="relative p-4">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <Input
           placeholder="Buscar por nombre, teléfono o email..."
@@ -220,10 +221,10 @@ export default function ClientesPage() {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-9"
         />
-      </div>
+      </SurfaceCard>
 
       {/* Customers table */}
-      <div className="overflow-x-auto">
+      <SurfaceCard elevated className="overflow-hidden p-0">
         <table className="w-full text-sm">
           <thead className="border-b border-slate-800 bg-slate-950/70">
             <tr>
@@ -298,7 +299,7 @@ export default function ClientesPage() {
             <p className="text-slate-400">No hay clientes con esos filtros</p>
           </div>
         )}
-      </div>
+      </SurfaceCard>
 
       {/* Modals */}
       <CustomerModal

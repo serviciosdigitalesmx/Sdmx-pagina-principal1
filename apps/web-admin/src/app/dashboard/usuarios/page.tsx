@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Plus, RefreshCw, Search, Shield, UserX, History } from "lucide-react";
+import { Badge, SurfaceCard } from "@white-label/ui";
 import { usersService } from "@/services/users/usersService";
 
 type UserRow = {
@@ -196,31 +197,32 @@ export default function UsuariosPage() {
       {error ? <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-300">{error}</div> : null}
 
       <div className="grid gap-4 lg:grid-cols-4">
-        <div className="card">
+        <SurfaceCard elevated className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input value={query} onChange={(event) => setQuery(event.target.value)} className="input pl-9" placeholder="Buscar nombre o correo..." />
           </div>
-        </div>
-        <div className="card">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-4">
           <select value={status} onChange={(event) => setStatus(event.target.value as typeof status)} className="input">
             <option value="all">Todos los estados</option>
             <option value="active">Activos</option>
             <option value="inactive">Inactivos</option>
           </select>
-        </div>
-        <div className="card">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-4">
           <input value={roleFilter} onChange={(event) => setRoleFilter(event.target.value)} className="input" placeholder="Filtrar por rol..." />
-        </div>
-        <div className="card text-center">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-4 text-center">
           <Shield className="mx-auto h-5 w-5 text-sky-300" />
           <div className="mt-3 text-3xl font-bold text-slate-50">{activeUsers}</div>
           <div className="text-xs text-slate-400">Usuarios activos</div>
-        </div>
+        </SurfaceCard>
       </div>
 
       {showInvite ? (
-        <form onSubmit={submitInvite} className="card space-y-4">
+        <SurfaceCard elevated className="space-y-4 p-4">
+          <form onSubmit={submitInvite} className="space-y-4">
           <div className="text-lg font-semibold text-slate-50">Invitar usuario</div>
           <div className="grid gap-4 md:grid-cols-2">
             <input value={invite.name} onChange={(event) => setInvite((current) => ({ ...current, name: event.target.value }))} className="input" placeholder="Nombre" required />
@@ -238,11 +240,12 @@ export default function UsuariosPage() {
             <button type="submit" className="btn-primary" disabled={saving}>{saving ? "Enviando..." : "Enviar invitación"}</button>
             <button type="button" className="btn-outline" onClick={() => setShowInvite(false)}>Cancelar</button>
           </div>
-        </form>
+          </form>
+        </SurfaceCard>
       ) : null}
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(340px,1fr)]">
-        <div className="overflow-hidden rounded-[1.5rem] border border-slate-800 bg-slate-950/70">
+        <SurfaceCard elevated className="overflow-hidden p-0">
           <table className="w-full text-sm">
             <thead className="border-b border-slate-800 bg-slate-950/70 text-slate-400">
               <tr>
@@ -260,8 +263,8 @@ export default function UsuariosPage() {
                     <div className="font-medium text-slate-200">{user.name}</div>
                     <div className="text-xs text-slate-400">{user.email}</div>
                   </td>
-                  <td className="px-4 py-3"><span className="badge-diagnostico">{roleLabel(user.role)}</span></td>
-                  <td className="px-4 py-3"><span className={user.activo ? "badge-listo" : "badge-cancelado"}>{user.activo ? "Activo" : "Inactivo"}</span></td>
+                  <td className="px-4 py-3"><Badge variant="primary">{roleLabel(user.role)}</Badge></td>
+                  <td className="px-4 py-3"><Badge variant={user.activo ? "success" : "danger"}>{user.activo ? "Activo" : "Inactivo"}</Badge></td>
                   <td className="px-4 py-3 text-slate-400">{formatDate(user.ultimo_acceso ?? user.last_login_at)}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
@@ -284,9 +287,9 @@ export default function UsuariosPage() {
             </tbody>
           </table>
           {users.length === 0 ? <div className="py-12 text-center text-slate-400">No hay usuarios con esos filtros.</div> : null}
-        </div>
+        </SurfaceCard>
 
-        <div className="card">
+        <SurfaceCard elevated className="p-4">
           <div className="mb-4 flex items-center gap-2 text-sky-300">
             <History className="w-5 h-5" />
             <h2 className="text-lg font-semibold">{historyUser ? `Historial de ${historyUser.name}` : "Historial de actividad"}</h2>
@@ -299,7 +302,7 @@ export default function UsuariosPage() {
                 <div key={row.id} className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="font-medium text-slate-200">{row.folio ?? row.reference ?? row.id}</div>
-                    <span className="badge-recibido">{row.status ?? "Sin estado"}</span>
+                    <Badge variant="neutral">{row.status ?? "Sin estado"}</Badge>
                   </div>
                   <div className="mt-2 text-xs text-slate-400">
                     {row.created_at ? new Date(row.created_at).toLocaleString("es-MX") : "Fecha no disponible"}
@@ -309,7 +312,7 @@ export default function UsuariosPage() {
               )) : <div className="text-sm text-slate-400">No hay historial asociado para este usuario.</div>}
             </div>
           ) : null}
-        </div>
+        </SurfaceCard>
       </div>
     </div>
   );

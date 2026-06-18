@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Plus, RefreshCw, Search, Edit2, Phone, Mail, Truck, Power, Trash2, X } from 'lucide-react';
+import { Badge, SurfaceCard } from '@white-label/ui';
 import { procurementService } from '@/services/procurement/procurementService';
 
 type SupplierRow = {
@@ -237,7 +238,8 @@ export default function ProveedoresPage() {
       {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{error}</div> : null}
 
       {showForm ? (
-        <form onSubmit={submitSupplier} className="card space-y-4">
+        <SurfaceCard elevated className="space-y-4 p-4">
+          <form onSubmit={submitSupplier} className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-50">{editing ? 'Editar proveedor' : 'Nuevo proveedor'}</h2>
             <button type="button" onClick={() => setShowForm(false)} className="btn-ghost inline-flex items-center gap-2 text-slate-400">
@@ -259,7 +261,8 @@ export default function ProveedoresPage() {
             <button type="submit" className="btn-primary" disabled={saving}>{saving ? 'Guardando...' : 'Guardar proveedor'}</button>
             <button type="button" className="btn-outline" onClick={() => setShowForm(false)}>Cancelar</button>
           </div>
-        </form>
+          </form>
+        </SurfaceCard>
       ) : null}
 
       <div className="relative">
@@ -269,13 +272,13 @@ export default function ProveedoresPage() {
 
       <div className="grid gap-4 xl:grid-cols-2">
         {filtered.map((supplier) => (
-          <div key={supplier.id} className="card card-hover space-y-4">
+          <SurfaceCard key={supplier.id} elevated className="space-y-4 p-4">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h3 className="text-lg font-semibold text-slate-50">{supplierName(supplier)}</h3>
                 <p className="text-xs text-slate-400">{supplier.rfc || 'RFC sin capturar'}</p>
               </div>
-              <span className={isActive(supplier) ? 'badge-listo' : 'badge-cancelado'}>{isActive(supplier) ? 'Activo' : 'Inactivo'}</span>
+              <Badge variant={isActive(supplier) ? 'success' : 'danger'}>{isActive(supplier) ? 'Activo' : 'Inactivo'}</Badge>
             </div>
 
             <div className="grid gap-2 text-sm text-slate-400">
@@ -306,7 +309,7 @@ export default function ProveedoresPage() {
                 </button>
               </div>
             </div>
-          </div>
+          </SurfaceCard>
         ))}
       </div>
 
