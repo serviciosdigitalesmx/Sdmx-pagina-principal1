@@ -7,6 +7,7 @@ import { getBrowserSupabaseClient } from "@/lib/supabase-browser";
 import { readAuthToken, saveAuthToken } from "@/lib/auth-storage";
 import { getPublicApiPath } from "@/lib/public-api";
 import { resolveAdminBridgeUrl, resolveAdminUrl } from "@/lib/admin-url";
+import { SurfaceCard } from "@white-label/ui";
 
 type LoginState = {
   email: string;
@@ -154,7 +155,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen px-6 py-10 text-zinc-100" style={{ background: srFixTheme.background }}>
       <section className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[1fr_1.05fr]">
-        <div className={`${srFixTheme.surface} p-8`}>
+        <SurfaceCard elevated className="p-8">
           <ShellBadge>Acceso al taller</ShellBadge>
           <h1 className="mt-5 text-4xl font-semibold tracking-tight text-stone-50 sm:text-5xl [font-family:var(--font-display)]">
             <span className="sm:hidden">Entra al sistema.</span>
@@ -179,9 +180,9 @@ export default function LoginPage() {
           <p className="mt-6 text-sm leading-7 text-stone-400">
             El acceso está conectado al backend real y respeta el tenant del usuario. No hay sesión simulada ni panel falso.
           </p>
-        </div>
+        </SurfaceCard>
 
-        <div className={`${srFixTheme.surface} p-8`}>
+        <SurfaceCard elevated className="p-8">
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div>
               <label className="mb-2 block text-sm font-medium text-stone-300" htmlFor="email">
@@ -282,7 +283,7 @@ export default function LoginPage() {
               El acceso se valida con Supabase y tu API real
             </p>
           </form>
-        </div>
+        </SurfaceCard>
       </section>
     </main>
   );

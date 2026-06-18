@@ -2,6 +2,7 @@ import Link from "next/link";
 import { optionalEnv } from "@white-label/config";
 import { RootAuthHashRedirect } from "@/components/root-auth-hash-redirect";
 import { resolveAdminUrl } from "@/lib/admin-url";
+import { Badge, SurfaceCard } from "@white-label/ui";
 
 const productName = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "FIXI";
 const brandShort = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_SHORT") ?? "FX";
@@ -83,7 +84,7 @@ const faqItems = [
 ];
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-[11px] font-semibold uppercase tracking-[0.36em] text-sky-300/80">{children}</p>;
+  return <Badge variant="neutral">{children}</Badge>;
 }
 
 function CTA({
@@ -95,11 +96,10 @@ function CTA({
   children: React.ReactNode;
   variant?: "primary" | "secondary";
 }) {
-  const base =
-    "inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold tracking-[0.12em] transition duration-200";
+  const base = "inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-medium transition duration-200";
   const className =
     variant === "primary"
-      ? `${base} border border-sky-400/30 bg-[linear-gradient(135deg,#60a5fa_0%,#2563eb_100%)] text-white shadow-[0_18px_40px_rgba(37,99,235,0.24)] hover:-translate-y-0.5 hover:brightness-110`
+      ? `${base} border border-sky-400/20 bg-sky-500/15 text-sky-100 hover:bg-sky-500/20`
       : `${base} border border-white/10 bg-white/5 text-slate-100 hover:-translate-y-0.5 hover:bg-white/10`;
 
   return (
@@ -115,7 +115,7 @@ function Pill({ children }: { children: React.ReactNode }) {
 
 function ProductMockup() {
   return (
-    <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.95),rgba(2,6,23,0.98))] p-5 shadow-[0_30px_100px_rgba(2,6,23,0.45)]">
+    <SurfaceCard elevated className="relative p-5">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(96,165,250,0.14),transparent_34%),radial-gradient(circle_at_80%_10%,rgba(34,211,238,0.1),transparent_26%)]" />
       <div className="relative space-y-4">
         <div className="flex items-center justify-between border-b border-white/10 pb-4">
@@ -173,7 +173,7 @@ function ProductMockup() {
           ))}
         </div>
       </div>
-    </div>
+    </SurfaceCard>
   );
 }
 
@@ -196,9 +196,9 @@ function SceneFrame({
           <h3 className="max-w-xl text-4xl font-black tracking-tight text-white sm:text-5xl">{title}</h3>
           <p className="max-w-xl text-base leading-8 text-slate-300">{copy}</p>
         </div>
-        <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.9),rgba(2,6,23,0.95))] p-5 shadow-[0_24px_80px_rgba(2,6,23,0.32)]">
+        <SurfaceCard elevated className="p-5">
           {children}
-        </div>
+        </SurfaceCard>
       </div>
     </section>
   );
@@ -220,13 +220,13 @@ export default function Home() {
       <RootAuthHashRedirect />
 
       <section className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-        <header className="flex flex-col gap-4 rounded-[1.75rem] border border-white/10 bg-white/5 px-5 py-4 backdrop-blur lg:flex-row lg:items-center lg:justify-between">
+        <SurfaceCard elevated className="flex flex-col gap-4 px-5 py-4 backdrop-blur lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-[linear-gradient(135deg,#60a5fa_0%,#2563eb_100%)] text-sm font-black text-white">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-sky-500/15 text-sm font-black text-sky-100">
               {brandShort.slice(0, 2)}
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.32em] text-sky-300/80">SaaS para talleres</p>
+              <Badge variant="neutral">SaaS para talleres</Badge>
               <h1 className="text-xl font-semibold tracking-tight text-white">{productName}</h1>
             </div>
           </div>
@@ -249,7 +249,7 @@ export default function Home() {
             </Link>
             <CTA href={adminOnboardingUrl}>Probar {trialDays} días gratis</CTA>
           </nav>
-        </header>
+        </SurfaceCard>
       </section>
 
       <section className="mx-auto grid w-full max-w-7xl gap-10 px-4 pb-10 pt-3 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:pt-8">
