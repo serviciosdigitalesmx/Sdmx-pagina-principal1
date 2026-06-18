@@ -1,40 +1,44 @@
 import React from "react";
 
-export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: "elevated" | "bordered";
+export interface SurfaceCardProps extends React.HTMLAttributes<HTMLDivElement> {
+  elevated?: boolean;
+  subtle?: boolean;
 }
 
-export function Card({ variant = "bordered", className = "", children, ...props }: CardProps) {
-  const baseStyle = "overflow-hidden rounded-2xl bg-slate-950/80";
-  const variantStyle =
-    variant === "elevated"
-      ? "border border-slate-800/80 shadow-[0_18px_50px_rgba(2,6,23,0.35)]"
-      : "border border-slate-800/70";
+export function SurfaceCard({ elevated = false, subtle = false, className = "", children, ...props }: SurfaceCardProps) {
+  const classes = [
+    "overflow-hidden rounded-[1.6rem] bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(2,6,23,0.98))]",
+    subtle ? "border border-white/8" : "border border-white/10",
+    elevated ? "shadow-[0_24px_80px_rgba(2,6,23,0.36)]" : "shadow-[0_16px_48px_rgba(2,6,23,0.22)]",
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <div className={`${baseStyle} ${variantStyle} ${className}`} {...props}>
+    <div className={classes} {...props}>
       {children}
     </div>
   );
 }
 
-export function CardHeader({ className = "", children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function SurfaceHeader({ className = "", children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`border-b border-slate-800/70 px-5 py-4 ${className}`} {...props}>
+    <div className={`border-b border-white/10 px-5 py-4 ${className}`} {...props}>
       {children}
     </div>
   );
 }
 
-export function CardTitle({ className = "", children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
+export function SurfaceTitle({ className = "", children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={`text-lg font-semibold tracking-tight text-slate-50 ${className}`} {...props}>
+    <h3 className={`text-[1.05rem] font-semibold tracking-tight text-slate-50 ${className}`} {...props}>
       {children}
     </h3>
   );
 }
 
-export function CardContent({ className = "", children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+export function SurfaceContent({ className = "", children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className={`p-5 ${className}`} {...props}>
       {children}
@@ -42,6 +46,6 @@ export function CardContent({ className = "", children, ...props }: React.HTMLAt
   );
 }
 
-Card.Header = CardHeader;
-Card.Title = CardTitle;
-Card.Content = CardContent;
+SurfaceCard.Header = SurfaceHeader;
+SurfaceCard.Title = SurfaceTitle;
+SurfaceCard.Content = SurfaceContent;

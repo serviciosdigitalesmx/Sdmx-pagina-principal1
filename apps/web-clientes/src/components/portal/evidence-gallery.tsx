@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import type { NormalizedAttachment } from "@/lib/types";
+import { SurfaceCard, Badge } from "@white-label/ui";
 
 type EvidenceGalleryProps = {
   images: NormalizedAttachment[];
@@ -15,7 +16,7 @@ export function EvidenceGallery({ images, videos }: EvidenceGalleryProps) {
   if (images.length === 0 && videos.length === 0) return null;
 
   return (
-    <section className="rounded-[2rem] border border-slate-800 bg-slate-950/80 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
+    <SurfaceCard elevated className="p-6">
       <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-300">Evidencias</p>
       <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-50">Fotos y videos del proceso</h3>
 
@@ -26,14 +27,14 @@ export function EvidenceGallery({ images, videos }: EvidenceGalleryProps) {
               key={item.id}
               type="button"
               onClick={() => setSelected(item)}
-              className="group overflow-hidden rounded-[1.5rem] border border-slate-800 bg-slate-900/50 text-left transition hover:border-sky-400/30"
+              className="group overflow-hidden rounded-[1.35rem] border border-white/10 bg-white/5 text-left transition hover:border-sky-400/25"
             >
               <div className="relative aspect-[4/3]">
                 <Image src={item.url} alt={item.name} fill className="object-cover transition duration-300 group-hover:scale-[1.03]" />
               </div>
               <div className="p-4">
                 <div className="text-sm font-semibold text-slate-50">{item.name}</div>
-                <div className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">{item.type}</div>
+                <div className="mt-2"><Badge variant="neutral">{item.type}</Badge></div>
               </div>
             </button>
           ))}
@@ -43,7 +44,7 @@ export function EvidenceGallery({ images, videos }: EvidenceGalleryProps) {
       {videos.length > 0 ? (
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           {videos.map((item) => (
-            <div key={item.id} className="overflow-hidden rounded-[1.5rem] border border-slate-800 bg-black">
+            <div key={item.id} className="overflow-hidden rounded-[1.35rem] border border-white/10 bg-black">
               <video src={item.url} controls className="h-full w-full" />
             </div>
           ))}
@@ -62,6 +63,6 @@ export function EvidenceGallery({ images, videos }: EvidenceGalleryProps) {
           </div>
         </button>
       ) : null}
-    </section>
+    </SurfaceCard>
   );
 }

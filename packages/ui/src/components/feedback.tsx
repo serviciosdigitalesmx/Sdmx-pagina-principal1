@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { SurfaceCard } from "./Card";
 
 type ToastTone = "success" | "error" | "info";
 
@@ -26,14 +27,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    if (toasts.length === 0) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setToasts((current) => current.slice(1));
-    }, 3200);
-
+    if (toasts.length === 0) return;
+    const timer = window.setTimeout(() => setToasts((current) => current.slice(1)), 3200);
     return () => window.clearTimeout(timer);
   }, [toasts]);
 
@@ -46,16 +41,22 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((toast) => {
           const toneClasses =
             toast.tone === "success"
-              ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-50"
+              ? "border-emerald-400/20 text-emerald-50"
               : toast.tone === "error"
-                ? "border-rose-500/30 bg-rose-500/15 text-rose-50"
-                : "border-sky-500/30 bg-sky-500/15 text-sky-50";
+                ? "border-rose-400/20 text-rose-50"
+                : "border-sky-400/20 text-sky-50";
+          const bgClasses =
+            toast.tone === "success"
+              ? "bg-emerald-500/12"
+              : toast.tone === "error"
+                ? "bg-rose-500/12"
+                : "bg-sky-500/12";
 
           return (
-            <div key={toast.id} className={`pointer-events-auto rounded-2xl border px-4 py-3 shadow-2xl backdrop-blur ${toneClasses}`}>
+            <SurfaceCard key={toast.id} subtle className={`pointer-events-auto px-4 py-3 ${bgClasses} ${toneClasses}`}>
               <div className="text-sm font-semibold">{toast.title}</div>
-              {toast.description ? <div className="mt-1 text-sm leading-6 opacity-90">{toast.description}</div> : null}
-            </div>
+              {toast.description ? <div className="mt-1 text-sm leading-6 text-slate-200/85">{toast.description}</div> : null}
+            </SurfaceCard>
           );
         })}
       </div>
@@ -65,14 +66,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
 export function useToast() {
   const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error("useToast must be used within ToastProvider");
-  }
+  if (!context) throw new Error("useToast must be used within ToastProvider");
   return context;
 }
 
 export function Skeleton({ className = "" }: { className?: string }) {
-  return <div className={`animate-pulse rounded-2xl bg-white/8 ${className}`} />;
+  return <div className={`animate-pulse rounded-2xl bg-white/6 ${className}`} />;
 }
 
 export function LoadingState({
@@ -83,7 +82,7 @@ export function LoadingState({
   description?: string;
 }) {
   return (
-    <div className="rounded-[1.5rem] border border-zinc-800 bg-zinc-950/80 p-6">
+    <SurfaceCard elevated className="p-6">
       <div className="space-y-4">
         <Skeleton className="h-6 w-32" />
         <Skeleton className="h-10 w-3/5" />
@@ -95,11 +94,11 @@ export function LoadingState({
           <Skeleton className="h-24" />
         </div>
       </div>
-      <div className="mt-4 text-sm text-zinc-400">
-        <div className="font-semibold text-zinc-200">{title}</div>
+      <div className="mt-4 text-sm text-slate-400">
+        <div className="font-semibold text-slate-200">{title}</div>
         <div className="mt-1">{description}</div>
       </div>
-    </div>
+    </SurfaceCard>
   );
 }
 
@@ -122,22 +121,16 @@ export function ConfirmDialog({
   onConfirm: () => void | Promise<void>;
   onCancel: () => void;
 }) {
-  if (!open) {
-    return null;
-  }
+  if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 px-4 py-6">
-      <div className="w-full max-w-lg rounded-3xl border border-zinc-800 bg-zinc-950 p-6 shadow-2xl">
-        <div className="text-xs uppercase tracking-[0.24em] text-zinc-500">Confirmación requerida</div>
-        <h3 className="mt-3 text-2xl font-semibold text-zinc-50">{title}</h3>
-        <p className="mt-3 text-sm leading-6 text-zinc-400">{description}</p>
+    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 px-4 py-6 backdrop-blur-sm">
+      <SurfaceCard elevated className="w-full max-w-lg p-6">
+        <div className="text-xs uppercase tracking-[0.24em] text-slate-500">Confirmación requerida</div>
+        <h3 className="mt-3 text-2xl font-semibold text-slate-50">{title}</h3>
+        <p className="mt-3 text-sm leading-6 text-slate-400">{description}</p>
         <div className="mt-6 flex flex-wrap justify-end gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="min-h-11 rounded-full border border-zinc-700 px-4 py-3 text-sm font-semibold text-zinc-200 transition hover:bg-white/5"
-          >
+          <button type="button" onClick={onCancel} className="min-h-11 rounded-full border border-white/10 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/5">
             {cancelLabel}
           </button>
           <button
@@ -151,8 +144,7 @@ export function ConfirmDialog({
             {confirmLabel}
           </button>
         </div>
-      </div>
+      </SurfaceCard>
     </div>
   );
 }
-

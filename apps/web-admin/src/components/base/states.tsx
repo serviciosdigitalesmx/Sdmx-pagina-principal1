@@ -1,20 +1,14 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import { EmptyState as UISEmptyState, LoadingState as UILoadingState } from '@white-label/ui';
 
 export function LoadingState({
   label = 'Cargando...',
 }: {
   label?: string;
 }) {
-  return (
-    <div className="flex min-h-[240px] items-center justify-center rounded-3xl border border-slate-800 bg-slate-950/70">
-      <div className="flex items-center gap-3 text-slate-400">
-        <div className="h-5 w-5 animate-spin rounded-full border-2 border-sky-400 border-t-transparent" />
-        <span className="text-sm">{label}</span>
-      </div>
-    </div>
-  );
+  return <UILoadingState title={label} />;
 }
 
 export function ErrorState({
@@ -27,10 +21,11 @@ export function ErrorState({
   action?: ReactNode;
 }) {
   return (
-    <div className="rounded-3xl border border-red-500/20 bg-red-500/10 p-5 text-sm text-red-100">
-      <div className="font-semibold">{title}</div>
-      <div className="mt-2 text-red-100/80">{message}</div>
-      {action ? <div className="mt-4">{action}</div> : null}
-    </div>
+    <UISEmptyState
+      title={title}
+      description={message}
+      action={action}
+      className="border-rose-400/20 bg-rose-500/10"
+    />
   );
 }

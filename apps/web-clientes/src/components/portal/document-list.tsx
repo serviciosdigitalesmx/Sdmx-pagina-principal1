@@ -1,6 +1,7 @@
 "use client";
 
 import type { NormalizedDocument } from "@/lib/types";
+import { Badge, SurfaceCard } from "@white-label/ui";
 
 type DocumentListProps = {
   documents: NormalizedDocument[];
@@ -17,7 +18,7 @@ export function DocumentList({ documents }: DocumentListProps) {
   if (documents.length === 0) return null;
 
   return (
-    <section className="rounded-[2rem] border border-slate-800 bg-slate-950/80 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
+    <SurfaceCard elevated className="p-6">
       <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-300">Documentos</p>
       <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-50">Archivos vinculados</h3>
 
@@ -26,22 +27,20 @@ export function DocumentList({ documents }: DocumentListProps) {
           <a
             key={doc.id}
             href={doc.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between gap-4 rounded-[1.4rem] border border-slate-800 bg-slate-900/50 px-4 py-4 transition hover:border-sky-400/30 hover:bg-slate-900"
-          >
-            <div>
-              <div className="text-sm font-semibold text-slate-50">{doc.name}</div>
-              <div className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
-                {getDocumentLabel(doc.type)} · {doc.date.toLocaleDateString("es-MX")}
-              </div>
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between gap-4 rounded-[1.35rem] border border-white/10 bg-white/5 px-4 py-4 transition hover:border-sky-400/25"
+        >
+          <div>
+            <div className="text-sm font-semibold text-slate-50">{doc.name}</div>
+            <div className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500">
+              {getDocumentLabel(doc.type)} · {doc.date.toLocaleDateString("es-MX")}
             </div>
-            <span className="rounded-full border border-slate-700 px-3 py-1 text-[10px] font-black uppercase tracking-[0.24em] text-slate-300">
-              Ver
-            </span>
-          </a>
-        ))}
+          </div>
+          <Badge variant="neutral">Ver</Badge>
+        </a>
+      ))}
       </div>
-    </section>
+    </SurfaceCard>
   );
 }

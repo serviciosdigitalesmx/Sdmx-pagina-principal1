@@ -3,6 +3,7 @@
 import { Calendar, User, Phone, Package, AlertCircle, MessageSquare, FileText, ArrowRightCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { ServiceRequest } from '@/types';
+import { Badge, SurfaceCard } from '@white-label/ui';
 
 interface RequestCardProps {
   request: ServiceRequest;
@@ -26,7 +27,7 @@ export function RequestCard({ request, onQuote, onConvert }: RequestCardProps) {
   const urgency = urgencyLabels[request.urgency] || { label: request.urgency, color: 'text-slate-400' };
 
   return (
-    <div className="card p-4 space-y-3">
+    <SurfaceCard elevated className="space-y-4 p-4">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
@@ -35,10 +36,8 @@ export function RequestCard({ request, onQuote, onConvert }: RequestCardProps) {
             <span className="text-xs text-slate-400">{formatDate(request.created_at)}</span>
           </div>
           <div className="flex items-center gap-2 mt-1">
-            <span className={`text-xs font-semibold ${urgency.color}`}>
-              {urgency.label}
-            </span>
-            <span className="badge-recibido text-xs">Pendiente</span>
+            <span className={`text-xs font-semibold ${urgency.color}`}>{urgency.label}</span>
+            <Badge variant="primary">Pendiente</Badge>
           </div>
         </div>
       </div>
@@ -83,6 +82,6 @@ export function RequestCard({ request, onQuote, onConvert }: RequestCardProps) {
           Convertir
         </Button>
       </div>
-    </div>
+    </SurfaceCard>
   );
 }

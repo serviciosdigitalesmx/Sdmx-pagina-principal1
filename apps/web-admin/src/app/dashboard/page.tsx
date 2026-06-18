@@ -36,6 +36,7 @@ import { getApiOptions } from '@/lib/tenant';
 import { getCustomerLabel, getOrderLabel, getTechnicianLabel } from '@/lib/labels';
 import { useTenantIdentity } from '@/providers/TenantIdentityProvider';
 import type { ReportsSummary } from '@/types';
+import { SurfaceCard } from '@white-label/ui';
 
 // Colores para gráficos
 const CHART_COLORS = {
@@ -224,7 +225,7 @@ export default function DashboardPage() {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        <SurfaceCard elevated className="p-5">
           <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
             Distribución por estado
           </h3>
@@ -259,9 +260,9 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-        </div>
+        </SurfaceCard>
 
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        <SurfaceCard elevated className="p-5">
           <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
             {ordersLabel} por {technicianLabel.toLowerCase()}
           </h3>
@@ -285,12 +286,12 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
-        </div>
+        </SurfaceCard>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Products Used */}
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        <SurfaceCard elevated className="p-5">
           <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
             Productos más utilizados
           </h3>
@@ -308,10 +309,10 @@ export default function DashboardPage() {
               <p className="py-4 text-center text-sm text-slate-400">Sin datos suficientes</p>
             )}
           </div>
-        </div>
+        </SurfaceCard>
 
         {/* Inventory Valuation */}
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        <SurfaceCard elevated className="p-5">
           <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
             Valor del inventario
           </h3>
@@ -329,12 +330,12 @@ export default function DashboardPage() {
               <span className="font-semibold text-rose-400">{summary.lowStockCount}</span>
             </div>
           </div>
-        </div>
+        </SurfaceCard>
       </div>
 
       {/* Overdue Orders */}
       {overdueOrders.length > 0 && (
-        <div className="rounded-3xl border border-rose-500/20 bg-rose-500/5 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        <SurfaceCard elevated className="border-rose-400/20 bg-rose-500/5 p-5">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="h-5 w-5 text-rose-400" />
             <h3 className="text-xs font-semibold uppercase tracking-[0.24em] text-rose-300">
@@ -356,7 +357,7 @@ export default function DashboardPage() {
               </div>
             ))}
           </div>
-        </div>
+        </SurfaceCard>
       )}
 
       {/* Quick Actions */}
@@ -415,13 +416,13 @@ function KPICard({ title, value, icon, trend, color = 'default' }: KPICardProps)
   };
 
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+    <SurfaceCard elevated className="p-5">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.24em] text-slate-400">{title}</p>
           <p className={`text-2xl font-bold mt-1 ${colorClasses[color]}`}>{value}</p>
         </div>
-        <div className={`rounded-xl bg-sky-500/10 p-2 ${colorClasses[color]}`}>
+        <div className={`rounded-xl border border-white/10 bg-white/5 p-2 ${colorClasses[color]}`}>
           {icon}
         </div>
       </div>
@@ -435,7 +436,7 @@ function KPICard({ title, value, icon, trend, color = 'default' }: KPICardProps)
           <span className="text-slate-400">vs mes anterior</span>
         </div>
       )}
-    </div>
+    </SurfaceCard>
   );
 }
 
@@ -454,8 +455,9 @@ function SimpleCard({ title, value, icon, variant = 'default', onClick }: Simple
   };
 
   return (
-    <div
-      className={`rounded-3xl border bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)] transition-transform hover:scale-[1.02] ${variantClasses[variant]}`}
+    <SurfaceCard
+      elevated
+      className={`p-5 transition-transform hover:scale-[1.01] ${variantClasses[variant]}`}
       onClick={onClick}
     >
       <div className="flex items-center justify-between">
@@ -465,9 +467,9 @@ function SimpleCard({ title, value, icon, variant = 'default', onClick }: Simple
             {value}
           </p>
         </div>
-        <div className="rounded-xl bg-sky-500/10 p-2 text-sky-300">{icon}</div>
+        <div className="rounded-xl border border-white/10 bg-white/5 p-2 text-sky-300">{icon}</div>
       </div>
-    </div>
+    </SurfaceCard>
   );
 }
 
@@ -481,7 +483,7 @@ function QuickActionButton({ label, icon, onClick }: QuickActionButtonProps) {
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center gap-2 rounded-2xl border border-slate-800 bg-slate-950/60 p-3 transition-colors hover:bg-slate-900/80"
+      className="flex flex-col items-center gap-2 rounded-[1.25rem] border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10"
     >
       {icon}
       <span className="text-xs font-medium">{label}</span>

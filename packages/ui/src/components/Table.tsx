@@ -1,4 +1,5 @@
-import React from 'react';
+import React from "react";
+import { SurfaceCard } from "./Card";
 
 export type TableColumn<T extends Record<string, unknown>> = {
   key: keyof T | string;
@@ -9,46 +10,42 @@ export type TableColumn<T extends Record<string, unknown>> = {
 export function Table<T extends Record<string, unknown>>({
   columns,
   rows,
-  emptyMessage = 'Sin registros',
+  emptyMessage = "Sin registros",
 }: {
   columns: TableColumn<T>[];
   rows: T[];
   emptyMessage?: string;
 }) {
   if (!rows.length) {
-    return (
-      <div className="rounded-2xl border border-slate-800/80 bg-slate-950/60 p-6 text-sm text-slate-400">
-        {emptyMessage}
-      </div>
-    );
+    return <SurfaceCard subtle className="px-5 py-6 text-sm text-slate-400">{emptyMessage}</SurfaceCard>;
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-800/80 bg-slate-950/60 shadow-[0_18px_50px_rgba(2,6,23,0.28)]">
-      <table className="min-w-full divide-y divide-slate-800 text-left text-sm">
-        <thead className="bg-white/[0.03] text-slate-400">
-          <tr>
-            {columns.map((column) => (
-              <th key={String(column.key)} className="px-4 py-3 font-medium">
-                {column.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-800">
-          {rows.map((row, rowIndex) => (
-            <tr key={rowIndex} className="bg-transparent transition-colors hover:bg-white/[0.03]">
+    <SurfaceCard elevated className="overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-white/10 text-left text-sm">
+          <thead className="bg-white/[0.03] text-slate-400">
+            <tr>
               {columns.map((column) => (
-                <td key={String(column.key)} className="px-4 py-3 text-slate-200">
-                  {column.render
-                    ? column.render(row)
-                    : String(row[column.key as keyof T] ?? '')}
-                </td>
+                <th key={String(column.key)} className="px-4 py-3 font-medium">
+                  {column.label}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {rows.map((row, rowIndex) => (
+              <tr key={rowIndex} className="bg-transparent transition-colors hover:bg-white/[0.03]">
+                {columns.map((column) => (
+                  <td key={String(column.key)} className="px-4 py-3 text-slate-200">
+                    {column.render ? column.render(row) : String(row[column.key as keyof T] ?? "")}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </SurfaceCard>
   );
 }

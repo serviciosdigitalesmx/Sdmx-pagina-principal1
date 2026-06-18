@@ -9,11 +9,11 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary: "border-transparent bg-sky-500 text-white shadow-[0_12px_24px_rgba(59,130,246,0.22)] hover:bg-sky-600",
-  secondary: "border-slate-800 bg-slate-900 text-slate-100 hover:bg-slate-800",
-  danger: "border-rose-500/30 bg-rose-500/10 text-rose-200 hover:bg-rose-500/20",
+  primary: "border-sky-400/25 bg-[linear-gradient(135deg,#60a5fa_0%,#2563eb_100%)] text-white shadow-[0_18px_40px_rgba(37,99,235,0.22)] hover:brightness-110",
+  secondary: "border-white/10 bg-white/5 text-slate-100 hover:bg-white/10",
+  danger: "border-rose-400/25 bg-rose-500/10 text-rose-100 hover:bg-rose-500/20",
   ghost: "border-transparent bg-transparent text-slate-300 hover:bg-white/5",
-  outline: "border-slate-800 bg-transparent text-slate-100 hover:bg-slate-800",
+  outline: "border-white/10 bg-transparent text-slate-100 hover:bg-white/5",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
@@ -35,7 +35,7 @@ export function Button({
     <button
       type={type ?? "button"}
       disabled={disabled}
-      className={`inline-flex items-center justify-center rounded-xl border font-medium transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:pointer-events-none disabled:opacity-50 ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
+      className={`inline-flex items-center justify-center rounded-full border font-semibold transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500/40 disabled:pointer-events-none disabled:opacity-50 ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
       {...props}
     >
       {children}

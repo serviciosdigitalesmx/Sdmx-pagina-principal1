@@ -2,6 +2,7 @@
 
 import { Eye, Calendar, User, Package, DollarSign } from 'lucide-react';
 import type { Order } from '@/types';
+import { Badge, SurfaceCard } from '@white-label/ui';
 
 interface OrderCardProps {
   order: Order;
@@ -33,18 +34,19 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
   const daysLeft = diasRestantes !== undefined && diasRestantes !== null ? diasRestantes : null;
 
   return (
-    <div
-      className={`rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)] cursor-pointer transition-all duration-200 hover:scale-[1.02] ${cardClass}`}
+    <SurfaceCard
+      elevated
+      className={`cursor-pointer p-5 transition-transform duration-200 hover:scale-[1.01] ${cardClass}`}
       onClick={onClick}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className="font-mono text-sm font-bold text-sky-300">{order.folio}</span>
-            <span className={`badge-estado ${statusBadgeClasses[status] || 'badge-recibido'}`}>
+            <span className="font-mono text-sm font-bold tracking-wide text-sky-300">{order.folio}</span>
+            <Badge variant={status === 'entregado' ? 'neutral' : status === 'cancelado' ? 'danger' : status === 'listo' ? 'success' : status === 'diagnostico' ? 'warning' : 'primary'}>
               {status}
-            </span>
+            </Badge>
           </div>
           <h3 className="text-lg font-semibold mt-2 truncate">{customerName}</h3>
           <p className="text-sm text-slate-400 truncate">{deviceName}</p>
@@ -84,6 +86,6 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
           <span>Ver detalle</span>
         </div>
       </div>
-    </div>
+    </SurfaceCard>
   );
 }
