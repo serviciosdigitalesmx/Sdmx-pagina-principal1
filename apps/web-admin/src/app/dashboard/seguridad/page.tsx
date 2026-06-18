@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Shield, Users, Key, RefreshCw, Eye, EyeOff, Copy, Check, Plus, Edit2 } from 'lucide-react';
+import { Badge, SurfaceCard } from '@white-label/ui';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
 import { Button } from '@/components/ui/button';
@@ -162,25 +163,25 @@ export default function SeguridadPage() {
 
       {/* KPIs */}
       {loadError ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{loadError}</div> : null}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 text-center shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <SurfaceCard elevated className="p-5 text-center">
           <div className="text-2xl font-bold text-sky-300">{users.length}</div>
           <div className="text-xs text-slate-400">Usuarios activos</div>
-        </div>
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 text-center shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-5 text-center">
           <div className="text-2xl font-bold text-sky-300">{sessions.length}</div>
           <div className="text-xs text-slate-400">Sesiones activas</div>
-        </div>
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 text-center shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-5 text-center">
           <div className="text-2xl font-bold text-sky-300">
             {config?.adminPasswordConfigured ? 'Sí' : 'No'}
           </div>
           <div className="text-xs text-slate-400">Clave admin configurada</div>
-        </div>
+        </SurfaceCard>
       </div>
 
       {/* Users section */}
-      <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+      <SurfaceCard elevated className="p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-50">
             <Users className="w-5 h-5" />
@@ -217,7 +218,7 @@ export default function SeguridadPage() {
                   <td className="py-2">{user.name}</td>
                   <td className="py-2">{user.email}</td>
                   <td className="py-2">
-                    <span className="badge-recibido text-xs">{user.role}</span>
+                    <Badge variant="primary">{user.role}</Badge>
                   </td>
                   <td className="py-2">
                     <span className={user.activo ? 'badge-listo text-xs' : 'badge-cancelado text-xs'}>
@@ -240,11 +241,11 @@ export default function SeguridadPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </SurfaceCard>
 
       {/* MFA Setup */}
       {!config?.adminPasswordConfigured && (
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        <SurfaceCard elevated className="p-5">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-50">
             <Key className="w-5 h-5" />
             Configurar MFA
@@ -256,7 +257,7 @@ export default function SeguridadPage() {
             </Button>
           ) : (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+              <div className="rounded-[1.4rem] border border-white/10 bg-white/[0.03] p-4">
                 <p className="mb-2 text-sm text-slate-400">
                   1. Escanea este código QR con Google Authenticator:
                 </p>
@@ -271,7 +272,7 @@ export default function SeguridadPage() {
                   2. O ingresa este código manualmente:
                 </p>
                 <div className="flex items-center gap-2">
-                  <code className="rounded bg-slate-950/70 px-3 py-2 font-mono text-sm">{mfaSecret}</code>
+                  <code className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2 font-mono text-sm text-slate-100">{mfaSecret}</code>
                   <button onClick={handleCopySecret} className="rounded p-2 hover:bg-sky-500/10">
                     {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                   </button>
@@ -294,12 +295,12 @@ export default function SeguridadPage() {
               </div>
             </div>
           )}
-        </div>
+        </SurfaceCard>
       )}
 
       {/* Active Sessions */}
       {sessions.length > 0 && (
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        <SurfaceCard elevated className="p-5">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-50">
             <Eye className="w-5 h-5" />
             Sesiones activas
@@ -307,7 +308,7 @@ export default function SeguridadPage() {
 
           <div className="space-y-2">
             {sessions.map((session) => (
-              <div key={session.id} className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900/60 p-3">
+              <div key={session.id} className="flex items-center justify-between rounded-[1.25rem] border border-white/10 bg-white/[0.03] p-3">
                 <div>
                   <p className="text-sm">
                     <span className="font-semibold">{session.user?.name || session.userId}</span>
@@ -325,12 +326,12 @@ export default function SeguridadPage() {
               </div>
             ))}
           </div>
-        </div>
+        </SurfaceCard>
       )}
 
       {/* Audit Logs */}
       {auditLogs.length > 0 && (
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        <SurfaceCard elevated className="p-5">
           <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-50">
             <Shield className="w-5 h-5" />
             Bitácora de seguridad
@@ -338,7 +339,7 @@ export default function SeguridadPage() {
 
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {auditLogs.map((log) => (
-              <div key={log.id} className="border-b border-slate-800 py-2 text-sm">
+              <div key={log.id} className="border-b border-white/10 py-2 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-sky-300">{log.action}</span>
                   <span className="text-xs text-slate-400">{formatDate(log.created_at)}</span>
@@ -349,11 +350,11 @@ export default function SeguridadPage() {
               </div>
             ))}
           </div>
-        </div>
+        </SurfaceCard>
       )}
 
       {/* Danger Zone */}
-      <div className="rounded-3xl border border-red-500/30 bg-red-500/5 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+      <SurfaceCard elevated className="border border-red-500/20 bg-red-500/5 p-5">
         <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-red-300">
           <Shield className="w-5 h-5" />
           Zona de riesgo
@@ -364,7 +365,7 @@ export default function SeguridadPage() {
         <Button onClick={handleRotateKeys} variant="outline" className="border-red-500 text-red-300 hover:bg-red-500/10">
           Rotar claves JWT
         </Button>
-      </div>
+      </SurfaceCard>
 
       {/* User Modal */}
       <UserModal

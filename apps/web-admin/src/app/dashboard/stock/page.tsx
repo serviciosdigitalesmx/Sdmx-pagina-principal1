@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Plus, Search, RefreshCw, Edit2, Package, AlertTriangle, ArrowUpDown, Filter, Layers3 } from 'lucide-react';
+import { Badge, SurfaceCard } from '@white-label/ui';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
 import { Button } from '@/components/ui/button';
@@ -115,15 +116,15 @@ export default function StockPage() {
 
   const getAlertBadge = (product: Product) => {
     if (product.alerta_nivel === 'agotado') {
-      return <span className="badge-cancelado text-xs">Agotado</span>;
+      return <Badge variant="danger">Agotado</Badge>;
     }
     if (product.alerta_nivel === 'critico') {
-      return <span className="badge-reparacion text-xs">Crítico</span>;
+      return <Badge variant="warning">Crítico</Badge>;
     }
     if (product.alerta_nivel === 'bajo') {
-      return <span className="badge-diagnostico text-xs">Stock bajo</span>;
+      return <Badge variant="warning">Stock bajo</Badge>;
     }
-    return <span className="badge-listo text-xs">Activo</span>;
+    return <Badge variant="success">Activo</Badge>;
   };
 
   if (loading) {
@@ -178,28 +179,28 @@ export default function StockPage() {
 
       {/* KPI cards */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        <SurfaceCard elevated className="p-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-slate-400">Productos activos</div>
             <Layers3 className="h-5 w-5 text-sky-400" />
           </div>
           <div className="mt-3 text-3xl font-semibold text-sky-300">{stats.totalProducts}</div>
-        </div>
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-slate-400">Stock bajo</div>
             <AlertTriangle className="h-5 w-5 text-amber-400" />
           </div>
           <div className="mt-3 text-3xl font-semibold text-amber-400">{stats.lowStock}</div>
-        </div>
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-slate-400">Agotados</div>
             <Package className="h-5 w-5 text-rose-400" />
           </div>
           <div className="mt-3 text-3xl font-semibold text-rose-400">{stats.outOfStock}</div>
-        </div>
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-slate-400">Valor inventario</div>
             <ArrowUpDown className="h-5 w-5 text-emerald-400" />
@@ -207,7 +208,7 @@ export default function StockPage() {
           <div className="mt-3 text-3xl font-semibold text-sky-300">
             ${stats.stockValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-        </div>
+        </SurfaceCard>
       </div>
 
       {/* Alert banner */}
@@ -220,7 +221,7 @@ export default function StockPage() {
       )}
 
       {/* Filters */}
-      <div className="flex flex-col gap-3 rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-[0_24px_70px_rgba(2,6,23,0.32)] lg:flex-row lg:items-center">
+      <SurfaceCard elevated className="flex flex-col gap-3 p-4 lg:flex-row lg:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <Input
@@ -260,10 +261,10 @@ export default function StockPage() {
           <RefreshCw className="w-4 h-4" />
           Actualizar
         </Button>
-      </div>
+      </SurfaceCard>
 
       {/* Products table */}
-      <div className="overflow-x-auto rounded-3xl border border-slate-800 bg-slate-950/70 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+      <SurfaceCard elevated className="overflow-hidden p-0">
         <table className="w-full text-sm">
           <thead className="border-b border-slate-800 bg-slate-900/70">
             <tr>
@@ -338,7 +339,7 @@ export default function StockPage() {
             <p className="mt-3 font-medium text-slate-300">No hay productos con esos filtros</p>
           </div>
         )}
-      </div>
+      </SurfaceCard>
 
       {/* Modals */}
       <ProductModal

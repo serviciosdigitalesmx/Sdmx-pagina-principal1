@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { BarChart3, LineChart, RefreshCw, Users, Package, Wallet } from "lucide-react";
+import { Badge, SurfaceCard } from "@white-label/ui";
 import { getActiveScope } from "@/lib/scope";
 import { reportsService } from "@/services/reports/reportsService";
 
@@ -101,79 +102,79 @@ export default function ReportesPage() {
       {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{error}</div> : null}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="card text-center">
+        <SurfaceCard elevated className="p-5 text-center">
           <BarChart3 className="mx-auto h-5 w-5 text-sky-300" />
           <div className="mt-3 text-3xl font-bold text-slate-50">{summary?.ordersCount ?? 0}</div>
           <div className="text-xs text-slate-400">Órdenes</div>
-        </div>
-        <div className="card text-center">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-5 text-center">
           <Users className="mx-auto h-5 w-5 text-sky-300" />
           <div className="mt-3 text-3xl font-bold text-slate-50">{summary?.customersCount ?? 0}</div>
           <div className="text-xs text-slate-400">Clientes</div>
-        </div>
-        <div className="card text-center">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-5 text-center">
           <Package className="mx-auto h-5 w-5 text-sky-300" />
           <div className="mt-3 text-3xl font-bold text-sky-300">{summary?.inventoryCount ?? 0}</div>
           <div className="text-xs text-slate-400">Items de inventario</div>
-        </div>
-        <div className="card text-center">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-5 text-center">
           <Wallet className="mx-auto h-5 w-5 text-sky-300" />
           <div className="mt-3 text-3xl font-bold text-sky-300">{currency(summary?.totalBalance ?? 0)}</div>
           <div className="text-xs text-slate-400">Balance visible</div>
-        </div>
+        </SurfaceCard>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <div className="card">
+        <SurfaceCard elevated className="p-5">
           <div className="mb-4 flex items-center gap-2 text-sky-300">
             <LineChart className="h-5 w-5" />
             <h2 className="text-lg font-semibold">Estados de órdenes</h2>
           </div>
           <div className="space-y-3">
             {statusRows.length > 0 ? statusRows.map(([status, count]) => (
-              <div key={status} className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3">
-                <span className="text-sm text-slate-200">{status}</span>
-                <span className="badge-recibido">{count}</span>
-              </div>
+                <div key={status} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+                  <span className="text-sm text-slate-200">{status}</span>
+                  <Badge variant="primary">{count}</Badge>
+                </div>
             )) : <div className="text-sm text-slate-400">Sin datos de estados todavía.</div>}
           </div>
-        </div>
+        </SurfaceCard>
 
-        <div className="card">
+        <SurfaceCard elevated className="p-5">
           <div className="mb-4 flex items-center gap-2 text-sky-300">
             <Users className="h-5 w-5" />
             <h2 className="text-lg font-semibold">Órdenes por técnico</h2>
           </div>
           <div className="space-y-3">
             {technicianRows.length > 0 ? technicianRows.map(([name, count]) => (
-              <div key={name} className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 px-4 py-3">
+              <div key={name} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
                 <span className="text-sm text-slate-200">{name}</span>
-                <span className="badge-diagnostico">{count}</span>
+                <Badge variant="warning">{count}</Badge>
               </div>
             )) : <div className="text-sm text-slate-400">No hay técnicos asignados todavía.</div>}
           </div>
-        </div>
+        </SurfaceCard>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-4">
-        <div className="card">
+        <SurfaceCard elevated className="p-5">
           <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Productividad</div>
           <div className="mt-3 text-2xl font-bold text-slate-50">{Math.round(Number(summary?.productivity ?? 0))}%</div>
-        </div>
-        <div className="card">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-5">
           <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Valuación</div>
           <div className="mt-3 text-2xl font-bold text-slate-50">{currency(summary?.inventoryValuation ?? 0)}</div>
-        </div>
-        <div className="card">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-5">
           <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Cuentas por cobrar</div>
           <div className="mt-3 text-2xl font-bold text-slate-50">{currency(summary?.accountsReceivable ?? 0)}</div>
-        </div>
-        <div className="card">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-5">
           <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Última actualización</div>
           <div className="mt-3 text-sm font-semibold text-slate-200">
             {mounted && summary?.lastUpdatedAt ? new Date(summary.lastUpdatedAt).toLocaleString("es-MX") : "No disponible"}
           </div>
-        </div>
+        </SurfaceCard>
       </div>
     </div>
   );

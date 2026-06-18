@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Banknote, CircleCheckBig, Clock3, RefreshCw } from 'lucide-react';
+import { Badge, SurfaceCard } from '@white-label/ui';
 import { financeService } from '@/services/finance/financeService';
 import { ordersService } from '@/services/orders/ordersService';
 import { getActiveScope } from '@/lib/scope';
@@ -161,42 +162,42 @@ export default function FinanzasPage() {
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        <SurfaceCard elevated className="p-5">
           <div className="flex items-center justify-between">
             <span className="text-slate-400">Ingresos</span>
             <ArrowUpRight className="h-5 w-5 text-emerald-400" />
           </div>
           <div className="mt-3 text-3xl font-bold text-emerald-400">{currency(summary.income)}</div>
           <div className="mt-2 text-xs text-slate-400">Fuente: balance real del backend</div>
-        </div>
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-5">
           <div className="flex items-center justify-between">
             <span className="text-slate-400">Egresos</span>
             <ArrowDownRight className="h-5 w-5 text-rose-400" />
           </div>
           <div className="mt-3 text-3xl font-bold text-rose-400">{currency(summary.expense)}</div>
           <div className="mt-2 text-xs text-slate-400">Gastos y salidas reales</div>
-        </div>
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-5">
           <div className="flex items-center justify-between">
             <span className="text-slate-400">Balance</span>
             <Banknote className="h-5 w-5 text-sky-400" />
           </div>
           <div className="mt-3 text-3xl font-bold text-sky-300">{currency(summary.balance)}</div>
           <div className="mt-2 text-xs text-slate-400">No se calcula con datos inventados</div>
-        </div>
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        </SurfaceCard>
+        <SurfaceCard elevated className="p-5">
           <div className="flex items-center justify-between">
             <span className="text-slate-400">Órdenes con cobro</span>
             <CircleCheckBig className="h-5 w-5 text-cyan-400" />
           </div>
           <div className="mt-3 text-3xl font-bold text-cyan-400">{summary.validatedOrders}</div>
           <div className="mt-2 text-xs text-slate-400">{summary.pendingOrders} pendientes de validación visual</div>
-        </div>
+        </SurfaceCard>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+        <SurfaceCard elevated className="p-5">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-50">Movimientos de caja</h2>
             <span className="text-xs text-slate-400">Solo lectura desde API real</span>
@@ -225,10 +226,10 @@ export default function FinanzasPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </SurfaceCard>
 
         <div className="space-y-4">
-          <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <SurfaceCard elevated className="p-5">
             <h2 className="text-lg font-semibold text-slate-50">Validación de cobros</h2>
             <div className="mt-3 space-y-3">
               {recentOrders.length === 0 ? (
@@ -245,7 +246,9 @@ export default function FinanzasPage() {
                           <div className="font-medium text-sky-300">{order.folio}</div>
                           <div className="text-xs text-slate-400">{order.device_info?.customer_name || 'Cliente sin nombre'}</div>
                         </div>
-                        <span className={`rounded-full border px-2 py-0.5 text-xs ${state.tone}`}>{state.label}</span>
+                        <Badge variant={state.label.includes('validado') ? 'success' : state.label.includes('Pendiente') || state.label.includes('validación') ? 'warning' : 'neutral'}>
+                          {state.label}
+                        </Badge>
                       </div>
                       <div className="mt-2 flex items-center justify-between text-sm">
                         <span className="text-slate-400">Importe</span>
@@ -260,9 +263,9 @@ export default function FinanzasPage() {
                 })
               )}
             </div>
-          </div>
+          </SurfaceCard>
 
-          <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-5 shadow-[0_24px_70px_rgba(2,6,23,0.32)]">
+          <SurfaceCard elevated className="p-5">
             <h2 className="text-lg font-semibold text-slate-50">Flujo por sucursal</h2>
             <div className="mt-4 overflow-x-auto">
               <table className="w-full text-sm">
@@ -286,7 +289,7 @@ export default function FinanzasPage() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </SurfaceCard>
         </div>
       </div>
     </div>
