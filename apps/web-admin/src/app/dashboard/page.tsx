@@ -62,7 +62,7 @@ export default function DashboardPage() {
   const ordersLabel = getOrderLabel({ plural: true });
   const customersLabel = getCustomerLabel({ plural: true });
   const technicianLabel = getTechnicianLabel();
-  const { identity } = useTenantIdentity();
+  const { identity, isLoading: identityLoading } = useTenantIdentity();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [summary, setSummary] = useState<ReportsSummary | null>(null);
@@ -85,17 +85,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setMounted(true);
+    if (identityLoading) return;
+    if (identity?.role === 'technician') {
+      router.replace('/dashboard/tecnico');
+      return;
+    }
     loadData();
     // Auto-refresh every 60 seconds
     const interval = setInterval(() => loadData(), 60000);
     return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (identity?.role === 'technician') {
-      router.replace('/dashboard/tecnico');
-    }
-  }, [identity, router]);
+  }, [identity, identityLoading, router]);
 
   if (loading) {
     return (

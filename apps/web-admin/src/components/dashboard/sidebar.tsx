@@ -76,7 +76,7 @@ const DASHBOARD_MODULE_ACCESS: Partial<Record<string, TenantModuleKey>> = {
 const ROLE_ALLOWED_MODULES: Record<'owner' | 'manager' | 'technician' | 'client', string[] | null> = {
   owner: null,
   manager: null,
-  technician: ['dashboard', 'tecnico', 'operativo', 'solicitudes', 'clientes', 'tareas', 'archivo'],
+  technician: ['dashboard', 'tecnico', 'operativo', 'solicitudes', 'tareas', 'archivo'],
   client: ['dashboard', 'landing'],
 };
 

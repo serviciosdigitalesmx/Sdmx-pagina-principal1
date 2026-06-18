@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus, Search, RefreshCw, Edit2, Eye, Trash2, Phone, MessageSquare, Wrench } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
@@ -8,9 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CustomerModal } from '@/components/clientes/customer-modal';
 import { CustomerHistory } from '@/components/clientes/customer-history';
+import { useTenantIdentity } from '@/providers/TenantIdentityProvider';
 import type { Customer } from '@/types';
 
 export default function ClientesPage() {
+  const router = useRouter();
+  const { identity, isLoading: identityLoading } = useTenantIdentity();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -65,8 +69,13 @@ export default function ClientesPage() {
   };
 
   useEffect(() => {
+    if (identityLoading) return;
+    if (identity?.role === 'technician') {
+      router.replace('/dashboard/tecnico');
+      return;
+    }
     loadCustomers();
-  }, []);
+  }, [identity, identityLoading, router]);
 
   useEffect(() => {
     if (searchTerm) {
@@ -138,6 +147,10 @@ export default function ClientesPage() {
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-sky-500/25 border-t-sky-400" />
       </div>
     );
+  }
+
+  if (identity?.role === 'technician') {
+    return null;
   }
 
   if (loadError && customers.length === 0) {
