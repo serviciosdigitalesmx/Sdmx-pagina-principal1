@@ -161,26 +161,26 @@ export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
 
   if (tenantError || !tenant) {
     return (
-      <main className="min-h-screen bg-[#f7f9fc] px-4 py-6 text-slate-900">
+      <main className="min-h-screen bg-[#020617] px-4 py-6 text-slate-50">
         <div className="mx-auto max-w-6xl space-y-6">
-          <header className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+          <header className="rounded-[1.75rem] border border-white/10 bg-white/5 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-sky-200 bg-white">
-                  <span className="text-xl font-black text-sky-600">FX</span>
+                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-sky-400/20 bg-white/5">
+                  <span className="text-xl font-black text-sky-300">FX</span>
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-[0.35em] text-sky-500">Panel del cliente</p>
-                  <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-900">Seguimiento de reparación</h1>
-                  <p className="mt-1 text-sm text-slate-500">{tenantSlug}</p>
+                  <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-50">Seguimiento de reparación</h1>
+                  <p className="mt-1 text-sm text-slate-400">{tenantSlug}</p>
                 </div>
               </div>
             </div>
           </header>
 
-          <section className="rounded-[1.5rem] border border-rose-200 bg-white p-6 text-center shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
-            <p className="text-lg font-semibold text-slate-900">No se pudo cargar la información del taller.</p>
-            <p className="mt-2 text-sm text-slate-500">{tenantError || "El taller especificado no se encuentra registrado en el sistema."}</p>
+          <section className="rounded-[1.5rem] border border-rose-400/20 bg-white/5 p-6 text-center shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
+            <p className="text-lg font-semibold text-slate-50">No se pudo cargar la información del taller.</p>
+            <p className="mt-2 text-sm text-slate-400">{tenantError || "El taller especificado no se encuentra registrado en el sistema."}</p>
           </section>
         </div>
       </main>
@@ -189,27 +189,27 @@ export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
 
   return (
     <TenantBrandingProvider tenant={tenant}>
-      <main className="min-h-screen bg-[#f7f9fc] px-4 py-6 text-slate-900">
+      <main className="min-h-screen bg-[#020617] px-4 py-6 text-slate-50">
         <div className="mx-auto max-w-6xl space-y-6">
-          <header className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+          <header className="rounded-[1.75rem] border border-white/10 bg-white/5 p-5 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
             <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-sky-200 bg-white">
+                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-sky-400/20 bg-white/5">
                   {logoUrl ? (
                     <Image src={logoUrl} alt={tenantLabel} width={56} height={56} className="h-14 w-14 object-contain" />
                   ) : (
-                    <span className="text-xl font-black text-sky-600">{tenantLabel.slice(0, 2).toUpperCase()}</span>
+                    <span className="text-xl font-black text-sky-300">{tenantLabel.slice(0, 2).toUpperCase()}</span>
                   )}
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-[0.35em] text-sky-500">SRFIX · Seguimiento técnico</p>
-                  <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-900">Portal del cliente</h1>
-                  <p className="mt-1 text-sm text-slate-500">{tenantLabel}</p>
+                  <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-50">Portal del cliente</h1>
+                  <p className="mt-1 text-sm text-slate-400">{tenantLabel}</p>
                 </div>
               </div>
-              <div className="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-right">
-                <div className="text-xs uppercase tracking-[0.22em] text-sky-600">Fecha de hoy</div>
-                <div className="mt-1 text-sm font-semibold text-slate-700">{currentDate}</div>
+              <div className="rounded-2xl border border-sky-400/15 bg-sky-500/10 px-4 py-3 text-right">
+                <div className="text-xs uppercase tracking-[0.22em] text-sky-300">Fecha de hoy</div>
+                <div className="mt-1 text-sm font-semibold text-slate-200">{currentDate}</div>
               </div>
             </div>
           </header>
@@ -217,31 +217,31 @@ export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
           <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
             <form
               onSubmit={handleSubmit}
-              className="rounded-[1.75rem] border border-sky-100 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.06)]"
+              className="rounded-[1.75rem] border border-sky-400/15 bg-white/5 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.2)]"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-500">Nueva consulta</p>
-              <div className="mt-5 rounded-[1.4rem] border border-sky-100 bg-slate-50 p-4">
-                <label className="block text-sm font-medium text-slate-700">Folio</label>
+              <div className="mt-5 rounded-[1.4rem] border border-sky-400/15 bg-black/20 p-4">
+                <label className="block text-sm font-medium text-slate-200">Folio</label>
                 <input
                   value={folio}
                   onChange={(event) => setFolio(event.target.value)}
-                  className="mt-2 w-full rounded-2xl border border-sky-200 bg-white px-4 py-3 text-lg font-semibold tracking-[0.14em] text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-300/30"
+                  className="mt-2 w-full rounded-2xl border border-sky-400/20 bg-white/5 px-4 py-3 text-lg font-semibold tracking-[0.14em] text-slate-50 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-300/30"
                   required
                   placeholder="SRF-00133"
                 />
-                <p className="mt-2 text-xs text-slate-500">Ingresa el folio de tu orden o el token de acceso.</p>
-                {error ? <p className="mt-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
+                <p className="mt-2 text-xs text-slate-400">Ingresa el folio de tu orden o el token de acceso.</p>
+                {error ? <p className="mt-3 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
                 <button
                   disabled={loading}
-                  className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-sky-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:opacity-60"
+                  className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-sky-500/100 px-5 py-3 text-sm font-semibold text-white transition hover:bg-sky-400 disabled:opacity-60"
                 >
                   {loading ? "Consultando..." : "Consultar"}
                 </button>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-3 text-center text-xs text-slate-500">
+              <div className="mt-4 grid grid-cols-2 gap-3 text-center text-xs text-slate-400">
                 {["Datos reales", "Tenant aislado", "Documentos", "Timeline"].map((badge) => (
-                  <span key={badge} className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-4">
+                  <span key={badge} className="rounded-2xl border border-white/10 bg-black/20 px-3 py-4">
                     {badge}
                   </span>
                 ))}
@@ -249,61 +249,61 @@ export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
             </form>
 
             {result ? (
-              <aside className="rounded-[1.75rem] border border-sky-100 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+              <aside className="rounded-[1.75rem] border border-sky-400/15 bg-white/5 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
                 <div className="space-y-5">
-                  <div className="rounded-[1.5rem] border border-sky-200 bg-sky-50 p-5">
+                  <div className="rounded-[1.5rem] border border-sky-400/20 bg-sky-500/10 p-5">
                     <div className="text-sm uppercase tracking-[0.2em] text-sky-500">Folio</div>
-                    <div className="mt-1 text-3xl font-black tracking-tight text-sky-600">{result.order.folio}</div>
-                    <div className="mt-4 text-sm text-slate-600">
-                      Estado actual: <span className="font-semibold text-slate-900">{result.orderStatusLabel}</span>
+                    <div className="mt-1 text-3xl font-black tracking-tight text-sky-300">{result.order.folio}</div>
+                    <div className="mt-4 text-sm text-slate-300">
+                      Estado actual: <span className="font-semibold text-slate-50">{result.orderStatusLabel}</span>
                     </div>
                   </div>
 
-                  <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5">
-                    <div className="text-sm font-semibold text-sky-600">Información del equipo</div>
+                  <div className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5">
+                    <div className="text-sm font-semibold text-sky-300">Información del equipo</div>
                     <div className="mt-4 space-y-3">
-                      <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-2">
-                        <span className="text-sm text-slate-600">Equipo</span>
-                        <span className="text-sm font-semibold text-slate-900">{result.order.deviceType}</span>
+                      <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-2">
+                        <span className="text-sm text-slate-300">Equipo</span>
+                        <span className="text-sm font-semibold text-slate-50">{result.order.deviceType}</span>
                       </div>
-                      <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-2">
-                        <span className="text-sm text-slate-600">Marca/Modelo</span>
-                        <span className="text-sm font-semibold text-slate-900">{[result.order.deviceBrand, result.order.deviceModel].filter(Boolean).join(" ") || "No disponible"}</span>
+                      <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-2">
+                        <span className="text-sm text-slate-300">Marca/Modelo</span>
+                        <span className="text-sm font-semibold text-slate-50">{[result.order.deviceBrand, result.order.deviceModel].filter(Boolean).join(" ") || "No disponible"}</span>
                       </div>
-                      <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-2">
-                        <span className="text-sm text-slate-600">Falla reportada</span>
-                        <span className="text-sm font-semibold text-slate-900 text-right">{result.order.problemDescription}</span>
+                      <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-2">
+                        <span className="text-sm text-slate-300">Falla reportada</span>
+                        <span className="text-sm font-semibold text-slate-50 text-right">{result.order.problemDescription}</span>
                       </div>
                       <div className="flex items-center justify-between gap-4">
-                        <span className="text-sm text-slate-600">Fecha de ingreso</span>
-                        <span className="text-sm font-semibold text-slate-900">{formatDateOnly(result.order.createdAt)}</span>
+                        <span className="text-sm text-slate-300">Fecha de ingreso</span>
+                        <span className="text-sm font-semibold text-slate-50">{formatDateOnly(result.order.createdAt)}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-[1.4rem] border border-slate-200 bg-white p-4">
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Fecha promesa</div>
+                    <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
+                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Fecha promesa</div>
                       <div className="mt-2 text-lg font-bold text-orange-500">{formatDateOnly(result.order.promisedDate ?? null)}</div>
                     </div>
-                    <div className="rounded-[1.4rem] border border-slate-200 bg-white p-4">
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Días restantes</div>
-                      <div className="mt-2 text-lg font-bold text-slate-900">
+                    <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
+                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Días restantes</div>
+                      <div className="mt-2 text-lg font-bold text-slate-50">
                         {remainingDays === null ? "No disponible" : remainingDays > 0 ? `${remainingDays} días` : `${Math.abs(remainingDays)} días vencidos`}
                       </div>
                     </div>
-                    <div className="rounded-[1.4rem] border border-slate-200 bg-white p-4 sm:col-span-2">
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Última actualización</div>
-                      <div className="mt-2 text-lg font-bold text-slate-900">{formatDateOnly(result.order.updatedAt)}</div>
+                    <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4 sm:col-span-2">
+                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Última actualización</div>
+                      <div className="mt-2 text-lg font-bold text-slate-50">{formatDateOnly(result.order.updatedAt)}</div>
                     </div>
                   </div>
                 </div>
               </aside>
             ) : (
-              <aside className="flex min-h-[300px] flex-col items-center justify-center rounded-[1.75rem] border border-sky-100 bg-white p-6 text-center shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
-                <div className="mb-4 rounded-full border border-sky-200 bg-sky-50 p-4 text-2xl font-black text-sky-600">SR</div>
-                <h3 className="text-xl font-black text-slate-900">Seguimiento técnico</h3>
-                <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
+              <aside className="flex min-h-[300px] flex-col items-center justify-center rounded-[1.75rem] border border-sky-400/15 bg-white/5 p-6 text-center shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
+                <div className="mb-4 rounded-full border border-sky-400/20 bg-sky-500/10 p-4 text-2xl font-black text-sky-300">SR</div>
+                <h3 className="text-xl font-black text-slate-50">Seguimiento técnico</h3>
+                <p className="mt-2 max-w-sm text-sm leading-6 text-slate-400">
                   Ingresa el folio para consultar el estado de tu reparación, ver fotografías, documentos y mensajes del taller.
                 </p>
               </aside>
@@ -313,86 +313,86 @@ export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
           {result ? (
             <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
               <article className="space-y-6">
-                <section className="rounded-[1.75rem] border border-sky-100 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+                <section className="rounded-[1.75rem] border border-sky-400/15 bg-white/5 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-500">Seguimiento técnico</p>
-                      <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-900">Información del equipo</h2>
+                      <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-50">Información del equipo</h2>
                     </div>
-                    <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-600">
+                    <span className="rounded-full border border-sky-400/20 bg-sky-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-300">
                       {result.orderStatusLabel}
                     </span>
                   </div>
 
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                    <div className="rounded-[1.4rem] border border-sky-100 bg-sky-50 p-4">
+                    <div className="rounded-[1.4rem] border border-sky-400/15 bg-sky-500/10 p-4">
                       <p className="text-xs uppercase tracking-[0.24em] text-sky-500">Folio</p>
-                      <p className="mt-2 text-2xl font-black tracking-tight text-sky-600">{result.order.folio}</p>
+                      <p className="mt-2 text-2xl font-black tracking-tight text-sky-300">{result.order.folio}</p>
                     </div>
-                    <div className="rounded-[1.4rem] border border-sky-100 bg-white p-4">
-                      <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Estado actual</p>
-                      <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">{result.orderStatusLabel}</p>
+                    <div className="rounded-[1.4rem] border border-sky-400/15 bg-white/5 p-4">
+                      <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Estado actual</p>
+                      <p className="mt-2 text-2xl font-black tracking-tight text-slate-50">{result.orderStatusLabel}</p>
                     </div>
                   </div>
                 </section>
 
-                <section className="rounded-[1.75rem] border border-sky-100 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+                <section className="rounded-[1.75rem] border border-sky-400/15 bg-white/5 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
                   <div className="flex items-center gap-3">
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-500 text-sm font-bold text-white">i</span>
-                    <h3 className="text-xl font-black text-sky-600">Información del equipo</h3>
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/100 text-sm font-bold text-white">i</span>
+                    <h3 className="text-xl font-black text-sky-300">Información del equipo</h3>
                   </div>
-                  <div className="mt-5 divide-y divide-sky-100 overflow-hidden rounded-[1.4rem] border border-sky-100">
+                  <div className="mt-5 divide-y divide-sky-100 overflow-hidden rounded-[1.4rem] border border-sky-400/15">
                     {[
                       ["Equipo", result.order.deviceType],
                       ["Marca/Modelo", [result.order.deviceBrand, result.order.deviceModel].filter(Boolean).join(" ") || "No disponible"],
                       ["Falla reportada", result.order.problemDescription],
                       ["Fecha de ingreso", formatDateOnly(result.order.createdAt)],
                     ].map(([label, value]) => (
-                      <div key={label as string} className="flex items-center justify-between gap-4 bg-white px-4 py-3">
-                        <span className="text-sm text-slate-600">{label as string}</span>
-                        <span className="text-sm font-semibold text-slate-900 text-right">{String(value)}</span>
+                      <div key={label as string} className="flex items-center justify-between gap-4 bg-white/5 px-4 py-3">
+                        <span className="text-sm text-slate-300">{label as string}</span>
+                        <span className="text-sm font-semibold text-slate-50 text-right">{String(value)}</span>
                       </div>
                     ))}
                   </div>
                 </section>
 
-                <section className="rounded-[1.75rem] border border-sky-100 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+                <section className="rounded-[1.75rem] border border-sky-400/15 bg-white/5 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
                   <div className="flex items-center gap-3">
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-500 text-sm font-bold text-white">📅</span>
-                    <h3 className="text-xl font-black text-sky-600">Fechas importantes</h3>
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/100 text-sm font-bold text-white">📅</span>
+                    <h3 className="text-xl font-black text-sky-300">Fechas importantes</h3>
                   </div>
-                  <div className="mt-5 divide-y divide-sky-100 overflow-hidden rounded-[1.4rem] border border-sky-100">
+                  <div className="mt-5 divide-y divide-sky-100 overflow-hidden rounded-[1.4rem] border border-sky-400/15">
                     {[
                       ["Fecha promesa", formatDateOnly(result.order.promisedDate ?? null), "text-orange-500"],
-                      ["Días restantes", remainingDays === null ? "No disponible" : remainingDays > 0 ? `${remainingDays} días` : `${Math.abs(remainingDays)} días vencidos`, "text-slate-900"],
-                      ["Última actualización", formatDateOnly(result.order.updatedAt), "text-slate-900"],
+                      ["Días restantes", remainingDays === null ? "No disponible" : remainingDays > 0 ? `${remainingDays} días` : `${Math.abs(remainingDays)} días vencidos`, "text-slate-50"],
+                      ["Última actualización", formatDateOnly(result.order.updatedAt), "text-slate-50"],
                     ].map(([label, value, tone]) => (
-                      <div key={label as string} className="flex items-center justify-between gap-4 bg-white px-4 py-3">
-                        <span className="text-sm text-slate-600">{label as string}</span>
+                      <div key={label as string} className="flex items-center justify-between gap-4 bg-white/5 px-4 py-3">
+                        <span className="text-sm text-slate-300">{label as string}</span>
                         <span className={`text-sm font-semibold ${tone as string}`}>{String(value)}</span>
                       </div>
                     ))}
                   </div>
                 </section>
 
-                <section className="rounded-[1.75rem] border border-sky-100 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+                <section className="rounded-[1.75rem] border border-sky-400/15 bg-white/5 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
                   <div className="flex items-center gap-3">
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-500 text-sm font-bold text-white">⇄</span>
-                    <h3 className="text-xl font-black text-sky-600">Seguimiento</h3>
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/100 text-sm font-bold text-white">⇄</span>
+                    <h3 className="text-xl font-black text-sky-300">Seguimiento</h3>
                   </div>
                   <div className="mt-5 space-y-4">
                     {result.timeline.map((step, index) => {
                       const completed = step.status === "completed";
                       const active = step.status === "in_progress";
                       return (
-                        <div key={step.id} className="flex gap-4 rounded-[1.25rem] border border-sky-100 bg-slate-50 p-4">
-                          <div className={`mt-1 h-3 w-3 rounded-full ${completed ? "bg-emerald-500" : active ? "bg-sky-500" : "bg-slate-300"}`} />
+                        <div key={step.id} className="flex gap-4 rounded-[1.25rem] border border-sky-400/15 bg-black/20 p-4">
+                          <div className={`mt-1 h-3 w-3 rounded-full ${completed ? "bg-emerald-500" : active ? "bg-sky-500/100" : "bg-slate-300"}`} />
                           <div className="flex-1">
                             <div className="flex items-center justify-between gap-3">
-                              <p className="font-semibold text-slate-900">{step.label}</p>
-                              <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-500">{index + 1}</span>
+                              <p className="font-semibold text-slate-50">{step.label}</p>
+                              <span className="text-[10px] font-black uppercase tracking-[0.22em] text-slate-400">{index + 1}</span>
                             </div>
-                            <p className="mt-1 text-sm leading-6 text-slate-500">{step.note}</p>
+                            <p className="mt-1 text-sm leading-6 text-slate-400">{step.note}</p>
                           </div>
                         </div>
                       );
@@ -405,7 +405,7 @@ export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
               </article>
 
               <aside className="space-y-4">
-                <section className="rounded-[1.75rem] border border-sky-100 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+                <section className="rounded-[1.75rem] border border-sky-400/15 bg-white/5 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-500">Acciones</p>
                   <div className="mt-4 space-y-3">
                     {whatsappHref ? (
@@ -423,7 +423,7 @@ export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
                         href={generatedPdfHref}
                         target="_blank"
                         rel="noreferrer"
-                        className="block rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-center text-sm font-semibold text-sky-700 transition hover:bg-sky-100"
+                        className="block rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-center text-sm font-semibold text-sky-700 transition hover:bg-sky-100"
                       >
                         Imprimir / Guardar PDF
                       </a>
@@ -433,7 +433,7 @@ export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
                         href={mapUrl}
                         target="_blank"
                         rel="noreferrer"
-                        className="block rounded-2xl border border-slate-200 bg-white px-4 py-3 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                        className="block rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-center text-sm font-semibold text-slate-200 transition hover:bg-black/20"
                       >
                         Visítanos
                       </a>
@@ -441,7 +441,7 @@ export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
                   </div>
                 </section>
 
-                <section className="rounded-[1.75rem] border border-sky-100 bg-white p-6 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+                <section className="rounded-[1.75rem] border border-sky-400/15 bg-white/5 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-500">Últimos movimientos</p>
                   <div className="mt-4 space-y-3">
                     {(result.messages.length > 0
@@ -455,9 +455,9 @@ export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
                         })))
                       .slice(0, 5)
                       .map((message) => (
-                        <div key={message.id} className="rounded-[1.25rem] border border-slate-200 bg-slate-50 px-4 py-3">
-                          <div className="text-sm font-semibold text-slate-900">{message.from ?? "Taller"}</div>
-                          <div className="mt-1 text-sm text-slate-600">{message.content}</div>
+                        <div key={message.id} className="rounded-[1.25rem] border border-white/10 bg-black/20 px-4 py-3">
+                          <div className="text-sm font-semibold text-slate-50">{message.from ?? "Taller"}</div>
+                          <div className="mt-1 text-sm text-slate-300">{message.content}</div>
                           <div className="mt-1 text-xs uppercase tracking-[0.18em] text-slate-400">{formatDate(message.date)}</div>
                         </div>
                       ))}
@@ -468,22 +468,22 @@ export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
           ) : null}
 
           {hasSearched && !result ? (
-            <section className="rounded-[1.75rem] border border-dashed border-sky-200 bg-white p-8 text-center text-slate-500 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
-              <p className="text-lg font-semibold text-slate-900">No encontramos una orden con ese folio</p>
+            <section className="rounded-[1.75rem] border border-dashed border-sky-400/20 bg-white/5 p-8 text-center text-slate-400 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
+              <p className="text-lg font-semibold text-slate-50">No encontramos una orden con ese folio</p>
               <p className="mt-2 text-sm">Ingresa un folio válido para ver el estado de tu reparación.</p>
             </section>
           ) : null}
 
-          <footer className="rounded-[1.5rem] border border-sky-100 bg-white p-5 text-sm text-slate-500 shadow-[0_12px_30px_rgba(15,23,42,0.06)]">
+          <footer className="rounded-[1.5rem] border border-sky-400/15 bg-white/5 p-5 text-sm text-slate-400 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <div className="font-semibold text-slate-900">{tenantLabel}</div>
+                <div className="font-semibold text-slate-50">{tenantLabel}</div>
                 <div>Panel de seguimiento y atención para clientes.</div>
               </div>
               <div className="flex flex-wrap gap-3">
                 <span>© {new Date().getFullYear()}</span>
                 <span>·</span>
-                <Link href="/" className="font-semibold text-sky-600">
+                <Link href="/" className="font-semibold text-sky-300">
                   Privacidad
                 </Link>
               </div>
