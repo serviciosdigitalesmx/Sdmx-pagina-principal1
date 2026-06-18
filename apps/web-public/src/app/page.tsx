@@ -6,8 +6,12 @@ import { resolveAdminUrl } from "@/lib/admin-url";
 const productName = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "FIXI";
 const brandShort = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_SHORT") ?? "FX";
 const hubName = optionalEnv("NEXT_PUBLIC_HUB_NAME") ?? "Hub";
-const adminUrl = optionalEnv("NEXT_PUBLIC_WEB_ADMIN_URL") ?? "";
-const publicUrl = optionalEnv("NEXT_PUBLIC_WEB_PUBLIC_URL") ?? "";
+const publicUrl =
+  optionalEnv("NEXT_PUBLIC_WEB_PUBLIC_URL") ??
+  "https://serviciosdigitalesmx.online";
+const adminUrl =
+  optionalEnv("NEXT_PUBLIC_WEB_ADMIN_URL") ??
+  "https://admin.serviciosdigitalesmx.online";
 const trialDays = optionalEnv("NEXT_PUBLIC_SAAS_TRIAL_DAYS") ?? "7";
 const contactEmail = optionalEnv("NEXT_PUBLIC_SAAS_CONTACT_EMAIL") ?? "";
 const contactPhone = optionalEnv("NEXT_PUBLIC_SAAS_CONTACT_PHONE") ?? "";

@@ -25,10 +25,10 @@ export function resolveAdminUrl() {
 
   const baseDomain = resolveBaseDomain();
   if (baseDomain) {
-    return `https://app.${baseDomain}`;
+    return `https://admin.${baseDomain}`;
   }
 
-  return null;
+  return "https://admin.serviciosdigitalesmx.online";
 }
 
 export function resolveAdminBridgeUrl(token: string, tenant?: string | null) {
