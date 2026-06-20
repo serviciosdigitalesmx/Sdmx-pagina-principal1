@@ -9,12 +9,13 @@ Fuente canónica:
 ## Compatibilidad con Canonical
 
 - **Tablas canónicas usadas:** `tenants`, `users`, `customers`, `repair_orders`, `quotations`, `quotation_items`, `audit_logs`.
+- **Nota de alcance:** `quotations` y `quotation_items` son nombres canónicos de dominio; no tienen tabla física en el estado actual del repo y no forman parte del bloque T01/T03/T02.
 - **Cambios de esquema propuestos:**
   - `branches`: Para soportar múltiples sucursales separadas operativamente. Impacto: Alto (añadir `branch_id` a operaciones).
   - `tenant_memberships` y `user_roles`: Para escalar multi-tenant puro y permisos granulares. Impacto: Medio-Alto (migrar `users.tenant_id` y `users.roles`).
-  - `devices` y `device_categories`: Para independizar historial de equipo de las órdenes. Impacto: Alto (migrar campos inline de `repair_orders`).
+  - `devices` y `device_categories`: Para independizar historial de equipo de las órdenes. Impacto: Alto. En el estado actual del repo, el bloque T01/T03/T02 no depende de estas tablas y el dato del equipo sigue inline en `repair_orders`/`service_orders`.
 - **Dependencias:** Ninguna, es el módulo base.
-- **Decisiones abiertas:** Ninguna. Se respeta el modelo canónico actual de 9 estados, con dispositivos inline y roles en array.
+- **Decisiones abiertas:** Ninguna para el bloque T01/T03/T02. Se respeta el modelo canónico actual de 9 estados, con dispositivos inline y roles en array.
 
 ---
 
@@ -23,7 +24,7 @@ Fuente canónica:
 - Todo dato operativo pertenece a un tenant, definido en `tenants`.
 - Los usuarios se asocian directamente al tenant mediante `users.tenant_id`.
 - Los roles se manejan directamente en `users.roles TEXT[]`.
-- Los dispositivos se capturan directamente en `repair_orders`.
+- Los dispositivos se capturan directamente en `repair_orders` / `service_orders`.
 - Se mantiene estrictamente el ciclo canónico de 9 estados en `repair_orders`.
 - Toda tabla operativa usa aislamiento por `tenant_id`.
 - T04 ya está aprobado para producción temprana y rige toda acción crítica.
@@ -114,6 +115,7 @@ Representar el expediente central de una reparación.
 - Se utilizan los nombres físicos canónicos (`repair_orders`).
 - Se mantiene el ciclo de vida estricto de 9 estados canónicos. No se introducen estados extra sin decisión de producto formal.
 - Cada transición crítica entre los 9 estados genera auditoría en `audit_logs`.
+- La evidencia operativa y documental para recepción y soporte se modela con tablas dedicadas del bloque T01/T02, no con `order_photos`.
 
 ## Presupuesto
 

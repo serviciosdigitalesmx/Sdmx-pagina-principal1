@@ -8,7 +8,8 @@ Fuente canónica:
 
 ## Compatibilidad con Canonical
 
-- **Tablas canónicas usadas:** `tenants`, `repair_orders`, `users`, `audit_logs`, `parts`, `stock_movements`, `repair_log`, `warranty_claims`, `quotations`, `quotation_items`, `customers`, `order_photos`.
+- **Tablas canónicas usadas:** `tenants`, `repair_orders`, `users`, `audit_logs`, `parts`, `stock_movements`, `repair_log`, `warranty_claims`, `quotations`, `quotation_items`, `customers`, `service_order_documents`, `service_order_events`.
+- **Nota de alcance:** `quotations` y `quotation_items` siguen siendo nombres canónicos de dominio; en el repositorio actual no existe su tabla física y no bloquean T01/T03/T02.
 - **Cambios de esquema propuestos:**
   - `inventory_reservations`: Para soportar reserva estricta de piezas por orden sin consumir inmediatamente el stock (T07). Impacto: Medio. Hasta su aprobación, las piezas pasan de disponible a consumido directo, o se maneja a nivel de aplicación con un estado temporal en `stock_movements`.
   - `device_history_views`: Vistas especializadas o tablas separadas si la consolidación por `repair_orders.serial_number` es ineficiente en despliegues muy grandes (T09). Impacto: Medio-Bajo.
@@ -103,7 +104,7 @@ Reducir fricción y registrar aceptación formal de presupuestos.
 
 - `repair_orders`
 - `quotations`
-- `order_photos` (para evidencia de firma, si aplica)
+- `service_order_documents` (para evidencia de firma o anexos, si aplica)
 
 ### Contratos Del Sistema
 
@@ -120,7 +121,7 @@ Autoservicio para cliente y transparencia limitada (sin exponer notas internas).
 
 - `repair_orders`
 - `customers`
-- `order_photos`
+- `service_order_documents`
 - `quotations`
 - `warranty_claims`
 

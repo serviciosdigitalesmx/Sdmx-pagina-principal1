@@ -8,13 +8,10 @@ Fuente canónica:
 
 ## Compatibilidad con Canonical
 
-- **Tablas canónicas usadas:** `tenants`, `customers`, `repair_orders`, `order_photos`, `payments`, `cash_register`, `cash_movements`, `audit_logs`.
-- **Cambios de esquema propuestos:**
-  - `order_checklist`: Para estructura formal de checklist legal. Impacto: Bajo (actualmente mitigable usando JSONB en `repair_orders` o `order_photos`).
-  - `device_categories`: Para exigir el tipo de identificador. Impacto: Bajo (hasta entonces se valida a nivel aplicación o configuración del tenant).
-  - Campos de consentimiento en `customers` (`data_consent_status`, `data_consent_date`, etc.): Para gestión fina de permisos GDPR. Impacto: Medio.
+- **Tablas canónicas usadas:** `tenants`, `customers`, `repair_orders`, `service_order_checklists`, `service_order_documents`, `service_order_events`, `payments`, `cash_register`, `cash_movements`, `audit_logs`.
+- **Cambios de esquema propuestos:** ninguno para T01/T03/T02 dentro de esta spec.
 - **Dependencias:** Spec 01 (Fundaciones).
-- **Decisiones abiertas:** Si el checklist legal (T01) vivirá en tabla separada o se inyectará como JSONB en una columna extra de `repair_orders` hasta que se aprueben cambios de esquema.
+- **Decisiones cerradas:** el checklist legal vive sobre `service_order_checklists`; la evidencia nueva vive en `service_order_documents` y `service_order_events`; el consentimiento no se mezcla con `PUT /customers/:id`.
 
 ---
 
@@ -29,15 +26,16 @@ Garantizar que una orden no quede recibida sin registrar condición física, acc
 - `tenants`
 - `users`
 - `customers`
-- `repair_orders`
-- `order_photos`
+- `repair_orders` / `service_orders`
+- `service_order_checklists`
 - `audit_logs`
 
 ### Contratos Del Sistema
 
-- La obligatoriedad depende de `tenants`.
-- `repair_orders.status` bloquea transición al siguiente estado si falta el checklist.
-- *CAMBIO DE ESQUEMA PROPUESTO:* Tabla `order_checklist` separada. Actualmente se maneja mediante `order_photos` con `photo_type='checkin'` para evidencia, o se almacena de forma plana/json.
+- La obligatoriedad depende de la configuración del tenant.
+- `service_order_checklists` guarda el checklist legal de recepción.
+- `service_orders.status` debe respetar la validación del backend cuando el tenant exige checklist.
+- La auditoría central debe registrar la creación y actualización del checklist con `request_id`.
 
 ## T02 — Consentimiento, Retención y Control De Evidencias
 
@@ -49,15 +47,18 @@ Controlar clasificación y visibilidad de evidencias asociadas a órdenes.
 
 - `tenants`
 - `customers`
-- `repair_orders`
-- `order_photos`
+- `repair_orders` / `service_orders`
+- `service_order_documents`
+- `service_order_events`
 - `audit_logs`
 
 ### Contratos Del Sistema
 
+- La fuente primaria de evidencia nueva es `service_order_documents`.
+- La fuente primaria de timeline/eventos es `service_order_events`.
+- `service_orders.evidence_metadata` queda únicamente como puente legacy temporal.
 - Evidencia interna nunca aparece en portal cliente.
-- Toda evidencia usa la tabla canónica `order_photos`.
-- *CAMBIO DE ESQUEMA PROPUESTO:* Columnas explícitas de `data_consent_*` en `customers`. Mientras tanto, el consentimiento se maneja en configuración general.
+- El consentimiento legal se gestiona en `PATCH /customers/:id/consent`, no en `PUT /customers/:id`.
 
 ## T03 — IMEI/Serie Obligatorio Configurable
 
@@ -68,13 +69,16 @@ Identificar equipos de forma confiable según su categoría.
 ### Tablas Utilizadas
 
 - `tenants`
-- `repair_orders`
+- `repair_orders` / `service_orders`
 - `customers`
 
 ### Contratos Del Sistema
 
-- Se utiliza el campo `repair_orders.serial_number` o campos similares aprobados en la fuente de verdad.
-- *CAMBIO DE ESQUEMA PROPUESTO:* Tablas `device_categories` y `devices` separadas. Actualmente la lógica vive en la aplicación mapeada a `repair_orders`.
+- La fuente única de verdad es `tenant_field_definitions`.
+- `service_orders.serial_number` aplica para recepción interna.
+- `service_requests.serial_number` aplica para solicitud/cotización pública.
+- La obligatoriedad no se duplica en frontend.
+- No depende de `device_categories` en este bloque.
 
 ## T05 — Motor De Caja Ligado A Órdenes
 
