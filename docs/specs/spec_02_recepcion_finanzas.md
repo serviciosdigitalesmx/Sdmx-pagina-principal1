@@ -8,7 +8,7 @@ Fuente canónica:
 
 ## Compatibilidad con Canonical
 
-- **Tablas canónicas usadas:** `tenants`, `customers`, `repair_orders`, `service_order_checklists`, `service_order_documents`, `service_order_events`, `payments`, `cash_register`, `cash_movements`, `audit_logs`.
+- **Tablas canónicas usadas:** `tenants`, `customers`, `repair_orders`, `service_order_checklists`, `service_order_documents`, `service_order_events`, `customer_payments`, `expenses`, `finances`, `audit_logs`.
 - **Cambios de esquema propuestos:** ninguno para T01/T03/T02 dentro de esta spec.
 - **Dependencias:** Spec 01 (Fundaciones).
 - **Decisiones cerradas:** el checklist legal vive sobre `service_order_checklists`; la evidencia nueva vive en `service_order_documents` y `service_order_events`; el consentimiento no se mezcla con `PUT /customers/:id`.
@@ -84,38 +84,44 @@ Identificar equipos de forma confiable según su categoría.
 
 ### Objetivo Técnico
 
-Vincular ingresos con órdenes, caja y sucursales.
+Vincular ingresos y egresos con órdenes, sucursal y reporte financiero.
 
 ### Tablas Utilizadas
 
 - `tenants`
-- `repair_orders`
+- `repair_orders` / `service_orders`
 - `customers`
-- `payments`
-- `cash_register`
-- `cash_movements`
+- `customer_payments`
+- `expenses`
+- `finances`
 - `audit_logs`
 
 ### Contratos Del Sistema
 
-- Todo pago usa la tabla canónica `payments`.
-- Los flujos de caja usan `cash_register` y `cash_movements`.
-- Los campos financieros de la orden deben reflejar los pagos asociados (`total_paid`, `balance_due`).
+- Todo ingreso de cliente se registra en `customer_payments`.
+- Todo egreso operativo se registra en `expenses`.
+- `finances` funciona como resumen financiero por tenant/sucursal.
+- El monto de la orden se calcula desde `service_orders.final_cost` o `estimated_cost` según el flujo aplicable.
+- No se inventan tablas de caja nuevas dentro de este bloque.
 
 ## T06 — Cancelaciones, Reembolsos y Ajustes Financieros
 
 ### Objetivo Técnico
 
-Permitir correcciones financieras mediante movimientos nuevos sin alterar la historia.
+Permitir correcciones financieras sin destruir historial de ingresos/egresos.
 
 ### Tablas Utilizadas
 
 - `tenants`
-- `repair_orders`
-- `payments`
+- `repair_orders` / `service_orders`
+- `customer_payments`
+- `expenses`
+- `finances`
 - `audit_logs`
 
 ### Contratos Del Sistema
 
-- Todo ajuste usa registros de reversa en `payments` o un `cash_movement` justificado, para mantener integridad de `payments`.
-- *CAMBIO DE ESQUEMA PROPUESTO:* Tabla separada para `adjustments` y `refunds` si la lógica requiere mayor detalle que el provisto por `payments`.
+- Todo ajuste debe registrarse como nuevo movimiento o reversa lógica, no como edición destructiva del registro original.
+- Los reembolsos deben referenciar el pago original en `customer_payments`.
+- Las cancelaciones operativas de orden no deben borrar `customer_payments` ni `expenses`.
+- Si el ajuste afecta el resumen financiero, `finances` debe reflejar el impacto por tenant/sucursal.
