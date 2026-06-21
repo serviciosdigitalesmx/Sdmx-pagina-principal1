@@ -17,6 +17,12 @@ export type OrderIntakeFormState = {
   powersOn: boolean;
   backupRequired: boolean;
   intakeNotes: string;
+  cosmeticCondition: string;
+  reportedPhysicalDamage: string;
+  accessoriesReceived: string;
+  customerAcceptanceRequired: boolean;
+  acceptedAt: string;
+  acceptedByName: string;
   promisedDate: string;
   estimatedCost: string;
   includeIva: boolean;
@@ -281,6 +287,38 @@ export function OrderIntakeModal({
                     </div>
 
                     <div className="rounded-[22px] border border-sky-500/10 bg-black/20 p-4">
+                      <div className="mb-3 text-lg font-semibold text-sky-400">Checklist legal</div>
+                      <div className="grid gap-4">
+                        <label className="space-y-2">
+                          <span className="text-sm text-zinc-300">Condición cosmética</span>
+                          <textarea value={form.cosmeticCondition} onChange={(e) => onChange("cosmeticCondition", e.target.value)} rows={3} placeholder="Rayones, golpes, humedad visible, pantalla, carcasa" className="w-full rounded-2xl border border-sky-400/30 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none placeholder:text-zinc-500" />
+                        </label>
+                        <label className="space-y-2">
+                          <span className="text-sm text-zinc-300">Daño físico reportado</span>
+                          <textarea value={form.reportedPhysicalDamage} onChange={(e) => onChange("reportedPhysicalDamage", e.target.value)} rows={3} placeholder="Ej: golpe en esquina, pantalla rota, equipo mojado" className="w-full rounded-2xl border border-sky-400/30 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none placeholder:text-zinc-500" />
+                        </label>
+                        <label className="space-y-2">
+                          <span className="text-sm text-zinc-300">Accesorios recibidos</span>
+                          <textarea value={form.accessoriesReceived} onChange={(e) => onChange("accessoriesReceived", e.target.value)} rows={2} placeholder="Ej: cargador, funda, SIM, memoria, caja" className="w-full rounded-2xl border border-sky-400/30 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none placeholder:text-zinc-500" />
+                        </label>
+                        <label className="flex items-center gap-3 text-zinc-100">
+                          <input type="checkbox" checked={form.customerAcceptanceRequired} onChange={(e) => onChange("customerAcceptanceRequired", e.target.checked)} className="h-5 w-5 rounded border-zinc-700" />
+                          <span>Requiere aceptación del cliente</span>
+                        </label>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <label className="space-y-2">
+                            <span className="text-sm text-zinc-300">Fecha de aceptación</span>
+                            <input value={form.acceptedAt} onChange={(e) => onChange("acceptedAt", e.target.value)} type="date" className="w-full rounded-2xl border border-sky-400/30 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none" />
+                          </label>
+                          <label className="space-y-2">
+                            <span className="text-sm text-zinc-300">Nombre de quien acepta</span>
+                            <input value={form.acceptedByName} onChange={(e) => onChange("acceptedByName", e.target.value)} placeholder="Nombre completo" className="w-full rounded-2xl border border-sky-400/30 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none placeholder:text-zinc-500" />
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-[22px] border border-sky-500/10 bg-black/20 p-4">
                       <div className="mb-3 text-lg font-semibold text-slate-200">Foto del estado en recepción</div>
                       <label className="flex cursor-pointer flex-col gap-3 rounded-2xl border border-dashed border-sky-400/40 bg-slate-950/60 px-4 py-5 transition hover:border-sky-300/70 hover:bg-slate-950">
                         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -345,6 +383,10 @@ export function OrderIntakeModal({
                           <div className="flex justify-between border-b border-sky-500/10 pb-2"><span className="text-zinc-400">Equipo:</span><span className="font-semibold text-zinc-50">{`${form.deviceType || "-"} - ${form.deviceModel || "-"}`}</span></div>
                           <div className="flex justify-between border-b border-sky-500/10 pb-2"><span className="text-zinc-400">Falla:</span><span className="font-semibold text-zinc-50">{form.issue || "-"}</span></div>
                           <div className="flex justify-between border-b border-sky-500/10 pb-2"><span className="text-zinc-400">Checklist:</span><span className="font-semibold text-zinc-50">{[form.hasCharger ? "⚡ Cargador" : null, form.powersOn ? "⏻ Prende" : null, form.screenCondition ? "Pantalla OK" : null, form.backupRequired ? "Respaldado" : null].filter(Boolean).join(" • ") || "Sin marcar"}</span></div>
+                          <div className="flex justify-between border-b border-sky-500/10 pb-2"><span className="text-zinc-400">Condición cosmética:</span><span className="max-w-[55%] text-right font-semibold text-zinc-50">{form.cosmeticCondition || "-"}</span></div>
+                          <div className="flex justify-between border-b border-sky-500/10 pb-2"><span className="text-zinc-400">Daño físico:</span><span className="max-w-[55%] text-right font-semibold text-zinc-50">{form.reportedPhysicalDamage || "-"}</span></div>
+                          <div className="flex justify-between border-b border-sky-500/10 pb-2"><span className="text-zinc-400">Accesorios:</span><span className="max-w-[55%] text-right font-semibold text-zinc-50">{form.accessoriesReceived || "-"}</span></div>
+                          <div className="flex justify-between border-b border-sky-500/10 pb-2"><span className="text-zinc-400">Aceptación:</span><span className="font-semibold text-zinc-50">{form.customerAcceptanceRequired ? form.acceptedByName || "Requerida" : "No requerida"}</span></div>
                           <div className="flex justify-between border-b border-sky-500/10 pb-2"><span className="text-zinc-400">Foto recepción:</span><span className="font-semibold text-zinc-50">{files.intakePhotos[0]?.name ?? "Adjunta"}</span></div>
                           <div className="flex justify-between border-b border-sky-500/10 pb-2"><span className="text-zinc-400">Entrega:</span><span className="font-semibold text-orange-400">{dateLabel || "-"}</span></div>
                           <div className="flex justify-between"><span className="text-zinc-400">Costo estimado:</span><span className="font-semibold text-zinc-50">${Number(form.estimatedCost || 0).toFixed(2)}</span></div>

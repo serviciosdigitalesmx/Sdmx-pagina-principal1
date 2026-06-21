@@ -69,6 +69,12 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderM
   const [powersOn, setPowersOn] = useState(false);
   const [backupRequired, setBackupRequired] = useState(false);
   const [checklistNotes, setChecklistNotes] = useState('');
+  const [cosmeticCondition, setCosmeticCondition] = useState('');
+  const [reportedPhysicalDamage, setReportedPhysicalDamage] = useState('');
+  const [accessoriesReceived, setAccessoriesReceived] = useState('');
+  const [customerAcceptanceRequired, setCustomerAcceptanceRequired] = useState(false);
+  const [acceptedAt, setAcceptedAt] = useState('');
+  const [acceptedByName, setAcceptedByName] = useState('');
 
   useEffect(() => {
     if (order && open) {
@@ -120,6 +126,12 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderM
         setPowersOn(payload.checklist.powers_on);
         setBackupRequired(payload.checklist.backup_required);
         setChecklistNotes(payload.checklist.notes || '');
+        setCosmeticCondition(payload.checklist.cosmetic_condition || '');
+        setReportedPhysicalDamage(payload.checklist.reported_physical_damage || '');
+        setAccessoriesReceived(payload.checklist.accessories_received || '');
+        setCustomerAcceptanceRequired(payload.checklist.customer_acceptance_required || false);
+        setAcceptedAt(payload.checklist.accepted_at ? String(payload.checklist.accepted_at).slice(0, 10) : '');
+        setAcceptedByName(payload.checklist.accepted_by_name || '');
       }
 
       setDocuments(payload?.documents || []);
@@ -172,6 +184,12 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderM
         powersOn,
         backupRequired,
         notes: checklistNotes,
+        cosmeticCondition,
+        reportedPhysicalDamage,
+        accessoriesReceived,
+        customerAcceptanceRequired,
+        acceptedAt: acceptedAt ? new Date(acceptedAt).toISOString() : '',
+        acceptedByName,
       }, getApiOptions());
 
       // Update internal notes and customer tracking
@@ -382,6 +400,62 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderM
                 <div>
                   <Label>Notas del checklist</Label>
                   <Textarea value={checklistNotes} onChange={(e) => setChecklistNotes(e.target.value)} rows={3} />
+                </div>
+
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+                  <h4 className="mb-3 text-sm font-semibold text-slate-300">Checklist legal de recepción</h4>
+                  <div className="grid gap-4">
+                    <div>
+                      <Label>Condición cosmética</Label>
+                      <Textarea
+                        value={cosmeticCondition}
+                        onChange={(e) => setCosmeticCondition(e.target.value)}
+                        placeholder="Rayones, golpes, humedad visible, pantalla, carcasa"
+                        rows={3}
+                      />
+                    </div>
+                    <div>
+                      <Label>Daño físico reportado</Label>
+                      <Textarea
+                        value={reportedPhysicalDamage}
+                        onChange={(e) => setReportedPhysicalDamage(e.target.value)}
+                        placeholder="Ej: golpe en esquina, pantalla rota, equipo mojado"
+                        rows={3}
+                      />
+                    </div>
+                    <div>
+                      <Label>Accesorios recibidos</Label>
+                      <Textarea
+                        value={accessoriesReceived}
+                        onChange={(e) => setAccessoriesReceived(e.target.value)}
+                        placeholder="Ej: cargador, funda, SIM, memoria, caja"
+                        rows={2}
+                      />
+                    </div>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={customerAcceptanceRequired}
+                        onChange={(e) => setCustomerAcceptanceRequired(e.target.checked)}
+                        className="w-4 h-4 accent-sky-400"
+                      />
+                      <span>Requiere aceptación del cliente</span>
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Fecha de aceptación</Label>
+                        <Input type="date" value={acceptedAt} onChange={(e) => setAcceptedAt(e.target.value)} />
+                      </div>
+                      <div>
+                        <Label>Nombre de quien acepta</Label>
+                        <Input
+                          value={acceptedByName}
+                          onChange={(e) => setAcceptedByName(e.target.value)}
+                          placeholder="Nombre completo"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
 

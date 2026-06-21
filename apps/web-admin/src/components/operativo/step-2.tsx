@@ -218,6 +218,96 @@ export function Step2({ data, onSubmit, onBack, onUpdate }: Step2Props) {
         </div>
       </div>
 
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
+        <p className="mb-3 text-sm font-semibold text-slate-400">Checklist legal de recepción</p>
+        <div className="grid gap-4">
+          <div>
+            <Label>Condición cosmética</Label>
+            <Textarea
+              value={localData.legalChecklist.cosmeticCondition}
+              onChange={(e) => {
+                const legalChecklist = { ...localData.legalChecklist, cosmeticCondition: e.target.value };
+                const next = { ...localData, legalChecklist };
+                setLocalData(next);
+                onUpdate({ legalChecklist });
+              }}
+              placeholder="Rayones, golpes, humedad visible, pantalla, carcasa"
+              rows={3}
+            />
+          </div>
+          <div>
+            <Label>Daño físico reportado</Label>
+            <Textarea
+              value={localData.legalChecklist.reportedPhysicalDamage}
+              onChange={(e) => {
+                const legalChecklist = { ...localData.legalChecklist, reportedPhysicalDamage: e.target.value };
+                const next = { ...localData, legalChecklist };
+                setLocalData(next);
+                onUpdate({ legalChecklist });
+              }}
+              placeholder="Ej: golpe en esquina, pantalla rota, equipo mojado"
+              rows={3}
+            />
+          </div>
+          <div>
+            <Label>Accesorios recibidos</Label>
+            <Textarea
+              value={localData.legalChecklist.accessoriesReceived}
+              onChange={(e) => {
+                const legalChecklist = { ...localData.legalChecklist, accessoriesReceived: e.target.value };
+                const next = { ...localData, legalChecklist };
+                setLocalData(next);
+                onUpdate({ legalChecklist });
+              }}
+              placeholder="Ej: cargador, funda, SIM, memoria, caja"
+              rows={2}
+            />
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={localData.legalChecklist.customerAcceptanceRequired}
+              onChange={(e) => {
+                const legalChecklist = { ...localData.legalChecklist, customerAcceptanceRequired: e.target.checked };
+                const next = { ...localData, legalChecklist };
+                setLocalData(next);
+                onUpdate({ legalChecklist });
+              }}
+              className="h-4 w-4 accent-sky-400"
+            />
+            <span className="text-sm">Requiere aceptación del cliente</span>
+          </label>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div>
+              <Label>Fecha de aceptación</Label>
+              <Input
+                type="date"
+                value={localData.legalChecklist.acceptedAt}
+                onChange={(e) => {
+                  const legalChecklist = { ...localData.legalChecklist, acceptedAt: e.target.value };
+                  const next = { ...localData, legalChecklist };
+                  setLocalData(next);
+                  onUpdate({ legalChecklist });
+                }}
+              />
+            </div>
+            <div>
+              <Label>Nombre de quien acepta</Label>
+              <Input
+                value={localData.legalChecklist.acceptedByName}
+                onChange={(e) => {
+                  const legalChecklist = { ...localData.legalChecklist, acceptedByName: e.target.value };
+                  const next = { ...localData, legalChecklist };
+                  setLocalData(next);
+                  onUpdate({ legalChecklist });
+                }}
+                placeholder="Nombre completo"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Receipt photo */}
       <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
         <Label className="flex items-center gap-2 text-sm text-slate-400">

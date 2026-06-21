@@ -113,6 +113,12 @@ export interface OrderChecklist {
   powers_on: boolean;
   backup_required: boolean;
   notes: string | null;
+  cosmetic_condition: string | null;
+  reported_physical_damage: string | null;
+  accessories_received: string | null;
+  customer_acceptance_required: boolean;
+  accepted_at: string | null;
+  accepted_by_name: string | null;
 }
 
 export interface OrderDocument {

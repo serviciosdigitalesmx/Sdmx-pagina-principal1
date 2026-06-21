@@ -68,6 +68,26 @@ export function Step3({ data, onSubmit, onBack, loading }: Step3Props) {
             {checklistItems.filter(i => i.value).map(i => i.label).join(' • ') || 'Ninguno'}
           </span>
         </div>
+        <div className="grid gap-2 border-b border-slate-800 pb-2 text-sm">
+          <div className="flex justify-between gap-4">
+            <span className="text-slate-400">Condición cosmética:</span>
+            <span className="max-w-[60%] text-right text-slate-100">{data.legalChecklist.cosmeticCondition || 'Sin dato'}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-slate-400">Daño físico:</span>
+            <span className="max-w-[60%] text-right text-slate-100">{data.legalChecklist.reportedPhysicalDamage || 'Sin dato'}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-slate-400">Accesorios:</span>
+            <span className="max-w-[60%] text-right text-slate-100">{data.legalChecklist.accessoriesReceived || 'Sin dato'}</span>
+          </div>
+          <div className="flex justify-between gap-4">
+            <span className="text-slate-400">Aceptación:</span>
+            <span className="max-w-[60%] text-right text-slate-100">
+              {data.legalChecklist.customerAcceptanceRequired ? data.legalChecklist.acceptedByName || 'Requerida' : 'No requerida'}
+            </span>
+          </div>
+        </div>
         <div className="flex justify-between border-b border-slate-800 pb-2">
           <span className="text-slate-400">Foto recepción:</span>
           <span className="text-slate-100">{data.fotoPreview ? 'Adjunta' : 'Sin foto'}</span>

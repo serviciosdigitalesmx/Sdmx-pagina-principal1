@@ -4,8 +4,10 @@ import { randomUUID } from 'crypto';
 import PDFDocument from 'pdfkit';
 import { getTenantClient, supabaseAdmin } from '@white-label/database';
 import { loadTenantRuntimeConfig } from '../services/tenant-config';
+import { getRequestIp } from '../lib/request-ip';
 import { calculateOperationalRisk } from '../services/operational-risk';
 import { sendTenantPushNotification } from '../services/pwa-push';
+import { writeAuditLog } from '../services/security-backoffice';
 import { getEvidenceMetadata, type EvidenceEntry } from '../services/evidence-adapter';
 import { FEATURE_EVIDENCE_MODE } from '../config/feature-flags';
 
@@ -51,6 +53,20 @@ const orderDetailsUpdateSchema = z.object({
   metadata: z.record(z.unknown()).optional(),
 });
 
+const checklistPayloadSchema = z.object({
+  hasCharger: z.coerce.boolean().default(false),
+  screenCondition: z.string().optional().default(''),
+  powersOn: z.coerce.boolean().default(false),
+  backupRequired: z.coerce.boolean().default(false),
+  notes: z.string().optional().default(''),
+  cosmeticCondition: z.string().optional().default(''),
+  reportedPhysicalDamage: z.string().optional().default(''),
+  accessoriesReceived: z.string().optional().default(''),
+  customerAcceptanceRequired: z.coerce.boolean().default(false),
+  acceptedAt: z.string().datetime().optional().or(z.literal('')).default(''),
+  acceptedByName: z.string().optional().default(''),
+});
+
 type TenantBranding = {
   primaryColor?: string;
   secondaryColor?: string;
@@ -88,6 +104,42 @@ type OrderEventRow = {
   note: string | null;
   actor_name: string | null;
   created_at: string;
+};
+
+type OrderChecklistPayload = {
+  hasCharger?: boolean;
+  screenCondition?: string;
+  powersOn?: boolean;
+  backupRequired?: boolean;
+  notes?: string;
+  cosmeticCondition?: string;
+  reportedPhysicalDamage?: string;
+  accessoriesReceived?: string;
+  customerAcceptanceRequired?: boolean;
+  acceptedAt?: string;
+  acceptedByName?: string;
+};
+
+type OrderChecklistDbPatch = {
+  tenant_id: string;
+  service_order_id: string;
+  has_charger: boolean;
+  screen_condition: string | null;
+  powers_on: boolean;
+  backup_required: boolean;
+  notes: string | null;
+  cosmetic_condition: string | null;
+  reported_physical_damage: string | null;
+  accessories_received: string | null;
+  customer_acceptance_required: boolean;
+  accepted_at: string | null;
+  accepted_by_name: string | null;
+};
+
+type OrderChecklistRow = OrderChecklistDbPatch & {
+  id?: string;
+  created_at?: string;
+  updated_at?: string;
 };
 
 function isUuid(value: unknown) {
@@ -149,18 +201,18 @@ const createOrderSchema = z.object({
   estimatedCost: z.coerce.number().min(0).default(0),
   promisedDate: z.string().optional().or(z.literal('')),
   includeIva: z.coerce.boolean().default(false),
-  checklist: z.object({
-    hasCharger: z.coerce.boolean().default(false),
-    screenCondition: z.string().optional().default(''),
-    powersOn: z.coerce.boolean().default(false),
-    backupRequired: z.coerce.boolean().default(false),
-    notes: z.string().optional().default(''),
-  }).default({
+  checklist: checklistPayloadSchema.default({
     hasCharger: false,
     screenCondition: '',
     powersOn: false,
     backupRequired: false,
     notes: '',
+    cosmeticCondition: '',
+    reportedPhysicalDamage: '',
+    accessoriesReceived: '',
+    customerAcceptanceRequired: false,
+    acceptedAt: '',
+    acceptedByName: '',
   }),
   receiptUrl: z.string().optional().or(z.literal('')),
   sucursalId: z.string().min(1).optional(),
@@ -177,6 +229,108 @@ function normalizeOrderStatus(status?: string | null) {
   if (value.includes('list')) return 'listo';
   if (value.includes('entreg')) return 'entregado';
   return 'recibido';
+}
+
+const CHECKLIST_FIELD_TO_PAYLOAD_KEY = {
+  has_charger: 'hasCharger',
+  screen_condition: 'screenCondition',
+  powers_on: 'powersOn',
+  backup_required: 'backupRequired',
+  notes: 'notes',
+  cosmetic_condition: 'cosmeticCondition',
+  reported_physical_damage: 'reportedPhysicalDamage',
+  accessories_received: 'accessoriesReceived',
+  customer_acceptance_required: 'customerAcceptanceRequired',
+  accepted_at: 'acceptedAt',
+  accepted_by_name: 'acceptedByName',
+} as const;
+
+const CHECKLIST_FIELD_KEYS = new Set(Object.keys(CHECKLIST_FIELD_TO_PAYLOAD_KEY));
+
+function cleanText(value: unknown) {
+  const text = typeof value === 'string' ? value.trim() : '';
+  return text.length > 0 ? text : null;
+}
+
+function normalizeAcceptedAt(value: unknown) {
+  const text = cleanText(value);
+  if (!text) return null;
+  const parsed = new Date(text);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+}
+
+function buildChecklistPatch(tenantId: string, orderId: string, payload: OrderChecklistPayload, existing?: Partial<OrderChecklistRow> | null): OrderChecklistDbPatch {
+  return {
+    tenant_id: tenantId,
+    service_order_id: orderId,
+    has_charger: payload.hasCharger ?? existing?.has_charger ?? false,
+    screen_condition: cleanText(payload.screenCondition ?? existing?.screen_condition),
+    powers_on: payload.powersOn ?? existing?.powers_on ?? false,
+    backup_required: payload.backupRequired ?? existing?.backup_required ?? false,
+    notes: cleanText(payload.notes ?? existing?.notes),
+    cosmetic_condition: cleanText(payload.cosmeticCondition ?? existing?.cosmetic_condition),
+    reported_physical_damage: cleanText(payload.reportedPhysicalDamage ?? existing?.reported_physical_damage),
+    accessories_received: cleanText(payload.accessoriesReceived ?? existing?.accessories_received),
+    customer_acceptance_required: payload.customerAcceptanceRequired ?? existing?.customer_acceptance_required ?? false,
+    accepted_at: normalizeAcceptedAt(payload.acceptedAt ?? existing?.accepted_at),
+    accepted_by_name: cleanText(payload.acceptedByName ?? existing?.accepted_by_name),
+  };
+}
+
+function normalizeChecklistRow(row: Partial<OrderChecklistRow> | null | undefined) {
+  if (!row) return null;
+  return {
+    ...row,
+    has_charger: Boolean(row.has_charger),
+    screen_condition: row.screen_condition ?? null,
+    powers_on: Boolean(row.powers_on),
+    backup_required: Boolean(row.backup_required),
+    notes: row.notes ?? null,
+    cosmetic_condition: row.cosmetic_condition ?? null,
+    reported_physical_damage: row.reported_physical_damage ?? null,
+    accessories_received: row.accessories_received ?? null,
+    customer_acceptance_required: Boolean(row.customer_acceptance_required),
+    accepted_at: row.accepted_at ?? null,
+    accepted_by_name: row.accepted_by_name ?? null,
+  };
+}
+
+async function getRequiredChecklistFields(tenantId: string) {
+  const runtimeConfig = await loadTenantRuntimeConfig(tenantId);
+  return runtimeConfig.fieldDefinitions
+    .filter((field) => field.entity === 'service_order_checklists' && field.required && field.visible !== false && CHECKLIST_FIELD_KEYS.has(field.field_key))
+    .map((field) => field.field_key);
+}
+
+function getMissingRequiredChecklistFields(requiredFields: string[], checklist: Partial<OrderChecklistRow>) {
+  return requiredFields.filter((fieldKey) => {
+    const value = checklist[fieldKey as keyof OrderChecklistRow];
+    if (typeof value === 'boolean') {
+      return false;
+    }
+    return cleanText(value) === null;
+  });
+}
+
+async function validateRequiredChecklist(tenantId: string, checklist: Partial<OrderChecklistRow>) {
+  const requiredFields = await getRequiredChecklistFields(tenantId);
+  return getMissingRequiredChecklistFields(requiredFields, checklist);
+}
+
+async function auditChecklistChange(req: Request, tenantId: string, action: string, before: Record<string, unknown> | null, after: Record<string, unknown> | null) {
+  try {
+    await writeAuditLog({
+      tenantId,
+      userId: req.user?.userId ?? null,
+      action,
+      ipAddress: getRequestIp(req.headers, req.ip),
+      userAgent: req.get('user-agent') ?? null,
+      dataBefore: before,
+      dataAfter: after,
+    });
+  } catch (error) {
+    console.error('Failed to write checklist audit log:', error);
+  }
 }
 
 function getStorageBucketName() {
@@ -488,6 +642,15 @@ export const createOrder = async (req: Request, res: Response) => {
     const estimatedCost = Number.isFinite(validatedData.estimatedCost) ? validatedData.estimatedCost : 0;
     const ivaAmount = validatedData.includeIva ? Number((estimatedCost * 0.16).toFixed(2)) : 0;
     const finalCost = Number((estimatedCost + ivaAmount).toFixed(2));
+    const checklistPatch = buildChecklistPatch(tenantId, '__pending_order__', validatedData.checklist);
+    const missingChecklistFields = await validateRequiredChecklist(tenantId, checklistPatch);
+
+    if (missingChecklistFields.length > 0) {
+      return res.status(400).json({
+        error: 'Required intake checklist fields are missing',
+        details: { entity: 'service_order_checklists', fields: missingChecklistFields },
+      });
+    }
 
     // Resolve Customer ID
     let customerId: string | null = null;
@@ -563,25 +726,16 @@ export const createOrder = async (req: Request, res: Response) => {
       });
     }
 
-    const checklist = validatedData.checklist ?? {
-      hasCharger: false,
-      screenCondition: '',
-      powersOn: false,
-      backupRequired: false,
-      notes: '',
+    const checklist = {
+      ...checklistPatch,
+      service_order_id: data.id,
     };
 
-    const { error: checklistError } = await supabase.from('service_order_checklists').insert([
-      {
-        tenant_id: tenantId,
-        service_order_id: data.id,
-        has_charger: checklist.hasCharger,
-        screen_condition: checklist.screenCondition || null,
-        powers_on: checklist.powersOn,
-        backup_required: checklist.backupRequired,
-        notes: checklist.notes || null,
-      },
-    ]);
+    const { data: checklistData, error: checklistError } = await supabase
+      .from('service_order_checklists')
+      .insert([checklist])
+      .select('*')
+      .single();
 
     if (checklistError) {
       console.error('Supabase checklist insert error:', checklistError.message);
@@ -590,6 +744,8 @@ export const createOrder = async (req: Request, res: Response) => {
         details: checklistError.message,
       });
     }
+
+    await auditChecklistChange(req, tenantId, 'orders.checklist_created', null, normalizeChecklistRow(checklistData) as Record<string, unknown>);
 
     const createdEventId = randomUUID();
     await supabase
@@ -649,6 +805,7 @@ export const createOrder = async (req: Request, res: Response) => {
         pdf_attachment: pdfAttachment,
         attachments: pdfAttachment ? [pdfAttachment] : [],
         include_iva: validatedData.includeIva,
+        checklist: normalizeChecklistRow(checklistData),
       },
     });
   } catch (error: unknown) {
@@ -799,7 +956,7 @@ export const getOrderById = async (req: Request, res: Response) => {
         operational_risk: operationalRisk,
         documents,
         events,
-        checklist: checklistResult.data ?? null,
+        checklist: normalizeChecklistRow(checklistResult.data as Partial<OrderChecklistRow> | null),
         pdf_attachment: pdfAttachment,
         attachments: pdfAttachment ? [pdfAttachment] : [],
       },
@@ -1161,6 +1318,27 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid status', details: { allowedStatuses: [...allowedStatuses] } });
     }
 
+    if (normalizeOrderStatus(nextStatus) === 'recibido') {
+      const { data: checklist, error: checklistError } = await supabase
+        .from('service_order_checklists')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .eq('service_order_id', orderId)
+        .maybeSingle();
+
+      if (checklistError) {
+        return res.status(502).json({ error: 'Failed to inspect order checklist', details: checklistError.message });
+      }
+
+      const missingChecklistFields = await validateRequiredChecklist(tenantId, (checklist ?? {}) as Partial<OrderChecklistRow>);
+      if (missingChecklistFields.length > 0) {
+        return res.status(400).json({
+          error: 'Required intake checklist fields are missing',
+          details: { entity: 'service_order_checklists', fields: missingChecklistFields },
+        });
+      }
+    }
+
     const { data, error } = await supabase
       .from('service_orders')
       .update({
@@ -1442,6 +1620,22 @@ export const getOrderChecklist = async (req: Request, res: Response) => {
     const orderId = req.params.id;
     if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
     const supabase = getTenantClient(tenantId);
+
+    const { data: order, error: orderError } = await supabase
+      .from('service_orders')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .eq('id', orderId)
+      .maybeSingle();
+
+    if (orderError) {
+      return res.status(502).json({ error: 'Failed to inspect order', details: orderError.message });
+    }
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
     const { data, error } = await supabase
       .from('service_order_checklists')
       .select('*')
@@ -1453,23 +1647,28 @@ export const getOrderChecklist = async (req: Request, res: Response) => {
       return res.status(502).json({ error: 'Failed to fetch order checklist', details: error.message });
     }
 
-    if (!data) {
-      return res.status(404).json({ error: 'Checklist not found' });
-    }
-
-    return res.json({ success: true, data });
+    return res.json({
+      success: true,
+      data: normalizeChecklistRow(data as Partial<OrderChecklistRow> | null) ?? normalizeChecklistRow(buildChecklistPatch(tenantId, orderId, {})),
+    });
   } catch (error) {
     console.error('Error getting checklist:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
 
-const updateChecklistSchema = z.object({
+const updateChecklistSchema = checklistPayloadSchema.partial().extend({
   hasCharger: z.coerce.boolean().optional(),
   screenCondition: z.string().optional().or(z.literal('')),
   powersOn: z.coerce.boolean().optional(),
   backupRequired: z.coerce.boolean().optional(),
   notes: z.string().optional().or(z.literal('')),
+  cosmeticCondition: z.string().optional().or(z.literal('')),
+  reportedPhysicalDamage: z.string().optional().or(z.literal('')),
+  accessoriesReceived: z.string().optional().or(z.literal('')),
+  customerAcceptanceRequired: z.coerce.boolean().optional(),
+  acceptedAt: z.string().datetime().optional().or(z.literal('')),
+  acceptedByName: z.string().optional().or(z.literal('')),
 });
 
 export const updateOrderChecklist = async (req: Request, res: Response) => {
@@ -1496,17 +1695,30 @@ export const updateOrderChecklist = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Order not found' });
     }
 
+    const { data: currentChecklist, error: currentChecklistError } = await supabase
+      .from('service_order_checklists')
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .eq('service_order_id', orderId)
+      .maybeSingle();
+
+    if (currentChecklistError) {
+      return res.status(502).json({ error: 'Failed to inspect order checklist', details: currentChecklistError.message });
+    }
+
+    const checklistPatch = buildChecklistPatch(tenantId, orderId, body, currentChecklist as Partial<OrderChecklistRow> | null);
+    const missingChecklistFields = await validateRequiredChecklist(tenantId, checklistPatch);
+
+    if (missingChecklistFields.length > 0) {
+      return res.status(400).json({
+        error: 'Required intake checklist fields are missing',
+        details: { entity: 'service_order_checklists', fields: missingChecklistFields },
+      });
+    }
+
     const { data, error } = await supabase
       .from('service_order_checklists')
-      .upsert({
-        tenant_id: tenantId,
-        service_order_id: orderId,
-        has_charger: body.hasCharger ?? false,
-        screen_condition: body.screenCondition || null,
-        powers_on: body.powersOn ?? false,
-        backup_required: body.backupRequired ?? false,
-        notes: body.notes || null,
-      }, { onConflict: 'service_order_id' })
+      .upsert(checklistPatch, { onConflict: 'service_order_id' })
       .select('*')
       .single();
 
@@ -1514,7 +1726,16 @@ export const updateOrderChecklist = async (req: Request, res: Response) => {
       return res.status(502).json({ error: 'Failed to persist order checklist', details: error.message });
     }
 
-    return res.json({ success: true, data });
+    const normalized = normalizeChecklistRow(data as Partial<OrderChecklistRow>);
+    await auditChecklistChange(
+      req,
+      tenantId,
+      currentChecklist ? 'orders.checklist_updated' : 'orders.checklist_created',
+      normalizeChecklistRow(currentChecklist as Partial<OrderChecklistRow> | null) as Record<string, unknown> | null,
+      normalized as Record<string, unknown>,
+    );
+
+    return res.json({ success: true, data: normalized });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Invalid payload', details: error.errors });

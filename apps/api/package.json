@@ -10,6 +10,7 @@
     "lint": "eslint \"src/**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "test:breaking": "node --test tests/breaking.integration.mjs",
+    "test:orders-checklist": "node --test tests/order-checklist.integration.mjs",
     "test:inventory": "node --test tests/inventory-rpc.integration.mjs",
     "test:evidence": "node --test tests/evidence-adapter.integration.mjs"
   },

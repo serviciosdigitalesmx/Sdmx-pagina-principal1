@@ -37,6 +37,12 @@ export type OrderDetailData = {
     powers_on?: boolean;
     backup_required?: boolean;
     notes?: string | null;
+    cosmetic_condition?: string | null;
+    reported_physical_damage?: string | null;
+    accessories_received?: string | null;
+    customer_acceptance_required?: boolean;
+    accepted_at?: string | null;
+    accepted_by_name?: string | null;
   } | null;
   documents?: Array<{
     id?: string;
@@ -514,6 +520,35 @@ export function OrderDetailDrawer({
                       </div>
                     </div>
                     <div className="rounded-2xl border border-zinc-800 bg-black/30 p-4 text-sm text-zinc-200">Notas: {checklist?.notes ?? "Sin notas"}</div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="rounded-2xl border border-zinc-800 bg-black/30 p-4 text-sm text-zinc-200">
+                        <div className="mb-2 flex items-center justify-between">
+                          <span>Condición cosmética: {checklist?.cosmetic_condition ?? "Sin dato"}</span>
+                          <InlineEditButton onClick={onEditChecklist} />
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-zinc-800 bg-black/30 p-4 text-sm text-zinc-200">
+                        <div className="mb-2 flex items-center justify-between">
+                          <span>Daño físico: {checklist?.reported_physical_damage ?? "Sin dato"}</span>
+                          <InlineEditButton onClick={onEditChecklist} />
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-zinc-800 bg-black/30 p-4 text-sm text-zinc-200">
+                        <div className="mb-2 flex items-center justify-between">
+                          <span>Accesorios: {checklist?.accessories_received ?? "Sin dato"}</span>
+                          <InlineEditButton onClick={onEditChecklist} />
+                        </div>
+                      </div>
+                      <div className="rounded-2xl border border-zinc-800 bg-black/30 p-4 text-sm text-zinc-200">
+                        <div className="mb-2 flex items-center justify-between">
+                          <span>Aceptación: {checklist?.customer_acceptance_required ? checklist.accepted_by_name ?? "Requerida" : "No requerida"}</span>
+                          <InlineEditButton onClick={onEditChecklist} />
+                        </div>
+                        {checklist?.accepted_at ? (
+                          <div className="text-xs text-zinc-400">{new Date(checklist.accepted_at).toLocaleString("es-MX")}</div>
+                        ) : null}
+                      </div>
+                    </div>
                   </section>
                 ) : null}
 

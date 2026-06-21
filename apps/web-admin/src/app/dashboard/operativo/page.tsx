@@ -33,6 +33,14 @@ export type OrderFormData = {
     prende: boolean;
     respaldo: boolean;
   };
+  legalChecklist: {
+    cosmeticCondition: string;
+    reportedPhysicalDamage: string;
+    accessoriesReceived: string;
+    customerAcceptanceRequired: boolean;
+    acceptedAt: string;
+    acceptedByName: string;
+  };
 
   // Foto
   fotoRecepcion: File | null;
@@ -64,6 +72,14 @@ export default function OperativoPage() {
       pantalla: false,
       prende: false,
       respaldo: false,
+    },
+    legalChecklist: {
+      cosmeticCondition: '',
+      reportedPhysicalDamage: '',
+      accessoriesReceived: '',
+      customerAcceptanceRequired: false,
+      acceptedAt: '',
+      acceptedByName: '',
     },
     fotoRecepcion: null,
     fotoPreview: null,
@@ -130,6 +146,14 @@ export default function OperativoPage() {
           powersOn: formData.checks.prende,
           backupRequired: formData.checks.respaldo,
           notes: formData.notas,
+          cosmeticCondition: formData.legalChecklist.cosmeticCondition,
+          reportedPhysicalDamage: formData.legalChecklist.reportedPhysicalDamage,
+          accessoriesReceived: formData.legalChecklist.accessoriesReceived,
+          customerAcceptanceRequired: formData.legalChecklist.customerAcceptanceRequired,
+          acceptedAt: formData.legalChecklist.acceptedAt
+            ? new Date(formData.legalChecklist.acceptedAt).toISOString()
+            : '',
+          acceptedByName: formData.legalChecklist.acceptedByName,
         },
         metadata: {
           internal_notes: formData.notas,
@@ -195,6 +219,14 @@ export default function OperativoPage() {
         pantalla: false,
         prende: false,
         respaldo: false,
+      },
+      legalChecklist: {
+        cosmeticCondition: '',
+        reportedPhysicalDamage: '',
+        accessoriesReceived: '',
+        customerAcceptanceRequired: false,
+        acceptedAt: '',
+        acceptedByName: '',
       },
       fotoRecepcion: null,
       fotoPreview: null,
