@@ -731,9 +731,11 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
 
     const { data: documents, error: documentsError } = await supabase
       .from('service_order_documents')
-      .select('id, file_name, file_type, public_url, mime_type, created_at, source')
+      .select('id, file_name, file_type, public_url, mime_type, created_at, source, is_customer_visible, retention_expires_at')
       .eq('tenant_id', tenant.id)
       .eq('service_order_id', data.id)
+      .eq('is_customer_visible', true)
+      .or(`retention_expires_at.is.null,retention_expires_at.gt.${new Date().toISOString()}`)
       .order('created_at', { ascending: true });
 
     if (documentsError) {
@@ -745,13 +747,14 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
       .select('id, event_type, previous_status, new_status, note, actor_name, created_at')
       .eq('tenant_id', tenant.id)
       .eq('service_order_id', data.id)
+      .neq('event_type', 'note')
       .order('created_at', { ascending: true });
 
     if (eventsError) {
       return res.status(502).json({ error: 'Failed to load events', details: eventsError.message });
     }
 
-    const evidenceMetadata = (await getEvidenceMetadata(data.id, FEATURE_EVIDENCE_MODE)) ?? [];
+    const evidenceMetadata = [] as Array<Record<string, unknown>>;
     const metadataDocuments = evidenceMetadata
       .filter((entry) => entry && typeof entry === 'object' && (entry as { kind?: string }).kind === 'document')
       .map((entry) => {
@@ -808,7 +811,7 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
       }));
 
     const receiptDocument = normalizedDocuments.find((document) => document.file_type === 'receipt_pdf' && document.public_url);
-    const pdfAttachment = buildPdfAttachment(data.receipt_url || receiptDocument?.public_url || null);
+    const pdfAttachment = buildPdfAttachment(receiptDocument?.public_url || null);
     const statusLabelMap: Record<string, string> = {
       pending: runtimeConfig.statusLabels.pending ?? 'Recibido',
       pendiente: runtimeConfig.statusLabels.pendiente ?? 'Recibido',
@@ -857,7 +860,7 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
         config: runtimeConfig,
       },
       data: {
-        order: data,
+        order: { ...data, receipt_url: receiptDocument?.public_url ?? null, evidence_metadata: null, internal_notes: null },
         orderStatusLabel: statusLabelMap[statusKey] ?? String(data.status ?? 'Sin estado'),
         timeline,
         pdf_attachment: pdfAttachment,
@@ -903,9 +906,11 @@ export async function getPublicOrderPdf(req: Request, res: Response) {
 
     const { data: documents, error: documentsError } = await supabase
       .from('service_order_documents')
-      .select('id, file_name, file_type, public_url, mime_type, created_at, source')
+      .select('id, file_name, file_type, public_url, mime_type, created_at, source, is_customer_visible, retention_expires_at')
       .eq('tenant_id', tenant.id)
       .eq('service_order_id', data.id)
+      .eq('is_customer_visible', true)
+      .or(`retention_expires_at.is.null,retention_expires_at.gt.${new Date().toISOString()}`)
       .order('created_at', { ascending: true });
 
     if (documentsError) {

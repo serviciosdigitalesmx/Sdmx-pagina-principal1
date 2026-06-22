@@ -5,7 +5,7 @@ import { attachScope } from '../middleware/scope';
 import { requireTenantBillingActive } from '../middleware/tenantBilling';
 import { requireRole } from '../middleware/requireRole';
 import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
-import { addOrderMessage, addOrderNote, createOrder, getOrderById, getOrderChecklist, listOrders, updateOrderChecklist, updateOrderDetails, updateOrderFinancials, updateOrderStatus, updateOrderWarranty, uploadOrderAttachments, createOrderPayment, refundOrderPayment } from '../controllers/orders';
+import { addOrderMessage, addOrderNote, createOrder, getOrderById, getOrderChecklist, listOrders, updateOrderChecklist, updateOrderDetails, updateOrderFinancials, updateOrderStatus, updateOrderWarranty, uploadOrderAttachments, createOrderPayment, refundOrderPayment, updateOrderDocumentVisibility } from '../controllers/orders';
 
 const router = Router({ mergeParams: true });
 
@@ -22,6 +22,7 @@ router.post('/', requireTenantModule('orders'), createOrder);
 router.get('/legacy', requireRole('owner', 'manager'), listOrders);
 router.get('/:id', requireTenantModule('orders'), getOrderById);
 router.post('/:id/attachments', requireTenantModule('documents'), uploadOrderAttachments);
+router.patch('/:id/documents/:documentId/visibility', requireTenantModule('documents'), requireRole('owner', 'manager'), updateOrderDocumentVisibility);
 router.post('/:id/notes', requireTenantModule('orders'), addOrderNote);
 router.post('/:id/messages', requireTenantModule('orders'), addOrderMessage);
 router.patch('/:id/status', requireTenantModule('orders'), updateOrderStatus);

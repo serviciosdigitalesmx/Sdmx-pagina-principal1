@@ -13,6 +13,29 @@ const updateCustomerSchema = createCustomerSchema.partial().refine((value) => Bo
   message: 'At least one field is required',
 });
 
+const customerConsentSchema = z.object({
+  dataConsentStatus: z.enum(['pending', 'accepted', 'rejected', 'revoked']),
+  dataConsentDate: z.union([z.string().datetime(), z.null(), z.literal('')]).optional(),
+  dataConsentVersion: z.string().trim().optional().or(z.literal('')),
+  dataConsentScope: z.array(z.string().trim().min(1)).optional().default(['privacy_notice', 'service_evidence']),
+}).superRefine((value, ctx) => {
+  if ((value.dataConsentStatus === 'accepted' || value.dataConsentStatus === 'revoked') && !value.dataConsentDate) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['dataConsentDate'],
+      message: 'dataConsentDate is required for accepted or revoked consent',
+    });
+  }
+
+  if (value.dataConsentStatus === 'accepted' && !value.dataConsentVersion) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['dataConsentVersion'],
+      message: 'dataConsentVersion is required for accepted consent',
+    });
+  }
+});
+
 type CustomerHistoryOrderRow = {
   id: string;
   folio: string;
@@ -407,6 +430,62 @@ export const updateCustomer = async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
+
+
+export const updateCustomerConsent = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
+
+    const customerId = req.params.id;
+    if (!customerId) return res.status(400).json({ error: 'Customer id is required' });
+
+    const body = customerConsentSchema.parse(req.body);
+    const consentDate = body.dataConsentDate === '' ? null : body.dataConsentDate ?? null;
+    const supabase = getTenantClient(tenantId);
+
+    const { data: existingCustomer, error: existingError } = await supabase
+      .from('customers')
+      .select('id, tenant_id, sucursal_id')
+      .eq('tenant_id', tenantId)
+      .eq('id', customerId)
+      .maybeSingle();
+
+    if (existingError) {
+      return res.status(502).json({ error: 'Failed to load customer', details: existingError.message });
+    }
+
+    if (!existingCustomer) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    const { data, error } = await supabase
+      .from('customers')
+      .update({
+        data_consent_status: body.dataConsentStatus,
+        data_consent_date: consentDate,
+        data_consent_version: body.dataConsentVersion || null,
+        data_consent_scope: body.dataConsentScope,
+        data_consent_updated_by: req.user?.userId ?? null,
+        data_consent_updated_at: new Date().toISOString(),
+      })
+      .eq('tenant_id', tenantId)
+      .eq('id', customerId)
+      .select('id, tenant_id, sucursal_id, name, full_name, phone, email, data_consent_status, data_consent_date, data_consent_version, data_consent_scope, data_consent_updated_by, data_consent_updated_at, created_at')
+      .single();
+
+    if (error) {
+      return res.status(502).json({ error: 'Failed to update customer consent', details: error.message });
+    }
+
+    return res.json({ success: true, data });
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json({ error: 'Invalid payload', details: error.errors });
+    console.error('Error updating customer consent:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
 
 export const getCustomerHistory = async (req: Request, res: Response) => {
   try {

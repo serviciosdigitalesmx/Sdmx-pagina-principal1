@@ -26,6 +26,13 @@ const attachmentRequestSchema = z.object({
   files: z.array(encodedFileSchema).min(1),
 });
 
+const documentVisibilitySchema = z.object({
+  isCustomerVisible: z.coerce.boolean(),
+  retentionPolicyVersion: z.string().trim().optional().or(z.literal('')),
+  retentionExpiresAt: z.union([z.string().datetime(), z.null(), z.literal('')]).optional(),
+  note: z.string().trim().optional().or(z.literal('')),
+});
+
 const noteRequestSchema = z.object({
   note: z.string().min(1),
   actorName: z.string().optional(),
@@ -93,6 +100,9 @@ type OrderDocumentRow = {
   mime_type: string | null;
   file_size: number | null;
   source: string;
+  is_customer_visible?: boolean | null;
+  retention_policy_version?: string | null;
+  retention_expires_at?: string | null;
   created_at: string;
 };
 
@@ -452,6 +462,9 @@ async function insertOrderDocument(supabase: ReturnType<typeof getTenantClient>,
   mime_type: string;
   file_size: number;
   source: string;
+  is_customer_visible?: boolean;
+  retention_policy_version?: string | null;
+  retention_expires_at?: string | null;
 }) {
   const { error } = await supabase.from('service_order_documents').insert([row]);
   if (error) {
@@ -928,7 +941,7 @@ export const getOrderById = async (req: Request, res: Response) => {
         .maybeSingle(),
       supabase
         .from('service_order_documents')
-        .select('id, tenant_id, service_order_id, bucket_name, storage_path, public_url, file_name, file_type, mime_type, file_size, source, created_at')
+        .select('id, tenant_id, service_order_id, bucket_name, storage_path, public_url, file_name, file_type, mime_type, file_size, source, is_customer_visible, retention_policy_version, retention_expires_at, created_at')
         .eq('tenant_id', tenantId)
         .eq('service_order_id', orderId)
         .order('created_at', { ascending: true }),
@@ -1085,6 +1098,9 @@ export const uploadOrderAttachments = async (req: Request, res: Response) => {
         mime_type: file.mimeType,
         file_size: fileBuffer.length,
         source: 'upload',
+        is_customer_visible: false,
+        retention_policy_version: null,
+        retention_expires_at: null,
         created_by: null,
         created_at: new Date().toISOString(),
         extension,
@@ -1103,6 +1119,9 @@ export const uploadOrderAttachments = async (req: Request, res: Response) => {
         mime_type: file.mimeType,
         file_size: fileBuffer.length,
         source: 'upload',
+        is_customer_visible: false,
+        retention_policy_version: null,
+        retention_expires_at: null,
       });
 
       const { data: latestDocumentEvidence } = await supabase
@@ -1216,6 +1235,9 @@ export const uploadOrderAttachments = async (req: Request, res: Response) => {
         mime_type: 'application/pdf',
         file_size: receiptPdfBuffer.length,
         source: 'generated',
+        is_customer_visible: false,
+        retention_policy_version: null,
+        retention_expires_at: null,
         created_by: null,
         created_at: new Date().toISOString(),
       });
@@ -1232,6 +1254,9 @@ export const uploadOrderAttachments = async (req: Request, res: Response) => {
         mime_type: 'application/pdf',
         file_size: receiptPdfBuffer.length,
         source: 'generated',
+        is_customer_visible: false,
+        retention_policy_version: null,
+        retention_expires_at: null,
       });
 
       // receipt evidence is appended in the single update above to avoid duplicate writes
@@ -1249,6 +1274,74 @@ export const uploadOrderAttachments = async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
+
+
+export const updateOrderDocumentVisibility = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    const orderId = req.params.id;
+    const documentId = req.params.documentId;
+    const scope = getRequestScope(req);
+
+    if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
+    if (!orderId) return res.status(400).json({ error: 'Order id is required' });
+    if (!documentId) return res.status(400).json({ error: 'Document id is required' });
+
+    const body = documentVisibilitySchema.parse(req.body);
+    const retentionExpiresAt = body.retentionExpiresAt === '' ? null : body.retentionExpiresAt ?? null;
+    const supabase = getTenantClient(tenantId);
+
+    const { data: order, error: orderError } = await supabase
+      .from('service_orders')
+      .select('id, tenant_id, sucursal_id')
+      .eq('tenant_id', tenantId)
+      .eq('id', orderId)
+      .eq(
+        scope?.mode === 'branch' && isUuid(scope.sucursalId) ? 'sucursal_id' : 'tenant_id',
+        scope?.mode === 'branch' && isUuid(scope.sucursalId) ? scope.sucursalId : tenantId,
+      )
+      .single();
+
+    if (orderError || !order) {
+      return res.status(404).json({ error: 'Order not found', details: orderError?.message ?? 'Not found' });
+    }
+
+    const { data, error } = await supabase
+      .from('service_order_documents')
+      .update({
+        is_customer_visible: body.isCustomerVisible,
+        retention_policy_version: body.retentionPolicyVersion || null,
+        retention_expires_at: retentionExpiresAt,
+      })
+      .eq('tenant_id', tenantId)
+      .eq('service_order_id', orderId)
+      .eq('id', documentId)
+      .select('id, tenant_id, service_order_id, bucket_name, storage_path, public_url, file_name, file_type, mime_type, file_size, source, is_customer_visible, retention_policy_version, retention_expires_at, created_at')
+      .single();
+
+    if (error) {
+      return res.status(502).json({ error: 'Failed to update document visibility', details: error.message });
+    }
+
+    await insertOrderEvent(supabase, {
+      id: randomUUID(),
+      tenant_id: tenantId,
+      service_order_id: orderId,
+      event_type: 'document_visibility_updated',
+      previous_status: null,
+      new_status: null,
+      note: body.note || `Documento ${body.isCustomerVisible ? 'visible' : 'privado'} para cliente`,
+      actor_name: req.user?.email ?? req.user?.role ?? 'system',
+    });
+
+    return res.json({ success: true, data });
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json({ error: 'Invalid payload', details: error.errors });
+    console.error('Error updating document visibility:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
 
 export const addOrderNote = async (req: Request, res: Response) => {
   try {
