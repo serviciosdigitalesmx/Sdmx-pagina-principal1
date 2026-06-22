@@ -116,6 +116,13 @@ const createPaymentSchema = z.object({
   notes: z.string().optional(),
 });
 
+
+const refundPaymentSchema = z.object({
+  amount: z.coerce.number().positive(),
+  reason: z.string().trim().min(3),
+  reference: z.string().trim().optional().or(z.literal('')),
+});
+
 type OrderChecklistPayload = {
   hasCharger?: boolean;
   screenCondition?: string;
@@ -1957,6 +1964,128 @@ export const createOrderPayment = async (req: Request, res: Response) => {
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: 'Invalid payload', details: error.errors });
     console.error('Error creating order payment:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+
+export const refundOrderPayment = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
+
+    const orderId = req.params.id;
+    const paymentId = req.params.paymentId;
+
+    if (!orderId) return res.status(400).json({ error: 'Order id is required' });
+    if (!paymentId) return res.status(400).json({ error: 'Payment id is required' });
+
+    const body = refundPaymentSchema.parse(req.body);
+    const scope = getRequestScope(req);
+    const supabase = getTenantClient(tenantId);
+
+    const { data: order, error: orderError } = await supabase
+      .from('service_orders')
+      .select('id, sucursal_id, customer_id, status')
+      .eq('tenant_id', tenantId)
+      .eq('id', orderId)
+      .eq(
+        scope?.mode === 'branch' && isUuid(scope.sucursalId) ? 'sucursal_id' : 'tenant_id',
+        scope?.mode === 'branch' && isUuid(scope.sucursalId) ? scope.sucursalId : tenantId,
+      )
+      .single();
+
+    if (orderError || !order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const { data: originalPayment, error: paymentError } = await supabase
+      .from('customer_payments')
+      .select('id, tenant_id, branch_id, customer_id, service_order_id, parent_payment_id, amount, payment_type, payment_method, reference')
+      .eq('tenant_id', tenantId)
+      .eq('service_order_id', orderId)
+      .eq('id', paymentId)
+      .single();
+
+    if (paymentError || !originalPayment) {
+      return res.status(404).json({ error: 'Payment not found' });
+    }
+
+    const originalAmount = Number(originalPayment.amount || 0);
+
+    if (!Number.isFinite(originalAmount) || originalAmount <= 0) {
+      return res.status(400).json({ error: 'Solo se pueden reembolsar cobros originales con monto positivo' });
+    }
+
+    if (originalPayment.parent_payment_id || String(originalPayment.payment_type || '').toLowerCase() === 'refund') {
+      return res.status(400).json({ error: 'No se puede reembolsar un reembolso' });
+    }
+
+    const { data: refunds, error: refundsError } = await supabase
+      .from('customer_payments')
+      .select('amount')
+      .eq('tenant_id', tenantId)
+      .eq('service_order_id', orderId)
+      .eq('parent_payment_id', paymentId);
+
+    if (refundsError) {
+      return res.status(502).json({ error: 'Error al consultar reembolsos previos', details: refundsError.message });
+    }
+
+    const alreadyRefunded = (refunds || []).reduce((sum, refund) => {
+      const amount = Number(refund.amount || 0);
+      return sum + Math.abs(Number.isFinite(amount) ? amount : 0);
+    }, 0);
+
+    const refundableAmount = Math.max(0, originalAmount - alreadyRefunded);
+
+    if (body.amount > refundableAmount) {
+      return res.status(400).json({
+        error: `El reembolso (${body.amount}) excede el monto disponible para reembolsar (${refundableAmount})`,
+      });
+    }
+
+    const refundAmount = -Math.abs(body.amount);
+
+    const { data: refundPayment, error: insertError } = await supabase
+      .from('customer_payments')
+      .insert([{
+        tenant_id: tenantId,
+        branch_id: originalPayment.branch_id ?? order.sucursal_id,
+        customer_id: originalPayment.customer_id ?? order.customer_id,
+        service_order_id: orderId,
+        parent_payment_id: paymentId,
+        payment_type: 'refund',
+        amount: refundAmount,
+        payment_method: originalPayment.payment_method || 'refund',
+        reference: body.reference || `refund:${paymentId}`,
+        notes: body.reason,
+        refund_reason: body.reason,
+        created_by: req.user?.userId ?? null,
+        source: 'manual',
+      }])
+      .select()
+      .single();
+
+    if (insertError) {
+      return res.status(502).json({ error: 'Failed to record refund', details: insertError.message });
+    }
+
+    await insertOrderEvent(supabase, {
+      id: randomUUID(),
+      tenant_id: tenantId,
+      service_order_id: orderId,
+      event_type: 'payment_refunded',
+      previous_status: null,
+      new_status: null,
+      note: `Reembolso registrado por $${body.amount}. Motivo: ${body.reason}`,
+      actor_name: req.user?.email ?? req.user?.role ?? 'system',
+    });
+
+    return res.status(201).json({ success: true, data: refundPayment });
+  } catch (error) {
+    if (error instanceof z.ZodError) return res.status(400).json({ error: 'Invalid payload', details: error.errors });
+    console.error('Error refunding order payment:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
