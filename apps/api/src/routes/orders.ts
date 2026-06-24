@@ -5,7 +5,7 @@ import { attachScope } from '../middleware/scope';
 import { requireTenantBillingActive } from '../middleware/tenantBilling';
 import { requireRole } from '../middleware/requireRole';
 import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
-import { addOrderMessage, addOrderNote, createOrder, createOrderWarrantyClaim, getDeviceHistoryBySerial, getOrderById, getOrderChecklist, getOrderWarrantySummary, listOrders, updateOrderChecklist, updateOrderDetails, updateOrderFinancials, updateOrderStatus, updateOrderWarranty, updateOrderWarrantyClaimStatus, uploadOrderAttachments, createOrderPayment, refundOrderPayment, updateOrderDocumentVisibility } from '../controllers/orders';
+import { addOrderMessage, addOrderNote, createOrder, createOrderWarrantyClaim, getDeviceHistoryBySerial, getOrderAuthorizations, getOrderById, getOrderChecklist, getOrderWarrantySummary, listOrders, updateOrderChecklist, updateOrderDetails, updateOrderFinancials, updateOrderStatus, updateOrderWarranty, updateOrderWarrantyClaimStatus, uploadOrderAttachments, createOrderPayment, refundOrderPayment, updateOrderDocumentVisibility } from '../controllers/orders';
 
 const router = Router({ mergeParams: true });
 
@@ -24,6 +24,7 @@ router.get('/legacy', requireRole('owner', 'manager'), listOrders);
 router.get('/:id/warranty', requireTenantModule('warranty'), requireRole('owner', 'manager', 'technician'), getOrderWarrantySummary);
 router.post('/:id/warranty/claims', requireTenantModule('warranty'), requireRole('owner', 'manager', 'technician'), createOrderWarrantyClaim);
 router.patch('/:id/warranty/claims/:claimId/status', requireTenantModule('warranty'), requireRole('owner', 'manager'), updateOrderWarrantyClaimStatus);
+router.get('/:id/authorizations', requireTenantModule('orders'), requireRole('owner', 'manager', 'technician'), getOrderAuthorizations);
 router.get('/:id', requireTenantModule('orders'), getOrderById);
 router.post('/:id/attachments', requireTenantModule('documents'), uploadOrderAttachments);
 router.patch('/:id/documents/:documentId/visibility', requireTenantModule('documents'), requireRole('owner', 'manager'), updateOrderDocumentVisibility);

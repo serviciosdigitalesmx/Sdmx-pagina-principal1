@@ -212,6 +212,25 @@ type WarrantyOrderRow = {
   warranty_until: string | null;
 };
 
+type ServiceOrderAuthorizationRow = {
+  id: string;
+  authorization_type: string;
+  status: string;
+  authorized_amount: number | string | null;
+  estimated_cost_snapshot: number | string | null;
+  final_cost_snapshot: number | string | null;
+  accepted_by_name: string;
+  accepted_by_phone: string | null;
+  accepted_by_email: string | null;
+  terms_version: string;
+  signature_method: string;
+  public_token_last4: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  decided_at: string;
+  created_at: string;
+};
+
 
 const createPaymentSchema = z.object({
   amount: z.number().positive('El monto debe ser mayor a 0'),
@@ -2315,6 +2334,72 @@ export const updateOrderChecklist = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid payload', details: error.errors });
     }
     console.error('Error updating checklist:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const getOrderAuthorizations = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    const orderId = req.params.id;
+
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context is required' });
+    }
+
+    if (!orderId) {
+      return res.status(400).json({ error: 'Order id is required' });
+    }
+
+    const orderResult = await supabaseAdmin
+      .from('service_orders')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .eq('id', orderId)
+      .maybeSingle();
+
+    if (orderResult.error) {
+      return res.status(502).json({ error: 'Failed to fetch order', details: orderResult.error.message });
+    }
+
+    if (!orderResult.data) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('service_order_authorizations')
+      .select('id, authorization_type, status, authorized_amount, estimated_cost_snapshot, final_cost_snapshot, accepted_by_name, accepted_by_phone, accepted_by_email, terms_version, signature_method, public_token_last4, ip_address, user_agent, decided_at, created_at')
+      .eq('tenant_id', tenantId)
+      .eq('service_order_id', orderId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      return res.status(502).json({ error: 'Failed to fetch order authorizations', details: error.message });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: ((data ?? []) as ServiceOrderAuthorizationRow[]).map((authorization) => ({
+        id: authorization.id,
+        authorizationType: authorization.authorization_type,
+        status: authorization.status,
+        authorizedAmount: authorization.authorized_amount === null ? null : Number(authorization.authorized_amount),
+        estimatedCostSnapshot: authorization.estimated_cost_snapshot === null ? null : Number(authorization.estimated_cost_snapshot),
+        finalCostSnapshot: authorization.final_cost_snapshot === null ? null : Number(authorization.final_cost_snapshot),
+        acceptedByName: authorization.accepted_by_name,
+        acceptedByPhone: authorization.accepted_by_phone,
+        acceptedByEmail: authorization.accepted_by_email,
+        termsVersion: authorization.terms_version,
+        signatureMethod: authorization.signature_method,
+        publicTokenLast4: authorization.public_token_last4,
+        ipAddress: authorization.ip_address,
+        userAgent: authorization.user_agent,
+        decidedAt: authorization.decided_at,
+        createdAt: authorization.created_at,
+      })),
+    });
+  } catch (error) {
+    console.error('Error getting order authorizations:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };

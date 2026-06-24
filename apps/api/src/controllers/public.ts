@@ -99,6 +99,39 @@ const publicPortalSchema = z.object({
   folio: z.string().min(1),
 });
 
+const publicAuthorizationParamsSchema = z.object({
+  tenantSlug: z.string().min(1),
+  publicToken: z.string().min(1),
+});
+
+const publicAuthorizationBodySchema = z.object({
+  decision: z.enum(['accepted', 'rejected']),
+  authorizationType: z.enum(['diagnosis', 'repair', 'quotation', 'work', 'other']).default('repair'),
+  acceptedByName: z.string().trim().min(1),
+  acceptedByPhone: z.string().trim().optional().or(z.literal('')),
+  acceptedByEmail: z.string().email().optional().or(z.literal('')),
+  authorizedAmount: z.coerce.number().min(0).optional(),
+  scopeSnapshot: z.string().trim().min(1),
+  termsVersion: z.string().trim().min(1),
+  termsSnapshot: z.string().trim().min(1),
+  signatureMethod: z.enum(['typed_name', 'checkbox', 'none']).default('typed_name'),
+  signatureText: z.string().trim().optional().or(z.literal('')),
+  idempotencyKey: z.string().uuid().optional().or(z.literal('')),
+}).superRefine((value, context) => {
+  if (value.decision === 'accepted' && value.authorizedAmount === undefined) {
+    context.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['authorizedAmount'],
+      message: 'authorizedAmount is required for accepted authorizations',
+    });
+  }
+});
+
+const PUBLIC_AUTHORIZATION_TERMS = {
+  version: 't11-v1',
+  text: 'Autorizo la revisión, diagnóstico o reparación indicada, con el costo y alcance mostrados.',
+};
+
 const publicCatalogSchema = z.object({
   tenantSlug: z.string().min(1),
 });
@@ -876,6 +909,145 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
       return res.status(404).json({ error: 'No encontramos un tenant con ese slug', details: message });
     }
     return res.status(500).json({ error: message });
+  }
+}
+
+export async function getPublicOrderAuthorization(req: Request, res: Response) {
+  const parsed = publicAuthorizationParamsSchema.safeParse(req.params);
+
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Invalid params', details: parsed.error.flatten() });
+  }
+
+  try {
+    const { tenantSlug, publicToken } = parsed.data;
+    const tenant = await resolveTenantIdBySlug(tenantSlug);
+
+    const { data: order, error: orderError } = await supabaseAdmin
+      .from('service_orders')
+      .select('id, tenant_id, folio, status, device_info, device_type, device_brand, device_model, serial_number, reported_issue, problem_description, estimated_cost, final_cost')
+      .eq('tenant_id', tenant.id)
+      .eq('public_token', publicToken.trim())
+      .maybeSingle();
+
+    if (orderError) {
+      return res.status(502).json({ error: 'Failed to load order authorization summary', details: orderError.message });
+    }
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const { data: latestAuthorization, error: authorizationError } = await supabaseAdmin
+      .from('service_order_authorizations')
+      .select('id, status, authorization_type, decided_at')
+      .eq('tenant_id', tenant.id)
+      .eq('service_order_id', order.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (authorizationError) {
+      return res.status(502).json({ error: 'Failed to load authorization', details: authorizationError.message });
+    }
+
+    const deviceInfo = (order.device_info && typeof order.device_info === 'object' ? order.device_info : {}) as Record<string, unknown>;
+    const estimatedCost = Number(order.estimated_cost ?? 0);
+    const finalCost = Number(order.final_cost ?? 0);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        order: {
+          folio: order.folio,
+          status: order.status,
+          device: {
+            type: String(deviceInfo.type ?? deviceInfo.device_type ?? order.device_type ?? ''),
+            brand: String(deviceInfo.brand ?? deviceInfo.device_brand ?? order.device_brand ?? ''),
+            model: String(deviceInfo.model ?? deviceInfo.device_model ?? order.device_model ?? ''),
+            serialNumber: String(deviceInfo.serialNumber ?? deviceInfo.serial_number ?? order.serial_number ?? ''),
+          },
+          estimatedCost: Number.isFinite(estimatedCost) ? estimatedCost : 0,
+          finalCost: Number.isFinite(finalCost) && finalCost > 0 ? finalCost : null,
+          reportedIssue: String(order.problem_description ?? order.reported_issue ?? ''),
+        },
+        authorization: {
+          hasAcceptedAuthorization: latestAuthorization?.status === 'accepted',
+          latestStatus: latestAuthorization?.status ?? null,
+          latestDecisionAt: latestAuthorization?.decided_at ?? null,
+          latestAuthorizationType: latestAuthorization?.authorization_type ?? null,
+        },
+        terms: PUBLIC_AUTHORIZATION_TERMS,
+      },
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'TenantNotFoundError') {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    console.error('Error loading public authorization:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+}
+
+export async function submitPublicOrderAuthorization(req: Request, res: Response) {
+  const parsedParams = publicAuthorizationParamsSchema.safeParse(req.params);
+
+  if (!parsedParams.success) {
+    return res.status(400).json({ error: 'Invalid params', details: parsedParams.error.flatten() });
+  }
+
+  const parsedBody = publicAuthorizationBodySchema.safeParse(req.body);
+
+  if (!parsedBody.success) {
+    return res.status(400).json({ error: 'Invalid payload', details: parsedBody.error.flatten() });
+  }
+
+  try {
+    const { tenantSlug, publicToken } = parsedParams.data;
+    const body = parsedBody.data;
+    const tenant = await resolveTenantIdBySlug(tenantSlug);
+    const requestId = String(req.headers['x-request-id'] ?? req.headers['x-correlation-id'] ?? randomUUID());
+    const ipAddress = getRequestIp(req.headers, req.ip);
+    const userAgent = typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null;
+
+    const { data, error } = await supabaseAdmin.rpc('submit_service_order_authorization', {
+      p_tenant_id: tenant.id,
+      p_public_token: publicToken.trim(),
+      p_authorization_type: body.authorizationType,
+      p_decision: body.decision,
+      p_accepted_by_name: body.acceptedByName,
+      p_accepted_by_phone: body.acceptedByPhone || null,
+      p_accepted_by_email: body.acceptedByEmail || null,
+      p_authorized_amount: body.authorizedAmount ?? null,
+      p_scope_snapshot: body.scopeSnapshot,
+      p_terms_version: body.termsVersion,
+      p_terms_snapshot: body.termsSnapshot,
+      p_signature_method: body.signatureMethod,
+      p_signature_text: body.signatureText || null,
+      p_idempotency_key: body.idempotencyKey || null,
+      p_ip_address: ipAddress,
+      p_user_agent: userAgent,
+      p_request_id: requestId,
+    });
+
+    if (error) {
+      const message = error.message ?? 'Authorization failed';
+      if (/order not found/i.test(message)) {
+        return res.status(404).json({ error: 'Order not found', details: message });
+      }
+      if (/amount|duplicate|invalid|already|required/i.test(message)) {
+        return res.status(409).json({ error: 'Authorization rejected', details: message });
+      }
+      return res.status(500).json({ error: 'Failed to submit authorization', details: message });
+    }
+
+    return res.status(201).json({ success: true, data });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'TenantNotFoundError') {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    console.error('Error submitting public authorization:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
 }
 
