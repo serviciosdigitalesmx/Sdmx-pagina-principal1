@@ -118,6 +118,66 @@ type OrderEventRow = {
   created_at: string;
 };
 
+type DeviceHistoryOrderRow = {
+  id: string;
+  tenant_id: string;
+  folio: string;
+  status: string;
+  priority: string | null;
+  customer_id: string | null;
+  device_info: Record<string, unknown> | null;
+  device_type: string | null;
+  device_brand: string | null;
+  device_model: string | null;
+  serial_number: string | null;
+  reported_issue: string | null;
+  internal_diagnosis: string | null;
+  estimated_cost: number | string | null;
+  final_cost: number | string | null;
+  promised_date: string | null;
+  received_at: string | null;
+  completed_at: string | null;
+  delivered_at: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+type DeviceHistoryStatusRow = {
+  id: string;
+  tenant_id: string;
+  service_order_id: string;
+  previous_status: string | null;
+  new_status: string;
+  comment: string | null;
+  changed_by: string | null;
+  created_at: string;
+};
+
+type DeviceHistoryDocumentRow = {
+  id: string;
+  tenant_id: string;
+  service_order_id: string;
+  file_name: string;
+  file_type: string;
+  mime_type: string | null;
+  source: string;
+  is_customer_visible: boolean | null;
+  created_at: string;
+};
+
+type DeviceHistoryMovementRow = {
+  id: string;
+  tenant_id: string;
+  service_order_id: string | null;
+  product_id: string;
+  movement_type: string;
+  quantity: number | string;
+  unit_cost: number | string | null;
+  reference: string | null;
+  notes: string | null;
+  created_at: string;
+};
+
 
 const createPaymentSchema = z.object({
   amount: z.number().positive('El monto debe ser mayor a 0'),
@@ -448,6 +508,59 @@ function normalizeOrderEvents(rows: OrderEventRow[] | null | undefined, metadata
     deduped.set(event.id, event);
   }
   return [...deduped.values()];
+}
+
+function toNumber(value: number | string | null | undefined) {
+  const parsed = Number(value ?? 0);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function normalizeDeviceHistoryTimeline(rows: DeviceHistoryStatusRow[] | null | undefined) {
+  return (rows ?? []).map((row) => ({
+    id: row.id,
+    previousStatus: row.previous_status,
+    newStatus: row.new_status,
+    comment: row.comment,
+    changedBy: row.changed_by,
+    createdAt: row.created_at,
+  }));
+}
+
+function normalizeDeviceHistoryEvents(rows: OrderEventRow[] | null | undefined) {
+  return (rows ?? []).map((row) => ({
+    id: row.id,
+    eventType: row.event_type,
+    previousStatus: row.previous_status,
+    newStatus: row.new_status,
+    note: row.note,
+    actorName: row.actor_name,
+    createdAt: row.created_at,
+  }));
+}
+
+function normalizeDeviceHistoryDocuments(rows: DeviceHistoryDocumentRow[] | null | undefined) {
+  return (rows ?? []).map((row) => ({
+    id: row.id,
+    fileName: row.file_name,
+    fileType: row.file_type,
+    mimeType: row.mime_type ?? null,
+    source: row.source,
+    isCustomerVisible: Boolean(row.is_customer_visible),
+    createdAt: row.created_at,
+  }));
+}
+
+function normalizeDeviceHistoryMovements(rows: DeviceHistoryMovementRow[] | null | undefined) {
+  return (rows ?? []).map((row) => ({
+    id: row.id,
+    productId: row.product_id,
+    movementType: row.movement_type,
+    quantity: toNumber(row.quantity),
+    unitCost: toNumber(row.unit_cost),
+    reference: row.reference,
+    notes: row.notes,
+    createdAt: row.created_at,
+  }));
 }
 
 async function insertOrderDocument(supabase: ReturnType<typeof getTenantClient>, row: {
@@ -1028,6 +1141,242 @@ export const getOrderById = async (req: Request, res: Response) => {
     });
   } catch (error) {
     console.error('Error getting order by id:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const getDeviceHistoryBySerial = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context is required' });
+    }
+
+    const parsed = z.object({
+      serialNumber: z.string().trim().min(1),
+      limit: z.coerce.number().int().min(1).max(100).default(50),
+    }).safeParse(req.query);
+
+    if (!parsed.success) {
+      return res.status(400).json({
+        error: 'Invalid serialNumber or limit',
+        details: parsed.error.errors,
+      });
+    }
+
+    const serialNumber = cleanTenantTextField(parsed.data.serialNumber) ?? '';
+    const normalizedSerialNumber = serialNumber.toLowerCase();
+
+    const { data: historyRows, error: historyError } = await supabaseAdmin.rpc('find_device_history_by_serial', {
+      p_tenant_id: tenantId,
+      p_serial_number: serialNumber,
+      p_limit: parsed.data.limit,
+    });
+
+    if (historyError) {
+      return res.status(502).json({
+        error: 'Failed to fetch device history',
+        details: historyError.message,
+      });
+    }
+
+    const orders = (historyRows ?? []) as DeviceHistoryOrderRow[];
+    if (orders.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          serialNumber,
+          normalizedSerialNumber,
+          totalOrders: 0,
+          orders: [],
+        },
+      });
+    }
+
+    const orderIds = orders.map((order) => order.id);
+    const [statusHistoryResult, eventsResult, documentsResult, movementsResult] = await Promise.all([
+      supabaseAdmin
+        .from('service_order_status_history')
+        .select('id, tenant_id, service_order_id, previous_status, new_status, comment, changed_by, created_at')
+        .eq('tenant_id', tenantId)
+        .in('service_order_id', orderIds)
+        .order('created_at', { ascending: true }),
+      supabaseAdmin
+        .from('service_order_events')
+        .select('id, tenant_id, service_order_id, event_type, previous_status, new_status, note, actor_name, created_at')
+        .eq('tenant_id', tenantId)
+        .in('service_order_id', orderIds)
+        .order('created_at', { ascending: true }),
+      supabaseAdmin
+        .from('service_order_documents')
+        .select('id, tenant_id, service_order_id, file_name, file_type, mime_type, source, is_customer_visible, created_at')
+        .eq('tenant_id', tenantId)
+        .in('service_order_id', orderIds)
+        .order('created_at', { ascending: true }),
+      supabaseAdmin
+        .from('inventory_movements')
+        .select('id, tenant_id, service_order_id, product_id, movement_type, quantity, unit_cost, reference, notes, created_at')
+        .eq('tenant_id', tenantId)
+        .eq('movement_type', 'service_order_consumed')
+        .in('service_order_id', orderIds)
+        .order('created_at', { ascending: true }),
+    ]);
+
+    if (statusHistoryResult.error) {
+      return res.status(502).json({
+        error: 'Failed to fetch status history',
+        details: statusHistoryResult.error.message,
+      });
+    }
+
+    if (eventsResult.error) {
+      return res.status(502).json({
+        error: 'Failed to fetch order events',
+        details: eventsResult.error.message,
+      });
+    }
+
+    if (documentsResult.error) {
+      return res.status(502).json({
+        error: 'Failed to fetch order documents',
+        details: documentsResult.error.message,
+      });
+    }
+
+    if (movementsResult.error) {
+      return res.status(502).json({
+        error: 'Failed to fetch inventory movements',
+        details: movementsResult.error.message,
+      });
+    }
+
+    const statusByOrder = new Map<string, ReturnType<typeof normalizeDeviceHistoryTimeline>>();
+    for (const row of (statusHistoryResult.data ?? []) as DeviceHistoryStatusRow[]) {
+      const list = statusByOrder.get(row.service_order_id) ?? [];
+      list.push({
+        id: row.id,
+        previousStatus: row.previous_status,
+        newStatus: row.new_status,
+        comment: row.comment,
+        changedBy: row.changed_by,
+        createdAt: row.created_at,
+      });
+      statusByOrder.set(row.service_order_id, list);
+    }
+
+    const eventsByOrder = new Map<string, ReturnType<typeof normalizeDeviceHistoryEvents>>();
+    for (const row of (eventsResult.data ?? []) as OrderEventRow[]) {
+      const list = eventsByOrder.get(row.service_order_id) ?? [];
+      list.push({
+        id: row.id,
+        eventType: row.event_type,
+        previousStatus: row.previous_status,
+        newStatus: row.new_status,
+        note: row.note,
+        actorName: row.actor_name,
+        createdAt: row.created_at,
+      });
+      eventsByOrder.set(row.service_order_id, list);
+    }
+
+    const documentsByOrder = new Map<string, ReturnType<typeof normalizeDeviceHistoryDocuments>>();
+    for (const row of (documentsResult.data ?? []) as DeviceHistoryDocumentRow[]) {
+      const list = documentsByOrder.get(row.service_order_id) ?? [];
+      list.push({
+        id: row.id,
+        fileName: row.file_name,
+        fileType: row.file_type,
+        mimeType: row.mime_type ?? null,
+        source: row.source,
+        isCustomerVisible: Boolean(row.is_customer_visible),
+        createdAt: row.created_at,
+      });
+      documentsByOrder.set(row.service_order_id, list);
+    }
+
+    const movementsByOrder = new Map<string, ReturnType<typeof normalizeDeviceHistoryMovements>>();
+    for (const row of (movementsResult.data ?? []) as DeviceHistoryMovementRow[]) {
+      if (!row.service_order_id) {
+        continue;
+      }
+      const list = movementsByOrder.get(row.service_order_id) ?? [];
+      list.push({
+        id: row.id,
+        productId: row.product_id,
+        movementType: row.movement_type,
+        quantity: toNumber(row.quantity),
+        unitCost: toNumber(row.unit_cost),
+        reference: row.reference,
+        notes: row.notes,
+        createdAt: row.created_at,
+      });
+      movementsByOrder.set(row.service_order_id, list);
+    }
+
+    const normalizedOrders = orders.map((order) => {
+      const device = order.device_info ?? {};
+      const safeDocuments = documentsByOrder.get(order.id) ?? [];
+      const customerVisibleCount = safeDocuments.filter((document) => document.isCustomerVisible).length;
+
+      return {
+        id: order.id,
+        folio: order.folio,
+        status: order.status,
+        priority: order.priority ?? null,
+        customerId: order.customer_id,
+        device: {
+          type: String((device as { type?: string | null }).type ?? order.device_type ?? ''),
+          brand: String((device as { brand?: string | null }).brand ?? order.device_brand ?? ''),
+          model: String((device as { model?: string | null }).model ?? order.device_model ?? ''),
+          serialNumber: String((device as { serial_number?: string | null }).serial_number ?? order.serial_number ?? ''),
+        },
+        reportedIssue: order.reported_issue,
+        internalDiagnosis: order.internal_diagnosis,
+        costs: {
+          estimated: toNumber(order.estimated_cost),
+          final: toNumber(order.final_cost),
+        },
+        dates: {
+          receivedAt: order.received_at,
+          promisedDate: order.promised_date,
+          completedAt: order.completed_at,
+          deliveredAt: order.delivered_at,
+          createdAt: order.created_at,
+          updatedAt: order.updated_at,
+        },
+        timeline: {
+          statusHistory: statusByOrder.get(order.id) ?? [],
+          events: eventsByOrder.get(order.id) ?? [],
+        },
+        documents: {
+          total: safeDocuments.length,
+          customerVisible: customerVisibleCount,
+          items: safeDocuments,
+        },
+        inventory: {
+          consumedItems: movementsByOrder.get(order.id) ?? [],
+        },
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        serialNumber,
+        normalizedSerialNumber,
+        totalOrders: normalizedOrders.length,
+        orders: normalizedOrders,
+      },
+    });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({
+        error: 'Invalid serialNumber or limit',
+        details: error.errors,
+      });
+    }
+    console.error('Error getting device history:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
@@ -2182,4 +2531,3 @@ export const refundOrderPayment = async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
-

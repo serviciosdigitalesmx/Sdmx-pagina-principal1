@@ -5,7 +5,7 @@ import { attachScope } from '../middleware/scope';
 import { requireTenantBillingActive } from '../middleware/tenantBilling';
 import { requireRole } from '../middleware/requireRole';
 import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
-import { addOrderMessage, addOrderNote, createOrder, getOrderById, getOrderChecklist, listOrders, updateOrderChecklist, updateOrderDetails, updateOrderFinancials, updateOrderStatus, updateOrderWarranty, uploadOrderAttachments, createOrderPayment, refundOrderPayment, updateOrderDocumentVisibility } from '../controllers/orders';
+import { addOrderMessage, addOrderNote, createOrder, getDeviceHistoryBySerial, getOrderById, getOrderChecklist, listOrders, updateOrderChecklist, updateOrderDetails, updateOrderFinancials, updateOrderStatus, updateOrderWarranty, uploadOrderAttachments, createOrderPayment, refundOrderPayment, updateOrderDocumentVisibility } from '../controllers/orders';
 
 const router = Router({ mergeParams: true });
 
@@ -17,6 +17,7 @@ router.use(attachTenantCapabilities);
 
 router.get('/', requireTenantModule('orders'), listOrders);
 router.post('/', requireTenantModule('orders'), createOrder);
+router.get('/device-history', requireTenantModule('orders'), requireRole('owner', 'manager', 'technician'), getDeviceHistoryBySerial);
 
 // Legacy compatibility while migrating clients.
 router.get('/legacy', requireRole('owner', 'manager'), listOrders);
