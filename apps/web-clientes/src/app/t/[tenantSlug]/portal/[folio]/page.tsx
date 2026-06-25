@@ -6,5 +6,5 @@ type PageProps = {
 
 export default async function PortalFolioPage({ params }: PageProps) {
   const { tenantSlug, folio } = await params;
-  return <PortalView tenantSlug={tenantSlug} initialFolio={folio} />;
+  return <PortalView tenantSlug={tenantSlug} initialFolio={folio} initialLookupMode="auto" />;
 }

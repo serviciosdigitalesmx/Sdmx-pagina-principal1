@@ -232,6 +232,78 @@ export interface BackendOrderResponse {
   };
 }
 
+export interface PortalOrderResponse {
+  success: boolean;
+  data: {
+    order: {
+      folio: string;
+      status: string;
+      priority?: string | null;
+      device: {
+        type?: string | null;
+        brand?: string | null;
+        model?: string | null;
+        serialNumber?: string | null;
+      };
+      reportedIssue?: string | null;
+      costs: {
+        estimated: number;
+        final: number | null;
+      };
+      dates: {
+        receivedAt?: string | null;
+        promisedDate?: string | null;
+        completedAt?: string | null;
+        deliveredAt?: string | null;
+        updatedAt?: string | null;
+      };
+    };
+    documents: {
+      total: number;
+      items: Array<{
+        id: string;
+        fileName: string;
+        fileType: string;
+        mimeType: string;
+        source: string;
+        url: string | null;
+        createdAt: string;
+      }>;
+    };
+    timeline: {
+      items: Array<{
+        id: string;
+        type: string;
+        label: string;
+        status: string;
+        note?: string | null;
+        createdAt?: string | null;
+      }>;
+    };
+    authorization: PortalAuthorizationSummary | null;
+    warranty: PortalWarrantySummary | null;
+    pdf: {
+      available: boolean;
+      url: string | null;
+    };
+  };
+}
+
+export type PortalAuthorizationSummary = {
+  hasAcceptedAuthorization: boolean;
+  latestStatus: string | null;
+  latestDecisionAt: string | null;
+  latestAuthorizationType: string | null;
+  authorizedAmount: number | null;
+};
+
+export type PortalWarrantySummary = {
+  warrantyUntil: string | null;
+  isWarrantyActive: boolean;
+  claimsCount: number;
+  latestClaimStatus: string | null;
+};
+
 export type NormalizedTimelineEvent = {
   id: string;
   label: string;
@@ -253,8 +325,8 @@ export type NormalizedAttachment = {
 export type NormalizedDocument = {
   id: string;
   name: string;
-  url: string;
-  type: "invoice" | "warranty" | "diagnostic" | "other";
+  url: string | null;
+  type: "invoice" | "warranty" | "diagnostic" | "image" | "video" | "other";
   date: Date;
 };
 
@@ -288,6 +360,10 @@ export interface NormalizedOrder {
   customerName?: string;
   customerPhone?: string;
   customerEmail?: string;
+  estimatedCost?: number;
+  finalCost?: number | null;
+  completedAt?: Date;
+  deliveredAt?: Date;
 }
 
 export interface NormalizedOrderDetail {
@@ -299,4 +375,11 @@ export interface NormalizedOrderDetail {
   documents: NormalizedDocument[];
   events: NormalizedEvent[];
   messages: NormalizedMessage[];
+  authorization?: PortalAuthorizationSummary | null;
+  warranty?: PortalWarrantySummary | null;
+  pdf?: {
+    available: boolean;
+    url: string | null;
+  };
+  source?: "legacy" | "canonical";
 }

@@ -1,4 +1,4 @@
-import type { BackendOrderResponse, NormalizedAttachment, NormalizedDocument, NormalizedEvent, NormalizedMessage, NormalizedOrder, NormalizedOrderDetail, NormalizedTimelineEvent } from "../types";
+import type { BackendOrderResponse, NormalizedAttachment, NormalizedDocument, NormalizedEvent, NormalizedMessage, NormalizedOrder, NormalizedOrderDetail, NormalizedTimelineEvent, PortalOrderResponse } from "../types";
 
 export function normalizeOrderDetail(raw: BackendOrderResponse["data"]): NormalizedOrderDetail {
   return {
@@ -10,7 +10,51 @@ export function normalizeOrderDetail(raw: BackendOrderResponse["data"]): Normali
     documents: normalizeDocuments(raw.documents ?? []),
     events: normalizeEvents(raw.events ?? []),
     messages: normalizeMessages(raw.messages ?? []),
+    source: "legacy",
   };
+}
+
+export function normalizePortalOrderDetail(raw: PortalOrderResponse["data"]): NormalizedOrderDetail {
+  return {
+    order: {
+      folio: raw.order.folio,
+      status: raw.order.status,
+      statusLabel: raw.order.status,
+      deviceType: raw.order.device.type || "No disponible",
+      deviceBrand: raw.order.device.brand || "No disponible",
+      deviceModel: raw.order.device.model || "No disponible",
+      serialNumber: raw.order.device.serialNumber ?? undefined,
+      problemDescription: raw.order.reportedIssue || "No disponible",
+      createdAt: safeDate(raw.order.dates.receivedAt),
+      updatedAt: safeDate(raw.order.dates.updatedAt ?? raw.order.dates.receivedAt),
+      promisedDate: raw.order.dates.promisedDate ? safeDate(raw.order.dates.promisedDate) : undefined,
+      estimatedCost: raw.order.costs.estimated,
+      finalCost: raw.order.costs.final,
+      completedAt: raw.order.dates.completedAt ? safeDate(raw.order.dates.completedAt) : undefined,
+      deliveredAt: raw.order.dates.deliveredAt ? safeDate(raw.order.dates.deliveredAt) : undefined,
+    },
+    orderStatusLabel: raw.order.status,
+    timeline: normalizePortalTimeline(raw.timeline.items),
+    attachments: [],
+    documents: normalizePortalDocuments(raw.documents.items),
+    events: raw.timeline.items.map((event) => ({
+      id: event.id,
+      type: event.type,
+      description: event.note ?? event.label,
+      date: safeDate(event.createdAt),
+    })),
+    messages: [],
+    authorization: raw.authorization,
+    warranty: raw.warranty,
+    pdf: raw.pdf,
+    source: "canonical",
+  };
+}
+
+function safeDate(value?: string | Date | null): Date {
+  if (value instanceof Date) return value;
+  const date = value ? new Date(value) : new Date();
+  return Number.isNaN(date.getTime()) ? new Date() : date;
 }
 
 function normalizeOrder(order: BackendOrderResponse["data"]["order"]): NormalizedOrder {
@@ -43,6 +87,16 @@ function normalizeTimeline(events: BackendOrderResponse["data"]["timeline"]): No
   }));
 }
 
+function normalizePortalTimeline(events: PortalOrderResponse["data"]["timeline"]["items"]): NormalizedTimelineEvent[] {
+  return events.map((event) => ({
+    id: event.id,
+    label: event.label,
+    status: event.status === "received" || event.status === "delivered" || event.status === "completed" ? "completed" : event.type === "status" ? "in_progress" : "pending",
+    note: event.note ?? event.type,
+    date: safeDate(event.createdAt),
+  }));
+}
+
 function normalizeAttachments(attachments: BackendOrderResponse["data"]["attachments"]): NormalizedAttachment[] {
   return attachments.map((attachment) => ({
     id: attachment.id,
@@ -59,10 +113,27 @@ function normalizeDocuments(documents: BackendOrderResponse["data"]["documents"]
   return documents.map((document) => ({
     id: document.id,
     name: document.file_name,
-    url: document.public_url ?? "",
-    type: document.file_type === "invoice" || document.file_type === "warranty" || document.file_type === "diagnostic" ? document.file_type : "other",
+    url: document.public_url ?? null,
+    type: resolveDocumentType(document.file_type, document.mime_type),
     date: new Date(document.created_at),
   }));
+}
+
+function normalizePortalDocuments(documents: PortalOrderResponse["data"]["documents"]["items"]): NormalizedDocument[] {
+  return documents.map((document) => ({
+    id: document.id,
+    name: document.fileName,
+    url: document.url,
+    type: resolveDocumentType(document.fileType, document.mimeType),
+    date: safeDate(document.createdAt),
+  }));
+}
+
+function resolveDocumentType(fileType: string, mimeType?: string | null): NormalizedDocument["type"] {
+  if (fileType === "invoice" || fileType === "warranty" || fileType === "diagnostic") return fileType;
+  if (mimeType?.startsWith("image/") || fileType.includes("photo") || fileType.includes("image")) return "image";
+  if (mimeType?.startsWith("video/") || fileType.includes("video")) return "video";
+  return "other";
 }
 
 function normalizeDocument(document: NonNullable<BackendOrderResponse["data"]["pdf_attachment"]>): NormalizedDocument {

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createPublicQuote, createPublicStoreOrder, getPublicOrderAuthorization, getPublicOrderPdf, getPublicPortalOrder, getPublicStoreCatalog, getPublicTenantLanding, submitPublicOrderAuthorization, trackPublicOrder } from '../controllers/public';
+import { createPublicQuote, createPublicStoreOrder, getPublicOrderAuthorization, getPublicOrderPdf, getPublicPortalByToken, getPublicPortalOrder, getPublicStoreCatalog, getPublicTenantLanding, submitPublicOrderAuthorization, trackPublicOrder } from '../controllers/public';
 
 const router = Router({ mergeParams: true });
 
@@ -10,6 +10,7 @@ router.get('/tracking', trackPublicOrder);
 router.get('/tenant/:tenantSlug/landing', getPublicTenantLanding);
 router.get('/tenant/:tenantSlug/orders/:publicToken/authorization', getPublicOrderAuthorization);
 router.post('/tenant/:tenantSlug/orders/:publicToken/authorization', submitPublicOrderAuthorization);
+router.get('/tenant/:tenantSlug/orders/:publicToken/portal', getPublicPortalByToken);
 router.get('/tenant/:tenantSlug/orders/:folio', getPublicPortalOrder);
 router.get('/tenant/:tenantSlug/orders/:folio/pdf', getPublicOrderPdf);
 

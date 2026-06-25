@@ -26,6 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function PortalPage({ params, searchParams }: PageProps) {
   const [{ tenantSlug }, query] = await Promise.all([params, searchParams]);
   const initialFolio = query.folio?.trim() || query.token?.trim() || "";
+  const initialLookupMode = query.token?.trim() ? "token" : query.folio?.trim() ? "folio" : "auto";
 
-  return <PortalView tenantSlug={tenantSlug} initialFolio={initialFolio} />;
+  return <PortalView tenantSlug={tenantSlug} initialFolio={initialFolio} initialLookupMode={initialLookupMode} />;
 }

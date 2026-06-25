@@ -99,6 +99,11 @@ const publicPortalSchema = z.object({
   folio: z.string().min(1),
 });
 
+const publicPortalTokenSchema = z.object({
+  tenantSlug: z.string().min(1),
+  publicToken: z.string().min(1),
+});
+
 const publicAuthorizationParamsSchema = z.object({
   tenantSlug: z.string().min(1),
   publicToken: z.string().min(1),
@@ -131,6 +136,16 @@ const PUBLIC_AUTHORIZATION_TERMS = {
   version: 't11-v1',
   text: 'Autorizo la revisión, diagnóstico o reparación indicada, con el costo y alcance mostrados.',
 };
+
+const PUBLIC_PORTAL_EVENT_TYPES = [
+  'status_changed',
+  'authorization_accepted',
+  'authorization_rejected',
+  'warranty_claim_created',
+  'warranty_claim_status_updated',
+  'document_uploaded',
+  'customer_message',
+];
 
 const publicCatalogSchema = z.object({
   tenantSlug: z.string().min(1),
@@ -909,6 +924,185 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
       return res.status(404).json({ error: 'No encontramos un tenant con ese slug', details: message });
     }
     return res.status(500).json({ error: message });
+  }
+}
+
+export async function getPublicPortalByToken(req: Request, res: Response) {
+  const parsed = publicPortalTokenSchema.safeParse(req.params);
+
+  if (!parsed.success) {
+    return res.status(400).json({ error: 'Invalid params', details: parsed.error.flatten() });
+  }
+
+  try {
+    const { tenantSlug, publicToken } = parsed.data;
+    const tenant = await resolveTenantIdBySlug(tenantSlug);
+    const cleanToken = publicToken.trim();
+    const nowIso = new Date().toISOString();
+
+    const { data: order, error: orderError } = await supabaseAdmin
+      .from('service_orders')
+      .select('id, tenant_id, folio, status, created_at, updated_at, received_at, promised_date, completed_at, delivered_at, device_info, device_type, device_brand, device_model, serial_number, reported_issue, problem_description, estimated_cost, final_cost, warranty_until')
+      .eq('tenant_id', tenant.id)
+      .eq('public_token', cleanToken)
+      .maybeSingle();
+
+    if (orderError) {
+      return res.status(502).json({ error: 'Failed to load portal order', details: orderError.message });
+    }
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const [{ data: documents, error: documentsError }, { data: events, error: eventsError }, { data: latestAuthorization, error: authorizationError }, { data: warrantyClaims, error: warrantyError }] = await Promise.all([
+      supabaseAdmin
+        .from('service_order_documents')
+        .select('id, file_name, file_type, public_url, mime_type, created_at, source')
+        .eq('tenant_id', tenant.id)
+        .eq('service_order_id', order.id)
+        .eq('is_customer_visible', true)
+        .or(`retention_expires_at.is.null,retention_expires_at.gt.${nowIso}`)
+        .order('created_at', { ascending: true }),
+      supabaseAdmin
+        .from('service_order_events')
+        .select('id, event_type, previous_status, new_status, note, actor_name, created_at')
+        .eq('tenant_id', tenant.id)
+        .eq('service_order_id', order.id)
+        .in('event_type', PUBLIC_PORTAL_EVENT_TYPES)
+        .order('created_at', { ascending: true }),
+      supabaseAdmin
+        .from('service_order_authorizations')
+        .select('id, status, authorization_type, authorized_amount, decided_at, created_at')
+        .eq('tenant_id', tenant.id)
+        .eq('service_order_id', order.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabaseAdmin
+        .from('service_order_warranties')
+        .select('id, status, warranty_until, eligibility_status, created_at')
+        .eq('tenant_id', tenant.id)
+        .eq('original_order_id', order.id)
+        .order('created_at', { ascending: false })
+        .limit(50),
+    ]);
+
+    if (documentsError) {
+      return res.status(502).json({ error: 'Failed to load portal documents', details: documentsError.message });
+    }
+
+    if (eventsError) {
+      return res.status(502).json({ error: 'Failed to load portal timeline', details: eventsError.message });
+    }
+
+    if (authorizationError) {
+      return res.status(502).json({ error: 'Failed to load authorization summary', details: authorizationError.message });
+    }
+
+    if (warrantyError) {
+      return res.status(502).json({ error: 'Failed to load warranty summary', details: warrantyError.message });
+    }
+
+    const deviceInfo = (order.device_info && typeof order.device_info === 'object' ? order.device_info : {}) as Record<string, unknown>;
+    const statusKey = String(order.status ?? '').toLowerCase();
+    const estimatedCost = Number(order.estimated_cost ?? 0);
+    const finalCost = order.final_cost == null ? null : Number(order.final_cost);
+    const activeWarrantyDate = order.warranty_until ? new Date(String(order.warranty_until)) : null;
+    const isWarrantyActive = Boolean(activeWarrantyDate && !Number.isNaN(activeWarrantyDate.getTime()) && activeWarrantyDate >= new Date());
+    const latestWarrantyClaim = warrantyClaims?.[0] ?? null;
+    const safeDocuments = (documents ?? []).map((document) => ({
+      id: document.id,
+      fileName: document.file_name,
+      fileType: document.file_type,
+      mimeType: document.mime_type ?? 'application/octet-stream',
+      source: document.source ?? 'upload',
+      url: document.public_url ?? null,
+      createdAt: document.created_at,
+    }));
+    const calculatedTimeline = [
+      {
+        id: 'status-received',
+        type: 'status',
+        label: 'Orden recibida',
+        status: 'received',
+        createdAt: order.received_at ?? order.created_at ?? null,
+      },
+      {
+        id: 'status-current',
+        type: 'status',
+        label: 'Estado actual',
+        status: statusKey || 'unknown',
+        createdAt: order.updated_at ?? order.created_at ?? null,
+      },
+    ];
+    const safeEvents = (events ?? []).map((event) => ({
+      id: event.id,
+      type: event.event_type,
+      label: event.actor_name ? `${event.event_type} · ${event.actor_name}` : event.event_type,
+      status: event.new_status ?? event.previous_status ?? event.event_type,
+      note: event.event_type === 'customer_message' ? event.note ?? null : null,
+      createdAt: event.created_at,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        order: {
+          folio: order.folio,
+          status: order.status,
+          priority: 'normal',
+          device: {
+            type: String(deviceInfo.type ?? deviceInfo.device_type ?? order.device_type ?? ''),
+            brand: String(deviceInfo.brand ?? deviceInfo.device_brand ?? order.device_brand ?? ''),
+            model: String(deviceInfo.model ?? deviceInfo.device_model ?? order.device_model ?? ''),
+            serialNumber: String(deviceInfo.serialNumber ?? deviceInfo.serial_number ?? order.serial_number ?? ''),
+          },
+          reportedIssue: String(order.problem_description ?? order.reported_issue ?? ''),
+          costs: {
+            estimated: Number.isFinite(estimatedCost) ? estimatedCost : 0,
+            final: finalCost != null && Number.isFinite(finalCost) && finalCost > 0 ? finalCost : null,
+          },
+          dates: {
+            receivedAt: order.received_at ?? order.created_at ?? null,
+            promisedDate: order.promised_date ?? null,
+            completedAt: order.completed_at ?? null,
+            deliveredAt: order.delivered_at ?? null,
+            updatedAt: order.updated_at ?? order.created_at ?? null,
+          },
+        },
+        documents: {
+          total: safeDocuments.length,
+          items: safeDocuments,
+        },
+        timeline: {
+          items: [...calculatedTimeline, ...safeEvents],
+        },
+        authorization: {
+          hasAcceptedAuthorization: latestAuthorization?.status === 'accepted',
+          latestStatus: latestAuthorization?.status ?? null,
+          latestDecisionAt: latestAuthorization?.decided_at ?? null,
+          latestAuthorizationType: latestAuthorization?.authorization_type ?? null,
+          authorizedAmount: latestAuthorization?.authorized_amount ?? null,
+        },
+        warranty: {
+          warrantyUntil: order.warranty_until ?? latestWarrantyClaim?.warranty_until ?? null,
+          isWarrantyActive,
+          claimsCount: warrantyClaims?.length ?? 0,
+          latestClaimStatus: latestWarrantyClaim?.status ?? null,
+        },
+        pdf: {
+          available: false,
+          url: null,
+        },
+      },
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === 'TenantNotFoundError') {
+      return res.status(404).json({ error: 'Tenant not found' });
+    }
+    console.error('Error loading public portal by token:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
   }
 }
 

@@ -4,8 +4,8 @@ import { useMemo, useState, useEffect, useCallback, type FormEvent } from "react
 import Link from "next/link";
 import Image from "next/image";
 import { getTenantLanding } from "@/lib/api/tenant";
-import { getOrderByFolio } from "@/lib/api/orders";
-import { normalizeOrderDetail } from "@/lib/utils/normalizers";
+import { getOrderByFolio, getPortalOrderByToken } from "@/lib/api/orders";
+import { normalizeOrderDetail, normalizePortalOrderDetail } from "@/lib/utils/normalizers";
 import type { NormalizedAttachment, NormalizedDocument, NormalizedOrderDetail, Tenant } from "@/lib/types";
 import { TenantBrandingProvider } from "@/lib/theme/tenant-branding-provider";
 import { OrderTimeline } from "@/components/portal/order-timeline";
@@ -44,9 +44,14 @@ function daysRemaining(promisedDate?: string | Date | null) {
 type PortalViewProps = {
   tenantSlug: string;
   initialFolio?: string;
+  initialLookupMode?: "auto" | "folio" | "token";
 };
 
-export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
+function looksLikePublicToken(value: string) {
+  return value.trim().length >= 24;
+}
+
+export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = "auto" }: PortalViewProps) {
   const [folio, setFolio] = useState(initialFolio);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +90,7 @@ export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
   }, [tenantSlug]);
 
   const executeSearch = useCallback(
-    async (searchValue: string) => {
+    async (searchValue: string, lookupMode: "auto" | "folio" | "token" = "auto") => {
       setLoading(true);
       setError(null);
       setHasSearched(true);
@@ -94,7 +99,21 @@ export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
         if (!tenantSlug) throw new Error("Tenant slug ausente en la ruta");
         if (!searchValue.trim()) throw new Error("Ingresa tu folio o token");
 
-        const payload = await getOrderByFolio(tenantSlug, searchValue.trim());
+        const cleanValue = searchValue.trim();
+        const shouldTryToken = lookupMode === "token" || (lookupMode === "auto" && looksLikePublicToken(cleanValue));
+
+        if (shouldTryToken) {
+          try {
+            const portalPayload = await getPortalOrderByToken(tenantSlug, cleanValue);
+            if (!portalPayload.success) throw new Error("No encontramos una orden con ese token");
+            setResult(normalizePortalOrderDetail(portalPayload.data));
+            return;
+          } catch (tokenError) {
+            if (lookupMode === "token") throw tokenError;
+          }
+        }
+
+        const payload = await getOrderByFolio(tenantSlug, cleanValue);
         if (!payload.success) throw new Error("No encontramos una orden con ese folio");
 
         setTenantLabel(payload.tenant.name || tenantSlug);
@@ -113,18 +132,18 @@ export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
   useEffect(() => {
     if (!initialFolio) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void executeSearch(initialFolio);
-  }, [executeSearch, initialFolio]);
+    void executeSearch(initialFolio, initialLookupMode);
+  }, [executeSearch, initialFolio, initialLookupMode]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await executeSearch(folio);
+    await executeSearch(folio, "auto");
   };
 
   const evidenceAttachments: NormalizedAttachment[] = useMemo(() => {
     if (!result) return [];
     return [...result.attachments, ...result.documents]
-      .filter((item) => item.url && (item.type === "image" || item.type === "video"))
+      .filter((item): item is (NormalizedAttachment | NormalizedDocument) & { url: string } => Boolean(item.url) && (item.type === "image" || item.type === "video"))
       .map((item) => ({
         id: item.id,
         name: item.name,
@@ -147,7 +166,7 @@ export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
     return documents;
   }, [result]);
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
-  const generatedPdfHref = result ? `${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(result.order.folio)}/pdf` : null;
+  const generatedPdfHref = result?.pdf?.available && result.pdf.url ? `${apiBaseUrl}${result.pdf.url}` : result && result.source === "legacy" ? `${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(result.order.folio)}/pdf` : null;
 
   if (loadingTenant) {
     return (
@@ -406,6 +425,38 @@ export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
               </article>
 
               <aside className="space-y-4">
+                {result.authorization ? (
+                  <section className="rounded-[1.75rem] border border-sky-400/15 bg-white/5 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-500">Autorización</p>
+                    <div className="mt-4 rounded-[1.25rem] border border-white/10 bg-black/20 p-4">
+                      <div className="text-sm text-slate-300">Estado</div>
+                      <div className="mt-1 text-xl font-black text-slate-50">
+                        {result.authorization.hasAcceptedAuthorization ? "Aceptada" : result.authorization.latestStatus ?? "Pendiente"}
+                      </div>
+                      <div className="mt-3 grid gap-3 text-sm text-slate-300">
+                        <div>Tipo: <span className="font-semibold text-slate-50">{result.authorization.latestAuthorizationType ?? "Sin definir"}</span></div>
+                        <div>Monto autorizado: <span className="font-semibold text-slate-50">{result.authorization.authorizedAmount != null ? `$${result.authorization.authorizedAmount.toFixed(2)}` : "No disponible"}</span></div>
+                        <div>Fecha: <span className="font-semibold text-slate-50">{formatDateOnly(result.authorization.latestDecisionAt)}</span></div>
+                      </div>
+                    </div>
+                  </section>
+                ) : null}
+
+                {result.warranty ? (
+                  <section className="rounded-[1.75rem] border border-sky-400/15 bg-white/5 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
+                    <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-500">Garantía</p>
+                    <div className="mt-4 rounded-[1.25rem] border border-white/10 bg-black/20 p-4">
+                      <div className="text-sm text-slate-300">Cobertura</div>
+                      <div className="mt-1 text-xl font-black text-slate-50">{result.warranty.isWarrantyActive ? "Activa" : "Sin garantía activa"}</div>
+                      <div className="mt-3 grid gap-3 text-sm text-slate-300">
+                        <div>Vigencia: <span className="font-semibold text-slate-50">{formatDateOnly(result.warranty.warrantyUntil)}</span></div>
+                        <div>Reclamos registrados: <span className="font-semibold text-slate-50">{result.warranty.claimsCount}</span></div>
+                        <div>Último estado: <span className="font-semibold text-slate-50">{result.warranty.latestClaimStatus ?? "Sin reclamos"}</span></div>
+                      </div>
+                    </div>
+                  </section>
+                ) : null}
+
                 <section className="rounded-[1.75rem] border border-sky-400/15 bg-white/5 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
                   <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-500">Acciones</p>
                   <div className="mt-4 space-y-3">
