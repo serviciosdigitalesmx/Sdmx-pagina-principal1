@@ -5,7 +5,7 @@ import { attachScope } from '../middleware/scope';
 import { requireTenantBillingActive } from '../middleware/tenantBilling';
 import { requireRole } from '../middleware/requireRole';
 import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
-import { getReportsSummary } from '../controllers/reports';
+import { getProductivityReport, getReportsSummary } from '../controllers/reports';
 
 const router = Router({ mergeParams: true });
 
@@ -16,5 +16,6 @@ router.use(requireTenantBillingActive);
 router.use(attachTenantCapabilities);
 
 router.get('/summary', requireTenantModule('reports'), requireRole('owner', 'manager'), getReportsSummary);
+router.get('/productivity', requireTenantModule('reports'), requireRole('owner', 'manager'), getProductivityReport);
 
 export default router;

@@ -1,5 +1,27 @@
 import { Request, Response } from 'express';
 import { getTenantClient } from '@white-label/database';
+import { z } from 'zod';
+import { getProductivityReport as buildProductivityReport, ProductivityReportError } from '../services/productivity-reports';
+
+const productivityStatusSchema = z.enum(['active', 'paused', 'completed', 'cancelled', 'all']);
+
+const productivityQuerySchema = z.object({
+  from: z.preprocess((value) => Array.isArray(value) ? value[0] : value, z.string().trim().optional()),
+  to: z.preprocess((value) => Array.isArray(value) ? value[0] : value, z.string().trim().optional()),
+  sucursalId: z.preprocess((value) => Array.isArray(value) ? value[0] : value, z.string().trim().optional()),
+  technicianUserId: z.preprocess((value) => Array.isArray(value) ? value[0] : value, z.string().trim().optional()),
+  status: z.preprocess((value) => Array.isArray(value) ? value[0] : value, productivityStatusSchema.optional().default('all')),
+});
+
+function isUuid(value: string | null | undefined) {
+  return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function parseReportDate(value: string | undefined, fallback: Date) {
+  if (!value) return fallback;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
 
 export const getReportsSummary = async (req: Request, res: Response) => {
   try {
@@ -226,6 +248,53 @@ export const getReportsSummary = async (req: Request, res: Response) => {
     console.error('REPORTS_SUMMARY_FATAL', {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : null,
+    });
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const getProductivityReport = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context is required' });
+    }
+
+    const parsed = productivityQuerySchema.parse(req.query);
+    const now = new Date();
+    const defaultFrom = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const from = parseReportDate(parsed.from, defaultFrom);
+    const to = parseReportDate(parsed.to, now);
+
+    if (!from) return res.status(400).json({ error: 'Invalid from date' });
+    if (!to) return res.status(400).json({ error: 'Invalid to date' });
+    if (from.getTime() > to.getTime()) return res.status(400).json({ error: 'from must be before or equal to to' });
+
+    const sucursalId = parsed.sucursalId || null;
+    const technicianUserId = parsed.technicianUserId || null;
+    if (sucursalId && !isUuid(sucursalId)) return res.status(400).json({ error: 'Invalid sucursalId' });
+    if (technicianUserId && !isUuid(technicianUserId)) return res.status(400).json({ error: 'Invalid technicianUserId' });
+
+    const data = await buildProductivityReport({
+      tenantId,
+      from,
+      to,
+      sucursalId,
+      technicianUserId,
+      status: parsed.status,
+      scope: req.scope ?? null,
+    });
+
+    return res.json({ success: true, data });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid query params', details: error.errors });
+    }
+    if (error instanceof ProductivityReportError) {
+      return res.status(error.statusCode).json({ error: error.message });
+    }
+    console.error('REPORTS_PRODUCTIVITY_FATAL', {
+      message: error instanceof Error ? error.message : String(error),
     });
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
