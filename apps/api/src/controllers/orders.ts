@@ -11,6 +11,17 @@ import { writeAuditLog } from '../services/security-backoffice';
 import { cleanTenantTextField, getMissingRequiredTextField } from '../services/tenant-fields';
 import { getEvidenceMetadata, type EvidenceEntry } from '../services/evidence-adapter';
 import { createWhatsAppDraft, listWhatsAppMessages, WhatsAppMessageError } from '../services/whatsapp-messages';
+import {
+  createCommissionRule,
+  listCommissionRules,
+  listOrderWorkLogs as listWorkLogsForOrder,
+  pauseWorkLog,
+  resumeWorkLog,
+  startWorkLog,
+  stopWorkLog,
+  updateCommissionRule,
+  WorkLogError,
+} from '../services/work-logs';
 import { FEATURE_EVIDENCE_MODE } from '../config/feature-flags';
 
 const defaultOrderStatuses = ['recibido', 'diagnostico', 'reparacion', 'listo', 'entregado'] as const;
@@ -45,6 +56,32 @@ const whatsappDraftRequestSchema = z.object({
   countryCode: z.string().trim().optional().or(z.literal('')).default('52'),
   idempotencyKey: z.string().trim().optional().or(z.literal('')),
 });
+
+const workLogStartSchema = z.object({
+  technicianUserId: z.string().uuid().optional().or(z.literal('')),
+  notes: z.string().trim().optional().or(z.literal('')),
+});
+
+const workLogNoteSchema = z.object({
+  note: z.string().trim().optional().or(z.literal('')),
+});
+
+const workLogStopSchema = z.object({
+  result: z.string().trim().optional().or(z.literal('')),
+  notes: z.string().trim().optional().or(z.literal('')),
+});
+
+const commissionRuleSchema = z.object({
+  name: z.string().trim().min(1),
+  basis: z.enum(['none', 'fixed_per_work_log', 'per_hour', 'percent_estimated_cost', 'percent_final_cost']).default('none'),
+  ratePercent: z.coerce.number().min(0).nullable().optional(),
+  fixedAmount: z.coerce.number().min(0).nullable().optional(),
+  hourlyAmount: z.coerce.number().min(0).nullable().optional(),
+  priority: z.coerce.number().int().optional(),
+  active: z.coerce.boolean().optional(),
+});
+
+const commissionRulePatchSchema = commissionRuleSchema.partial();
 
 const statusRequestSchema = z.object({
   status: orderStatusSchema,
@@ -1947,6 +1984,228 @@ export const listOrderWhatsAppMessages = async (req: Request, res: Response) => 
     }
     console.error('Error listing WhatsApp messages:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+function handleWorkLogControllerError(res: Response, error: unknown, context: string) {
+  if (error instanceof z.ZodError) {
+    return res.status(400).json({ error: 'Invalid payload', details: error.errors });
+  }
+  if (error instanceof WorkLogError) {
+    return res.status(error.statusCode).json({ error: error.message, details: error.details });
+  }
+  console.error(context, error);
+  return res.status(500).json({ error: 'Error interno del servidor' });
+}
+
+function getTenantOrUnauthorized(req: Request, res: Response) {
+  const tenantId = req.tenantId;
+  if (!tenantId) {
+    res.status(401).json({ error: 'Tenant context is required' });
+    return null;
+  }
+  return tenantId;
+}
+
+export const startOrderWorkLog = async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantOrUnauthorized(req, res);
+    if (!tenantId) return;
+    const orderId = req.params.id;
+    if (!isUuid(orderId)) return res.status(400).json({ error: 'Invalid order id' });
+
+    const body = workLogStartSchema.parse(req.body ?? {});
+    const data = await startWorkLog({
+      tenantId,
+      orderId,
+      technicianUserId: body.technicianUserId || null,
+      notes: body.notes || null,
+      user: req.user ?? null,
+      scope: req.scope ?? null,
+    });
+
+    return res.status(201).json({ success: true, data });
+  } catch (error) {
+    return handleWorkLogControllerError(res, error, 'Error starting work log:');
+  }
+};
+
+export const pauseOrderWorkLog = async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantOrUnauthorized(req, res);
+    if (!tenantId) return;
+    const orderId = req.params.id;
+    const workLogId = req.params.workLogId;
+    if (!isUuid(orderId)) return res.status(400).json({ error: 'Invalid order id' });
+    if (!isUuid(workLogId)) return res.status(400).json({ error: 'Invalid work log id' });
+
+    const body = workLogNoteSchema.parse(req.body ?? {});
+    const data = await pauseWorkLog({
+      tenantId,
+      orderId,
+      workLogId,
+      note: body.note || null,
+      user: req.user ?? null,
+      scope: req.scope ?? null,
+    });
+
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return handleWorkLogControllerError(res, error, 'Error pausing work log:');
+  }
+};
+
+export const resumeOrderWorkLog = async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantOrUnauthorized(req, res);
+    if (!tenantId) return;
+    const orderId = req.params.id;
+    const workLogId = req.params.workLogId;
+    if (!isUuid(orderId)) return res.status(400).json({ error: 'Invalid order id' });
+    if (!isUuid(workLogId)) return res.status(400).json({ error: 'Invalid work log id' });
+
+    const body = workLogNoteSchema.parse(req.body ?? {});
+    const data = await resumeWorkLog({
+      tenantId,
+      orderId,
+      workLogId,
+      note: body.note || null,
+      user: req.user ?? null,
+      scope: req.scope ?? null,
+    });
+
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return handleWorkLogControllerError(res, error, 'Error resuming work log:');
+  }
+};
+
+export const stopOrderWorkLog = async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantOrUnauthorized(req, res);
+    if (!tenantId) return;
+    const orderId = req.params.id;
+    const workLogId = req.params.workLogId;
+    if (!isUuid(orderId)) return res.status(400).json({ error: 'Invalid order id' });
+    if (!isUuid(workLogId)) return res.status(400).json({ error: 'Invalid work log id' });
+
+    const body = workLogStopSchema.parse(req.body ?? {});
+    const data = await stopWorkLog({
+      tenantId,
+      orderId,
+      workLogId,
+      result: body.result || null,
+      notes: body.notes || null,
+      user: req.user ?? null,
+      scope: req.scope ?? null,
+    });
+
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return handleWorkLogControllerError(res, error, 'Error stopping work log:');
+  }
+};
+
+export const listOrderWorkLogs = async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantOrUnauthorized(req, res);
+    if (!tenantId) return;
+    const orderId = req.params.id;
+    if (!isUuid(orderId)) return res.status(400).json({ error: 'Invalid order id' });
+
+    const data = await listWorkLogsForOrder({
+      tenantId,
+      orderId,
+      user: req.user ?? null,
+      scope: req.scope ?? null,
+    });
+
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return handleWorkLogControllerError(res, error, 'Error listing work logs:');
+  }
+};
+
+export const listTechnicianCommissionRules = async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantOrUnauthorized(req, res);
+    if (!tenantId) return;
+    const data = await listCommissionRules(tenantId);
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return handleWorkLogControllerError(res, error, 'Error listing commission rules:');
+  }
+};
+
+export const createTechnicianCommissionRule = async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantOrUnauthorized(req, res);
+    if (!tenantId) return;
+    const body = commissionRuleSchema.parse(req.body ?? {});
+    const data = await createCommissionRule({
+      tenantId,
+      name: body.name,
+      basis: body.basis,
+      ratePercent: body.ratePercent ?? null,
+      fixedAmount: body.fixedAmount ?? null,
+      hourlyAmount: body.hourlyAmount ?? null,
+      priority: body.priority ?? 0,
+      active: body.active ?? true,
+      user: req.user ?? null,
+    });
+
+    try {
+      await writeAuditLog({
+        tenantId,
+        userId: req.user?.userId ?? null,
+        action: 'technician_commission_rule.created',
+        ipAddress: getRequestIp(req.headers, req.ip),
+        userAgent: req.get('user-agent') ?? null,
+        dataBefore: null,
+        dataAfter: data,
+      });
+    } catch (auditError) {
+      console.error('Failed to write commission rule audit log:', auditError);
+    }
+
+    return res.status(201).json({ success: true, data });
+  } catch (error) {
+    return handleWorkLogControllerError(res, error, 'Error creating commission rule:');
+  }
+};
+
+export const updateTechnicianCommissionRule = async (req: Request, res: Response) => {
+  try {
+    const tenantId = getTenantOrUnauthorized(req, res);
+    if (!tenantId) return;
+    const ruleId = req.params.ruleId;
+    if (!isUuid(ruleId)) return res.status(400).json({ error: 'Invalid commission rule id' });
+
+    const body = commissionRulePatchSchema.parse(req.body ?? {});
+    const data = await updateCommissionRule({
+      tenantId,
+      ruleId,
+      patch: body,
+      user: req.user ?? null,
+    });
+
+    try {
+      await writeAuditLog({
+        tenantId,
+        userId: req.user?.userId ?? null,
+        action: 'technician_commission_rule.updated',
+        ipAddress: getRequestIp(req.headers, req.ip),
+        userAgent: req.get('user-agent') ?? null,
+        dataBefore: { id: ruleId },
+        dataAfter: data,
+      });
+    } catch (auditError) {
+      console.error('Failed to write commission rule audit log:', auditError);
+    }
+
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return handleWorkLogControllerError(res, error, 'Error updating commission rule:');
   }
 };
 

@@ -5,7 +5,7 @@ import { attachScope } from '../middleware/scope';
 import { requireTenantBillingActive } from '../middleware/tenantBilling';
 import { requireRole } from '../middleware/requireRole';
 import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
-import { addOrderMessage, addOrderNote, createOrder, createOrderWarrantyClaim, createOrderWhatsAppDraft, getDeviceHistoryBySerial, getOrderAuthorizations, getOrderById, getOrderChecklist, getOrderWarrantySummary, listOrderWhatsAppMessages, listOrders, updateOrderChecklist, updateOrderDetails, updateOrderFinancials, updateOrderStatus, updateOrderWarranty, updateOrderWarrantyClaimStatus, uploadOrderAttachments, createOrderPayment, refundOrderPayment, updateOrderDocumentVisibility } from '../controllers/orders';
+import { addOrderMessage, addOrderNote, createOrder, createOrderWarrantyClaim, createOrderWhatsAppDraft, createTechnicianCommissionRule, getDeviceHistoryBySerial, getOrderAuthorizations, getOrderById, getOrderChecklist, getOrderWarrantySummary, listOrderWhatsAppMessages, listOrderWorkLogs, listOrders, listTechnicianCommissionRules, pauseOrderWorkLog, resumeOrderWorkLog, startOrderWorkLog, stopOrderWorkLog, updateOrderChecklist, updateOrderDetails, updateOrderFinancials, updateOrderStatus, updateOrderWarranty, updateOrderWarrantyClaimStatus, updateTechnicianCommissionRule, uploadOrderAttachments, createOrderPayment, refundOrderPayment, updateOrderDocumentVisibility } from '../controllers/orders';
 
 const router = Router({ mergeParams: true });
 
@@ -18,6 +18,9 @@ router.use(attachTenantCapabilities);
 router.get('/', requireTenantModule('orders'), listOrders);
 router.post('/', requireTenantModule('orders'), createOrder);
 router.get('/device-history', requireTenantModule('orders'), requireRole('owner', 'manager', 'technician'), getDeviceHistoryBySerial);
+router.get('/commission-rules', requireTenantModule('reports'), requireRole('owner', 'manager'), listTechnicianCommissionRules);
+router.post('/commission-rules', requireTenantModule('reports'), requireRole('owner', 'manager'), createTechnicianCommissionRule);
+router.patch('/commission-rules/:ruleId', requireTenantModule('reports'), requireRole('owner', 'manager'), updateTechnicianCommissionRule);
 
 // Legacy compatibility while migrating clients.
 router.get('/legacy', requireRole('owner', 'manager'), listOrders);
@@ -27,6 +30,11 @@ router.patch('/:id/warranty/claims/:claimId/status', requireTenantModule('warran
 router.get('/:id/authorizations', requireTenantModule('orders'), requireRole('owner', 'manager', 'technician'), getOrderAuthorizations);
 router.post('/:id/whatsapp/draft', requireTenantModule('whatsapp'), requireRole('owner', 'manager', 'technician'), createOrderWhatsAppDraft);
 router.get('/:id/whatsapp/messages', requireTenantModule('whatsapp'), requireRole('owner', 'manager', 'technician'), listOrderWhatsAppMessages);
+router.get('/:id/work-logs', requireTenantModule('reports'), requireRole('owner', 'manager', 'technician'), listOrderWorkLogs);
+router.post('/:id/work-logs/start', requireTenantModule('reports'), requireRole('owner', 'manager', 'technician'), startOrderWorkLog);
+router.post('/:id/work-logs/:workLogId/pause', requireTenantModule('reports'), requireRole('owner', 'manager', 'technician'), pauseOrderWorkLog);
+router.post('/:id/work-logs/:workLogId/resume', requireTenantModule('reports'), requireRole('owner', 'manager', 'technician'), resumeOrderWorkLog);
+router.post('/:id/work-logs/:workLogId/stop', requireTenantModule('reports'), requireRole('owner', 'manager', 'technician'), stopOrderWorkLog);
 router.get('/:id', requireTenantModule('orders'), getOrderById);
 router.post('/:id/attachments', requireTenantModule('documents'), uploadOrderAttachments);
 router.patch('/:id/documents/:documentId/visibility', requireTenantModule('documents'), requireRole('owner', 'manager'), updateOrderDocumentVisibility);
