@@ -20,13 +20,14 @@ import stockAlertsRouter from './routes/stock-alerts';
 import movivendorRouter from './routes/movivendor';
 import pwaRouter from './routes/pwa';
 import billingRouter, { webhookRouter } from './routes/billing';
-import { getApiRoot, getHealth } from './controllers/meta';
+import { getApiRoot, getDependencyHealth, getHealth } from './controllers/meta';
 import { listAuditLogs } from './controllers/security';
 import { requireAuth } from './middleware/auth';
 import { requireTenantBillingActive } from './middleware/tenantBilling';
 import { attachTenantCapabilities, requireTenantModule } from './middleware/tenantCapabilities';
 import { requireRole } from './middleware/requireRole';
 import { errorHandler } from './middleware/errorHandler';
+import { requestIdMiddleware } from './middleware/requestId';
 
 dotenv.config();
 
@@ -103,6 +104,7 @@ app.use(cors({
   optionsSuccessStatus: 204,
 }));
 app.use(express.json());
+app.use(requestIdMiddleware);
 
 app.options('*', cors({
   origin: (origin, callback) => {
@@ -171,6 +173,8 @@ app.get('/api', getApiRoot);
 app.get('/health', getHealth);
 app.get('/healthz', getHealth);
 app.get('/api/health', getHealth);
+app.get('/health/dependencies', getDependencyHealth);
+app.get('/api/health/dependencies', getDependencyHealth);
 app.use(errorHandler);
 
 const isVercel = Boolean(process.env.VERCEL);

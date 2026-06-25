@@ -6,6 +6,7 @@ import { loadTenantBillingSummary } from '../services/tenant-billing';
 import { getIndustryTemplate, listAvailableIndustries, loadTenantRuntimeConfig } from '../services/tenant-config';
 import { resolveTenantCapabilities } from '../services/tenant-capabilities';
 import { resolveEffectiveUserRole } from '../lib/user-roles';
+import { runDependencyHealthCheck } from '../services/observability';
 
 export const getApiRoot = (_req: Request, res: Response) => {
   const apiName = process.env.API_NAME ?? 'White-label API';
@@ -66,6 +67,15 @@ export const getHealth = (_req: Request, res: Response) => {
     status: 'ok',
     timestamp: new Date().toISOString(),
     service: process.env.API_NAME ?? 'White-label API',
+  });
+};
+
+export const getDependencyHealth = async (req: Request, res: Response) => {
+  const health = await runDependencyHealthCheck();
+
+  return res.status(health.status === 'ok' ? 200 : 503).json({
+    ...health,
+    requestId: req.requestId ?? null,
   });
 };
 
