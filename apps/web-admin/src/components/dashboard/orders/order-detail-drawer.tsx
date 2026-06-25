@@ -23,6 +23,8 @@ export type OrderDetailData = {
     estimated_cost?: number;
     final_cost?: number;
     customer_id?: string | null;
+    public_token?: string | null;
+    publicToken?: string | null;
     operational_risk?: {
       color?: 'green' | 'yellow' | 'red' | 'gray';
       reason?: string;
@@ -91,9 +93,14 @@ type Props = {
   onArchive: () => void;
 };
 
-function buildTrackingUrl(customerPortalUrl?: string | null, folio?: string | null) {
+function buildTrackingUrl(customerPortalUrl?: string | null, folio?: string | null, publicToken?: string | null) {
   const publicBase = process.env.NEXT_PUBLIC_WEB_PUBLIC_URL?.replace(/\/$/, "") ?? "";
   const tenantSlug = getTenantSlug();
+  if (publicToken && tenantSlug) {
+    const tokenPath = `/t/${encodeURIComponent(tenantSlug)}/portal?token=${encodeURIComponent(publicToken)}`;
+    return publicBase ? `${publicBase}${tokenPath}` : tokenPath;
+  }
+
   const resolvedBase = customerPortalUrl || (publicBase && tenantSlug ? `${publicBase}/${encodeURIComponent(tenantSlug)}` : "");
   if (!resolvedBase) return "";
   const trimmed = resolvedBase.replace(/\/$/, "");
@@ -102,11 +109,11 @@ function buildTrackingUrl(customerPortalUrl?: string | null, folio?: string | nu
   return `${trackingUrl}${folio ? `${separator}folio=${encodeURIComponent(folio)}` : ""}`;
 }
 
-function whatsappLink(phone?: string | null, folio?: string | null, customerPortalUrl?: string | null) {
+function whatsappLink(phone?: string | null, folio?: string | null, customerPortalUrl?: string | null, publicToken?: string | null) {
   if (!phone) return null;
   const normalized = phone.replace(/\D/g, "");
   if (!normalized) return null;
-  const portalUrl = buildTrackingUrl(customerPortalUrl, folio);
+  const portalUrl = buildTrackingUrl(customerPortalUrl, folio, publicToken);
   const message = encodeURIComponent(`Bienvenido a FIXI. Aquí puedes consultar el estatus de tu equipo: ${portalUrl}`);
   return `https://wa.me/${normalized}?text=${message}`;
 }
@@ -221,9 +228,10 @@ export function OrderDetailDrawer({
 
   const checklist = data?.checklist ?? null;
   const phone = (order?.device_info as { customer_phone?: string } | undefined)?.customer_phone ?? null;
-  const waLink = whatsappLink(phone, order?.folio, customerPortalUrl);
+  const publicToken = order?.public_token ?? order?.publicToken ?? null;
+  const waLink = whatsappLink(phone, order?.folio, customerPortalUrl, publicToken);
   const pdfUrl = order?.receipt_url ?? data?.documents?.find((document) => document.file_type === "receipt_pdf" && document.public_url)?.public_url ?? null;
-  const portalUrl = buildTrackingUrl(customerPortalUrl, order?.folio);
+  const portalUrl = buildTrackingUrl(customerPortalUrl, order?.folio, publicToken);
   const metadataEntries = Object.entries((order?.metadata as Record<string, unknown> | undefined) ?? {}).filter(([, value]) => value !== undefined && value !== null && value !== "");
   const operationalRisk = order?.operational_risk ?? null;
 

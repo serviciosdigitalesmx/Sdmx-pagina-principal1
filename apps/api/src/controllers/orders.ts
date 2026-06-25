@@ -10,6 +10,7 @@ import { sendTenantPushNotification } from '../services/pwa-push';
 import { writeAuditLog } from '../services/security-backoffice';
 import { cleanTenantTextField, getMissingRequiredTextField } from '../services/tenant-fields';
 import { getEvidenceMetadata, type EvidenceEntry } from '../services/evidence-adapter';
+import { createWhatsAppDraft, listWhatsAppMessages, WhatsAppMessageError } from '../services/whatsapp-messages';
 import { FEATURE_EVIDENCE_MODE } from '../config/feature-flags';
 
 const defaultOrderStatuses = ['recibido', 'diagnostico', 'reparacion', 'listo', 'entregado'] as const;
@@ -36,6 +37,13 @@ const documentVisibilitySchema = z.object({
 const noteRequestSchema = z.object({
   note: z.string().min(1),
   actorName: z.string().optional(),
+});
+
+const whatsappDraftRequestSchema = z.object({
+  templateKey: z.enum(['order_received', 'status_update', 'authorization_request', 'portal_link', 'warranty_info']).default('portal_link'),
+  recipientPhone: z.string().trim().optional().or(z.literal('')),
+  countryCode: z.string().trim().optional().or(z.literal('')).default('52'),
+  idempotencyKey: z.string().trim().optional().or(z.literal('')),
 });
 
 const statusRequestSchema = z.object({
@@ -1872,6 +1880,75 @@ export const addOrderNote = async (req: Request, res: Response) => {
 };
 
 export const addOrderMessage = addOrderNote;
+
+export const createOrderWhatsAppDraft = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    const orderId = req.params.id;
+
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context is required' });
+    }
+
+    if (!isUuid(orderId)) {
+      return res.status(400).json({ error: 'Invalid order id' });
+    }
+
+    const body = whatsappDraftRequestSchema.parse(req.body ?? {});
+    const data = await createWhatsAppDraft({
+      tenantId,
+      tenantSlug: req.user?.tenantSlug ?? req.params.tenantSlug ?? null,
+      orderId,
+      templateKey: body.templateKey,
+      recipientPhone: body.recipientPhone || null,
+      countryCode: body.countryCode || '52',
+      idempotencyKey: body.idempotencyKey || null,
+      user: req.user ?? null,
+      scope: req.scope ?? null,
+    });
+
+    return res.status(201).json({ success: true, data });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid payload', details: error.errors });
+    }
+    if (error instanceof WhatsAppMessageError) {
+      return res.status(error.statusCode).json({ error: error.message, details: error.details });
+    }
+    console.error('Error creating WhatsApp draft:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const listOrderWhatsAppMessages = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    const orderId = req.params.id;
+
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context is required' });
+    }
+
+    if (!isUuid(orderId)) {
+      return res.status(400).json({ error: 'Invalid order id' });
+    }
+
+    const data = await listWhatsAppMessages({
+      tenantId,
+      orderId,
+      user: req.user ?? null,
+      scope: req.scope ?? null,
+    });
+
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    if (error instanceof WhatsAppMessageError) {
+      return res.status(error.statusCode).json({ error: error.message, details: error.details });
+    }
+    console.error('Error listing WhatsApp messages:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
 
 export const updateOrderStatus = async (req: Request, res: Response) => {
   try {

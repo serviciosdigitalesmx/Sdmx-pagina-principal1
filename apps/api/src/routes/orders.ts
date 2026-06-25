@@ -5,7 +5,7 @@ import { attachScope } from '../middleware/scope';
 import { requireTenantBillingActive } from '../middleware/tenantBilling';
 import { requireRole } from '../middleware/requireRole';
 import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
-import { addOrderMessage, addOrderNote, createOrder, createOrderWarrantyClaim, getDeviceHistoryBySerial, getOrderAuthorizations, getOrderById, getOrderChecklist, getOrderWarrantySummary, listOrders, updateOrderChecklist, updateOrderDetails, updateOrderFinancials, updateOrderStatus, updateOrderWarranty, updateOrderWarrantyClaimStatus, uploadOrderAttachments, createOrderPayment, refundOrderPayment, updateOrderDocumentVisibility } from '../controllers/orders';
+import { addOrderMessage, addOrderNote, createOrder, createOrderWarrantyClaim, createOrderWhatsAppDraft, getDeviceHistoryBySerial, getOrderAuthorizations, getOrderById, getOrderChecklist, getOrderWarrantySummary, listOrderWhatsAppMessages, listOrders, updateOrderChecklist, updateOrderDetails, updateOrderFinancials, updateOrderStatus, updateOrderWarranty, updateOrderWarrantyClaimStatus, uploadOrderAttachments, createOrderPayment, refundOrderPayment, updateOrderDocumentVisibility } from '../controllers/orders';
 
 const router = Router({ mergeParams: true });
 
@@ -25,6 +25,8 @@ router.get('/:id/warranty', requireTenantModule('warranty'), requireRole('owner'
 router.post('/:id/warranty/claims', requireTenantModule('warranty'), requireRole('owner', 'manager', 'technician'), createOrderWarrantyClaim);
 router.patch('/:id/warranty/claims/:claimId/status', requireTenantModule('warranty'), requireRole('owner', 'manager'), updateOrderWarrantyClaimStatus);
 router.get('/:id/authorizations', requireTenantModule('orders'), requireRole('owner', 'manager', 'technician'), getOrderAuthorizations);
+router.post('/:id/whatsapp/draft', requireTenantModule('whatsapp'), requireRole('owner', 'manager', 'technician'), createOrderWhatsAppDraft);
+router.get('/:id/whatsapp/messages', requireTenantModule('whatsapp'), requireRole('owner', 'manager', 'technician'), listOrderWhatsAppMessages);
 router.get('/:id', requireTenantModule('orders'), getOrderById);
 router.post('/:id/attachments', requireTenantModule('documents'), uploadOrderAttachments);
 router.patch('/:id/documents/:documentId/visibility', requireTenantModule('documents'), requireRole('owner', 'manager'), updateOrderDocumentVisibility);
