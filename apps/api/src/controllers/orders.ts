@@ -953,13 +953,13 @@ export const createOrder = async (req: Request, res: Response) => {
     let customerId: string | null = null;
     let customerQuery = supabase
       .from('customers')
-      .select('id, name, full_name, phone')
+      .select('id, name, phone')
       .eq('tenant_id', tenantId);
 
     if (validatedData.clientPhone) {
       customerQuery = customerQuery.eq('phone', validatedData.clientPhone);
     } else {
-      customerQuery = customerQuery.or(`name.ilike.${validatedData.clientName},full_name.ilike.${validatedData.clientName}`);
+      customerQuery = customerQuery.ilike('name', validatedData.clientName);
     }
 
     const { data: existingCustomers } = await customerQuery.limit(1);
@@ -972,10 +972,8 @@ export const createOrder = async (req: Request, res: Response) => {
         .insert({
           tenant_id: tenantId,
           name: validatedData.clientName || 'Cliente Sin Nombre',
-          full_name: validatedData.clientName || 'Cliente Sin Nombre',
           phone: validatedData.clientPhone || null,
           email: validatedData.clientEmail || null,
-          tag: 'nuevo'
         })
         .select('id')
         .single();
@@ -2475,7 +2473,7 @@ export const updateOrderDetails = async (req: Request, res: Response) => {
     if (body.clientPhone || body.clientName) {
       let customerQuery = supabase
         .from('customers')
-        .select('id, name, full_name, phone')
+        .select('id, name, phone')
         .eq('tenant_id', tenantId);
 
       const phoneToSearch = body.clientPhone ?? String(currentDeviceInfo.customer_phone ?? '');
@@ -2484,7 +2482,7 @@ export const updateOrderDetails = async (req: Request, res: Response) => {
       if (phoneToSearch) {
         customerQuery = customerQuery.eq('phone', phoneToSearch);
       } else {
-        customerQuery = customerQuery.or(`name.ilike.${nameToSearch},full_name.ilike.${nameToSearch}`);
+        customerQuery = customerQuery.ilike('name', nameToSearch);
       }
 
       const { data: existingCustomers } = await customerQuery.limit(1);
@@ -2497,10 +2495,8 @@ export const updateOrderDetails = async (req: Request, res: Response) => {
           .insert({
             tenant_id: tenantId,
             name: nameToSearch || 'Cliente Sin Nombre',
-            full_name: nameToSearch || 'Cliente Sin Nombre',
             phone: phoneToSearch || null,
             email: nextDeviceInfo.customer_email || null,
-            tag: 'actualizado'
           })
           .select('id')
           .single();

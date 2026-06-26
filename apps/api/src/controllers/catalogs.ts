@@ -75,6 +75,15 @@ function normalizeCustomerName(name?: string | null, fullName?: string | null) {
   return String(name ?? fullName ?? '').trim();
 }
 
+function serializeCustomerRow<T extends Record<string, unknown>>(row: T) {
+  const displayName = normalizeCustomerName(row.name as string | null | undefined);
+  return {
+    ...row,
+    name: displayName,
+    full_name: displayName,
+  };
+}
+
 function normalizeCustomerHistoryStatus(status?: string | null) {
   const value = String(status ?? '').toLowerCase();
   if (value.includes('conv')) return 'convertida';
@@ -96,7 +105,7 @@ async function findMatchingCustomer(
   if (phone) {
     const { data } = await supabase
       .from('customers')
-      .select('id, tenant_id, sucursal_id, name, full_name, phone, email, created_at')
+      .select('id, tenant_id, sucursal_id, name, phone, email, created_at')
       .eq('tenant_id', tenantId)
       .eq('phone', phone)
       .maybeSingle();
@@ -110,9 +119,9 @@ async function findMatchingCustomer(
 
   const { data: exactName } = await supabase
     .from('customers')
-    .select('id, tenant_id, sucursal_id, name, full_name, phone, email, created_at')
+    .select('id, tenant_id, sucursal_id, name, phone, email, created_at')
     .eq('tenant_id', tenantId)
-    .or(`name.ilike.${normalizedName},full_name.ilike.${normalizedName}`)
+    .ilike('name', normalizedName)
     .limit(1)
     .maybeSingle();
 
@@ -120,9 +129,9 @@ async function findMatchingCustomer(
 
   const { data: partialName } = await supabase
     .from('customers')
-    .select('id, tenant_id, sucursal_id, name, full_name, phone, email, created_at')
+    .select('id, tenant_id, sucursal_id, name, phone, email, created_at')
     .eq('tenant_id', tenantId)
-    .or(`name.ilike.%${normalizedName}%,full_name.ilike.%${normalizedName}%`)
+    .ilike('name', `%${normalizedName}%`)
     .limit(1)
     .maybeSingle();
 
@@ -291,7 +300,7 @@ export const listCustomers = async (req: Request, res: Response) => {
     const supabase = getTenantClient(tenantId);
     let query = supabase
       .from('customers')
-      .select('id, tenant_id, sucursal_id, name, full_name, phone, email, created_at')
+      .select('id, tenant_id, sucursal_id, name, phone, email, created_at')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(100);
@@ -303,11 +312,7 @@ export const listCustomers = async (req: Request, res: Response) => {
 
     const { data, error } = await query;
     if (error) return res.status(502).json({ error: 'Failed to fetch customers', details: error.message });
-    const normalized = (data ?? []).map((row) => ({
-      ...row,
-      name: normalizeCustomerName((row as { name?: string | null }).name, (row as { full_name?: string | null }).full_name),
-      full_name: normalizeCustomerName((row as { full_name?: string | null }).full_name, (row as { name?: string | null }).name),
-    }));
+    const normalized = (data ?? []).map((row) => serializeCustomerRow(row as Record<string, unknown>));
     return res.json({ success: true, data: normalized });
   } catch (error) {
     console.error('Error listing customers:', error);
@@ -328,25 +333,20 @@ export const createCustomer = async (req: Request, res: Response) => {
       const { data, error } = await supabase
         .from('customers')
         .update({
-          name: body.name || existingCustomer.name || existingCustomer.full_name || '',
-          full_name: body.name || existingCustomer.full_name || existingCustomer.name || '',
+          name: body.name || existingCustomer.name || '',
           phone: body.phone || existingCustomer.phone || '',
           email: body.email === undefined ? existingCustomer.email ?? null : body.email || null,
           sucursal_id: scope?.sucursalId ?? existingCustomer.sucursal_id ?? null,
         })
         .eq('tenant_id', tenantId)
         .eq('id', existingCustomer.id)
-        .select('id, tenant_id, sucursal_id, name, full_name, phone, email, created_at')
+        .select('id, tenant_id, sucursal_id, name, phone, email, created_at')
         .single();
 
       if (error) return res.status(502).json({ error: 'Failed to update customer', details: error.message });
       return res.status(200).json({
         success: true,
-        data: {
-          ...data,
-          name: normalizeCustomerName((data as { name?: string | null }).name, (data as { full_name?: string | null }).full_name),
-          full_name: normalizeCustomerName((data as { full_name?: string | null }).full_name, (data as { name?: string | null }).name),
-        },
+        data: serializeCustomerRow(data as Record<string, unknown>),
       });
     }
 
@@ -354,18 +354,13 @@ export const createCustomer = async (req: Request, res: Response) => {
       tenant_id: tenantId,
       sucursal_id: scope?.sucursalId ?? null,
       name: body.name,
-      full_name: body.name,
       phone: body.phone,
       email: body.email || null,
-    }]).select('id, tenant_id, sucursal_id, name, full_name, phone, email, created_at').single();
+    }]).select('id, tenant_id, sucursal_id, name, phone, email, created_at').single();
     if (error) return res.status(502).json({ error: 'Failed to create customer', details: error.message });
     return res.status(201).json({
       success: true,
-      data: {
-        ...data,
-        name: normalizeCustomerName((data as { name?: string | null }).name, (data as { full_name?: string | null }).full_name),
-        full_name: normalizeCustomerName((data as { full_name?: string | null }).full_name, (data as { name?: string | null }).name),
-      },
+      data: serializeCustomerRow(data as Record<string, unknown>),
     });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: 'Invalid payload', details: error.errors });
@@ -386,7 +381,7 @@ export const updateCustomer = async (req: Request, res: Response) => {
     const supabase = getTenantClient(tenantId);
     const { data: existingCustomer, error: existingError } = await supabase
       .from('customers')
-      .select('id, tenant_id, sucursal_id, name, full_name, phone, email')
+      .select('id, tenant_id, sucursal_id, name, phone, email')
       .eq('tenant_id', tenantId)
       .eq('id', customerId)
       .maybeSingle();
@@ -400,8 +395,7 @@ export const updateCustomer = async (req: Request, res: Response) => {
     }
 
     const nextData = {
-      name: body.name ?? existingCustomer.name ?? existingCustomer.full_name ?? '',
-      full_name: body.name ?? existingCustomer.full_name ?? existingCustomer.name ?? '',
+      name: body.name ?? existingCustomer.name ?? '',
       phone: body.phone ?? existingCustomer.phone ?? '',
       email: body.email === undefined ? existingCustomer.email ?? null : body.email || null,
       sucursal_id: scope?.mode === 'branch' && scope.sucursalId ? scope.sucursalId : existingCustomer.sucursal_id ?? null,
@@ -412,17 +406,13 @@ export const updateCustomer = async (req: Request, res: Response) => {
       .update(nextData)
       .eq('tenant_id', tenantId)
       .eq('id', customerId)
-      .select('id, tenant_id, sucursal_id, name, full_name, phone, email, created_at')
+      .select('id, tenant_id, sucursal_id, name, phone, email, created_at')
       .single();
 
     if (error) return res.status(502).json({ error: 'Failed to update customer', details: error.message });
     return res.json({
       success: true,
-      data: {
-        ...data,
-        name: normalizeCustomerName((data as { name?: string | null }).name, (data as { full_name?: string | null }).full_name),
-        full_name: normalizeCustomerName((data as { full_name?: string | null }).full_name, (data as { name?: string | null }).name),
-      },
+      data: serializeCustomerRow(data as Record<string, unknown>),
     });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: 'Invalid payload', details: error.errors });
@@ -471,14 +461,14 @@ export const updateCustomerConsent = async (req: Request, res: Response) => {
       })
       .eq('tenant_id', tenantId)
       .eq('id', customerId)
-      .select('id, tenant_id, sucursal_id, name, full_name, phone, email, data_consent_status, data_consent_date, data_consent_version, data_consent_scope, data_consent_updated_by, data_consent_updated_at, created_at')
+      .select('id, tenant_id, sucursal_id, name, phone, email, data_consent_status, data_consent_date, data_consent_version, data_consent_scope, data_consent_updated_by, data_consent_updated_at, created_at')
       .single();
 
     if (error) {
       return res.status(502).json({ error: 'Failed to update customer consent', details: error.message });
     }
 
-    return res.json({ success: true, data });
+    return res.json({ success: true, data: serializeCustomerRow(data as Record<string, unknown>) });
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: 'Invalid payload', details: error.errors });
     console.error('Error updating customer consent:', error);
@@ -500,7 +490,7 @@ export const getCustomerHistory = async (req: Request, res: Response) => {
 
     const { data: customerRow, error: customerError } = await supabase
       .from('customers')
-      .select('id, tenant_id, sucursal_id, name, full_name, phone, email, created_at')
+      .select('id, tenant_id, sucursal_id, name, phone, email, created_at')
       .eq('tenant_id', tenantId)
       .eq('id', customerId)
       .maybeSingle();
@@ -587,11 +577,7 @@ export const getCustomerHistory = async (req: Request, res: Response) => {
     return res.json({
       success: true,
       data: {
-        customer: {
-          ...customerRow,
-          name: normalizeCustomerName((customerRow as { name?: string | null }).name, (customerRow as { full_name?: string | null }).full_name),
-          full_name: normalizeCustomerName((customerRow as { full_name?: string | null }).full_name, (customerRow as { name?: string | null }).name),
-        },
+        customer: serializeCustomerRow(customerRow as Record<string, unknown>),
         totalEquipos,
         totalReparaciones,
         totalCotizaciones,
