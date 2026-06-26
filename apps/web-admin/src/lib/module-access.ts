@@ -1,4 +1,3 @@
-import { getPlatformScope } from '@/lib/scope';
 import { resolveVertical } from '@/domain/vertical/VerticalRegistry';
 import { getStoredActiveModules, getStoredIndustryKey } from '@/lib/tenant-runtime-config';
 
@@ -25,6 +24,7 @@ const MODULE_KEY_ALIASES: Record<string, TenantModuleKey> = {
   orders: 'orders',
   appointments: 'orders',
   assets: 'inventory',
+  inventory: 'inventory',
   stock: 'inventory',
   suppliers: 'procurement',
   'purchase-orders': 'procurement',
@@ -83,8 +83,7 @@ export function getEnabledModules(): string[] {
       .filter((moduleKey): moduleKey is TenantModuleKey => Boolean(moduleKey));
   }
 
-  const scope = getPlatformScope();
-  const vertical = resolveVertical(getStoredIndustryKey() ?? scope?.verticalCode ?? null);
+  const vertical = resolveVertical(getStoredIndustryKey() ?? 'electronics_repair');
 
   return (vertical.enabledModules ?? [])
     .map((moduleKey) => normalizeModuleKey(moduleKey))

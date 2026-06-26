@@ -62,6 +62,7 @@ export const DASHBOARD_MODULES: DashboardModule[] = [
   { key: 'movivendor', label: 'Movivendor', icon: 'CircleDollarSign', href: '/dashboard/movivendor', enabled: true },
   { key: 'sucursales', label: 'Sucursales', icon: 'Building2', href: '/dashboard/sucursales', enabled: true },
   { key: 'seguridad', label: 'Seguridad', icon: 'Shield', href: '/dashboard/seguridad', enabled: true },
+  { key: 'usuarios', label: 'Usuarios', icon: 'Users', href: '/dashboard/usuarios', enabled: true },
 ];
 
 // Tipos de órdenes

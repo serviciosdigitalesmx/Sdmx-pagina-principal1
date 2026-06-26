@@ -71,6 +71,7 @@ const DASHBOARD_MODULE_ACCESS: Partial<Record<string, TenantModuleKey>> = {
   movivendor: 'movivendor',
   sucursales: 'branches',
   seguridad: 'security',
+  usuarios: 'users',
 };
 
 const ROLE_ALLOWED_MODULES: Record<'owner' | 'manager' | 'technician' | 'client', string[] | null> = {

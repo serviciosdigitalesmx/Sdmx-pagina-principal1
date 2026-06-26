@@ -3,6 +3,11 @@
 import { useEffect, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { saveAuthToken } from "@/lib/auth-storage";
+import { resolveAdminApiBaseUrl } from "@/lib/api-base-url";
+import {
+  extractTenantRuntimeConfig,
+  saveTenantRuntimeConfig,
+} from "@/lib/tenant-runtime-config";
 
 export function OnboardingSuccessRedirect() {
   const searchParams = useSearchParams();
@@ -22,9 +27,46 @@ export function OnboardingSuccessRedirect() {
       return;
     }
 
-    saveAuthToken(token);
-    window.location.replace("/dashboard");
-  }, [token]);
+    let cancelled = false;
+    const sessionToken = token;
+    const tenantSlug = tenant;
+
+    async function prepareDashboardSession() {
+      saveAuthToken(sessionToken);
+
+      if (tenantSlug) {
+        try {
+          const apiUrl = resolveAdminApiBaseUrl();
+          const response = await fetch(`${apiUrl}/api/auth/tenant/${encodeURIComponent(tenantSlug)}/settings`, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${sessionToken}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (response.ok) {
+            const settings = await response.json().catch(() => null);
+            if (settings) {
+              saveTenantRuntimeConfig(extractTenantRuntimeConfig(settings));
+            }
+          }
+        } catch {
+          // Onboarding must still reach the dashboard; route guards have safe defaults.
+        }
+      }
+
+      if (!cancelled) {
+        window.location.replace("/dashboard");
+      }
+    }
+
+    prepareDashboardSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tenant, token]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(44,110,159,0.12),_transparent_28%),linear-gradient(180deg,#f4f6f9_0%,#eef2f6_100%)] px-6 text-slate-950">
