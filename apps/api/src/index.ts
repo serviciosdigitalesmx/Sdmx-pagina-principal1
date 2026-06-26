@@ -21,6 +21,7 @@ import stockAlertsRouter from './routes/stock-alerts';
 import movivendorRouter from './routes/movivendor';
 import pwaRouter from './routes/pwa';
 import billingRouter, { webhookRouter } from './routes/billing';
+import { portabilityExportRouter, portabilityImportRouter } from './routes/portability';
 import { getApiRoot, getDependencyHealth, getHealth } from './controllers/meta';
 import { listAuditLogs } from './controllers/security';
 import { requireAuth } from './middleware/auth';
@@ -164,6 +165,8 @@ app.use('/api/:tenantSlug/movivendor', movivendorRouter);
 app.use('/api/movivendor', movivendorRouter);
 app.use('/api/:tenantSlug/billing', billingRouter);
 app.use('/api/billing', billingRouter);
+app.use('/api/:tenantSlug/export', portabilityExportRouter);
+app.use('/api/:tenantSlug/import', portabilityImportRouter);
 app.use('/api/webhooks', webhookRouter);
 app.use('/api/public', publicRouter);
 
