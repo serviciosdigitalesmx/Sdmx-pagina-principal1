@@ -373,6 +373,34 @@ function formatLongDateTime(value?: string | null) {
   return date.toLocaleString('es-MX', { dateStyle: 'long', timeStyle: 'short' });
 }
 
+function isMissingDocumentVisibilitySchema(error: { message?: string } | null | undefined) {
+  const message = error?.message ?? '';
+  return /service_order_documents\.(is_customer_visible|retention_expires_at)|column .*service_order_documents.*(is_customer_visible|retention_expires_at).*does not exist/i.test(message);
+}
+
+async function fetchPublicVisibleOrderDocuments(
+  client: ReturnType<typeof getTenantClient>,
+  tenantId: string,
+  orderId: string,
+  nowIso: string,
+) {
+  const result = await client
+    .from('service_order_documents')
+    .select('id, file_name, file_type, public_url, mime_type, created_at, source, is_customer_visible, retention_expires_at')
+    .eq('tenant_id', tenantId)
+    .eq('service_order_id', orderId)
+    .eq('is_customer_visible', true)
+    .or(`retention_expires_at.is.null,retention_expires_at.gt.${nowIso}`)
+    .order('created_at', { ascending: true });
+
+  if (result.error && isMissingDocumentVisibilitySchema(result.error)) {
+    // Legacy production schemas cannot prove customer visibility, so fail safe by hiding documents.
+    return { data: [], error: null };
+  }
+
+  return result;
+}
+
 function getBrandingValue(branding: Record<string, unknown> | null, key: string) {
   const value = branding && typeof branding[key] === 'string' ? String(branding[key]).trim() : '';
   return value || '';
@@ -777,14 +805,12 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
       return res.status(404).json({ error: 'No encontramos una orden con ese folio', details: error?.message });
     }
 
-    const { data: documents, error: documentsError } = await supabase
-      .from('service_order_documents')
-      .select('id, file_name, file_type, public_url, mime_type, created_at, source, is_customer_visible, retention_expires_at')
-      .eq('tenant_id', tenant.id)
-      .eq('service_order_id', data.id)
-      .eq('is_customer_visible', true)
-      .or(`retention_expires_at.is.null,retention_expires_at.gt.${new Date().toISOString()}`)
-      .order('created_at', { ascending: true });
+    const { data: documents, error: documentsError } = await fetchPublicVisibleOrderDocuments(
+      supabase,
+      tenant.id,
+      data.id,
+      new Date().toISOString(),
+    );
 
     if (documentsError) {
       return res.status(502).json({ error: 'Failed to load documents', details: documentsError.message });
@@ -956,14 +982,7 @@ export async function getPublicPortalByToken(req: Request, res: Response) {
     }
 
     const [{ data: documents, error: documentsError }, { data: events, error: eventsError }, { data: latestAuthorization, error: authorizationError }, { data: warrantyClaims, error: warrantyError }] = await Promise.all([
-      supabaseAdmin
-        .from('service_order_documents')
-        .select('id, file_name, file_type, public_url, mime_type, created_at, source')
-        .eq('tenant_id', tenant.id)
-        .eq('service_order_id', order.id)
-        .eq('is_customer_visible', true)
-        .or(`retention_expires_at.is.null,retention_expires_at.gt.${nowIso}`)
-        .order('created_at', { ascending: true }),
+      fetchPublicVisibleOrderDocuments(supabaseAdmin as ReturnType<typeof getTenantClient>, tenant.id, order.id, nowIso),
       supabaseAdmin
         .from('service_order_events')
         .select('id, event_type, previous_status, new_status, note, actor_name, created_at')
@@ -1270,14 +1289,12 @@ export async function getPublicOrderPdf(req: Request, res: Response) {
       return res.status(404).json({ error: 'No encontramos una orden con ese folio', details: error?.message });
     }
 
-    const { data: documents, error: documentsError } = await supabase
-      .from('service_order_documents')
-      .select('id, file_name, file_type, public_url, mime_type, created_at, source, is_customer_visible, retention_expires_at')
-      .eq('tenant_id', tenant.id)
-      .eq('service_order_id', data.id)
-      .eq('is_customer_visible', true)
-      .or(`retention_expires_at.is.null,retention_expires_at.gt.${new Date().toISOString()}`)
-      .order('created_at', { ascending: true });
+    const { data: documents, error: documentsError } = await fetchPublicVisibleOrderDocuments(
+      supabase,
+      tenant.id,
+      data.id,
+      new Date().toISOString(),
+    );
 
     if (documentsError) {
       return res.status(502).json({ error: 'Failed to load documents', details: documentsError.message });

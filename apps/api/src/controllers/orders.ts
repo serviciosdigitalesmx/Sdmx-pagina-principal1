@@ -276,6 +276,80 @@ type ServiceOrderAuthorizationRow = {
   created_at: string;
 };
 
+const orderDocumentSelect =
+  'id, tenant_id, service_order_id, bucket_name, storage_path, public_url, file_name, file_type, mime_type, file_size, source, is_customer_visible, retention_policy_version, retention_expires_at, created_at';
+const legacyOrderDocumentSelect =
+  'id, tenant_id, service_order_id, bucket_name, storage_path, public_url, file_name, file_type, mime_type, file_size, source, created_at';
+const deviceHistoryDocumentSelect =
+  'id, tenant_id, service_order_id, file_name, file_type, mime_type, source, is_customer_visible, created_at';
+const legacyDeviceHistoryDocumentSelect =
+  'id, tenant_id, service_order_id, file_name, file_type, mime_type, source, created_at';
+
+function isMissingDocumentVisibilitySchema(error: { message?: string } | null | undefined) {
+  const message = error?.message ?? '';
+  return /service_order_documents\.(is_customer_visible|retention_policy_version|retention_expires_at)|column .*service_order_documents.*(is_customer_visible|retention_policy_version|retention_expires_at).*does not exist/i.test(message);
+}
+
+async function fetchOrderDocuments(
+  client: ReturnType<typeof getTenantClient>,
+  tenantId: string,
+  orderId: string,
+  options: { ascending?: boolean } = {},
+) {
+  const ascending = options.ascending ?? true;
+  const result = await client
+    .from('service_order_documents')
+    .select(orderDocumentSelect)
+    .eq('tenant_id', tenantId)
+    .eq('service_order_id', orderId)
+    .order('created_at', { ascending });
+
+  if (!result.error || !isMissingDocumentVisibilitySchema(result.error)) {
+    return result;
+  }
+
+  return client
+    .from('service_order_documents')
+    .select(legacyOrderDocumentSelect)
+    .eq('tenant_id', tenantId)
+    .eq('service_order_id', orderId)
+    .order('created_at', { ascending });
+}
+
+async function fetchDeviceHistoryDocuments(
+  client: ReturnType<typeof getTenantClient>,
+  tenantId: string,
+  orderIds: string[],
+  options: { ascending?: boolean; singleOrderId?: string } = {},
+) {
+  const ascending = options.ascending ?? true;
+  let query = client
+    .from('service_order_documents')
+    .select(deviceHistoryDocumentSelect)
+    .eq('tenant_id', tenantId);
+
+  query = options.singleOrderId
+    ? query.eq('service_order_id', options.singleOrderId)
+    : query.in('service_order_id', orderIds);
+
+  const result = await query.order('created_at', { ascending });
+
+  if (!result.error || !isMissingDocumentVisibilitySchema(result.error)) {
+    return result;
+  }
+
+  let legacyQuery = client
+    .from('service_order_documents')
+    .select(legacyDeviceHistoryDocumentSelect)
+    .eq('tenant_id', tenantId);
+
+  legacyQuery = options.singleOrderId
+    ? legacyQuery.eq('service_order_id', options.singleOrderId)
+    : legacyQuery.in('service_order_id', orderIds);
+
+  return legacyQuery.order('created_at', { ascending });
+}
+
 
 const createPaymentSchema = z.object({
   amount: z.number().positive('El monto debe ser mayor a 0'),
@@ -734,9 +808,21 @@ async function insertOrderDocument(supabase: ReturnType<typeof getTenantClient>,
   retention_expires_at?: string | null;
 }) {
   const { error } = await supabase.from('service_order_documents').insert([row]);
-  if (error) {
-    throw new Error(`Failed to persist service_order_documents: ${error.message}`);
+  if (!error) {
+    return;
   }
+
+  if (isMissingDocumentVisibilitySchema(error)) {
+    const { is_customer_visible, retention_policy_version, retention_expires_at, ...legacyRow } = row;
+    const { error: legacyError } = await supabase.from('service_order_documents').insert([legacyRow]);
+    if (!legacyError) {
+      return;
+    }
+
+    throw new Error(`Failed to persist service_order_documents: ${legacyError.message}`);
+  }
+
+  throw new Error(`Failed to persist service_order_documents: ${error.message}`);
 }
 
 async function insertOrderEvent(supabase: ReturnType<typeof getTenantClient>, row: {
@@ -1216,12 +1302,7 @@ export const getOrderById = async (req: Request, res: Response) => {
         .eq('tenant_id', tenantId)
         .eq('service_order_id', orderId)
         .maybeSingle(),
-      supabase
-        .from('service_order_documents')
-        .select('id, tenant_id, service_order_id, bucket_name, storage_path, public_url, file_name, file_type, mime_type, file_size, source, is_customer_visible, retention_policy_version, retention_expires_at, created_at')
-        .eq('tenant_id', tenantId)
-        .eq('service_order_id', orderId)
-        .order('created_at', { ascending: true }),
+      fetchOrderDocuments(supabase, tenantId, orderId, { ascending: true }),
       supabase
         .from('service_order_events')
         .select('id, tenant_id, service_order_id, event_type, previous_status, new_status, note, actor_name, created_at')
@@ -1372,12 +1453,7 @@ export const getDeviceHistoryBySerial = async (req: Request, res: Response) => {
         .eq('tenant_id', tenantId)
         .in('service_order_id', orderIds)
         .order('created_at', { ascending: true }),
-      supabaseAdmin
-        .from('service_order_documents')
-        .select('id, tenant_id, service_order_id, file_name, file_type, mime_type, source, is_customer_visible, created_at')
-        .eq('tenant_id', tenantId)
-        .in('service_order_id', orderIds)
-        .order('created_at', { ascending: true }),
+      fetchDeviceHistoryDocuments(supabaseAdmin as ReturnType<typeof getTenantClient>, tenantId, orderIds, { ascending: true }),
       supabaseAdmin
         .from('inventory_movements')
         .select('id, tenant_id, service_order_id, product_id, movement_type, quantity, unit_cost, reference, notes, created_at')
@@ -2808,12 +2884,7 @@ export const getOrderWarrantySummary = async (req: Request, res: Response) => {
         .eq('tenant_id', tenantId)
         .or(`original_order_id.eq.${orderId},claim_order_id.eq.${orderId}`)
         .order('created_at', { ascending: false }),
-      supabaseAdmin
-        .from('service_order_documents')
-        .select('id, tenant_id, service_order_id, file_name, file_type, mime_type, source, is_customer_visible, created_at')
-        .eq('tenant_id', tenantId)
-        .eq('service_order_id', orderId)
-        .order('created_at', { ascending: false }),
+      fetchDeviceHistoryDocuments(supabaseAdmin as ReturnType<typeof getTenantClient>, tenantId, [], { singleOrderId: orderId, ascending: false }),
       supabaseAdmin
         .from('inventory_movements')
         .select('id, tenant_id, service_order_id, product_id, movement_type, quantity, unit_cost, reference, notes, created_at')
