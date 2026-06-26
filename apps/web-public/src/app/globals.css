@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -18,9 +19,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: Arial, Helvetica, sans-serif;
+  --font-sans: "Inter", Arial, Helvetica, sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  --font-display: Arial, Helvetica, sans-serif;
+  --font-display: "Inter", Arial, Helvetica, sans-serif;
 }
 
 * {
@@ -49,4 +50,91 @@ a {
 ::selection {
   background: #60a5fa;
   color: #ffffff;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes gradientShift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 20px var(--tenant-primary-glow);
+  }
+  50% {
+    box-shadow: 0 0 40px var(--tenant-primary-glow), 0 0 60px var(--tenant-primary-glow);
+  }
+}
+
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes countUp {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-float {
+  animation: float 5.5s ease-in-out infinite;
+}
+
+.animate-gradientShift {
+  animation: gradientShift 8s ease infinite;
+}
+
+.animate-pulseGlow {
+  animation: pulseGlow 2s infinite;
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.animate-countUp {
+  animation: countUp 0.5s ease-out forwards;
+}
+
+.animate-slideIn {
+  animation: slideIn 1.5s ease-out forwards;
 }

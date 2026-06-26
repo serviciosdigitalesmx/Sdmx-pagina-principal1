@@ -20,7 +20,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.16),_transparent_28%),radial-gradient(circle_at_80%_10%,_rgba(34,211,238,0.08),_transparent_24%),linear-gradient(180deg,#050608_0%,#09090b_46%,#0f1117_100%)] text-slate-100">{children}</body>
+      <body className="min-h-full flex flex-col bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.16),_transparent_28%),radial-gradient(circle_at_80%_10%,_rgba(34,211,238,0.08),_transparent_24%),linear-gradient(180deg,#050608_0%,#09090b_46%,#0f1117_100%)] font-sans text-slate-100">
+        {children}
+      </body>
     </html>
   );
 }
