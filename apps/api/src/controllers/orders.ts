@@ -476,6 +476,18 @@ function buildChecklistPatch(tenantId: string, orderId: string, payload: OrderCh
   };
 }
 
+function buildBaseChecklistPatch(checklist: OrderChecklistDbPatch) {
+  return {
+    tenant_id: checklist.tenant_id,
+    service_order_id: checklist.service_order_id,
+    has_charger: checklist.has_charger,
+    screen_condition: checklist.screen_condition,
+    powers_on: checklist.powers_on,
+    backup_required: checklist.backup_required,
+    notes: checklist.notes,
+  };
+}
+
 function normalizeChecklistRow(row: Partial<OrderChecklistRow> | null | undefined) {
   if (!row) return null;
   return {
@@ -1028,11 +1040,23 @@ export const createOrder = async (req: Request, res: Response) => {
       service_order_id: data.id,
     };
 
-    const { data: checklistData, error: checklistError } = await supabase
+    let { data: checklistData, error: checklistError } = await supabase
       .from('service_order_checklists')
       .insert([checklist])
       .select('*')
       .single();
+
+    if (checklistError) {
+      console.warn('Full checklist insert failed; retrying base checklist payload:', checklistError.message);
+      const fallbackResult = await supabase
+        .from('service_order_checklists')
+        .insert([buildBaseChecklistPatch(checklist)])
+        .select('*')
+        .single();
+
+      checklistData = fallbackResult.data;
+      checklistError = fallbackResult.error;
+    }
 
     if (checklistError) {
       console.error('Supabase checklist insert error:', checklistError.message);
@@ -2641,11 +2665,23 @@ export const updateOrderChecklist = async (req: Request, res: Response) => {
       });
     }
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('service_order_checklists')
       .upsert(checklistPatch, { onConflict: 'service_order_id' })
       .select('*')
       .single();
+
+    if (error) {
+      console.warn('Full checklist upsert failed; retrying base checklist payload:', error.message);
+      const fallbackResult = await supabase
+        .from('service_order_checklists')
+        .upsert(buildBaseChecklistPatch(checklistPatch), { onConflict: 'service_order_id' })
+        .select('*')
+        .single();
+
+      data = fallbackResult.data;
+      error = fallbackResult.error;
+    }
 
     if (error) {
       return res.status(502).json({ error: 'Failed to persist order checklist', details: error.message });
