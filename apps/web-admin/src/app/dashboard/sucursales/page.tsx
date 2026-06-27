@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus, RefreshCw, Edit2, Trash2, Building2, Phone, Mail, MapPin, ArrowRightLeft, Search } from 'lucide-react';
 import { Badge, SurfaceCard } from '@white-label/ui';
 import { apiClient } from '@/lib/api-client';
@@ -14,6 +15,7 @@ import { useAuth } from '@/components/guard/use-auth';
 import type { Sucursal } from '@/types';
 
 export default function SucursalesPage() {
+  const router = useRouter();
   const auth = useAuth();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -61,7 +63,7 @@ export default function SucursalesPage() {
 
   const handleSetActive = (sucursalId: string | null) => {
     setActiveSucursalId(sucursalId);
-    window.location.reload();
+    router.push('/dashboard');
   };
 
   const handleDelete = async (sucursal: Sucursal) => {
@@ -237,7 +239,13 @@ export default function SucursalesPage() {
             open={modalOpen}
             onOpenChange={setModalOpen}
             sucursal={selectedSucursal}
-            onSucursalSaved={() => loadSucursales()}
+            onSucursalSaved={(sucursal) => {
+              loadSucursales();
+              if (sucursal?.id) {
+                setActiveSucursalId(sucursal.id);
+                router.push('/dashboard');
+              }
+            }}
           />
 
           <TransferModal

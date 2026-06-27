@@ -508,16 +508,16 @@ export default async function TenantLandingPage({
 
                 <div className="flex flex-wrap gap-3">
                   <Link
-                    href={adminLoginUrl}
+                    href={`/${slug}/tracking`}
                     className="inline-flex items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[color:var(--bg-card)] px-5 py-3 text-sm font-semibold text-[color:var(--text-primary)] transition hover:bg-[color:var(--bg-card-hover)]"
                   >
-                    Abrir panel
+                    Ver estado
                   </Link>
                   <Link
-                    href={`/${slug}/tracking`}
+                    href={adminLoginUrl}
                     className="inline-flex items-center justify-center rounded-full border border-sky-400/35 bg-sky-500/15 px-5 py-3 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/20"
                   >
-                    Ver estado
+                    Abrir panel
                   </Link>
                 </div>
               </div>

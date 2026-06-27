@@ -18,7 +18,7 @@ interface SucursalModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   sucursal: Sucursal | null;
-  onSucursalSaved: () => void;
+  onSucursalSaved: (sucursal?: Sucursal) => void;
 }
 
 export function SucursalModal({ open, onOpenChange, sucursal, onSucursalSaved }: SucursalModalProps) {
@@ -81,11 +81,12 @@ export function SucursalModal({ open, onOpenChange, sucursal, onSucursalSaved }:
       };
 
       if (sucursal) {
-        await apiClient.put(`/sucursales/${sucursal.id}`, payload, getApiOptions());
+        const updated = await apiClient.put<{ data: Sucursal }>(`/sucursales/${sucursal.id}`, payload, getApiOptions());
+        onSucursalSaved(updated.data);
       } else {
-        await apiClient.post('/sucursales', payload, getApiOptions());
+        const created = await apiClient.post<{ data: Sucursal }>('/sucursales', payload, getApiOptions());
+        onSucursalSaved(created.data);
       }
-      onSucursalSaved();
       onOpenChange(false);
     } catch (error) {
       console.error('Failed to save sucursal:', error);
