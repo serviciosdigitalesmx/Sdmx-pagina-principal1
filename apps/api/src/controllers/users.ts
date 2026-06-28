@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { supabaseAdmin } from '@white-label/database';
 import { resolveDisplayUserRole, resolveEffectiveUserRole, normalizeStoredUserRole } from '../lib/user-roles';
@@ -44,6 +45,10 @@ function ensureAllowedStoredRole(role: string) {
     throw new Error('Invalid role');
   }
   return normalized;
+}
+
+function generateTemporaryPassword() {
+  return `Fixi-${randomBytes(10).toString('hex')}!`;
 }
 
 async function assertSucursalOwnership(tenantId: string, sucursalId: string) {
@@ -215,7 +220,7 @@ export const inviteUser = async (req: Request, res: Response) => {
       name: body.name,
     };
 
-    const authResponse = body.password
+    let authResponse = body.password
       ? await supabaseAdmin.auth.admin.createUser({
           email: body.email,
           password: body.password,
@@ -225,6 +230,18 @@ export const inviteUser = async (req: Request, res: Response) => {
       : await supabaseAdmin.auth.admin.inviteUserByEmail(body.email, {
           data: authMetadata,
         });
+
+    let temporaryPassword: string | null = null;
+
+    if (!body.password && authResponse.error) {
+      temporaryPassword = generateTemporaryPassword();
+      authResponse = await supabaseAdmin.auth.admin.createUser({
+        email: body.email,
+        password: temporaryPassword,
+        email_confirm: true,
+        user_metadata: authMetadata,
+      });
+    }
 
     const authUser = authResponse.data.user ?? null;
     const authError = authResponse.error;
@@ -292,6 +309,7 @@ export const inviteUser = async (req: Request, res: Response) => {
             tenantId,
             requesterRole: getRequesterRole(req),
           },
+          temporaryPassword,
         },
       });
     }
@@ -332,6 +350,7 @@ export const inviteUser = async (req: Request, res: Response) => {
           tenantId,
           requesterRole: getRequesterRole(req),
         },
+        temporaryPassword,
       },
     });
   } catch (error) {
