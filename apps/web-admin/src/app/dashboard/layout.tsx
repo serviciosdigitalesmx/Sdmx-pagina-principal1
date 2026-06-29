@@ -36,10 +36,10 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState(getSessionUser());
+  const [user, setUser] = useState<ReturnType<typeof getSessionUser>>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [billingExpired, setBillingExpired] = useState(isBillingExpired());
+  const [billingExpired, setBillingExpired] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -51,7 +51,10 @@ export default function DashboardLayout({
     }
   }, [router, pathname]);
 
-  useEffect(() => onBillingExpired(setBillingExpired), []);
+  useEffect(() => {
+    setBillingExpired(isBillingExpired());
+    return onBillingExpired(setBillingExpired);
+  }, []);
 
   if (billingExpired) {
     return <BillingExpiredScreen />;
