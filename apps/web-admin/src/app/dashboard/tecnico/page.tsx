@@ -17,8 +17,17 @@ type SortOrder = 'dias_asc' | 'dias_desc' | 'folio_asc' | 'folio_desc';
 interface KPI {
   urgentes: number;
   atencion: number;
-  aTiempo: number;
+  conMargen: number;
   total: number;
+}
+
+function getPromiseDays(promisedDate?: string | null) {
+  if (!promisedDate) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const promise = new Date(promisedDate);
+  promise.setHours(0, 0, 0, 0);
+  return Math.ceil((promise.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 export default function TecnicoPage() {
@@ -30,7 +39,7 @@ export default function TecnicoPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
-  const [kpis, setKpis] = useState<KPI>({ urgentes: 0, atencion: 0, aTiempo: 0, total: 0 });
+  const [kpis, setKpis] = useState<KPI>({ urgentes: 0, atencion: 0, conMargen: 0, total: 0 });
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -49,26 +58,20 @@ export default function TecnicoPage() {
 
       // Calcular días restantes y color si no vienen del backend
       const enrichedOrders = ordersList.map((order) => {
-        let diasRestantes = order.diasRestantes;
+        const promisedDays = getPromiseDays(order.promised_date);
+        let diasRestantes = order.diasRestantes ?? promisedDays ?? undefined;
         let color = order.color;
 
-        if (diasRestantes === undefined && order.promised_date) {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const promise = new Date(order.promised_date);
-          promise.setHours(0, 0, 0, 0);
-          diasRestantes = Math.ceil((promise.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-        }
-
-        if (order.operational_risk) {
-          color = order.operational_risk.color === 'red' ? 'rojo' : order.operational_risk.color === 'yellow' ? 'amarillo' : order.operational_risk.color === 'green' ? 'verde' : 'gris';
-        }
-
-        if (!color) {
-          if (order.status === 'entregado') color = 'gris';
-          else if (diasRestantes !== undefined && diasRestantes <= 2) color = 'rojo';
-          else if (diasRestantes !== undefined && diasRestantes <= 4) color = 'amarillo';
+        if (order.status === 'entregado') {
+          color = 'gris';
+        } else if (promisedDays !== null) {
+          if (promisedDays <= 2) color = 'rojo';
+          else if (promisedDays <= 4) color = 'amarillo';
           else color = 'verde';
+        } else if (order.operational_risk) {
+          color = order.operational_risk.color === 'red' ? 'rojo' : order.operational_risk.color === 'yellow' ? 'amarillo' : order.operational_risk.color === 'green' ? 'verde' : 'gris';
+        } else if (!color) {
+          color = 'verde';
         }
 
         return { ...order, diasRestantes, color };
@@ -79,11 +82,20 @@ export default function TecnicoPage() {
 
       // Calcular KPIs
       const activeOrders = enrichedOrders.filter((o) => o.status !== 'entregado');
-      const urgentes = activeOrders.filter((o) => o.color === 'rojo').length;
-      const atencion = activeOrders.filter((o) => o.color === 'amarillo').length;
-      const aTiempo = activeOrders.filter((o) => o.color === 'verde').length;
+      const urgentes = activeOrders.filter((o) => {
+        const promiseDays = getPromiseDays(o.promised_date);
+        return promiseDays !== null && promiseDays <= 2;
+      }).length;
+      const atencion = activeOrders.filter((o) => {
+        const promiseDays = getPromiseDays(o.promised_date);
+        return promiseDays !== null && promiseDays >= 3 && promiseDays <= 4;
+      }).length;
+      const conMargen = activeOrders.filter((o) => {
+        const promiseDays = getPromiseDays(o.promised_date);
+        return promiseDays === null || promiseDays >= 5;
+      }).length;
 
-      setKpis({ urgentes, atencion, aTiempo, total: activeOrders.length });
+      setKpis({ urgentes, atencion, conMargen, total: activeOrders.length });
     } catch (error) {
       console.error('Failed to load orders:', error);
       setLoadError(error instanceof Error ? error.message : 'No se pudieron cargar las órdenes');
@@ -212,7 +224,7 @@ export default function TecnicoPage() {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <KPIBox label="Críticos (≤2 días)" value={kpis.urgentes} color="red" />
         <KPIBox label="Atención (3-4 días)" value={kpis.atencion} color="yellow" />
-        <KPIBox label="A tiempo (≥5 días)" value={kpis.aTiempo} color="green" />
+        <KPIBox label="Con margen (≥5 días)" value={kpis.conMargen} color="green" />
         <KPIBox label="Total en taller" value={kpis.total} color="blue" />
       </div>
 
@@ -237,10 +249,10 @@ export default function TecnicoPage() {
             onChange={(e) => setFilterColor(e.target.value as FilterColor)}
             className="input"
           >
-            <option value="todos">Todos los colores</option>
+            <option value="todos">Todos los niveles</option>
             <option value="rojo">🔴 Urgente</option>
             <option value="amarillo">🟡 Atención</option>
-            <option value="verde">🟢 A tiempo</option>
+            <option value="verde">🟢 Con margen</option>
           </select>
 
           {/* Filter by status */}

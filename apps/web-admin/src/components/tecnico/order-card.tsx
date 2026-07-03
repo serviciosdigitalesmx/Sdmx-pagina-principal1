@@ -1,6 +1,6 @@
 'use client';
 
-import { Eye, Calendar, User, Package, DollarSign } from 'lucide-react';
+import { Eye, Calendar, Package, DollarSign, PhoneCall, MessageCircleMore } from 'lucide-react';
 import type { Order } from '@/types';
 import { Badge, SurfaceCard } from '@white-label/ui';
 
@@ -22,6 +22,20 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
   const deviceName = `${order.device_info?.type || ''} ${order.device_info?.model || ''}`.trim() || 'Equipo sin especificar';
   const hasPromiseDate = !!order.promised_date;
   const daysLeft = diasRestantes !== undefined && diasRestantes !== null ? diasRestantes : null;
+  const customerPhone = order.customers?.phone || order.device_info?.customer_phone || null;
+
+  const openWhatsApp = () => {
+    if (!customerPhone) return;
+    const normalized = customerPhone.replace(/\D/g, '');
+    if (!normalized) return;
+    const message = encodeURIComponent(`Hola, te compartimos el estatus de tu equipo ${order.folio}.`);
+    window.open(`https://wa.me/${normalized}?text=${message}`, '_blank', 'noopener,noreferrer');
+  };
+
+  const callCustomer = () => {
+    if (!customerPhone) return;
+    window.open(`tel:${customerPhone}`, '_self');
+  };
 
   return (
     <SurfaceCard
@@ -60,20 +74,70 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
         {order.estimated_cost > 0 && (
           <div className="flex items-center gap-2 text-slate-400">
             <DollarSign className="w-4 h-4 text-sky-400" />
-            <span>${order.estimated_cost.toFixed(2)}</span>
+            <span>Estimado: ${order.estimated_cost.toFixed(2)}</span>
+          </div>
+        )}
+        {customerPhone && (
+          <div className="flex items-center gap-2 text-slate-400">
+            <PhoneCall className="w-4 h-4" />
+            <span className="truncate">{customerPhone}</span>
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="mt-4 flex items-center justify-between border-t border-slate-800 pt-3">
-        <div className="flex items-center gap-2 text-xs text-slate-400">
-          <Calendar className="w-3 h-3" />
-          <span>{formatDate(order.created_at)}</span>
+      <div className="mt-4 border-t border-slate-800 pt-3">
+        <div className="flex items-center justify-between text-xs text-slate-400">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-3 h-3" />
+            <span>Recibido: {formatDate(order.created_at)}</span>
+          </div>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onClick();
+            }}
+            className="inline-flex items-center gap-1 text-sky-300 transition hover:text-sky-200"
+          >
+            <Eye className="w-3 h-3" />
+            <span>Ver detalle</span>
+          </button>
         </div>
-        <div className="flex items-center gap-1 text-xs text-sky-300">
-          <Eye className="w-3 h-3" />
-          <span>Ver detalle</span>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onClick();
+            }}
+            className="rounded-full border border-sky-500/20 bg-sky-500/10 px-3 py-1.5 text-xs font-semibold text-sky-100 transition hover:bg-sky-500/15"
+          >
+            Detalle
+          </button>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              callCustomer();
+            }}
+            disabled={!customerPhone}
+            className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Llamar
+          </button>
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              openWhatsApp();
+            }}
+            disabled={!customerPhone}
+            className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <MessageCircleMore className="mr-1 h-3 w-3" />
+            WhatsApp
+          </button>
         </div>
       </div>
     </SurfaceCard>
