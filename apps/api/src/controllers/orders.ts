@@ -998,6 +998,107 @@ async function uploadBufferToStorage(options: {
   };
 }
 
+async function persistReceiptPdf(options: {
+  supabase: ReturnType<typeof getTenantClient>;
+  tenantId: string;
+  orderId: string;
+  bucketName: string;
+  tenantBranding: { name: string; branding: TenantBranding | null };
+  order: Record<string, unknown>;
+  photo?: {
+    buffer: Buffer;
+    mimeType: string;
+    fileName: string;
+  } | null;
+}) {
+  const receiptPdfBuffer = await generateReceiptPdf({
+    order: options.order,
+    photo: options.photo ?? null,
+    tenantName: options.tenantBranding.name,
+    tenantBranding: options.tenantBranding.branding,
+  });
+  const receiptUpload = await uploadBufferToStorage({
+    tenantId: options.tenantId,
+    orderId: options.orderId,
+    bucketName: options.bucketName,
+    fileName: 'recepcion.pdf',
+    mimeType: 'application/pdf',
+    buffer: receiptPdfBuffer,
+    fileType: 'receipt_pdf',
+  });
+
+  const { data: latestReceiptOrder, error: latestReceiptOrderError } = await options.supabase
+    .from('service_orders')
+    .select('evidence_metadata')
+    .eq('tenant_id', options.tenantId)
+    .eq('id', options.orderId)
+    .single();
+
+  if (latestReceiptOrderError) {
+    throw new Error(`Failed to persist receipt evidence: ${latestReceiptOrderError.message}`);
+  }
+
+  const receiptDocumentId = randomUUID();
+  const receiptDocument = {
+    id: receiptDocumentId,
+    tenant_id: options.tenantId,
+    service_order_id: options.orderId,
+    bucket_name: options.bucketName,
+    storage_path: receiptUpload.storagePath,
+    public_url: receiptUpload.publicUrl,
+    file_name: 'recepcion.pdf',
+    file_type: 'receipt_pdf',
+    mime_type: 'application/pdf',
+    file_size: receiptPdfBuffer.length,
+    source: 'generated',
+    is_customer_visible: false,
+    retention_policy_version: null,
+    retention_expires_at: null,
+    created_by: null,
+    created_at: new Date().toISOString(),
+  };
+
+  const { error: receiptUpdateError } = await options.supabase
+    .from('service_orders')
+    .update({
+      receipt_url: receiptUpload.publicUrl,
+      evidence_metadata: appendEvidenceEntry(latestReceiptOrder?.evidence_metadata, {
+        kind: 'document',
+        id: receiptDocumentId,
+        file_name: 'recepcion.pdf',
+        file_type: 'receipt_pdf',
+        public_url: receiptUpload.publicUrl,
+        mime_type: 'application/pdf',
+        created_at: receiptDocument.created_at,
+      }),
+    })
+    .eq('tenant_id', options.tenantId)
+    .eq('id', options.orderId);
+
+  if (receiptUpdateError) {
+    throw new Error(`Failed to persist receipt url: ${receiptUpdateError.message}`);
+  }
+
+  await insertOrderDocument(options.supabase, {
+    id: receiptDocumentId,
+    tenant_id: options.tenantId,
+    service_order_id: options.orderId,
+    bucket_name: options.bucketName,
+    storage_path: receiptUpload.storagePath,
+    public_url: receiptUpload.publicUrl,
+    file_name: 'recepcion.pdf',
+    file_type: 'receipt_pdf',
+    mime_type: 'application/pdf',
+    file_size: receiptPdfBuffer.length,
+    source: 'generated',
+    is_customer_visible: false,
+    retention_policy_version: null,
+    retention_expires_at: null,
+  });
+
+  return receiptDocument;
+}
+
 export const createOrder = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
@@ -1183,7 +1284,33 @@ export const createOrder = async (req: Request, res: Response) => {
       actor_name: req.user?.email ?? req.user?.role ?? 'system',
     });
 
-    const pdfAttachment = buildPdfAttachment(validatedData.receiptUrl || null);
+    let resolvedReceiptUrl = validatedData.receiptUrl || null;
+    let generatedReceiptDocument = null;
+    if (!resolvedReceiptUrl) {
+      try {
+        const bucketName = getStorageBucketName();
+        await ensureBucketExists(bucketName);
+        const tenantBranding = await getTenantBranding(tenantId);
+        generatedReceiptDocument = await persistReceiptPdf({
+          supabase,
+          tenantId,
+          orderId: data.id,
+          bucketName,
+          tenantBranding,
+          order: {
+            ...data,
+            final_cost: finalCost,
+            estimated_cost: estimatedCost,
+            sucursal_id: requestedSucursalId,
+          },
+        });
+        resolvedReceiptUrl = generatedReceiptDocument.public_url;
+      } catch (receiptError) {
+        console.error('Failed to generate order receipt PDF:', receiptError);
+      }
+    }
+
+    const pdfAttachment = buildPdfAttachment(resolvedReceiptUrl);
 
     if (data.assigned_user_id) {
       void sendTenantPushNotification(tenantId, {
@@ -1206,11 +1333,11 @@ export const createOrder = async (req: Request, res: Response) => {
         ...data,
         final_cost: finalCost,
         estimated_cost: estimatedCost,
-        receipt_url: validatedData.receiptUrl || null,
+        receipt_url: resolvedReceiptUrl,
         sucursal_id: requestedSucursalId,
         public_token: data.public_token,
         pdf_attachment: pdfAttachment,
-        attachments: pdfAttachment ? [pdfAttachment] : [],
+        attachments: generatedReceiptDocument ? [generatedReceiptDocument] : pdfAttachment ? [pdfAttachment] : [],
         include_iva: validatedData.includeIva,
         checklist: normalizeChecklistRow(checklistData),
       },
@@ -1338,7 +1465,7 @@ export const getOrderById = async (req: Request, res: Response) => {
     }
 
     const evidenceMetadata = await getEvidenceMetadata(orderId, FEATURE_EVIDENCE_MODE);
-    const documents = normalizeOrderDocuments(documentsResult.data ?? [], evidenceMetadata ?? []);
+    let documents = normalizeOrderDocuments(documentsResult.data ?? [], evidenceMetadata ?? []);
     const events = normalizeOrderEvents(eventsResult.data ?? [], evidenceMetadata ?? []);
     const operationalRisk = calculateOperationalRisk({
       order: orderResult.data,
@@ -1350,9 +1477,30 @@ export const getOrderById = async (req: Request, res: Response) => {
           new_status: event.new_status,
         })),
     });
-    const pdfAttachment = buildPdfAttachment(
-      orderResult.data.receipt_url || documents.find((document) => document.file_type === 'receipt_pdf' && document.public_url)?.public_url || null
-    );
+    let resolvedReceiptUrl =
+      orderResult.data.receipt_url || documents.find((document) => document.file_type === 'receipt_pdf' && document.public_url)?.public_url || null;
+
+    if (!resolvedReceiptUrl) {
+      try {
+        const bucketName = getStorageBucketName();
+        await ensureBucketExists(bucketName);
+        const tenantBranding = await getTenantBranding(tenantId);
+        const generatedReceiptDocument = await persistReceiptPdf({
+          supabase,
+          tenantId,
+          orderId,
+          bucketName,
+          tenantBranding,
+          order: orderResult.data,
+        });
+        resolvedReceiptUrl = generatedReceiptDocument.public_url;
+        documents = [...documents, generatedReceiptDocument];
+      } catch (receiptError) {
+        console.error('Failed to generate missing order receipt PDF:', receiptError);
+      }
+    }
+
+    const pdfAttachment = buildPdfAttachment(resolvedReceiptUrl);
 
     if (paymentsResult.error) {
       console.error('Failed to fetch order payments:', paymentsResult.error);
@@ -1368,6 +1516,7 @@ export const getOrderById = async (req: Request, res: Response) => {
       data: {
         order: {
           ...orderResult.data,
+          receipt_url: resolvedReceiptUrl,
           operational_risk: operationalRisk,
         },
         operational_risk: operationalRisk,
