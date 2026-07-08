@@ -59,7 +59,6 @@ export const DASHBOARD_MODULES: DashboardModule[] = [
   { key: 'gastos', label: 'Gastos', icon: 'Wallet', href: '/dashboard/gastos', enabled: true },
   { key: 'finanzas', label: 'Finanzas', icon: 'LineChart', href: '/dashboard/finanzas', enabled: true },
   { key: 'reportes', label: 'Reportes', icon: 'BarChart3', href: '/dashboard/reportes', enabled: true },
-  { key: 'movivendor', label: 'Movivendor', icon: 'CircleDollarSign', href: '/dashboard/movivendor', enabled: true },
   { key: 'sucursales', label: 'Sucursales', icon: 'Building2', href: '/dashboard/sucursales', enabled: true },
   { key: 'seguridad', label: 'Seguridad', icon: 'Shield', href: '/dashboard/seguridad', enabled: true },
   { key: 'usuarios', label: 'Usuarios', icon: 'Users', href: '/dashboard/usuarios', enabled: true },

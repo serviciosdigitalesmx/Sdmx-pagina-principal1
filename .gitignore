@@ -67,3 +67,4 @@ audit-*.sh
 .env.example.bak
 .vercel
 .env*.local
+.env*

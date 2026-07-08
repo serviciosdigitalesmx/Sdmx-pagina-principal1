@@ -63,7 +63,7 @@ export default function SucursalesPage() {
 
   const handleSetActive = (sucursalId: string | null) => {
     setActiveSucursalId(sucursalId, { skipReload: true });
-    router.push('/dashboard');
+    window.location.assign('/dashboard');
   };
 
   const handleDelete = async (sucursal: Sucursal) => {
@@ -243,7 +243,7 @@ export default function SucursalesPage() {
               loadSucursales();
               if (sucursal?.id) {
                 setActiveSucursalId(sucursal.id);
-                router.push('/dashboard');
+                window.location.assign('/dashboard');
               }
             }}
           />

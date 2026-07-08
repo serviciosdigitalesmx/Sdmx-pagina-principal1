@@ -1,0 +1,17 @@
+{
+  "services": {
+    "sdmx-backend-api": {
+      "root": ".",
+      "framework": "nextjs"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": {
+        "type": "service",
+        "service": "sdmx-backend-api"
+      }
+    }
+  ]
+}

@@ -212,16 +212,16 @@ export default function TecnicoPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div>
         <p className="text-xs uppercase tracking-[0.28em] text-sky-400/70">Operación técnica</p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-50">Panel Técnico</h1>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-50">Panel Técnico</h1>
         <p className="mt-1 text-sm text-slate-400">Seguimiento y gestión de órdenes activas</p>
       </div>
 
       {/* KPIs */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <KPIBox label="Críticos (≤2 días)" value={kpis.urgentes} color="red" />
         <KPIBox label="Atención (3-4 días)" value={kpis.atencion} color="yellow" />
         <KPIBox label="Con margen (≥5 días)" value={kpis.conMargen} color="green" />
@@ -229,8 +229,8 @@ export default function TecnicoPage() {
       </div>
 
       {/* Toolbar */}
-      <SurfaceCard elevated className="p-4">
-        <div className="flex flex-col md:flex-row gap-3">
+      <SurfaceCard elevated className="p-3">
+        <div className="flex flex-col gap-2 md:flex-row">
           {/* Search */}
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -247,7 +247,7 @@ export default function TecnicoPage() {
           <select
             value={filterColor}
             onChange={(e) => setFilterColor(e.target.value as FilterColor)}
-            className="input"
+            className="input min-h-[44px]"
           >
             <option value="todos">Todos los niveles</option>
             <option value="rojo">🔴 Urgente</option>
@@ -259,7 +259,7 @@ export default function TecnicoPage() {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
-            className="input"
+            className="input min-h-[44px]"
           >
             <option value="todos">Todos los estados</option>
             <option value="recibido">📦 Recibido</option>
@@ -273,7 +273,7 @@ export default function TecnicoPage() {
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-            className="input"
+            className="input min-h-[44px]"
           >
             <option value="dias_asc">Días (menor primero)</option>
             <option value="dias_desc">Días (mayor primero)</option>
@@ -285,7 +285,7 @@ export default function TecnicoPage() {
           <button
             onClick={() => loadOrders(true)}
             disabled={refreshing}
-            className="btn-secondary px-4 py-2"
+            className="btn-secondary px-4 py-2 min-h-[44px]"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
             Actualizar
@@ -293,7 +293,7 @@ export default function TecnicoPage() {
         </div>
 
         {/* Last update time */}
-        <div className="mt-3 text-right text-xs text-slate-400">
+        <div className="mt-2 text-right text-xs text-slate-400">
           Última actualización: {new Date().toLocaleTimeString()}
           {refreshing && <span className="ml-2 text-sky-400">Actualizando...</span>}
         </div>
@@ -305,7 +305,7 @@ export default function TecnicoPage() {
           <p className="text-slate-400">No hay órdenes con esos filtros</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
           {filteredOrders.map((order) => (
             <OrderCard
               key={order.id}
@@ -343,7 +343,7 @@ function KPIBox({ label, value, color }: { label: string; value: number; color: 
   };
 
   return (
-    <SurfaceCard elevated className={`p-5 text-center ${colorClasses[color]}`}>
+    <SurfaceCard elevated className={`p-4 text-center ${colorClasses[color]}`}>
       <div className={`text-3xl font-bold ${textColors[color]}`}>{value}</div>
       <div className="mt-1 text-xs uppercase tracking-[0.24em] text-slate-400">{label}</div>
     </SurfaceCard>

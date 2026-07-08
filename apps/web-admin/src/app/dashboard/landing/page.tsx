@@ -254,10 +254,10 @@ export default function LandingSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.28em] text-sky-400/70">Marketing SaaS</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-50">Landing</h1>
+          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-50">Landing</h1>
           <p className="mt-1 text-sm text-slate-400">Configura la landing pública del tenant {settings?.tenant.name ?? tenantSlug}.</p>
         </div>
         <div className="flex gap-2">
@@ -275,12 +275,12 @@ export default function LandingSettingsPage() {
       {error ? <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200">{error}</div> : null}
       {success ? <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-200">{success}</div> : null}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(360px,1fr)]">
-        <div className="space-y-6">
-          <SurfaceCard elevated className="p-5">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(340px,0.95fr)]">
+        <div className="space-y-4">
+          <SurfaceCard elevated className="p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-slate-50">URL pública del tenant</h2>
+                <h2 className="text-base font-semibold text-slate-50">URL pública del tenant</h2>
                 <p className="text-sm text-slate-400">Comparte esta URL para abrir la landing pública del negocio.</p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -310,12 +310,12 @@ export default function LandingSettingsPage() {
             </div>
           </SurfaceCard>
 
-          <SurfaceCard elevated className="space-y-4 p-5">
-            <h2 className="text-lg font-semibold text-slate-50">Branding del tenant</h2>
+          <SurfaceCard elevated className="space-y-3 p-4">
+            <h2 className="text-base font-semibold text-slate-50">Branding del tenant</h2>
             <p className="text-sm text-slate-400">Sube logo, favicon y piezas visuales para la landing del cliente.</p>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <label className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/50 p-3">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-sm font-medium text-slate-100">Logo</span>
                   {branding?.logoUrl ? <a href={branding.logoUrl} target="_blank" rel="noreferrer" className="text-xs text-sky-300">Ver actual</a> : null}
@@ -334,7 +334,7 @@ export default function LandingSettingsPage() {
                 />
               </label>
 
-              <label className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+              <label className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/50 p-3">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-sm font-medium text-slate-100">Favicon</span>
                   {branding?.faviconUrl ? <a href={branding.faviconUrl} target="_blank" rel="noreferrer" className="text-xs text-sky-300">Ver actual</a> : null}
@@ -353,7 +353,7 @@ export default function LandingSettingsPage() {
                 />
               </label>
 
-              <label className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+              <label className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/50 p-3">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-sm font-medium text-slate-100">Imagen hero</span>
                   {branding?.heroImageUrl ? <a href={branding.heroImageUrl} target="_blank" rel="noreferrer" className="text-xs text-sky-300">Ver actual</a> : null}
@@ -372,7 +372,7 @@ export default function LandingSettingsPage() {
                 />
               </label>
 
-              <label className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+              <label className="space-y-2 rounded-2xl border border-slate-800 bg-slate-900/50 p-3">
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-sm font-medium text-slate-100">Imagen cover</span>
                   {branding?.coverImageUrl ? <a href={branding.coverImageUrl} target="_blank" rel="noreferrer" className="text-xs text-sky-300">Ver actual</a> : null}
@@ -398,18 +398,18 @@ export default function LandingSettingsPage() {
             </div>
           </SurfaceCard>
 
-          <SurfaceCard elevated className="space-y-4 p-5">
+          <SurfaceCard elevated className="space-y-3 p-4">
             <div className="flex items-center gap-2 text-sky-300"><Globe className="w-5 h-5" /><h2 className="text-lg font-semibold text-slate-50">Hero</h2></div>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-2">
               <input value={landingContent.heroTitle} onChange={(e) => updateField("heroTitle", e.target.value)} className="input" placeholder="Título principal" />
               <input value={landingContent.heroSubtitle} onChange={(e) => updateField("heroSubtitle", e.target.value)} className="input" placeholder="Subtítulo" />
-              <textarea value={landingContent.heroDescription} onChange={(e) => updateField("heroDescription", e.target.value)} className="input min-h-28 md:col-span-2" placeholder="Descripción principal" />
+              <textarea value={landingContent.heroDescription} onChange={(e) => updateField("heroDescription", e.target.value)} className="input min-h-24 md:col-span-2" placeholder="Descripción principal" />
             </div>
           </SurfaceCard>
 
-          <SurfaceCard elevated className="space-y-4 p-5">
+          <SurfaceCard elevated className="space-y-3 p-4">
             <h2 className="text-lg font-semibold text-slate-50">CTAs y SEO</h2>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-3 md:grid-cols-2">
               <input value={landingContent.primaryCtaLabel} onChange={(e) => updateField("primaryCtaLabel", e.target.value)} className="input" placeholder="CTA primario" />
               <input value={landingContent.primaryCtaHref} onChange={(e) => updateField("primaryCtaHref", e.target.value)} className="input" placeholder="/cotizar" />
               <input value={landingContent.secondaryCtaLabel} onChange={(e) => updateField("secondaryCtaLabel", e.target.value)} className="input" placeholder="CTA secundario" />
@@ -417,26 +417,26 @@ export default function LandingSettingsPage() {
               <input value={landingContent.contactLabel} onChange={(e) => updateField("contactLabel", e.target.value)} className="input" placeholder="Etiqueta de contacto" />
               <input value={landingContent.contactHref} onChange={(e) => updateField("contactHref", e.target.value)} className="input" placeholder="https://wa.me/..." />
               <input value={landingContent.seoTitle} onChange={(e) => updateField("seoTitle", e.target.value)} className="input md:col-span-2" placeholder="SEO title" />
-              <textarea value={landingContent.seoDescription} onChange={(e) => updateField("seoDescription", e.target.value)} className="input min-h-24 md:col-span-2" placeholder="SEO description" />
+              <textarea value={landingContent.seoDescription} onChange={(e) => updateField("seoDescription", e.target.value)} className="input min-h-20 md:col-span-2" placeholder="SEO description" />
             </div>
           </SurfaceCard>
 
-          <SurfaceCard elevated className="space-y-4 p-5">
+          <SurfaceCard elevated className="space-y-3 p-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-50">Servicios</h2>
               <button onClick={addService} className="rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-sky-400/30 hover:bg-slate-800/80">Agregar servicio</button>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {landingContent.services.map((service, index) => (
-                <div key={`${service.title}-${index}`} className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+                <div key={`${service.title}-${index}`} className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-900/50 p-3">
                   <input value={service.title} onChange={(e) => updateService(index, "title", e.target.value)} className="input" placeholder="Título del servicio" />
-                  <textarea value={service.description} onChange={(e) => updateService(index, "description", e.target.value)} className="input min-h-20" placeholder="Descripción" />
+                  <textarea value={service.description} onChange={(e) => updateService(index, "description", e.target.value)} className="input min-h-16" placeholder="Descripción" />
                 </div>
               ))}
             </div>
           </SurfaceCard>
 
-          <SurfaceCard elevated className="space-y-4 p-5">
+          <SurfaceCard elevated className="space-y-3 p-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-slate-50">Redes y perfil</h2>
               <button onClick={addSocial} className="rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-sky-400/30 hover:bg-slate-800/80">Agregar enlace</button>
@@ -444,9 +444,9 @@ export default function LandingSettingsPage() {
             <select value={industryKey} onChange={(e) => setIndustryKey(e.target.value)} className="input">
               {(settings?.availableIndustries ?? []).map((industry) => <option key={industry.key} value={industry.key}>{industry.label}</option>)}
             </select>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {landingContent.socialLinks.map((link, index) => (
-                <div key={`${link.label}-${index}`} className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-900/50 p-4 md:grid-cols-2">
+                <div key={`${link.label}-${index}`} className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-900/50 p-3 md:grid-cols-2">
                   <input value={link.label} onChange={(e) => updateSocial(index, "label", e.target.value)} className="input" placeholder="Instagram, WhatsApp..." />
                   <input value={link.href} onChange={(e) => updateSocial(index, "href", e.target.value)} className="input" placeholder="https://..." />
                 </div>
@@ -455,26 +455,26 @@ export default function LandingSettingsPage() {
           </SurfaceCard>
         </div>
 
-        <SurfaceCard elevated className="space-y-5 p-5">
+        <SurfaceCard elevated className="space-y-4 p-4 xl:sticky xl:top-4 self-start">
           <div className="flex items-center gap-2 text-sky-300">
             <Eye className="w-5 h-5" />
             <h2 className="text-lg font-semibold text-slate-50">Preview</h2>
           </div>
-          <div className="rounded-[1.5rem] border border-slate-800 bg-slate-900/50 p-6">
+          <div className="rounded-[1.5rem] border border-slate-800 bg-slate-900/50 p-4">
             <div className="text-xs uppercase tracking-[0.25em] text-sky-400">{tenantSlug || "tenant"}</div>
-            <h3 className="mt-3 text-2xl font-semibold tracking-tight text-slate-50">{landingContent.heroTitle}</h3>
+            <h3 className="mt-3 text-xl font-semibold tracking-tight text-slate-50">{landingContent.heroTitle}</h3>
             <p className="mt-2 text-sm text-slate-200">{landingContent.heroSubtitle}</p>
-            <p className="mt-4 text-sm text-slate-400">{landingContent.heroDescription}</p>
-            <div className="mt-5 flex flex-wrap gap-2">
+            <p className="mt-3 text-sm text-slate-400">{landingContent.heroDescription}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
               <a href={preview.primaryHref} className="inline-flex items-center justify-center rounded-xl bg-sky-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-sky-400">{landingContent.primaryCtaLabel}</a>
               <a href={preview.secondaryHref} className="inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-sky-400/30 hover:bg-slate-800/80">{landingContent.secondaryCtaLabel}</a>
             </div>
-            <div className="mt-4 text-xs text-slate-400">
+            <div className="mt-3 text-xs text-slate-400">
               Contacto: <a href={preview.contactHref} className="text-sky-300">{landingContent.contactLabel}</a>
             </div>
-            <div className="mt-6 space-y-3">
+            <div className="mt-4 space-y-2">
               {landingContent.services.map((service, index) => (
-                <div key={`${service.title}-${index}`} className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+                <div key={`${service.title}-${index}`} className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3">
                   <div className="font-semibold text-slate-100">{service.title || "Servicio"}</div>
                   <div className="mt-1 text-sm text-slate-400">{service.description || "Descripción pendiente."}</div>
                 </div>

@@ -968,7 +968,7 @@ export async function getPublicPortalByToken(req: Request, res: Response) {
 
     const { data: order, error: orderError } = await supabaseAdmin
       .from('service_orders')
-      .select('id, tenant_id, folio, status, created_at, updated_at, received_at, promised_date, completed_at, delivered_at, device_info, device_type, device_brand, device_model, serial_number, reported_issue, problem_description, estimated_cost, final_cost, warranty_until')
+      .select('id, tenant_id, folio, status, created_at, updated_at, promised_date, device_info, serial_number, problem_description, estimated_cost, final_cost, warranty_until')
       .eq('tenant_id', tenant.id)
       .eq('public_token', cleanToken)
       .maybeSingle();
@@ -1045,7 +1045,7 @@ export async function getPublicPortalByToken(req: Request, res: Response) {
         type: 'status',
         label: 'Orden recibida',
         status: 'received',
-        createdAt: order.received_at ?? order.created_at ?? null,
+        createdAt: order.created_at ?? null,
       },
       {
         id: 'status-current',
@@ -1063,6 +1063,17 @@ export async function getPublicPortalByToken(req: Request, res: Response) {
       note: event.event_type === 'customer_message' ? event.note ?? null : null,
       createdAt: event.created_at,
     }));
+    const resolveStatusDate = (statusNames: string[]) => {
+      const matchingEvent = [...(events ?? [])].reverse().find((event) => {
+        const eventStatus = String(event.new_status ?? event.event_type ?? '').toLowerCase();
+        return statusNames.some((statusName) => eventStatus.includes(statusName));
+      });
+
+      if (matchingEvent?.created_at) return matchingEvent.created_at;
+      return statusNames.some((statusName) => statusKey.includes(statusName))
+        ? order.updated_at ?? order.created_at ?? null
+        : null;
+    };
 
     return res.status(200).json({
       success: true,
@@ -1072,21 +1083,21 @@ export async function getPublicPortalByToken(req: Request, res: Response) {
           status: order.status,
           priority: 'normal',
           device: {
-            type: String(deviceInfo.type ?? deviceInfo.device_type ?? order.device_type ?? ''),
-            brand: String(deviceInfo.brand ?? deviceInfo.device_brand ?? order.device_brand ?? ''),
-            model: String(deviceInfo.model ?? deviceInfo.device_model ?? order.device_model ?? ''),
+            type: String(deviceInfo.type ?? deviceInfo.device_type ?? ''),
+            brand: String(deviceInfo.brand ?? deviceInfo.device_brand ?? ''),
+            model: String(deviceInfo.model ?? deviceInfo.device_model ?? ''),
             serialNumber: String(deviceInfo.serialNumber ?? deviceInfo.serial_number ?? order.serial_number ?? ''),
           },
-          reportedIssue: String(order.problem_description ?? order.reported_issue ?? ''),
+          reportedIssue: String(order.problem_description ?? ''),
           costs: {
             estimated: Number.isFinite(estimatedCost) ? estimatedCost : 0,
             final: finalCost != null && Number.isFinite(finalCost) && finalCost > 0 ? finalCost : null,
           },
           dates: {
-            receivedAt: order.received_at ?? order.created_at ?? null,
+            receivedAt: order.created_at ?? null,
             promisedDate: order.promised_date ?? null,
-            completedAt: order.completed_at ?? null,
-            deliveredAt: order.delivered_at ?? null,
+            completedAt: resolveStatusDate(['complet', 'listo']),
+            deliveredAt: resolveStatusDate(['entreg', 'deliver']),
             updatedAt: order.updated_at ?? order.created_at ?? null,
           },
         },

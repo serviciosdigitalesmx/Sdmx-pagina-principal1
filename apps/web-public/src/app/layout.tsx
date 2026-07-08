@@ -3,14 +3,16 @@ import "./globals.css";
 import { optionalEnv } from "@white-label/config";
 
 export const metadata: Metadata = {
-  title: optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "FIXI",
+  title:
+    optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ??
+    "FIXI — Software para talleres de reparación | Control de órdenes y respaldo legal",
   description:
     optionalEnv("NEXT_PUBLIC_SAAS_META_DESCRIPTION") ??
-    "FIXI: SaaS multi-tenant para talleres.",
+    "FIXI — Software para talleres de reparación con control de órdenes, seguimiento por WhatsApp, portal del cliente, facturación y respaldo legal mexicano.",
 };
 
 export const viewport = {
-  themeColor: optionalEnv("NEXT_PUBLIC_SAAS_THEME_COLOR") ?? "#111827",
+  themeColor: optionalEnv("NEXT_PUBLIC_SAAS_THEME_COLOR") ?? "#0f172a",
 };
 
 export default function RootLayout({

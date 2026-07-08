@@ -40,11 +40,11 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
   return (
     <SurfaceCard
       elevated
-      className={`cursor-pointer p-5 transition-transform duration-200 hover:scale-[1.01] ${color === 'rojo' ? 'border-rose-400/20' : color === 'amarillo' ? 'border-amber-400/20' : color === 'verde' ? 'border-emerald-400/20' : ''}`}
+      className={`cursor-pointer p-4 transition-transform duration-200 hover:scale-[1.01] ${color === 'rojo' ? 'border-rose-400/20' : color === 'amarillo' ? 'border-amber-400/20' : color === 'verde' ? 'border-emerald-400/20' : ''}`}
       onClick={onClick}
     >
       {/* Header */}
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-2">
         <div>
           <div className="flex items-center gap-2">
             <span className="font-mono text-sm font-bold tracking-wide text-sky-300">{order.folio}</span>
@@ -52,8 +52,8 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
               {status}
             </Badge>
           </div>
-          <h3 className="text-lg font-semibold mt-2 truncate">{customerName}</h3>
-          <p className="text-sm text-slate-400 truncate">{deviceName}</p>
+          <h3 className="mt-2 truncate text-base font-semibold">{customerName}</h3>
+          <p className="truncate text-sm text-slate-400">{deviceName}</p>
         </div>
         {hasPromiseDate && daysLeft !== null && (
           <div className="text-right">
@@ -66,7 +66,7 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
       </div>
 
       {/* Body */}
-      <div className="space-y-2 text-sm">
+      <div className="space-y-1.5 text-sm">
         <div className="flex items-center gap-2 text-slate-400">
           <Package className="w-4 h-4" />
           <span className="truncate">{order.problem_description?.slice(0, 60) || 'Sin descripción'}</span>
@@ -86,7 +86,7 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
       </div>
 
       {/* Footer */}
-      <div className="mt-4 border-t border-slate-800 pt-3">
+      <div className="mt-3 border-t border-slate-800 pt-3">
         <div className="flex items-center justify-between text-xs text-slate-400">
           <div className="flex items-center gap-2">
             <Calendar className="w-3 h-3" />
@@ -104,7 +104,7 @@ export function OrderCard({ order, onClick }: OrderCardProps) {
             <span>Ver detalle</span>
           </button>
         </div>
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-2 flex flex-wrap gap-2">
           <button
             type="button"
             onClick={(event) => {

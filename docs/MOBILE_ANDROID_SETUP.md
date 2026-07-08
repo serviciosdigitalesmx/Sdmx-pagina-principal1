@@ -18,6 +18,8 @@ Opcionalmente puedes definir:
 
 Si `MOBILE_WEB_URL` está presente, tiene prioridad sobre `NEXT_PUBLIC_WEB_ADMIN_URL`.
 
+En producción, `NEXT_PUBLIC_API_URL` debe apuntar al backend activo de Render.
+
 ## Comandos
 
 Desde la raíz del monorepo:

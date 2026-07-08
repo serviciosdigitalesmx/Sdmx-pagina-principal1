@@ -12,6 +12,7 @@ import { OrderTimeline } from "@/components/portal/order-timeline";
 import { EvidenceGallery } from "@/components/portal/evidence-gallery";
 import { DocumentList } from "@/components/portal/document-list";
 import { Badge, SurfaceCard } from "@white-label/ui";
+import { isApiError } from "@white-label/config";
 
 function resolveWhatsappHref(phone?: string | null, folio?: string) {
   if (!phone) return undefined;
@@ -49,6 +50,36 @@ type PortalViewProps = {
 
 function looksLikePublicToken(value: string) {
   return value.trim().length >= 24;
+}
+
+function resolveLookupError(error: unknown, lookupMode: "folio" | "token") {
+  if (isApiError(error)) {
+    const normalizedMessage = error.message.toLowerCase();
+
+    if (error.status === 404 && normalizedMessage.includes("tenant")) {
+      return "No encontramos el taller indicado. Revisa el enlace e intenta de nuevo.";
+    }
+
+    if (error.status === 404) {
+      return lookupMode === "token"
+        ? "El enlace de acceso no es válido o ya no corresponde a una orden pública."
+        : "No encontramos una orden con ese folio en este taller.";
+    }
+
+    if (error.status === 403) {
+      return "Esta orden no está disponible para consulta pública.";
+    }
+
+    if (error.status >= 500) {
+      return "El portal del taller no está disponible temporalmente. Intenta de nuevo en unos minutos.";
+    }
+  }
+
+  if (error instanceof TypeError) {
+    return "No pudimos conectarnos con el taller. Revisa tu conexión e intenta de nuevo.";
+  }
+
+  return error instanceof Error ? error.message : "No pudimos completar la consulta.";
 }
 
 export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = "auto" }: PortalViewProps) {
@@ -95,6 +126,7 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
       setLoading(true);
       setError(null);
       setHasSearched(true);
+      const effectiveLookupMode = lookupMode === "token" || (lookupMode === "auto" && looksLikePublicToken(searchValue)) ? "token" : "folio";
 
       try {
         if (!tenantSlug) throw new Error("Tenant slug ausente en la ruta");
@@ -111,6 +143,7 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
             return;
           } catch (tokenError) {
             if (lookupMode === "token") throw tokenError;
+            if (!isApiError(tokenError) || tokenError.status !== 404) throw tokenError;
           }
         }
 
@@ -121,7 +154,7 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
         setTenant(payload.tenant);
         setResult(normalizeOrderDetail(payload.data));
       } catch (submitError) {
-        setError(submitError instanceof Error ? submitError.message : "Error inesperado");
+        setError(resolveLookupError(submitError, effectiveLookupMode));
         setResult(null);
       } finally {
         setLoading(false);
@@ -242,8 +275,9 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
             >
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-500">Nueva consulta</p>
               <div className="mt-5 rounded-[1.4rem] border border-sky-400/15 bg-black/20 p-4">
-                <label className="block text-sm font-medium text-slate-200">Folio</label>
+                <label htmlFor="portal-order-lookup" className="block text-sm font-medium text-slate-200">Folio</label>
                 <input
+                  id="portal-order-lookup"
                   value={folio}
                   onChange={(event) => setFolio(event.target.value)}
                   className="mt-2 w-full rounded-2xl border border-sky-400/20 bg-white/5 px-4 py-3 text-lg font-semibold tracking-[0.14em] text-slate-50 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-300/30"
@@ -531,8 +565,8 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
 
           {hasSearched && !result ? (
             <section className="rounded-[1.75rem] border border-dashed border-sky-400/20 bg-white/5 p-8 text-center text-slate-400 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
-              <p className="text-lg font-semibold text-slate-50">No encontramos una orden con ese folio</p>
-              <p className="mt-2 text-sm">Ingresa un folio válido para ver el estado de tu reparación.</p>
+              <p className="text-lg font-semibold text-slate-50">No pudimos completar la consulta</p>
+              <p className="mt-2 text-sm">{error ?? "Revisa el folio o enlace de acceso e intenta de nuevo."}</p>
             </section>
           ) : null}
 

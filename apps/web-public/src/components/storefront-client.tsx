@@ -6,6 +6,7 @@ import { fetchJson } from "@white-label/config";
 import { RootAuthHashRedirect } from "@/components/root-auth-hash-redirect";
 import { getPublicApiPath } from "@/lib/public-api";
 import { resolveAdminUrl } from "@/lib/admin-url";
+import { buildCustomerPortalUrl } from "@/lib/customer-portal-url";
 
 type CatalogItem = {
   id: string;
@@ -169,6 +170,7 @@ export function StorefrontClient({
   const adminBaseUrl = resolveAdminUrl();
   const adminLoginUrl = adminBaseUrl ? `${adminBaseUrl}/login` : "/login";
   const adminSignupUrl = adminBaseUrl ? `${adminBaseUrl}/login?mode=signup` : "/onboarding";
+  const customerPortalUrl = buildCustomerPortalUrl(tenantSlug || initialTenantSlug || defaultTenantSlug);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.12),_transparent_28%),radial-gradient(circle_at_80%_10%,_rgba(14,165,233,0.08),_transparent_26%),linear-gradient(180deg,#020617_0%,#050b16_45%,#0b1220_100%)] text-slate-50">
@@ -185,7 +187,7 @@ export function StorefrontClient({
             </div>
           </div>
           <nav className="mt-4 flex flex-wrap items-center gap-3 text-sm font-medium text-slate-300 lg:mt-0">
-            <Link href="/portal" className="rounded-full px-4 py-2 transition hover:bg-slate-100/10 hover:text-white">
+            <Link href={customerPortalUrl} className="rounded-full px-4 py-2 transition hover:bg-slate-100/10 hover:text-white">
               Seguimiento
             </Link>
             <Link href={adminLoginUrl} className="rounded-full px-4 py-2 transition hover:bg-slate-100/10 hover:text-white">

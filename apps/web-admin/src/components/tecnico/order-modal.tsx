@@ -1,590 +1,243 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import {
-  Calendar,
-  Phone,
-  Mail,
-  DollarSign,
-  Wrench,
-  FileText,
-  Camera,
-  CheckSquare,
-  History,
-  Save,
-  CheckCircle,
-  Loader2,
-} from 'lucide-react';
-import { apiClient } from '@/lib/api-client';
-import { getApiOptions } from '@/lib/tenant';
-import type { Order, OrderChecklist, OrderDocument, OrderEvent } from '@/types';
-import Image from 'next/image';
+import { useMemo, useState } from "react";
+import { CheckCircle, Clock3, FileText, MessageCircle, Phone, Shield, X } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge, SurfaceCard } from "@white-label/ui";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import type { Order, OrderChecklist, OrderDocument, OrderEvent } from "@/types";
+import { getTenantSlug } from "@/lib/tenant";
 
-function buildDeliveryWhatsAppUrl(phone?: string | null, folio?: string | null, warrantyUntil?: string | null) {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, '');
-  if (!digits) return null;
-
-  const warrantyText = warrantyUntil
-    ? ` Tu garantía queda vigente hasta ${new Date(warrantyUntil).toLocaleDateString('es-MX', { dateStyle: 'long' })}.`
-    : ' Tu garantía quedó registrada en el sistema.';
-
-  const message = encodeURIComponent(`Hola, tu equipo ${folio ?? ''} ya fue entregado.${warrantyText} Gracias por confiar en FIXI.`);
-  return `https://wa.me/${digits}?text=${message}`;
-}
-
-interface OrderModalProps {
+type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   order: Order | null;
   onOrderUpdated: () => void;
+};
+
+function formatDate(value?: string | null) {
+  if (!value) return "Sin fecha";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Sin fecha";
+  return new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(date);
 }
 
-export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: OrderModalProps) {
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [checklist, setChecklist] = useState<OrderChecklist | null>(null);
-  const [documents, setDocuments] = useState<OrderDocument[]>([]);
-  const [events, setEvents] = useState<OrderEvent[]>([]);
-  const [activeTab, setActiveTab] = useState('details');
-
-  // Form fields
-  const [clienteNombre, setClienteNombre] = useState('');
-  const [clienteTelefono, setClienteTelefono] = useState('');
-  const [clienteEmail, setClienteEmail] = useState('');
-  const [dispositivo, setDispositivo] = useState('');
-  const [modelo, setModelo] = useState('');
-  const [serialNumber, setSerialNumber] = useState('');
-  const [falla, setFalla] = useState('');
-  const [costo, setCosto] = useState('');
-  const [fechaPromesa, setFechaPromesa] = useState('');
-  const [estado, setEstado] = useState('');
-  const [tecnico, setTecnico] = useState('');
-  const [notas, setNotas] = useState('');
-  const [seguimiento, setSeguimiento] = useState('');
-  const [youtubeId, setYoutubeId] = useState('');
-
-  // Checklist
-  const [hasCharger, setHasCharger] = useState(false);
-  const [screenCondition, setScreenCondition] = useState('');
-  const [powersOn, setPowersOn] = useState(false);
-  const [backupRequired, setBackupRequired] = useState(false);
-  const [checklistNotes, setChecklistNotes] = useState('');
-  const [cosmeticCondition, setCosmeticCondition] = useState('');
-  const [reportedPhysicalDamage, setReportedPhysicalDamage] = useState('');
-  const [accessoriesReceived, setAccessoriesReceived] = useState('');
-  const [customerAcceptanceRequired, setCustomerAcceptanceRequired] = useState(false);
-  const [acceptedAt, setAcceptedAt] = useState('');
-  const [acceptedByName, setAcceptedByName] = useState('');
-
-  useEffect(() => {
-    if (order && open) {
-      loadOrderDetails();
-    }
-  }, [order, open]);
-
-  const loadOrderDetails = async () => {
-    if (!order) return;
-    setLoading(true);
-    setLoadError(null);
-    try {
-      const response = await apiClient.get<{
-        success?: boolean;
-        data?: {
-          order?: Order;
-          checklist: OrderChecklist | null;
-          documents: OrderDocument[];
-          events: OrderEvent[];
-        };
-      }>(`/orders/${order.id}`, getApiOptions());
-
-      const payload = response.data ?? null;
-      const orderData = payload?.order ?? null;
-      if (!orderData) {
-        throw new Error('La API no devolvió los datos de la orden');
-      }
-      setEstado(orderData.status || 'recibido');
-      setTecnico(orderData.assigned_user_id || '');
-      setNotas(orderData.internal_notes || '');
-      
-      // CRM priority fallback to device_info
-      setClienteNombre(orderData.customers?.name || orderData.device_info?.customer_name || '');
-      setClienteTelefono(orderData.customers?.phone || orderData.device_info?.customer_phone || '');
-      setClienteEmail(orderData.customers?.email || orderData.device_info?.customer_email || '');
-      setDispositivo((orderData as { device_type?: string }).device_type || orderData.device_info?.type || '');
-      setModelo((orderData as { device_model?: string }).device_model || orderData.device_info?.model || '');
-      setSerialNumber(orderData.serial_number || orderData.device_info?.serial_number || '');
-      setFalla(orderData.problem_description || '');
-      setCosto(String(orderData.estimated_cost ?? orderData.final_cost ?? ''));
-      setFechaPromesa(orderData.promised_date ? String(orderData.promised_date).slice(0, 10) : '');
-
-      setSeguimiento(((orderData.evidence_metadata?.find((e: any) => e.event_type === 'note') as { note?: string } | undefined)?.note) || '');
-      setYoutubeId((orderData.metadata as any)?.youtube_id || '');
-
-      if (payload?.checklist) {
-        setChecklist(payload.checklist);
-        setHasCharger(payload.checklist.has_charger);
-        setScreenCondition(payload.checklist.screen_condition || '');
-        setPowersOn(payload.checklist.powers_on);
-        setBackupRequired(payload.checklist.backup_required);
-        setChecklistNotes(payload.checklist.notes || '');
-        setCosmeticCondition(payload.checklist.cosmetic_condition || '');
-        setReportedPhysicalDamage(payload.checklist.reported_physical_damage || '');
-        setAccessoriesReceived(payload.checklist.accessories_received || '');
-        setCustomerAcceptanceRequired(payload.checklist.customer_acceptance_required || false);
-        setAcceptedAt(payload.checklist.accepted_at ? String(payload.checklist.accepted_at).slice(0, 10) : '');
-        setAcceptedByName(payload.checklist.accepted_by_name || '');
-      }
-
-      setDocuments(payload?.documents || []);
-      setEvents(payload?.events || []);
-    } catch (error) {
-      console.error('Failed to load order details:', error);
-      setLoadError(error instanceof Error ? error.message : 'No se pudieron cargar los detalles de la orden');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!order) return;
-    setSaving(true);
-    setSaveError(null);
-    try {
-      // Update order details
-      await apiClient.patch(`/orders/${order.id}/details`, {
-        clientName: clienteNombre,
-        clientPhone: clienteTelefono,
-        clientEmail: clienteEmail,
-        deviceType: dispositivo,
-        deviceModel: modelo,
-        serialNumber,
-        issue: falla,
-        promisedDate: fechaPromesa,
-        metadata: { youtube_id: youtubeId },
-      }, getApiOptions());
-
-      // Update financials if cost changed
-      const costValue = parseFloat(costo);
-      if (!isNaN(costValue) && costValue !== order.estimated_cost) {
-        await apiClient.patch(`/orders/${order.id}/financials`, {
-          estimatedCost: costValue,
-        }, getApiOptions());
-      }
-
-      // Update status if changed
-      if (estado !== order.status) {
-        await apiClient.patch(`/orders/${order.id}/status`, {
-          status: estado,
-          note: `Estado cambiado a ${estado}`,
-        }, getApiOptions());
-      }
-
-      // Update checklist
-      await apiClient.put(`/orders/${order.id}/checklist`, {
-        hasCharger,
-        screenCondition,
-        powersOn,
-        backupRequired,
-        notes: checklistNotes,
-        cosmeticCondition,
-        reportedPhysicalDamage,
-        accessoriesReceived,
-        customerAcceptanceRequired,
-        acceptedAt: acceptedAt ? new Date(acceptedAt).toISOString() : '',
-        acceptedByName,
-      }, getApiOptions());
-
-      // Update internal notes and customer tracking
-      await apiClient.patch(`/orders/${order.id}/details`, {
-        metadata: {
-          ...order.metadata,
-          internal_notes: notas,
-          customer_tracking: seguimiento,
-        },
-      }, getApiOptions());
-
-      onOrderUpdated();
-      loadOrderDetails();
-    } catch (error) {
-      console.error('Failed to save order:', error);
-      setSaveError(error instanceof Error ? error.message : 'No se pudo guardar la orden');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDeliver = async () => {
-    if (!order) return;
-    if (!confirm('¿Marcar esta orden como entregada? Esta acción no se puede deshacer.')) return;
-
-    setSaving(true);
-    setSaveError(null);
-    try {
-      await apiClient.patch(`/orders/${order.id}/status`, {
-        status: 'entregado',
-        note: 'Equipo entregado al cliente',
-      }, getApiOptions());
-      onOrderUpdated();
-      loadOrderDetails();
-    } catch (error) {
-      console.error('Failed to deliver order:', error);
-      setSaveError(error instanceof Error ? error.message : 'No se pudo entregar la orden');
-    } finally {
-      setSaving(false);
-    }
-  };
-
+function buildPdfUrl(order: Order | null) {
   if (!order) return null;
-  const deliveryWhatsAppUrl = buildDeliveryWhatsAppUrl(clienteTelefono, order.folio, order.warranty_until);
+  return order.receipt_url ?? null;
+}
+
+function buildWhatsappUrl(order: Order | null) {
+  const phone = order?.device_info?.customer_phone?.replace(/\D/g, "");
+  if (!phone) return null;
+  const folio = order?.folio ?? "";
+  const tenantSlug = getTenantSlug();
+  const portalBase = process.env.NEXT_PUBLIC_WEB_PUBLIC_URL?.replace(/\/$/, "") ?? "";
+  const portalUrl = tenantSlug && portalBase ? `${portalBase}/${encodeURIComponent(tenantSlug)}/portal?folio=${encodeURIComponent(folio)}` : "";
+  const message = encodeURIComponent(`Hola, tu equipo ${folio} está en seguimiento. Puedes consultar su estado aquí: ${portalUrl || "portal público"}.`);
+  return `https://wa.me/${phone}?text=${message}`;
+}
+
+function InfoRow({ label, value }: { label: string; value?: string | number | null }) {
+  if (value === null || value === undefined || value === "") return null;
+  return (
+    <div className="flex items-start justify-between gap-4 border-b border-slate-800/70 py-2 text-sm last:border-b-0">
+      <span className="text-slate-400">{label}</span>
+      <span className="max-w-[62%] text-right font-medium text-slate-100">{String(value)}</span>
+    </div>
+  );
+}
+
+export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props) {
+  const [activeTab, setActiveTab] = useState<"details" | "checklist" | "photos" | "history">("details");
+
+  const checklist = useMemo(() => null as OrderChecklist | null, []);
+  const documents = useMemo(() => [] as OrderDocument[], []);
+  const events = useMemo(() => [] as OrderEvent[], []);
+  const pdfUrl = buildPdfUrl(order);
+  const whatsappUrl = buildWhatsappUrl(order);
+
+  if (!open || !order) return null;
+
+  const device = order.device_info ?? {};
+  const statusLabel = String(order.status || "recibido").replaceAll("_", " ");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto border border-slate-800 bg-slate-950/95">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-slate-100">
-            <FileText className="w-5 h-5" />
-            Orden {order.folio}
-          </DialogTitle>
-        </DialogHeader>
-
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-sky-400" />
+      <DialogContent className="max-w-[94vw] border border-slate-800 bg-slate-950/95 p-0 sm:max-w-[860px]">
+        <div className="flex h-[82vh] max-h-[82vh] flex-col overflow-hidden">
+          <div className="border-b border-slate-800/80 px-4 py-3 sm:px-5">
+            <DialogHeader className="mb-0">
+              <DialogTitle className="flex items-center justify-between gap-3 text-base text-slate-100 sm:text-lg">
+                <span className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-sky-300" />
+                  Orden {order.folio}
+                </span>
+                <Badge variant="success">{statusLabel}</Badge>
+              </DialogTitle>
+            </DialogHeader>
           </div>
-        ) : (
-          <>
-            {loadError ? (
-              <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">
-                <p className="font-semibold">No se pudieron cargar los detalles</p>
-                <p className="mt-1 text-rose-100/80">{loadError}</p>
-                <Button variant="outline" size="sm" onClick={() => void loadOrderDetails()} className="mt-3 gap-2">
-                  Reintentar
-                </Button>
-              </div>
-            ) : null}
-            {saveError ? (
-              <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">
-                {saveError}
-              </div>
-            ) : null}
-            <div className="mt-4">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="border border-slate-800 bg-slate-900/70">
-                <TabsTrigger value="details" className="data-[state=active]:bg-sky-500/15">
-                  Detalles
-                </TabsTrigger>
-                <TabsTrigger value="checklist" className="data-[state=active]:bg-sky-500/15">
-                  Checklist
-                </TabsTrigger>
-                <TabsTrigger value="photos" className="data-[state=active]:bg-sky-500/15">
-                  Fotos
-                </TabsTrigger>
-                <TabsTrigger value="history" className="data-[state=active]:bg-sky-500/15">
-                  Historial
-                </TabsTrigger>
+
+          <div className="flex-1 overflow-y-auto px-4 py-3 sm:px-5">
+            <div className="mb-4 grid gap-3 md:grid-cols-3">
+              <SurfaceCard elevated className="p-4 md:col-span-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Resumen</p>
+                    <h3 className="mt-1 text-lg font-semibold text-slate-50">{device.customer_name || "Cliente sin nombre"}</h3>
+                  </div>
+                  <Badge variant={order.warranty_until ? "success" : "neutral"}>
+                    <Shield className="mr-1 h-3.5 w-3.5" />
+                    {order.warranty_until ? "Con garantía" : "Sin garantía"}
+                  </Badge>
+                </div>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <InfoRow label="Equipo" value={[device.type, device.model].filter(Boolean).join(" - ") || "Sin dato"} />
+                  <InfoRow label="Serie / IMEI" value={device.serial_number || order.serial_number || "Sin dato"} />
+                  <InfoRow label="Falla" value={order.problem_description || "Sin dato"} />
+                  <InfoRow label="Promesa" value={formatDate(order.promised_date)} />
+                  <InfoRow label="Costo estimado" value={`$${Number(order.estimated_cost || 0).toFixed(2)}`} />
+                  <InfoRow label="Costo final" value={`$${Number(order.final_cost || 0).toFixed(2)}`} />
+                </div>
+              </SurfaceCard>
+
+              <SurfaceCard elevated className="p-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Acciones</p>
+                <div className="mt-3 space-y-2">
+                  <Button className="w-full justify-start gap-2" variant="outline" onClick={() => onOpenChange(false)}>
+                    <X className="h-4 w-4" />
+                    Cerrar
+                  </Button>
+                  <Button className="w-full justify-start gap-2" variant="outline" onClick={() => window.open(`/dashboard/operativo?order=${encodeURIComponent(order.id)}`, "_blank")}>
+                    <Clock3 className="h-4 w-4" />
+                    Ir a operativo
+                  </Button>
+                  {pdfUrl ? (
+                    <Button className="w-full justify-start gap-2" onClick={() => window.open(pdfUrl, "_blank", "noopener,noreferrer")}>
+                      <FileText className="h-4 w-4" />
+                      Ver PDF
+                    </Button>
+                  ) : null}
+                  {whatsappUrl ? (
+                    <Button className="w-full justify-start gap-2 bg-emerald-600 hover:bg-emerald-700" onClick={() => window.open(whatsappUrl, "_blank", "noopener,noreferrer")}>
+                      <MessageCircle className="h-4 w-4" />
+                      WhatsApp cliente
+                    </Button>
+                  ) : null}
+                  <div className="rounded-2xl border border-sky-500/15 bg-black/20 px-4 py-3 text-xs text-slate-400">
+                    <div className="font-semibold text-slate-200">Actualizada</div>
+                    <div className="mt-1">{formatDate(order.updated_at || order.created_at)}</div>
+                  </div>
+                </div>
+              </SurfaceCard>
+            </div>
+
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)}>
+              <TabsList className="grid w-full grid-cols-4 border border-slate-800 bg-slate-900/80 p-1">
+                <TabsTrigger value="details" className="rounded-xl text-xs text-slate-400 data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-50">Detalles</TabsTrigger>
+                <TabsTrigger value="checklist" className="rounded-xl text-xs text-slate-400 data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-50">Checklist</TabsTrigger>
+                <TabsTrigger value="photos" className="rounded-xl text-xs text-slate-400 data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-50">Fotos</TabsTrigger>
+                <TabsTrigger value="history" className="rounded-xl text-xs text-slate-400 data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-50">Historial</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="details" className="space-y-4 mt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label>Cliente</Label>
-                    <Input value={clienteNombre} onChange={(e) => setClienteNombre(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Teléfono</Label>
-                    <Input value={clienteTelefono} onChange={(e) => setClienteTelefono(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Email</Label>
-                    <Input value={clienteEmail} onChange={(e) => setClienteEmail(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Dispositivo</Label>
-                    <Input value={dispositivo} onChange={(e) => setDispositivo(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Modelo</Label>
-                    <Input value={modelo} onChange={(e) => setModelo(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Serie / IMEI</Label>
-                    <Input value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Costo estimado</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={costo}
-                      onChange={(e) => setCosto(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <Label>Fecha promesa</Label>
-                    <Input type="date" value={fechaPromesa} onChange={(e) => setFechaPromesa(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>Estado</Label>
-                    <select
-                      value={estado}
-                      onChange={(e) => setEstado(e.target.value)}
-                      className="input w-full"
-                    >
-                      <option value="recibido">Recibido</option>
-                      <option value="diagnostico">Diagnóstico</option>
-                      <option value="reparacion">Reparación</option>
-                      <option value="listo">Listo</option>
-                      <option value="entregado">Entregado</option>
-                      <option value="cancelado">Cancelado</option>
-                    </select>
-                  </div>
-                  <div>
-                    <Label>Técnico asignado</Label>
-                    <Input value={tecnico} onChange={(e) => setTecnico(e.target.value)} />
-                  </div>
-                  <div>
-                    <Label>YouTube ID (Live Cam)</Label>
-                    <Input value={youtubeId} onChange={(e) => setYoutubeId(e.target.value)} />
-                  </div>
+              <TabsContent value="details" className="mt-4 space-y-4">
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  <SurfaceCard elevated className="p-4">
+                    <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Cliente</p>
+                    <InfoRow label="Nombre" value={device.customer_name || "Sin dato"} />
+                    <InfoRow label="Teléfono" value={device.customer_phone || "Sin dato"} />
+                    <InfoRow label="Email" value={device.customer_email || "Sin dato"} />
+                  </SurfaceCard>
+                  <SurfaceCard elevated className="p-4">
+                    <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Equipo</p>
+                    <InfoRow label="Tipo" value={device.type || "Sin dato"} />
+                    <InfoRow label="Modelo" value={device.model || "Sin dato"} />
+                    <InfoRow label="Serie / IMEI" value={device.serial_number || order.serial_number || "Sin dato"} />
+                  </SurfaceCard>
+                  <SurfaceCard elevated className="p-4">
+                    <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Operación</p>
+                    <InfoRow label="Estado" value={statusLabel} />
+                    <InfoRow label="Fecha promesa" value={formatDate(order.promised_date)} />
+                    <InfoRow label="Garantía" value={order.warranty_until ? formatDate(order.warranty_until) : "Sin garantía"} />
+                  </SurfaceCard>
                 </div>
-
-                <div>
-                  <Label>Falla reportada</Label>
-                  <Textarea value={falla} onChange={(e) => setFalla(e.target.value)} rows={3} />
-                </div>
-
-                <div>
-                  <Label>Notas internas</Label>
-                  <Textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={3} />
-                </div>
-
-                <div>
-                  <Label>Seguimiento para el cliente</Label>
-                  <Textarea value={seguimiento} onChange={(e) => setSeguimiento(e.target.value)} rows={2} />
-                </div>
+                <SurfaceCard elevated className="p-4">
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Falla reportada</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-100">{order.problem_description || "Sin dato"}</p>
+                </SurfaceCard>
               </TabsContent>
 
-              <TabsContent value="checklist" className="space-y-4 mt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={hasCharger}
-                      onChange={(e) => setHasCharger(e.target.checked)}
-                      className="w-4 h-4 accent-sky-400"
-                    />
-                    <span>Trae cargador</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={powersOn}
-                      onChange={(e) => setPowersOn(e.target.checked)}
-                      className="w-4 h-4 accent-sky-400"
-                    />
-                    <span>Equipo prende</span>
-                  </label>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={backupRequired}
-                      onChange={(e) => setBackupRequired(e.target.checked)}
-                      className="w-4 h-4 accent-sky-400"
-                    />
-                    <span>Requiere respaldo de datos</span>
-                  </label>
-                </div>
-
-                <div>
-                  <Label>Condición de pantalla</Label>
-                  <Input
-                    value={screenCondition}
-                    onChange={(e) => setScreenCondition(e.target.value)}
-                    placeholder="Ej: Rayada, rota, OK"
-                  />
-                </div>
-
-                <div>
-                  <Label>Notas del checklist</Label>
-                  <Textarea value={checklistNotes} onChange={(e) => setChecklistNotes(e.target.value)} rows={3} />
-                </div>
-
-                <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4">
-                  <h4 className="mb-3 text-sm font-semibold text-slate-300">Checklist legal de recepción</h4>
-                  <div className="grid gap-4">
-                    <div>
-                      <Label>Condición cosmética</Label>
-                      <Textarea
-                        value={cosmeticCondition}
-                        onChange={(e) => setCosmeticCondition(e.target.value)}
-                        placeholder="Rayones, golpes, humedad visible, pantalla, carcasa"
-                        rows={3}
-                      />
-                    </div>
-                    <div>
-                      <Label>Daño físico reportado</Label>
-                      <Textarea
-                        value={reportedPhysicalDamage}
-                        onChange={(e) => setReportedPhysicalDamage(e.target.value)}
-                        placeholder="Ej: golpe en esquina, pantalla rota, equipo mojado"
-                        rows={3}
-                      />
-                    </div>
-                    <div>
-                      <Label>Accesorios recibidos</Label>
-                      <Textarea
-                        value={accessoriesReceived}
-                        onChange={(e) => setAccessoriesReceived(e.target.value)}
-                        placeholder="Ej: cargador, funda, SIM, memoria, caja"
-                        rows={2}
-                      />
-                    </div>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={customerAcceptanceRequired}
-                        onChange={(e) => setCustomerAcceptanceRequired(e.target.checked)}
-                        className="w-4 h-4 accent-sky-400"
-                      />
-                      <span>Requiere aceptación del cliente</span>
-                    </label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Fecha de aceptación</Label>
-                        <Input type="date" value={acceptedAt} onChange={(e) => setAcceptedAt(e.target.value)} />
-                      </div>
-                      <div>
-                        <Label>Nombre de quien acepta</Label>
-                        <Input
-                          value={acceptedByName}
-                          onChange={(e) => setAcceptedByName(e.target.value)}
-                          placeholder="Nombre completo"
-                        />
-                      </div>
-                    </div>
+              <TabsContent value="checklist" className="mt-4 space-y-4">
+                <SurfaceCard elevated className="p-4">
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Checklist</p>
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <InfoRow label="Trae cargador" value={checklist?.has_charger ? "Sí" : "No"} />
+                    <InfoRow label="Equipo prende" value={checklist?.powers_on ? "Sí" : "No"} />
+                    <InfoRow label="Respaldo" value={checklist?.backup_required ? "Sí" : "No"} />
+                    <InfoRow label="Aceptación del cliente" value={checklist?.customer_acceptance_required ? "Requerida" : "No requerida"} />
+                    <InfoRow label="Condición de pantalla" value={checklist?.screen_condition || "Sin dato"} />
+                    <InfoRow label="Notas" value={checklist?.notes || "Sin dato"} />
                   </div>
-                </div>
+                </SurfaceCard>
               </TabsContent>
 
-              <TabsContent value="photos" className="space-y-4 mt-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {documents
-                    .filter((doc) => doc.file_type === 'intake_photo')
-                    .map((doc) => (
-                      <div key={doc.id} className="relative aspect-square overflow-hidden rounded-lg border border-slate-700">
-                        {doc.public_url && (
-                          <img
-                            src={doc.public_url}
-                            alt={doc.file_name}
-                            className="w-full h-full object-cover"
-                          />
+              <TabsContent value="photos" className="mt-4 space-y-4">
+                <SurfaceCard elevated className="p-4">
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Fotos</p>
+                  <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
+                    {documents.filter((doc) => doc.file_type === "intake_photo").map((doc) => (
+                      <div key={doc.id} className="aspect-square overflow-hidden rounded-xl border border-slate-800 bg-black/20">
+                        {doc.public_url ? (
+                          <img src={doc.public_url} alt={doc.file_name} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-xs text-slate-500">Sin vista previa</div>
                         )}
                       </div>
                     ))}
-                </div>
-
-                {documents.filter((doc) => doc.file_type === 'intake_photo').length === 0 && (
-                  <p className="py-4 text-center text-slate-400">No hay fotos de recepción</p>
-                )}
-
-                <div className="border-t border-slate-800 pt-4">
-                  <Label>Subir nueva foto</Label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="input w-full mt-2"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (!file || !order) return;
-
-                      const formData = new FormData();
-                      formData.append('file', file);
-
-                      try {
-                        await apiClient.upload(`/orders/${order.id}/attachments`, file, {
-                          fileType: 'intake_photo',
-                        }, getApiOptions());
-                        loadOrderDetails();
-                      } catch (error) {
-                        console.error('Failed to upload photo:', error);
-                      }
-                    }}
-                  />
-                </div>
+                  </div>
+                  {documents.filter((doc) => doc.file_type === "intake_photo").length === 0 ? (
+                    <p className="py-4 text-center text-slate-400">No hay fotos de recepción</p>
+                  ) : null}
+                </SurfaceCard>
               </TabsContent>
 
-              <TabsContent value="history" className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  {events.map((event) => (
-                    <div key={event.id} className="rounded-lg border border-slate-800 bg-slate-900/60 p-3">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-semibold text-sky-300">{event.event_type}</span>
-                        <span className="text-xs text-slate-400">
-                          {new Date(event.created_at).toLocaleString()}
-                        </span>
+              <TabsContent value="history" className="mt-4 space-y-4">
+                <SurfaceCard elevated className="p-4">
+                  <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Historial</p>
+                  <div className="mt-3 space-y-2">
+                    {events.length > 0 ? events.map((event) => (
+                      <div key={event.id} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm font-semibold text-sky-300">{event.event_type || "evento"}</span>
+                          <span className="text-xs text-slate-400">{formatDate(event.created_at)}</span>
+                        </div>
+                        {event.note ? <p className="mt-1 text-sm text-slate-100">{event.note}</p> : null}
+                        {event.actor_name ? <p className="mt-1 text-xs text-slate-400">Por: {event.actor_name}</p> : null}
                       </div>
-                      {event.previous_status && event.new_status && (
-                        <p className="text-xs mt-1">
-                          Cambió de <span className="text-yellow-500">{event.previous_status}</span> a{' '}
-                          <span className="text-green-500">{event.new_status}</span>
-                        </p>
-                      )}
-                      {event.note && <p className="text-sm mt-1">{event.note}</p>}
-                      {event.actor_name && (
-                        <p className="mt-1 text-xs text-slate-400">Por: {event.actor_name}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                {events.length === 0 && (
-                  <p className="py-4 text-center text-slate-400">Sin historial de eventos</p>
-                )}
+                    )) : (
+                      <p className="py-4 text-center text-slate-400">Sin historial de eventos</p>
+                    )}
+                  </div>
+                </SurfaceCard>
               </TabsContent>
-              </Tabs>
-            </div>
+            </Tabs>
+          </div>
 
-            <div className="mt-6 flex justify-end gap-3 border-t border-slate-800 pt-4">
+          <div className="border-t border-slate-800/80 bg-slate-950/95 px-4 py-3 sm:px-5">
+            <div className="flex flex-wrap items-center justify-end gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              {estado !== 'entregado' && (
-                <Button onClick={handleDeliver} disabled={saving} className="bg-green-600 hover:bg-green-700">
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Entregar
-                </Button>
-              )}
-              {deliveryWhatsAppUrl ? (
-                <a
-                  href={deliveryWhatsAppUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center rounded-md border border-emerald-400/40 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/10"
-                >
-                  Avisar entrega por WhatsApp
-                </a>
-              ) : null}
-              <Button onClick={handleSave} disabled={saving}>
-                <Save className="w-4 h-4 mr-2" />
-                {saving ? 'Guardando...' : 'Guardar cambios'}
+              <Button onClick={onOrderUpdated} className="gap-2">
+                <CheckCircle className="h-4 w-4" />
+                Refrescar
               </Button>
             </div>
-          </>
-        )}
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

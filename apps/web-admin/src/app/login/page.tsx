@@ -54,20 +54,27 @@ function LoginScreen() {
     }
   };
 
-  const getGoogleOnboardingUrl = () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || '';
-    const url = new URL(apiUrl.replace(/\/$/, '') + "/api/auth/google");
-    url.searchParams.set("origin", window.location.origin);
-    return url.toString();
-  };
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    setError(null);
 
-  const handleGoogleRegister = () => {
-    const url = getGoogleOnboardingUrl();
-    if (!url) {
-      setError("Falta configurar la URL del API.");
-      return;
+    try {
+      const supabase = getBrowserSupabaseClient();
+      const callbackUrl = new URL('/auth/callback', window.location.origin).toString();
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: callbackUrl,
+        },
+      });
+
+      if (oauthError) {
+        throw oauthError;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo iniciar Google');
+      setLoading(false);
     }
-    window.location.assign(url);
   };
 
   const handlePasswordReset = async () => {
@@ -191,7 +198,7 @@ function LoginScreen() {
 
                   <button
                     type="button"
-                    onClick={handleGoogleRegister}
+                    onClick={handleGoogleLogin}
                     disabled={loading || resetLoading}
                     className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white transition hover:border-white/20 hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
                   >

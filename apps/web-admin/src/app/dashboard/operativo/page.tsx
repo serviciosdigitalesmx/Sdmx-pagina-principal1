@@ -216,13 +216,23 @@ export default function OperativoPage() {
         },
       };
 
-      const response = await apiClient.post<{ data: { folio: string; id: string } }>(
+      const response = await apiClient.post<{
+        data: {
+          folio: string;
+          id: string;
+          pdf_attachment?: { public_url: string | null } | null;
+        };
+      }>(
         '/orders',
         payload,
         getApiOptions()
       );
 
-      let pdfUrl: string | null = null;
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
+      const pdfRouteUrl = tenantSlug && apiBaseUrl
+        ? `${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(response.data.folio)}/pdf`
+        : null;
+      let pdfUrl: string | null = response.data.pdf_attachment?.public_url ?? pdfRouteUrl;
       if (formData.fotoRecepcion) {
         try {
           const uploadResponse = await apiClient.upload<{
@@ -238,7 +248,9 @@ export default function OperativoPage() {
             getApiOptions()
           );
 
-          pdfUrl = uploadResponse.data.find((document) => document.file_type === 'receipt_pdf')?.public_url ?? null;
+          pdfUrl = uploadResponse.data.find((document) => document.file_type === 'receipt_pdf')?.public_url
+            ?? response.data.pdf_attachment?.public_url
+            ?? pdfRouteUrl;
         } catch (uploadError) {
           console.error('Failed to upload intake photo:', uploadError);
         }

@@ -21,18 +21,18 @@ export function BillingExpiredScreen() {
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 lg:flex-row lg:items-stretch">
         <section className="flex-1 rounded-[2rem] border border-white/10 bg-white/[0.04] p-8 shadow-[0_30px_80px_rgba(0,0,0,0.35)]">
           <p className="text-xs uppercase tracking-[0.35em] text-sky-300/80">Estado de cuenta</p>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight">Tu prueba gratuita terminó</h1>
+          <h1 className="mt-4 text-4xl font-semibold tracking-tight">Tu prueba de 14 días terminó</h1>
           <p className="mt-5 max-w-2xl text-base leading-8 text-slate-300">
-            El acceso a este negocio está pausado porque el periodo de prueba expiró. Tus clientes, órdenes, inventario y configuración están guardados. Activa un plan para continuar usando Fixi.
+            El acceso a este negocio está pausado porque el periodo de prueba expiró. Tus clientes, órdenes, inventario y configuración están guardados. Activa tu cuenta para continuar usando Fixi.
           </p>
           <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-400">
-            No perderás tu información. Al activar tu plan, el acceso se restablece automáticamente.
+            No perderás tu información. Al activar tu cuenta, el acceso se restablece automáticamente.
           </p>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <Link href="/dashboard/billing" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-500 px-5 py-3 font-semibold text-white transition hover:bg-sky-400">
               <Sparkles className="h-4 w-4" />
-              Activar plan
+              Activar mi cuenta
             </Link>
             <Link href="/dashboard/billing" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-5 py-3 font-semibold text-white transition hover:bg-white/10">
               Ver planes
@@ -76,4 +76,3 @@ export function BillingExpiredScreen() {
     </main>
   );
 }
-

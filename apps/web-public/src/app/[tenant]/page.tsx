@@ -9,6 +9,7 @@ import { PhoneMockup } from "@/components/PhoneMockup";
 import { ServiceCard } from "@/components/ServiceCard";
 import { StatCounter } from "@/components/StatCounter";
 import { TrustBar } from "@/components/TrustBar";
+import { buildCustomerPortalUrl } from "@/lib/customer-portal-url";
 
 type LandingResponse = {
   success: true;
@@ -245,6 +246,7 @@ export default async function TenantLandingPage({
   const email = tenant.contactEmail ?? tenant.contact_email ?? null;
   const whatsappHref = resolveWhatsappHref(phone ?? landing.contactHref ?? undefined);
   const hasWhatsApp = Boolean(whatsappHref);
+  const customerPortalUrl = buildCustomerPortalUrl(slug);
   const heroTitleParts = landing.heroTitle.trim().split(/\s+/).filter(Boolean);
   const heroTitleLine1 = heroTitleParts.slice(0, Math.max(1, Math.ceil(heroTitleParts.length / 2))).join(" ");
   const heroTitleLine2 = heroTitleParts.slice(Math.max(1, Math.ceil(heroTitleParts.length / 2))).join(" ");
@@ -363,7 +365,7 @@ export default async function TenantLandingPage({
                 {landing.primaryCtaLabel || "Cotizar ahora"}
               </Link>
               <Link
-                href={landing.secondaryCtaHref || `/${slug}/tracking`}
+                href={customerPortalUrl}
                 className="inline-flex items-center justify-center rounded-full border border-sky-400/35 bg-sky-500/15 px-5 py-3 text-center text-sm font-semibold text-sky-100 transition duration-200 hover:border-sky-300/45 hover:bg-sky-500/20"
               >
                 {landing.secondaryCtaLabel || "Ver estado"}
@@ -508,7 +510,7 @@ export default async function TenantLandingPage({
 
                 <div className="flex flex-wrap gap-3">
                   <Link
-                    href={`/${slug}/tracking`}
+                    href={customerPortalUrl}
                     className="inline-flex items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[color:var(--bg-card)] px-5 py-3 text-sm font-semibold text-[color:var(--text-primary)] transition hover:bg-[color:var(--bg-card-hover)]"
                   >
                     Ver estado

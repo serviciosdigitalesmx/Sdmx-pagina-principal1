@@ -10,7 +10,6 @@ export type TenantModuleKey =
   | 'procurement'
   | 'finance'
   | 'security'
-  | 'movivendor'
   | 'requests'
   | 'settings'
   | 'users'
@@ -46,7 +45,6 @@ const MODULE_KEY_ALIASES: Record<string, TenantModuleKey> = {
   users: 'users',
   usuarios: 'users',
   tasks: 'tasks',
-  movivendor: 'movivendor',
   security: 'security',
   seguridad: 'security',
   archive: 'archive',
@@ -68,7 +66,6 @@ const MODULE_ROUTE_MAP: Record<string, TenantModuleKey> = {
   '/dashboard/finanzas': 'finance',
   '/dashboard/gastos': 'finance',
   '/dashboard/seguridad': 'security',
-  '/dashboard/movivendor': 'movivendor',
   '/dashboard/solicitudes': 'requests',
   '/dashboard/usuarios': 'users',
   '/dashboard/sucursales': 'branches',
@@ -101,9 +98,6 @@ export function isModuleEnabled(moduleKey: TenantModuleKey): boolean {
 }
 
 export function isRouteEnabled(pathname: string): boolean {
-  if (pathname.startsWith('/dashboard/movivendor')) {
-    return true;
-  }
   const moduleKey = MODULE_ROUTE_MAP[pathname];
 
   if (!moduleKey) {

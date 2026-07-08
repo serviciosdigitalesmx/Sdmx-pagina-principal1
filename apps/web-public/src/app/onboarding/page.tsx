@@ -21,7 +21,7 @@ const initialState: RegisterState = {
   phone: "",
 };
 
-const trialDays = optionalEnv("NEXT_PUBLIC_SAAS_TRIAL_DAYS") ?? "7";
+const trialDays = optionalEnv("NEXT_PUBLIC_SAAS_TRIAL_DAYS") ?? "14";
 
 export default function OnboardingPage() {
   const [form, setForm] = useState<RegisterState>(initialState);
