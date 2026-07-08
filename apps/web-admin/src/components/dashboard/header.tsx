@@ -80,7 +80,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   }, [refreshOfflineState]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-xl">
+    <header className="sticky top-0 z-40 border-b border-white/8 bg-slate-950/70 backdrop-blur-2xl">
       <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <button
@@ -94,7 +94,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           <BranchSelector />
           <Link
             href="/dashboard"
-            className="hidden items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/70 px-3 py-2 text-xs font-medium text-slate-400 transition hover:bg-slate-800 hover:text-slate-100 md:inline-flex"
+            className="hidden items-center gap-2 rounded-full border border-sky-500/15 bg-sky-500/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-sky-400/30 hover:bg-sky-500/15 hover:text-slate-100 md:inline-flex"
             title="Volver al hub"
           >
             <Building2 className="h-4 w-4 text-sky-400" />
@@ -102,7 +102,8 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           </Link>
         </div>
 
-        <div className="hidden min-w-0 items-center gap-2 rounded-full border border-slate-800 bg-slate-900/70 px-3 py-2 text-xs text-slate-400 md:flex">
+        <div className="hidden min-w-0 items-center gap-2 rounded-full border border-white/8 bg-white/5 px-3 py-2 text-xs text-slate-300 md:flex">
+          <span className={`h-2.5 w-2.5 rounded-full ${isOnline ? 'bg-emerald-400' : 'bg-amber-400'} shadow-[0_0_18px_currentColor]`} />
           <Building2 className="h-4 w-4 text-sky-400" />
           <span className="truncate">{identity?.tenantName || 'Mi taller'}</span>
         </div>
@@ -115,7 +116,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
         <div className="relative">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/70 px-3 py-2 transition hover:bg-slate-800"
+            className="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/5 px-3 py-2 transition hover:border-sky-400/25 hover:bg-white/8"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/15">
               <User className="w-4 h-4 text-sky-400" />

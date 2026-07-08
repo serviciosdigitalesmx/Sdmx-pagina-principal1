@@ -67,8 +67,8 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[94vw] border border-slate-800 bg-slate-950/95 p-0 sm:max-w-[860px]">
-        <div className="flex h-[82vh] max-h-[82vh] flex-col overflow-hidden">
+      <DialogContent className="max-w-[calc(100vw-1rem)] border border-slate-800 bg-slate-950/96 p-0 shadow-[0_30px_120px_rgba(2,6,23,0.65)] sm:max-w-[820px]">
+        <div className="flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] flex-col overflow-hidden">
           <div className="border-b border-slate-800/80 px-4 py-3 sm:px-5">
             <DialogHeader className="mb-0">
               <DialogTitle className="flex items-center justify-between gap-3 text-base text-slate-100 sm:text-lg">
@@ -136,7 +136,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
             </div>
 
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)}>
-              <TabsList className="grid w-full grid-cols-4 border border-slate-800 bg-slate-900/80 p-1">
+              <TabsList className="sticky top-0 z-10 grid w-full grid-cols-4 border border-slate-800 bg-slate-950/95 p-1 backdrop-blur-xl">
                 <TabsTrigger value="details" className="rounded-xl text-xs text-slate-400 data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-50">Detalles</TabsTrigger>
                 <TabsTrigger value="checklist" className="rounded-xl text-xs text-slate-400 data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-50">Checklist</TabsTrigger>
                 <TabsTrigger value="photos" className="rounded-xl text-xs text-slate-400 data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-50">Fotos</TabsTrigger>
@@ -226,7 +226,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
             </Tabs>
           </div>
 
-          <div className="border-t border-slate-800/80 bg-slate-950/95 px-4 py-3 sm:px-5">
+          <div className="border-t border-slate-800/80 bg-slate-950/96 px-4 py-3 sm:px-5">
             <div className="flex flex-wrap items-center justify-end gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar

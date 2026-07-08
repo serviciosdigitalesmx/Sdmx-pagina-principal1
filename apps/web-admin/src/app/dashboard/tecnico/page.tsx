@@ -212,18 +212,27 @@ export default function TecnicoPage() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div>
-        <p className="text-xs uppercase tracking-[0.28em] text-sky-400/70">Operación técnica</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-50">Panel Técnico</h1>
-        <p className="mt-1 text-sm text-slate-400">Seguimiento y gestión de órdenes activas</p>
-      </div>
+    <div className="space-y-3">
+      <SurfaceCard elevated className="border border-sky-500/10 bg-[linear-gradient(135deg,rgba(15,23,42,0.96),rgba(15,118,110,0.12))] p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.28em] text-sky-400/70">Operación técnica</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-50">Panel Técnico</h1>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-400">
+              Seguimiento y gestión de órdenes activas, ordenadas por promesa para actuar rápido en lo urgente.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 rounded-2xl border border-white/8 bg-white/[0.03] px-3 py-2 text-xs text-slate-300">
+            <Eye className="h-4 w-4 text-sky-300" />
+            Vista compacta para pantalla completa
+          </div>
+        </div>
+      </SurfaceCard>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
         <KPIBox label="Críticos (≤2 días)" value={kpis.urgentes} color="red" />
-        <KPIBox label="Atención (3-4 días)" value={kpis.atencion} color="yellow" />
+        <KPIBox label="En atención (3-4 días)" value={kpis.atencion} color="yellow" />
         <KPIBox label="Con margen (≥5 días)" value={kpis.conMargen} color="green" />
         <KPIBox label="Total en taller" value={kpis.total} color="blue" />
       </div>

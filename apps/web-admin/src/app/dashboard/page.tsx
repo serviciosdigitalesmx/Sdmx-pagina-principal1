@@ -15,6 +15,8 @@ import {
   DollarSign,
   ArrowRight,
   RefreshCw,
+  ShoppingCart,
+  BarChart3,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -34,6 +36,7 @@ import {
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
 import { getCustomerLabel, getOrderLabel, getTechnicianLabel } from '@/lib/labels';
+import { isModuleEnabled } from '@/lib/module-access';
 import { useTenantIdentity } from '@/providers/TenantIdentityProvider';
 import type { ReportsSummary } from '@/types';
 import { SurfaceCard } from '@white-label/ui';
@@ -136,36 +139,67 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.28em] text-sky-400/70">Hub operativo</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-50">
-            Panel de Control
-          </h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Resumen operativo del taller en tiempo real
-          </p>
+      <SurfaceCard elevated className="overflow-hidden border border-sky-500/15 bg-[linear-gradient(135deg,rgba(14,165,233,0.16),rgba(15,23,42,0.86)_44%,rgba(8,47,73,0.28))] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.36)]">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-xs uppercase tracking-[0.32em] text-sky-300/80">Hub operativo</p>
+            <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-50 sm:text-5xl">
+              Panel de Control
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+              Resumen operativo del taller en tiempo real con métricas, órdenes activas, inventario y caja en una sola vista.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button
+                onClick={() => router.push('/dashboard/operativo')}
+                className="btn-primary"
+              >
+                Nueva orden
+              </button>
+              <button
+                onClick={() => router.push('/dashboard/tecnico')}
+                className="btn-outline"
+              >
+                Ver semáforo
+              </button>
+              <button
+                onClick={() => router.push('/dashboard/clientes')}
+                className="btn-outline"
+              >
+                Clientes
+              </button>
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 lg:w-[34rem]">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Última actualización</p>
+              <p className="mt-2 text-2xl font-bold text-slate-50">{lastUpdated ? lastUpdated.toLocaleTimeString() : '—'}</p>
+              <p className="mt-1 text-xs text-slate-400">Datos sincronizados desde la API del tenant.</p>
+            </div>
+            <div className="rounded-2xl border border-emerald-400/15 bg-emerald-500/10 p-4">
+              <p className="text-xs uppercase tracking-[0.24em] text-emerald-200">Estado</p>
+              <p className="mt-2 text-2xl font-bold text-emerald-300">{summary.productivity}%</p>
+              <p className="mt-1 text-xs text-emerald-100/80">Productividad operativa actual.</p>
+            </div>
+            <div className="rounded-2xl border border-sky-400/15 bg-sky-500/10 p-4">
+              <p className="text-xs uppercase tracking-[0.24em] text-sky-200">Órdenes activas</p>
+              <p className="mt-2 text-2xl font-bold text-sky-100">{summary.ordersCount}</p>
+              <p className="mt-1 text-xs text-sky-100/80">{ordersLabel} en taller</p>
+            </div>
+            <div className="rounded-2xl border border-amber-400/15 bg-amber-500/10 p-4">
+              <p className="text-xs uppercase tracking-[0.24em] text-amber-100">Pendientes de revisión</p>
+              <p className="mt-2 text-2xl font-bold text-amber-100">
+                {summary.lowStockCount + (summary.overduePromisedOrders?.length ?? 0)}
+              </p>
+              <p className="mt-1 text-xs text-amber-100/80">Inventario y promesas por revisar.</p>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          {lastUpdated && (
-            <span className="text-xs text-slate-400">
-              Última actualización: {lastUpdated.toLocaleTimeString()}
-            </span>
-          )}
-          <button
-            onClick={() => loadData(true)}
-            disabled={refreshing}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-100 transition hover:border-sky-400/30 hover:bg-slate-800/80 disabled:opacity-60"
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            Actualizar
-          </button>
-        </div>
-      </div>
+      </SurfaceCard>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KPICard
           title="Ingresos del mes"
           value={`$${summary.totalIncome.toFixed(2)}`}
@@ -195,7 +229,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SimpleCard
           title={`${ordersLabel} activas`}
           value={summary.ordersCount}
@@ -224,11 +258,16 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SurfaceCard elevated className="p-5">
-          <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <SurfaceCard elevated className="border border-white/8 p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
             Distribución por estado
-          </h3>
+            </h3>
+            <span className="rounded-full border border-slate-700 bg-white/[0.03] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+              Operativo
+            </span>
+          </div>
           <div className="h-64 min-h-64 min-w-0">
             {mounted ? (
               <ResponsiveContainer width="100%" height={256} minWidth={0} minHeight={256}>
@@ -262,10 +301,15 @@ export default function DashboardPage() {
           </div>
         </SurfaceCard>
 
-        <SurfaceCard elevated className="p-5">
-          <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
+        <SurfaceCard elevated className="border border-white/8 p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
             {ordersLabel} por {technicianLabel.toLowerCase()}
-          </h3>
+            </h3>
+            <span className="rounded-full border border-sky-500/15 bg-sky-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-200">
+              Tiempo real
+            </span>
+          </div>
           <div className="h-64 min-h-64 min-w-0">
             {mounted ? (
               <ResponsiveContainer width="100%" height={256} minWidth={0} minHeight={256}>
@@ -289,9 +333,9 @@ export default function DashboardPage() {
         </SurfaceCard>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Top Products Used */}
-        <SurfaceCard elevated className="p-5">
+        <SurfaceCard elevated className="border border-white/8 p-5">
           <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
             Productos más utilizados
           </h3>
@@ -312,7 +356,7 @@ export default function DashboardPage() {
         </SurfaceCard>
 
         {/* Inventory Valuation */}
-        <SurfaceCard elevated className="p-5">
+        <SurfaceCard elevated className="border border-white/8 p-5">
           <h3 className="mb-4 text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">
             Valor del inventario
           </h3>
@@ -335,8 +379,8 @@ export default function DashboardPage() {
 
       {/* Overdue Orders */}
       {overdueOrders.length > 0 && (
-        <SurfaceCard elevated className="border-rose-400/20 bg-rose-500/5 p-5">
-          <div className="flex items-center gap-2 mb-4">
+        <SurfaceCard elevated className="border border-rose-400/20 bg-rose-500/5 p-5">
+          <div className="mb-4 flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-rose-400" />
             <h3 className="text-xs font-semibold uppercase tracking-[0.24em] text-rose-300">
               Órdenes atrasadas ({overdueOrders.length})
@@ -361,7 +405,7 @@ export default function DashboardPage() {
       )}
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <QuickActionButton
           label={`Nueva ${orderLabel.toLowerCase()}`}
           icon={<ClipboardList className="w-5 h-5" />}
@@ -490,7 +534,3 @@ function QuickActionButton({ label, icon, onClick }: QuickActionButtonProps) {
     </button>
   );
 }
-
-// Importar íconos que faltan
-import { ShoppingCart, BarChart3 } from 'lucide-react';
-import { isModuleEnabled } from '@/lib/module-access';
