@@ -13,7 +13,17 @@ function resolveWhatsappHref() {
   return `https://wa.me/${phone}?text=${message}`;
 }
 
-export function BillingExpiredScreen() {
+type BillingExpiredScreenProps = {
+  onActivate?: () => void;
+  activating?: boolean;
+  selectedPlanName?: string;
+};
+
+export function BillingExpiredScreen({
+  onActivate,
+  activating = false,
+  selectedPlanName,
+}: BillingExpiredScreenProps = {}) {
   const whatsappHref = useMemo(() => resolveWhatsappHref(), []);
 
   return (
@@ -30,11 +40,23 @@ export function BillingExpiredScreen() {
           </p>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <Link href="/dashboard/billing" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-500 px-5 py-3 font-semibold text-white transition hover:bg-sky-400">
-              <Sparkles className="h-4 w-4" />
-              Activar mi cuenta
-            </Link>
-            <Link href="/dashboard/billing" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-5 py-3 font-semibold text-white transition hover:bg-white/10">
+            {onActivate ? (
+              <button
+                type="button"
+                onClick={onActivate}
+                disabled={activating}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-500 px-5 py-3 font-semibold text-white transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Sparkles className="h-4 w-4" />
+                {activating ? "Abriendo pago..." : `Activar ${selectedPlanName ?? "mi cuenta"}`}
+              </button>
+            ) : (
+              <Link href="/dashboard/billing#planes" className="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-500 px-5 py-3 font-semibold text-white transition hover:bg-sky-400">
+                <Sparkles className="h-4 w-4" />
+                Activar mi cuenta
+              </Link>
+            )}
+            <Link href="/dashboard/billing#planes" className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-5 py-3 font-semibold text-white transition hover:bg-white/10">
               Ver planes
             </Link>
             {whatsappHref ? (

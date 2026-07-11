@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { createBillingCheckout, handleMercadoPagoWebhook } from '../services/billing';
+import { loadTenantBillingSummary } from '../services/tenant-billing';
 
 const checkoutSchema = z.object({
   plan: z.enum(['basic', 'pro', 'enterprise']),
@@ -44,6 +45,20 @@ export async function createPublicCheckout(req: Request, res: Response) {
     const { tenantSlug, plan } = parsed.data;
     const result = await createBillingCheckout(null, { plan, tenantSlug });
     return res.status(201).json({ success: true, initPoint: result.initPoint, preferenceId: result.preferenceId ?? null });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Internal server error';
+    return res.status(500).json({ error: message });
+  }
+}
+
+export async function getBillingStatus(req: Request, res: Response) {
+  if (!req.tenantId) {
+    return res.status(400).json({ error: 'Tenant context is required' });
+  }
+
+  try {
+    const billing = await loadTenantBillingSummary(req.tenantId, req.user?.tenantSlug);
+    return res.status(200).json({ success: true, data: billing });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Internal server error';
     return res.status(500).json({ error: message });

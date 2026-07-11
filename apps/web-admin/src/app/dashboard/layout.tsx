@@ -56,7 +56,9 @@ export default function DashboardLayout({
     return onBillingExpired(setBillingExpired);
   }, []);
 
-  if (billingExpired) {
+  const isBillingPage = pathname?.startsWith('/dashboard/billing');
+
+  if (billingExpired && !isBillingPage) {
     return <BillingExpiredScreen />;
   }
 

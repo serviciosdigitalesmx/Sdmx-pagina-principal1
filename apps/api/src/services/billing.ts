@@ -36,11 +36,11 @@ const PLAN_PRICES: Record<BillingPlanCode, number> = {
   enterprise: 600,
 };
 
-function resolveBillingBaseUrl() {
+function resolveBillingBaseUrl(protectedCheckout: boolean) {
   const candidates = [
-    process.env.NEXT_PUBLIC_WEB_PUBLIC_URL,
+    protectedCheckout ? process.env.NEXT_PUBLIC_WEB_ADMIN_URL : process.env.NEXT_PUBLIC_WEB_PUBLIC_URL,
+    protectedCheckout ? process.env.NEXT_PUBLIC_WEB_PUBLIC_URL : process.env.NEXT_PUBLIC_WEB_ADMIN_URL,
     process.env.APP_URL,
-    process.env.NEXT_PUBLIC_WEB_ADMIN_URL,
     process.env.CORS_ALLOWED_ORIGINS?.split(',').map((origin) => origin.trim()).find(Boolean),
   ].filter((value): value is string => Boolean(value?.trim()));
 
@@ -195,7 +195,7 @@ export async function createBillingCheckout(authUserId: string | null, request: 
   }
 
   const { userRow, tenantRow } = await resolveTenantForCheckout(authUserId, request.tenantSlug);
-  const appUrl = resolveBillingBaseUrl();
+  const appUrl = resolveBillingBaseUrl(Boolean(authUserId));
   const webhookBaseUrl = resolveWebhookBaseUrl();
 
   const preference = {
@@ -207,11 +207,17 @@ export async function createBillingCheckout(authUserId: string | null, request: 
         unit_price: amount,
       },
     ],
-    back_urls: {
-      success: `${appUrl}/billing/success`,
-      failure: `${appUrl}/billing/failure`,
-      pending: `${appUrl}/billing/pending`,
-    },
+    back_urls: authUserId
+      ? {
+          success: `${appUrl}/dashboard/billing?payment=success`,
+          failure: `${appUrl}/dashboard/billing?payment=failure`,
+          pending: `${appUrl}/dashboard/billing?payment=pending`,
+        }
+      : {
+          success: `${appUrl}/billing/success`,
+          failure: `${appUrl}/billing/failure`,
+          pending: `${appUrl}/billing/pending`,
+        },
     auto_return: 'approved',
     notification_url: `${webhookBaseUrl}/api/webhooks/mercadopago`,
     metadata: {
