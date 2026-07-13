@@ -10,6 +10,7 @@ import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
 import { getAssetLabel, getCustomerLabel, getNewEntityLabel } from '@/lib/labels';
 import { getTenantSlug } from '@/lib/tenant';
+import { buildCustomerTrackingUrl } from '@/lib/customer-portal-url';
 
 export type SerialFieldDefinition = {
   entity: string;
@@ -308,11 +309,8 @@ export default function OperativoPage() {
     localStorage.removeItem('srf_borrador_orden');
   };
 
-  const publicBaseUrl = process.env.NEXT_PUBLIC_WEB_PUBLIC_URL?.replace(/\/$/, "") ?? "";
   const tenantSlug = getTenantSlug();
-  const trackingUrl = savedFolio && publicBaseUrl && tenantSlug
-    ? `${publicBaseUrl}/${encodeURIComponent(tenantSlug)}/tracking?folio=${encodeURIComponent(savedFolio)}`
-    : null;
+  const trackingUrl = savedFolio ? buildCustomerTrackingUrl(tenantSlug, savedFolio) || null : null;
 
   return (
     <div className="mx-auto max-w-2xl">

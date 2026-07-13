@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { SurfaceCard } from '@white-label/ui';
 import { getCreatedSuccessLabel, getNewEntityLabel } from '@/lib/labels';
 import { getTenantSlug } from '@/lib/tenant';
+import { buildCustomerTrackingUrl } from '@/lib/customer-portal-url';
 
 interface SuccessProps {
   folio: string;
@@ -18,8 +19,7 @@ export function Success({ folio, customerPhone, pdfUrl, trackingUrl, onNewOrder 
   const createdLabel = getCreatedSuccessLabel();
   const newOrderLabel = getNewEntityLabel();
   const tenantSlug = getTenantSlug();
-  const publicBase = process.env.NEXT_PUBLIC_WEB_PUBLIC_URL?.replace(/\/$/, "") ?? "";
-  const fallbackTrackingUrl = trackingUrl || (publicBase && tenantSlug ? `${publicBase}/${encodeURIComponent(tenantSlug)}/tracking?folio=${encodeURIComponent(folio)}` : null);
+  const fallbackTrackingUrl = trackingUrl || buildCustomerTrackingUrl(tenantSlug, folio) || null;
 
   const copyFolio = () => {
     navigator.clipboard.writeText(folio);

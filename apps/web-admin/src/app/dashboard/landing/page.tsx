@@ -5,6 +5,7 @@ import { Globe, RefreshCw, Save, Eye, Copy, ExternalLink } from "lucide-react";
 import { SurfaceCard } from "@white-label/ui";
 import { apiGateway } from "@/services/apiGateway";
 import { tenantSettingsService } from "@/services/tenant-settings/tenantSettingsService";
+import { buildTenantLandingUrl } from "@/lib/customer-portal-url";
 
 type LandingService = {
   title: string;
@@ -232,8 +233,7 @@ export default function LandingSettingsPage() {
     secondaryHref: toPublicHref(tenantSlug, landingContent.secondaryCtaHref),
     contactHref: toPublicHref(tenantSlug, landingContent.contactHref),
   }), [landingContent.contactHref, landingContent.primaryCtaHref, landingContent.secondaryCtaHref, tenantSlug]);
-  const publicBaseUrl = process.env.NEXT_PUBLIC_WEB_PUBLIC_URL?.replace(/\/$/, "") ?? "";
-  const tenantPublicUrl = publicBaseUrl && tenantSlug ? `${publicBaseUrl}/${encodeURIComponent(tenantSlug)}` : "";
+  const tenantPublicUrl = buildTenantLandingUrl(tenantSlug);
 
   const updateField = <K extends keyof LandingContent>(key: K, value: LandingContent[K]) => {
     setLandingContent((current) => ({ ...current, [key]: value }));
