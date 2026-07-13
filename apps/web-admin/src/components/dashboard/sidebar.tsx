@@ -70,6 +70,7 @@ const DASHBOARD_MODULE_ACCESS: Partial<Record<string, TenantModuleKey>> = {
   sucursales: 'branches',
   seguridad: 'security',
   usuarios: 'users',
+  landing: 'landing',
 };
 
 const ROLE_ALLOWED_MODULES: Record<'owner' | 'manager' | 'technician' | 'client', string[] | null> = {
@@ -110,7 +111,7 @@ export function Sidebar({
       return false;
     }
 
-    if (module.key === 'dashboard' || module.key === 'landing') {
+    if (module.key === 'dashboard') {
       return true;
     }
 

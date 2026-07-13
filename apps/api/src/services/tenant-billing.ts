@@ -6,6 +6,7 @@ export type TenantBillingSummary = {
   tenantId: string;
   tenantSlug: string;
   subscriptionStatus: string;
+  planKey: 'basic' | 'pro' | 'scale';
   trialExpiresAt: string | null;
   billingExempt: boolean;
   isTrialActive: boolean;
@@ -13,6 +14,13 @@ export type TenantBillingSummary = {
   daysLeft: number | null;
   upgradeHref: string | null;
 };
+
+function normalizePlanKey(value: string | null | undefined): TenantBillingSummary['planKey'] {
+  const plan = String(value ?? '').trim().toLowerCase();
+  if (['enterprise', 'empresarial', 'business', 'scale'].includes(plan)) return 'scale';
+  if (['pro', 'professional', 'profesional'].includes(plan)) return 'pro';
+  return 'basic';
+}
 
 function computeDaysLeft(trialExpiresAt: string | null) {
   if (!trialExpiresAt) {
@@ -32,7 +40,7 @@ export async function loadTenantBillingSummary(tenantId: string, tenantSlug?: st
   const [{ data: tenantRow, error: tenantError }, { data: organizationRow, error: orgError }] = await Promise.all([
     supabaseAdmin
       .from('tenants')
-      .select('id, slug, trial_expires_at, billing_exempt')
+      .select('id, slug, plan, trial_expires_at, billing_exempt')
       .eq('id', tenantId)
       .maybeSingle(),
     supabaseAdmin
@@ -50,6 +58,7 @@ export async function loadTenantBillingSummary(tenantId: string, tenantSlug?: st
   const trialExpiresAt = tenantRow?.trial_expires_at ?? null;
   const billingExempt = Boolean(tenantRow?.billing_exempt);
   const subscriptionStatus = String((await getBillingStatus(tenantId, BILLING_ADAPTER_MODE)) ?? 'trial').trim() || 'trial';
+  const planKey = normalizePlanKey(tenantRow?.plan);
   const daysLeft = computeDaysLeft(trialExpiresAt ? new Date(trialExpiresAt).toISOString() : null);
   const isTrialActive = subscriptionStatus === 'trial' && daysLeft !== null && daysLeft > 0;
   const isBillingBlocked = !billingExempt && subscriptionStatus !== 'active' && (!isTrialActive || daysLeft === 0);
@@ -60,6 +69,7 @@ export async function loadTenantBillingSummary(tenantId: string, tenantSlug?: st
     tenantId,
     tenantSlug: resolvedTenantSlug ?? '',
     subscriptionStatus,
+    planKey,
     trialExpiresAt: trialExpiresAt ? new Date(trialExpiresAt).toISOString() : null,
     billingExempt,
     isTrialActive,

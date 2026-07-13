@@ -21,15 +21,21 @@ export async function getBillingStatus(tenantId: string, mode: BillingAdapterMod
   return orgRow?.subscription_status ?? null;
 }
 
-export async function upsertSubscriptionStatus(tenantId: string, status: string, mode: BillingAdapterMode = 'legacy') {
+export async function upsertSubscriptionStatus(tenantId: string, status: string, mode: BillingAdapterMode = 'legacy', plan?: string) {
+  const tenantPlan = plan === 'enterprise' ? 'enterprise' : plan === 'pro' ? 'pro' : plan === 'basic' ? 'basic' : undefined;
+
   if (mode === 'legacy') {
     const { error } = await supabaseAdmin.from('organizations').update({ subscription_status: status }).eq('id', tenantId);
     if (error) throw error;
+    if (tenantPlan) {
+      const { error: tenantError } = await supabaseAdmin.from('tenants').update({ plan: tenantPlan }).eq('id', tenantId);
+      if (tenantError) throw tenantError;
+    }
     return;
   }
 
   // tenants (or mixed): update tenants
-  const { error } = await supabaseAdmin.from('tenants').update({ subscription_status: status }).eq('id', tenantId);
+  const { error } = await supabaseAdmin.from('tenants').update({ subscription_status: status, ...(tenantPlan ? { plan: tenantPlan } : {}) }).eq('id', tenantId);
   if (error) throw error;
   // in mixed mode we intentionally do NOT mirror to organizations here in this PR
 }

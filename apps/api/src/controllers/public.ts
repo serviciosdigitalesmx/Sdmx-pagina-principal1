@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { getTenantClient, supabaseAdmin } from '@white-label/database';
 import { getRequestIp } from '../lib/request-ip';
 import { loadTenantRuntimeConfig } from '../services/tenant-config';
+import { loadTenantBillingSummary } from '../services/tenant-billing';
+import { resolveTenantCapabilities } from '../services/tenant-capabilities';
 import { cleanTenantTextField, getMissingRequiredTextField } from '../services/tenant-fields';
 import { getEvidenceMetadata } from '../services/evidence-adapter';
 import { FEATURE_EVIDENCE_MODE } from '../config/feature-flags';
@@ -1592,6 +1594,18 @@ export async function getPublicTenantLanding(req: Request, res: Response) {
   try {
     const tenant = await resolveTenantIdBySlug(tenantSlug);
     const runtimeConfig = await loadTenantRuntimeConfig(tenant.id);
+    const billing = await loadTenantBillingSummary(tenant.id, tenant.slug);
+    const capabilities = resolveTenantCapabilities({
+      tenantId: tenant.id,
+      tenantSlug: tenant.slug,
+      billing,
+      runtimeConfig,
+    });
+
+    if (!capabilities.active_modules.includes('landing')) {
+      return res.status(404).json({ error: 'La landing no está disponible para el plan actual' });
+    }
+
     const landingContent = mergeLandingContent(tenant.landing_content, (runtimeConfig.templates.landing ?? null) as LandingTemplate | null, tenant.name, tenant.slug);
 
     return res.json({

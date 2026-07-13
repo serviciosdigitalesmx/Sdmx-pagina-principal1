@@ -63,15 +63,15 @@ const comparisonRows = [
 ];
 
 const pricingPlans = [
-  { name: "Básico", price: "$299", period: "MXN / mes", description: "Para el taller que empieza. Órdenes, clientes y seguimiento por WhatsApp." },
+  { name: "Básico", price: "$300", period: "MXN / mes", description: "1 sucursal, hasta 2 usuarios, órdenes, clientes e inventario básico." },
   {
     name: "Profesional",
-    price: "$449",
+    price: "$450",
     period: "MXN / mes",
-    description: "Inventario, reportes detallados y control total de tu operación.",
+    description: "Hasta 2 sucursales, 3 usuarios, landing, compras y reportes.",
     featured: true,
   },
-  { name: "Negocio", price: "$599", period: "MXN / mes", description: "Multi-sucursal, usuarios ilimitados y administración avanzada." },
+  { name: "Empresarial", price: "$600", period: "MXN / mes", description: "Sucursales y usuarios ilimitados, con control financiero completo." },
 ];
 
 const faqItems = [
@@ -497,7 +497,7 @@ export default function Home() {
               </div>
               <p className="mt-4 text-sm leading-7 text-slate-400">{plan.description}</p>
               <div className="mt-6">
-                <CTA href={plan.name === "Negocio" ? adminLoginUrl : adminOnboardingUrl} variant={plan.name === "Profesional" ? "primary" : "secondary"}>
+                <CTA href={plan.name === "Empresarial" ? adminLoginUrl : adminOnboardingUrl} variant={plan.name === "Profesional" ? "primary" : "secondary"}>
                   {plan.name === "Negocio" ? "Hablar con ventas" : "Empieza gratis"}
                 </CTA>
               </div>
