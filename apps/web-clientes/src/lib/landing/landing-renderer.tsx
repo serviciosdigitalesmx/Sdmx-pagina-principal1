@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
-import { Badge, SurfaceCard } from "@white-label/ui";
+import type { CSSProperties } from "react";
 import { LeadForm } from "../lead/lead-form";
+import { resolveLandingSectionRegistry } from "./section-registry";
 import { resolveTenantTheme } from "../theme/theme-resolver";
 import type { LandingContent, Tenant } from "../types";
 
@@ -11,223 +11,130 @@ type LandingRendererProps = {
 };
 
 function whatsappHref(phone?: string | null) {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, "");
+  const digits = phone?.replace(/\D/g, "") ?? "";
   return digits ? `https://wa.me/${digits}` : null;
+}
+
+function initials(value: string) {
+  return value.split(/\s+/).filter(Boolean).slice(0, 2).map((word) => word[0]).join("").toUpperCase();
 }
 
 export function LandingRenderer({ tenant, landingContent }: LandingRendererProps) {
   const theme = resolveTenantTheme(tenant);
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "LocalBusiness",
-        "@id": `#${tenant.slug}`,
-        name: tenant.name,
-        telephone: landingContent.contactPhone || tenant.contactPhone || undefined,
-        email: landingContent.contactEmail || tenant.contactEmail || undefined,
-        address: tenant.contactAddress
-          ? {
-              "@type": "PostalAddress",
-              streetAddress: tenant.contactAddress,
-            }
-          : undefined,
-      },
-      {
-        "@type": "Service",
-        name: landingContent.heroTitle,
-        provider: {
-          "@type": "LocalBusiness",
-          name: tenant.name,
-        },
-        areaServed: "Local",
-        serviceType: landingContent.services?.[0]?.title || "Repair service",
-      },
-    ],
-  };
-  const heroTitle = landingContent.heroTitle;
-  const heroDescription = landingContent.heroDescription;
-  const primaryCtaLabel = landingContent.primaryCtaLabel;
-  const primaryCtaHref = landingContent.primaryCtaHref;
-  const secondaryCtaLabel = landingContent.secondaryCtaLabel || "Ver estado";
-  const secondaryCtaHref = landingContent.secondaryCtaHref || `/t/${tenant.slug}/portal`;
-  const contactHref = landingContent.contactHref || tenant.contactEmail || tenant.contactPhone || null;
-  const contactLabel = landingContent.contactLabel || "Contacto";
-  const whatsapp = whatsappHref(tenant.contactPhone || null);
-  const socialLinks = landingContent.socialLinks ?? [];
+  const enabled = new Set(resolveLandingSectionRegistry(landingContent).filter((section) => section.enabled).map((section) => section.id));
+  const whatsapp = whatsappHref(landingContent.contactPhone || tenant.contactPhone);
   const heroImage = theme.imagery.heroImage || theme.imagery.coverImage || tenant.branding.heroImageUrl || tenant.branding.coverImageUrl || tenant.branding.logoUrl || null;
+  const portalHref = `/t/${tenant.slug}/portal`;
+  const ratingValue = landingContent.ratingValue || "";
+  const ratingLabel = landingContent.ratingLabel || "";
+  const ratingCountLabel = landingContent.ratingCountLabel || "";
+  const locationHref = landingContent.showMap && landingContent.mapEmbedUrl
+    ? landingContent.mapEmbedUrl
+    : tenant.contactAddress
+      ? `https://www.google.com/maps/search/${encodeURIComponent(tenant.contactAddress)}`
+      : "";
+
+  const pageStyle = {
+    "--tenant-primary": theme.colors.primary,
+    "--tenant-secondary": theme.colors.secondary,
+    "--tenant-accent": theme.colors.accent,
+    "--tenant-surface": theme.colors.surface,
+    "--tenant-border": theme.colors.border,
+    "--tenant-success": theme.colors.success,
+    "--tenant-muted": theme.colors.muted,
+    fontFamily: theme.typography.sans,
+  } as CSSProperties;
+  const displayStyle = { fontFamily: theme.typography.display } as CSSProperties;
 
   return (
-    <main
-      className="min-h-screen px-4 py-6 text-zinc-50"
-      style={{
-        background: `radial-gradient(circle_at_top, color-mix(in srgb, ${theme.colors.accent} 18%, transparent), transparent 30%), linear-gradient(180deg, ${theme.colors.background} 0%, ${theme.colors.surface} 48%, #020617 100%)`,
-      }}
-    >
-      <section className="mx-auto w-full max-w-7xl space-y-8">
-        <SurfaceCard elevated className="p-6 backdrop-blur" style={{ borderColor: theme.colors.border }}>
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-zinc-950 text-xl font-black">
-                {tenant.branding.logoUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={tenant.branding.logoUrl} alt={tenant.name} className="h-full w-full object-contain" loading="lazy" decoding="async" />
-                ) : (
-                  <span>{tenant.name.slice(0, 2).toUpperCase()}</span>
-                )}
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.35em] text-sky-200/70">Web del tenant</p>
-                <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-5xl">{tenant.name}</h1>
-                <p className="mt-2 text-sm text-zinc-300">{tenant.slug}</p>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Link href={`/t/${tenant.slug}/portal`} className="inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold text-white transition hover:opacity-95" style={{ backgroundColor: theme.colors.primary, borderRadius: theme.cta.primaryRadius, boxShadow: theme.cta.shadow }}>
-                Ver estado
-              </Link>
-              <Link href={primaryCtaHref} className="inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-white/10" style={{ borderColor: theme.colors.border, borderRadius: theme.cta.secondaryRadius }}>
-                {primaryCtaLabel}
-              </Link>
-              {whatsapp ? (
-                <a href={whatsapp} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-500/20" style={{ borderColor: theme.colors.success }}>
-                  WhatsApp
-                </a>
-              ) : null}
+    <main className="min-h-screen bg-[#1e1e1e] text-[#f2f2f2]" style={pageStyle}>
+      <nav className="sticky top-0 z-30 border-b-2 bg-[#1e1e1e]/95 px-5 py-4 shadow-[0_4px_30px_rgba(0,0,0,0.32)] backdrop-blur md:px-[5%]" style={{ borderColor: "var(--tenant-accent)" }}>
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4">
+          <a href="#inicio" className="flex min-w-0 items-center gap-3 text-lg font-black uppercase tracking-[0.08em] sm:text-xl" style={displayStyle}>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded border border-white/20 bg-white/5">
+              {tenant.branding.logoUrl ? <img src={tenant.branding.logoUrl} alt="" className="h-full w-full object-contain" /> : initials(tenant.name)}
+            </span>
+            <span className="truncate">{tenant.name}</span>
+          </a>
+          <div className="hidden items-center gap-7 text-sm font-bold uppercase tracking-[0.12em] text-[#8a8f95] lg:flex" style={{ fontFamily: theme.typography.mono }}>
+            <a href="#inicio" className="transition hover:text-white">Inicio</a>
+            <a href="#cotizar" className="transition hover:text-white">Cotizar</a>
+            {landingContent.testimonials?.length ? <a href="#opiniones" className="transition hover:text-white">Opiniones</a> : null}
+            {tenant.contactAddress ? <a href="#ubicacion" className="transition hover:text-white">Ubicación</a> : null}
+          </div>
+          <Link href={portalHref} className="shrink-0 rounded px-4 py-2 text-sm font-bold uppercase tracking-[0.1em] text-white shadow-[0_0_20px_color-mix(in_srgb,var(--tenant-accent)_42%,transparent)]" style={{ backgroundColor: "var(--tenant-accent)" }}>
+            Ver estado
+          </Link>
+        </div>
+      </nav>
+
+      {enabled.has("hero") ? <section id="inicio" className="relative overflow-hidden bg-[linear-gradient(135deg,#1e1e1e_0%,#2b2b2b_100%)] px-5 py-20 md:min-h-[min(760px,calc(100vh-70px))] md:px-[5%] md:py-28">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_45%,color-mix(in_srgb,var(--tenant-accent)_20%,transparent)_0%,transparent_35%),radial-gradient(circle_at_84%_76%,color-mix(in_srgb,var(--tenant-primary)_28%,transparent)_0%,transparent_37%)]" />
+        <div className="relative mx-auto grid max-w-[1400px] items-center gap-12 lg:grid-cols-2">
+          <div>
+            {ratingLabel ? <div className="mb-6 inline-flex items-center gap-2 border px-4 py-2 text-xs font-bold uppercase tracking-[0.14em]" style={{ borderColor: "var(--tenant-accent)", color: "var(--tenant-accent)", fontFamily: theme.typography.mono }}>
+              {ratingLabel}
+            </div> : null}
+            <p className="mb-4 text-sm font-bold uppercase tracking-[0.18em]" style={{ color: "var(--tenant-accent)", fontFamily: theme.typography.mono }}>{landingContent.heroSubtitle}</p>
+            <h1 className="max-w-3xl text-5xl font-black uppercase leading-[0.98] tracking-tight text-white sm:text-6xl lg:text-7xl" style={displayStyle}>{landingContent.heroTitle}</h1>
+            <p className="mt-7 max-w-xl text-lg leading-8 text-[#b6bbc0]">{landingContent.heroDescription}</p>
+            {ratingValue || ratingCountLabel ? <div className="mt-7 flex max-w-xl flex-wrap items-center gap-3 border border-[#8a8f95] border-l-4 bg-[#2b2b2b]/80 px-5 py-4" style={{ borderLeftColor: "var(--tenant-primary)" }}>
+              <span className="text-base font-black tracking-[0.16em]" style={{ color: "var(--tenant-primary)" }}>{ratingValue}</span>
+              <span className="text-sm font-semibold text-white">{ratingCountLabel}</span>
+            </div> : null}
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a href="#cotizar" className="rounded border-2 px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-white shadow-[0_6px_24px_color-mix(in_srgb,var(--tenant-primary)_38%,transparent)] transition hover:-translate-y-0.5" style={{ backgroundColor: "var(--tenant-primary)", borderColor: "var(--tenant-primary)" }}>Cotizar</a>
+              <Link href={portalHref} className="rounded border-2 px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:-translate-y-0.5" style={{ backgroundColor: "var(--tenant-accent)", borderColor: "var(--tenant-accent)" }}>Ver estado</Link>
+              {whatsapp ? <a href={whatsapp} target="_blank" rel="noreferrer" className="rounded border-2 px-6 py-4 text-sm font-bold uppercase tracking-[0.12em] text-white transition hover:-translate-y-0.5" style={{ backgroundColor: "var(--tenant-success)", borderColor: "var(--tenant-success)" }}>WhatsApp</a> : null}
             </div>
           </div>
-        </SurfaceCard>
-
-        <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-          <div className="space-y-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.35em]" style={{ color: theme.colors.accent }}>{landingContent.heroSubtitle ?? "Landing del taller"}</p>
-            <h2 className="max-w-3xl text-5xl font-black tracking-tight sm:text-7xl">{heroTitle}</h2>
-            <p className="max-w-2xl text-lg leading-8 text-zinc-300">{heroDescription}</p>
-            <div className="flex flex-wrap gap-3">
-              <Link href={primaryCtaHref} className="inline-flex items-center justify-center rounded-2xl px-6 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-white transition hover:opacity-95" style={{ backgroundColor: theme.colors.primary, borderRadius: theme.cta.primaryRadius }}>
-                {primaryCtaLabel}
-              </Link>
-              <Link href={secondaryCtaHref} className="inline-flex items-center justify-center rounded-2xl border px-6 py-4 text-sm font-semibold uppercase tracking-[0.18em] text-zinc-100 transition hover:bg-white/10" style={{ borderColor: theme.colors.border, borderRadius: theme.cta.secondaryRadius }}>
-                {secondaryCtaLabel}
-              </Link>
+          <div className="relative mx-auto w-full max-w-[500px] lg:justify-self-end">
+            <div className="aspect-square overflow-hidden border-2 bg-[#2b2b2b] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.5),inset_0_0_40px_color-mix(in_srgb,var(--tenant-accent)_12%,transparent)]" style={{ borderColor: "var(--tenant-accent)" }}>
+              {heroImage ? <img src={heroImage} alt={tenant.name} className="h-full w-full object-contain" /> : <div className="flex h-full items-center justify-center text-center text-sm text-[#8a8f95]">El tenant puede configurar su imagen principal.</div>}
             </div>
           </div>
+        </div>
+      </section> : null}
 
-          <aside className="space-y-4">
-            <SurfaceCard elevated className="overflow-hidden p-0" style={{ borderColor: theme.colors.border }}>
-              {heroImage ? (
-                <div className="relative min-h-[18rem] w-full">
-                  <Image src={heroImage} alt={tenant.name} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 45vw" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/10 to-transparent" />
-                </div>
-              ) : (
-                <div className="flex min-h-[18rem] items-center justify-center p-8 text-center text-zinc-400">
-                  Sube una imagen del tenant para mostrarla aquí.
-                </div>
-              )}
-            </SurfaceCard>
-            <SurfaceCard elevated className="p-6" style={{ borderColor: theme.colors.border }}>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em]" style={{ color: theme.colors.accent }}>Servicios</p>
-              <div className="mt-5 grid gap-4">
-                {(landingContent.services ?? []).length > 0 ? (landingContent.services ?? []).map((service) => (
-                  <div key={service.title} className="rounded-2xl border border-white/10 bg-white/5 p-4" style={{ borderColor: theme.colors.border }}>
-                    <p className="font-semibold text-zinc-50">{service.title}</p>
-                    <p className="mt-1 text-sm leading-6 text-zinc-300">{service.description}</p>
-                  </div>
-                )) : (
-                  <div className="rounded-2xl border border-dashed bg-white/5 p-4 text-sm text-zinc-300" style={{ borderColor: theme.colors.border }}>
-                    No hay servicios configurados para este tenant.
-                  </div>
-                )}
-              </div>
-            </SurfaceCard>
-          </aside>
-        </section>
-
-        <SurfaceCard elevated className="p-6" style={{ borderColor: theme.colors.border }}>
-          <p className="text-xs font-semibold uppercase tracking-[0.3em]" style={{ color: theme.colors.accent }}>Redes sociales</p>
-          <div className="mt-4 flex flex-wrap gap-3">
-            {socialLinks.length > 0 ? socialLinks.map((link) => (
-              <Badge key={link.label} variant="neutral" className="rounded-full px-4 py-2 text-[11px]">
-                {link.label}
-              </Badge>
-            )) : (
-              <p className="text-sm text-zinc-300">No hay redes sociales configuradas para este tenant.</p>
-            )}
-          </div>
-        </SurfaceCard>
-
-        <section className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <LeadForm
-            tenantSlug={tenant.slug}
-            tenantName={tenant.name}
-            contactPhone={tenant.contactPhone || null}
-            contactEmail={tenant.contactEmail || null}
-            fieldDefinitions={tenant.config?.fieldDefinitions ?? []}
-          />
-
-          <SurfaceCard elevated className="space-y-4 p-6" style={{ borderColor: theme.colors.border }}>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em]" style={{ color: theme.colors.accent }}>Acciones rápidas</p>
-            <a href={whatsapp ?? undefined} target="_blank" rel="noreferrer" className="block rounded-full px-5 py-3 text-center text-sm font-semibold text-white transition hover:opacity-95" style={{ backgroundColor: theme.colors.success, borderRadius: theme.cta.primaryRadius, pointerEvents: whatsapp ? "auto" : "none", opacity: whatsapp ? 1 : 0.5 }}>
-              Abrir WhatsApp
-            </a>
-            {contactHref ? (
-              <a href={contactHref} className="block rounded-full border px-5 py-3 text-center text-sm font-semibold text-zinc-100 transition hover:bg-white/10" style={{ borderColor: theme.colors.border, borderRadius: theme.cta.secondaryRadius }}>
-                Contacto directo
-              </a>
-            ) : null}
-            {tenant.contactAddress ? (
-              <a href={landingContent.showMap && landingContent.mapEmbedUrl ? landingContent.mapEmbedUrl : `https://www.google.com/maps/search/${encodeURIComponent(tenant.contactAddress)}`} target="_blank" rel="noreferrer" className="block rounded-full border px-5 py-3 text-center text-sm font-semibold text-zinc-100 transition hover:bg-white/10" style={{ borderColor: theme.colors.border, borderRadius: theme.cta.secondaryRadius }}>
-                Abrir mapa
-              </a>
-            ) : null}
-            <Link href={`/t/${tenant.slug}/portal`} className="block rounded-full px-5 py-3 text-center text-sm font-semibold text-white transition hover:opacity-95" style={{ backgroundColor: theme.colors.primary, borderRadius: theme.cta.primaryRadius }}>
-              Consultar portal
-            </Link>
-          </SurfaceCard>
-        </section>
-
-        <script
-          type="application/ld+json"
-          suppressHydrationWarning
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-        />
-
-        <section className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
-          <SurfaceCard elevated className="p-6" style={{ borderColor: theme.colors.border }}>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em]" style={{ color: theme.colors.accent }}>Contacto</p>
-            <div className="mt-4 space-y-2 text-zinc-300">
-              {landingContent.hours ? <p>Horario: {landingContent.hours}</p> : null}
-              {tenant.contactPhone ? <p>Tel: {tenant.contactPhone}</p> : null}
-              {tenant.contactEmail ? <p>Email: {tenant.contactEmail}</p> : null}
-              {tenant.contactAddress ? <p>Dirección: {tenant.contactAddress}</p> : null}
-            </div>
-            <div className="mt-5 flex flex-wrap gap-3">
-              {whatsapp ? (
-                <a href={whatsapp} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold text-white transition hover:opacity-95" style={{ backgroundColor: theme.colors.success, borderRadius: theme.cta.primaryRadius }}>
-                  WhatsApp CTA
-                </a>
-              ) : null}
-              {contactHref ? (
-                <a href={contactHref} className="inline-flex items-center justify-center rounded-full border bg-white/5 px-5 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-white/10" style={{ borderColor: theme.colors.border, borderRadius: theme.cta.secondaryRadius }}>
-                  {contactLabel}
-                </a>
-              ) : null}
-            </div>
-          </SurfaceCard>
-
-          <SurfaceCard elevated className="p-6" style={{ borderColor: theme.colors.border }}>
-            <p className="text-xs font-semibold uppercase tracking-[0.3em]" style={{ color: theme.colors.accent }}>Cotización</p>
-            <p className="mt-4 text-sm leading-7 text-zinc-300">
-              Si el backend expone un endpoint real de solicitud o cotización, aquí se conecta el flujo de alta sin contenido falso.
-            </p>
-            <Link href={primaryCtaHref} className="mt-5 inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold text-white transition hover:opacity-95" style={{ backgroundColor: theme.colors.primary, borderRadius: theme.cta.primaryRadius }}>
-              {primaryCtaLabel}
-            </Link>
-          </SurfaceCard>
-        </section>
+      <section className="border-y-4 px-5 py-16 text-center" style={{ backgroundColor: "var(--tenant-accent)", borderColor: "var(--tenant-primary)" }}>
+        <h2 className="text-3xl font-black uppercase tracking-tight text-white sm:text-4xl" style={displayStyle}>¿Ya dejaste tu equipo?</h2>
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-white/90">Consulta el estado de tu servicio en tiempo real y recibe actualizaciones directas de tu taller.</p>
+        <Link href={portalHref} className="mt-7 inline-flex border-2 bg-white px-7 py-4 text-sm font-black uppercase tracking-[0.13em] transition hover:-translate-y-0.5" style={{ borderColor: "var(--tenant-primary)", color: "var(--tenant-accent)" }}>Ir al panel del cliente</Link>
       </section>
+
+      {enabled.has("services") ? <section id="cotizar" className="bg-[#1e1e1e] px-5 py-20 md:px-[5%]">
+        <div className="mx-auto max-w-[1200px]">
+          <header className="mx-auto max-w-3xl text-center">
+            <h2 className="text-4xl font-black uppercase tracking-tight" style={displayStyle}>Cotizar</h2>
+            <div className="mx-auto mt-4 h-1 w-16" style={{ backgroundColor: "var(--tenant-primary)" }} />
+            <p className="mt-5 text-[#8a8f95]">Selecciona el servicio que necesitas y comparte los detalles para recibir una respuesta del taller.</p>
+          </header>
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {(landingContent.services ?? []).map((service, index) => <article key={`${service.title}-${index}`} className="border border-[#5e646a] bg-[#242424] p-7 transition hover:-translate-y-1 hover:border-[var(--tenant-accent)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.28)]">
+              <div className="mb-8 flex h-12 w-12 items-center justify-center border text-sm font-black" style={{ color: "var(--tenant-accent)", borderColor: "var(--tenant-accent)" }}>{String(index + 1).padStart(2, "0")}</div>
+              <h3 className="text-lg font-black uppercase tracking-wide text-white" style={displayStyle}>{service.title}</h3>
+              <p className="mt-4 text-sm leading-7 text-[#9ca1a7]">{service.description}</p>
+            </article>)}
+          </div>
+          {enabled.has("quote") ? <div className="mt-12 border-t-4 bg-[#2b2b2b] p-5 sm:p-8" style={{ borderTopColor: "var(--tenant-primary)" }}><LeadForm tenantSlug={tenant.slug} tenantName={tenant.name} contactPhone={tenant.contactPhone || null} contactEmail={tenant.contactEmail || null} fieldDefinitions={tenant.config?.fieldDefinitions ?? []} /></div> : null}
+        </div>
+      </section> : null}
+
+      {enabled.has("benefits") && landingContent.benefits?.length ? <section className="bg-[#242424] px-5 py-20 md:px-[5%]"><div className="mx-auto grid max-w-[1200px] gap-5 md:grid-cols-3">{landingContent.benefits.map((benefit, index) => <article key={`${benefit.title}-${index}`} className="border border-white/15 p-6"><p className="text-xs font-bold tracking-[0.16em]" style={{ color: "var(--tenant-accent)" }}>0{index + 1}</p><h2 className="mt-4 text-xl font-black uppercase" style={displayStyle}>{benefit.title}</h2><p className="mt-3 text-sm leading-7 text-[#9ca1a7]">{benefit.description}</p></article>)}</div></section> : null}
+
+      {enabled.has("about") ? <section className="bg-[#1e1e1e] px-5 py-20 md:px-[5%]"><div className="mx-auto max-w-4xl border-l-4 py-3 pl-7" style={{ borderColor: "var(--tenant-primary)" }}><p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: "var(--tenant-accent)" }}>Sobre el taller</p><h2 className="mt-3 text-4xl font-black uppercase" style={displayStyle}>{landingContent.aboutTitle}</h2><p className="mt-5 max-w-3xl text-base leading-8 text-[#b6bbc0]">{landingContent.aboutDescription}</p></div></section> : null}
+
+      {enabled.has("gallery") && landingContent.gallery?.length ? <section className="bg-[#1e1e1e] px-5 py-20 md:px-[5%]"><div className="mx-auto max-w-[1200px]"><h2 className="text-center text-4xl font-black uppercase" style={displayStyle}>Nuestro trabajo</h2><div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{landingContent.gallery.map((item, index) => <figure key={item.id || `${item.url}-${index}`} className="overflow-hidden border border-white/15 bg-[#2b2b2b]"><img src={item.url} alt={item.alt || tenant.name} className="aspect-[4/3] w-full object-cover" />{item.caption ? <figcaption className="p-4 text-sm text-[#b6bbc0]">{item.caption}</figcaption> : null}</figure>)}</div></div></section> : null}
+
+      {enabled.has("testimonials") && landingContent.testimonials?.length ? <section id="opiniones" className="bg-[#2b2b2b] px-5 py-20 md:px-[5%]"><div className="mx-auto max-w-[1200px]"><header className="text-center"><h2 className="text-4xl font-black uppercase" style={displayStyle}>Lo que dicen nuestros clientes</h2><p className="mt-4 text-[#8a8f95]">Opiniones compartidas por este taller</p></header><div className="mt-10 grid gap-5 lg:grid-cols-3">{landingContent.testimonials.map((testimonial, index) => <article key={`${testimonial.clientName}-${index}`} className="border border-[#5e646a] bg-[#242424] p-6"><div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-black text-white" style={{ backgroundColor: "var(--tenant-accent)" }}>{initials(testimonial.clientName)}</span><div><h3 className="font-bold text-white">{testimonial.clientName}</h3><p className="text-xs tracking-[0.12em]" style={{ color: "var(--tenant-primary)" }}>{"*".repeat(Math.max(1, Math.min(5, testimonial.rating || 5)))}</p></div></div><p className="mt-5 text-sm leading-7 text-[#c0c4c8]">&ldquo;{testimonial.comment}&rdquo;</p>{testimonial.date ? <p className="mt-5 text-xs uppercase tracking-[0.12em] text-[#8a8f95]">{testimonial.date}</p> : null}</article>)}</div></div></section> : null}
+
+      {enabled.has("contact") ? <section id="ubicacion" className="bg-[#1e1e1e] px-5 py-20 md:px-[5%]"><div className="mx-auto grid max-w-[1200px] gap-10 lg:grid-cols-2"><div><h2 className="text-4xl font-black uppercase" style={displayStyle}>{landingContent.locationTitle || tenant.name}</h2>{landingContent.locationDescription ? <p className="mt-5 text-[#9ca1a7]">{landingContent.locationDescription}</p> : null}<div className="mt-7 space-y-4 border-l-2 pl-5" style={{ borderColor: "var(--tenant-primary)" }}>{tenant.contactAddress ? <p className="text-sm leading-7 text-[#d9dcdf]">{tenant.contactAddress}</p> : null}{landingContent.hours ? <p className="text-sm leading-7 text-[#d9dcdf]">{landingContent.hours}</p> : null}{tenant.contactPhone ? <p className="text-sm text-[#d9dcdf]">{tenant.contactPhone}</p> : null}</div><div className="mt-7 flex flex-wrap gap-3">{locationHref ? <a href={locationHref} target="_blank" rel="noreferrer" className="rounded border-2 px-5 py-3 text-sm font-bold uppercase tracking-[0.1em] text-white" style={{ backgroundColor: "var(--tenant-primary)", borderColor: "var(--tenant-primary)" }}>Ver ubicación</a> : null}{whatsapp ? <a href={whatsapp} target="_blank" rel="noreferrer" className="rounded border-2 px-5 py-3 text-sm font-bold uppercase tracking-[0.1em] text-white" style={{ backgroundColor: "var(--tenant-success)", borderColor: "var(--tenant-success)" }}>WhatsApp</a> : null}</div></div>{landingContent.showMap && landingContent.mapEmbedUrl ? <iframe title={`Ubicación de ${tenant.name}`} src={landingContent.mapEmbedUrl} className="min-h-[340px] w-full border border-white/15" loading="lazy" referrerPolicy="no-referrer-when-downgrade" /> : <div className="flex min-h-[340px] items-center justify-center border border-dashed border-white/20 p-8 text-center text-sm text-[#8a8f95]">El tenant puede configurar su mapa o ubicación.</div>}</div></section> : null}
+
+      {enabled.has("faq") && landingContent.faqs?.length ? <section className="bg-[#242424] px-5 py-20 md:px-[5%]"><div className="mx-auto max-w-4xl"><h2 className="text-center text-4xl font-black uppercase" style={displayStyle}>Preguntas frecuentes</h2><div className="mt-10 space-y-3">{landingContent.faqs.map((faq, index) => <details key={`${faq.question}-${index}`} className="border border-white/15 bg-[#1e1e1e] p-5"><summary className="cursor-pointer font-bold text-white">{faq.question}</summary><p className="mt-4 text-sm leading-7 text-[#b6bbc0]">{faq.answer}</p></details>)}</div></div></section> : null}
+
+      {landingContent.showVideo && landingContent.videoUrl ? <section className="bg-[#1e1e1e] px-5 py-16 text-center"><a href={landingContent.videoUrl} target="_blank" rel="noreferrer" className="inline-flex border-2 px-7 py-4 text-sm font-black uppercase tracking-[0.12em] text-white" style={{ borderColor: "var(--tenant-primary)", backgroundColor: "var(--tenant-primary)" }}>Ver transmisión en vivo</a></section> : null}
+
+      <footer className="border-t border-white/10 bg-[#242424] px-5 py-10 text-center text-sm text-[#8a8f95]">{tenant.name}{landingContent.contactEmail ? ` · ${landingContent.contactEmail}` : ""}</footer>
     </main>
   );
 }

@@ -139,6 +139,11 @@ export interface LandingContent {
   faqs?: FaqItem[];
   aboutTitle?: string;
   aboutDescription?: string;
+  ratingLabel?: string;
+  ratingValue?: string;
+  ratingCountLabel?: string;
+  locationTitle?: string;
+  locationDescription?: string;
   showMap?: boolean;
   mapEmbedUrl?: string;
   showVideo?: boolean;
