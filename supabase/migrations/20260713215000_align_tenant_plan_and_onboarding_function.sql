@@ -1,3 +1,10 @@
+alter table public.tenants
+  add column if not exists plan text not null default 'basic';
+
+update public.tenants
+set plan = 'basic'
+where plan is null or btrim(plan) = '';
+
 create or replace function public.create_tenant_transaction(
   p_user_id uuid,
   p_workshop_name text,
@@ -79,11 +86,3 @@ $$;
 
 revoke all on function public.create_tenant_transaction(uuid, text, text, text, text, text, text) from public;
 grant execute on function public.create_tenant_transaction(uuid, text, text, text, text, text, text) to service_role;
-
-update public.tenants
-set landing_content = coalesce(landing_content, '{}'::jsonb) || jsonb_strip_nulls(jsonb_build_object(
-  'heroTitle', coalesce(nullif(landing_content->>'heroTitle', ''), name),
-  'seoTitle', coalesce(nullif(landing_content->>'seoTitle', ''), name),
-  'contactHref', coalesce(nullif(landing_content->>'contactHref', ''), case when regexp_replace(coalesce(contact_phone, ''), '\D', '', 'g') <> '' then 'https://wa.me/' || regexp_replace(contact_phone, '\D', '', 'g') else null end),
-  'locationDescription', nullif(landing_content->>'locationDescription', '')
-));

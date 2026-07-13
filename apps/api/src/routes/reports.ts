@@ -15,7 +15,8 @@ router.use(attachScope);
 router.use(requireTenantBillingActive);
 router.use(attachTenantCapabilities);
 
-router.get('/summary', requireTenantModule('reports'), requireRole('owner', 'manager'), getReportsSummary);
+// The dashboard summary is a core operational view; detailed reports stay plan-gated below.
+router.get('/summary', requireTenantModule('dashboard'), requireRole('owner', 'manager'), getReportsSummary);
 router.get('/productivity', requireTenantModule('reports'), requireRole('owner', 'manager'), getProductivityReport);
 
 export default router;
