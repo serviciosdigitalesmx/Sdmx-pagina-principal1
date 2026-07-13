@@ -47,15 +47,15 @@ export const MODULE_REGISTRY: ModuleRegistryEntry[] = [
 
 export const PLAN_REGISTRY: Record<TenantCapabilities['plan_key'], { module_allowlist: string[]; limits: TenantPlanLimits }> = {
   basic: {
-    module_allowlist: ['dashboard', 'customers', 'requests', 'orders', 'portal', 'landing', 'whatsapp', 'documents'],
-    limits: { users: 3, sucursales: 1, monthly_orders: 50, storage_mb: 500, public_portal: true, whatsapp_templates: 5, document_templates: 3 },
+    module_allowlist: ['dashboard', 'customers', 'requests', 'orders', 'assets', 'stock', 'documents', 'portal', 'whatsapp', 'billing', 'settings'],
+    limits: { users: 2, sucursales: 1, monthly_orders: 50, storage_mb: 500, public_portal: true, whatsapp_templates: 5, document_templates: 3 },
   },
   pro: {
-    module_allowlist: ['dashboard', 'customers', 'requests', 'orders', 'appointments', 'assets', 'stock', 'suppliers', 'purchase-orders', 'expenses', 'reports', 'documents', 'portal', 'landing', 'whatsapp', 'warranty', 'billing', 'settings', 'sucursales', 'tasks', 'security'],
-    limits: { users: 10, sucursales: 5, monthly_orders: 500, storage_mb: 5000, public_portal: true, whatsapp_templates: 50, document_templates: 20 },
+    module_allowlist: ['dashboard', 'customers', 'requests', 'orders', 'appointments', 'assets', 'stock', 'suppliers', 'purchase-orders', 'expenses', 'reports', 'documents', 'portal', 'landing', 'whatsapp', 'warranty', 'billing', 'settings', 'sucursales', 'users', 'tasks', 'security'],
+    limits: { users: 3, sucursales: 2, monthly_orders: 500, storage_mb: 5000, public_portal: true, whatsapp_templates: 50, document_templates: 20 },
   },
   scale: {
-    module_allowlist: MODULE_REGISTRY.map((module) => module.key),
+    module_allowlist: MODULE_REGISTRY.filter((module) => module.key !== 'movivendor').map((module) => module.key),
     limits: { users: null, sucursales: null, monthly_orders: null, storage_mb: null, public_portal: true, whatsapp_templates: null, document_templates: null },
   },
 };
@@ -84,9 +84,7 @@ function getIndustryDefaultModules(industryKey?: string | null) {
 function getPlanKeyFromBilling(billing: TenantBillingSummary | null | undefined): TenantCapabilities['plan_key'] {
   if (!billing) return 'basic';
   if (billing.billingExempt) return 'scale';
-  if (billing.subscriptionStatus === 'active') return 'pro';
-  if (billing.isTrialActive) return 'basic';
-  return 'basic';
+  return billing.planKey;
 }
 
 function getAccessStatus(billing: TenantBillingSummary | null | undefined, tenantSlug?: string | null, tenantEmail?: string | null): TenantCapabilities['access_status'] {
@@ -115,9 +113,7 @@ export function resolveTenantCapabilities({
 }): TenantCapabilitiesType {
   const planKey = getPlanKeyFromBilling(billing);
   const accessStatus = getAccessStatus(billing, tenantSlug, tenantEmail);
-  const isTrialAccess = accessStatus === 'trial';
-  const effectivePlanKey: TenantCapabilities['plan_key'] = isTrialAccess ? 'scale' : planKey;
-  const plan = PLAN_REGISTRY[effectivePlanKey];
+  const plan = PLAN_REGISTRY[planKey];
 
   const activeModules = runtimeConfig.activeModules.map((module) => canonicalModuleKey(module));
   const enabledModules = runtimeConfig.enabledModules
@@ -125,16 +121,14 @@ export function resolveTenantCapabilities({
     .map((module) => canonicalModuleKey(module.module_key));
   const industryModules = getIndustryDefaultModules(runtimeConfig.industryProfile?.industry_key);
   const baseModules = unique(
-    isTrialAccess
-      ? MODULE_REGISTRY.map((module) => module.key)
-      : activeModules.length > 0
-        ? activeModules
-        : enabledModules.length > 0
-          ? enabledModules
-          : industryModules,
+    activeModules.length > 0
+      ? activeModules
+      : enabledModules.length > 0
+        ? enabledModules
+        : industryModules,
   );
 
-  const requestedActive = unique(baseModules);
+  const requestedActive = unique(baseModules.filter((module) => plan.module_allowlist.includes(module)));
   const locked = unique(MODULE_REGISTRY
     .filter((module) => !requestedActive.includes(module.key))
     .map((module) => module.key));
