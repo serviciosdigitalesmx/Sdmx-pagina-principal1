@@ -1325,7 +1325,7 @@ export async function getPublicOrderPdf(req: Request, res: Response) {
     return res
       .status(200)
       .setHeader('Content-Type', 'application/pdf')
-      .setHeader('Content-Disposition', `attachment; filename="Seguimiento-${folio}.pdf"`)
+      .setHeader('Content-Disposition', `inline; filename="Seguimiento-${folio}.pdf"`)
       .setHeader('Cache-Control', 'no-store')
       .send(pdfBuffer);
   } catch (error) {

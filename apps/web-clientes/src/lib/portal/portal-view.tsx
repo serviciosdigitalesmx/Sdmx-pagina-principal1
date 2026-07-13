@@ -12,7 +12,7 @@ import { OrderTimeline } from "@/components/portal/order-timeline";
 import { EvidenceGallery } from "@/components/portal/evidence-gallery";
 import { DocumentList } from "@/components/portal/document-list";
 import { Badge, SurfaceCard } from "@white-label/ui";
-import { isApiError } from "@white-label/config";
+import { isApiError, resolveApiBaseUrl } from "@white-label/config";
 
 function resolveWhatsappHref(phone?: string | null, folio?: string) {
   if (!phone) return undefined;
@@ -199,8 +199,12 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
     }
     return documents;
   }, [result]);
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
-  const generatedPdfHref = result?.pdf?.available && result.pdf.url ? `${apiBaseUrl}${result.pdf.url}` : result && result.source === "legacy" ? `${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(result.order.folio)}/pdf` : null;
+  const apiBaseUrl = resolveApiBaseUrl();
+  const generatedPdfHref = result
+    ? result.pdf?.available && result.pdf.url
+      ? `${apiBaseUrl}${result.pdf.url}`
+      : `${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(result.order.folio)}/pdf`
+    : null;
 
   if (loadingTenant) {
     return (
@@ -521,7 +525,17 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
                         rel="noreferrer"
                         className="block rounded-2xl border border-sky-400/20 bg-sky-500/10 px-4 py-3 text-center text-sm font-semibold text-sky-700 transition hover:bg-sky-100"
                       >
-                        {isDelivered ? "Imprimir / Guardar PDF de entrega" : "Imprimir / Guardar PDF"}
+                        {isDelivered ? "Ver PDF de entrega y garantía" : "Ver comprobante PDF"}
+                      </a>
+                    ) : null}
+                    {hasLiveCam && liveCamUrl ? (
+                      <a
+                        href={liveCamUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-center text-sm font-semibold text-rose-100 transition hover:bg-rose-500/20"
+                      >
+                        Ver reparación en vivo
                       </a>
                     ) : null}
                     {mapUrl ? (

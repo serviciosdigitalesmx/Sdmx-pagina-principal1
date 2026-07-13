@@ -13,6 +13,7 @@ import { resolveAdminApiBaseUrl } from "@/lib/api-base-url";
 import { getApiOptions } from "@/lib/tenant";
 import type { Order, OrderChecklist, OrderDocument, OrderEvent } from "@/types";
 import { getTenantSlug } from "@/lib/tenant";
+import { resolveBaseDomain } from "@white-label/config";
 
 type Props = {
   open: boolean;
@@ -43,8 +44,11 @@ function buildWhatsappUrl(order: Order | null) {
   if (!phone) return null;
   const folio = order?.folio ?? "";
   const tenantSlug = getTenantSlug();
-  const portalBase = process.env.NEXT_PUBLIC_WEB_PUBLIC_URL?.replace(/\/$/, "") ?? "";
-  const portalUrl = tenantSlug && portalBase ? `${portalBase}/${encodeURIComponent(tenantSlug)}/portal?folio=${encodeURIComponent(folio)}` : "";
+  const baseDomain = resolveBaseDomain();
+  const customerPortalBase = process.env.NEXT_PUBLIC_CUSTOMER_TRACKING_URL?.replace(/\/$/, "") ?? (baseDomain ? `https://clientes.${baseDomain}` : "");
+  const portalUrl = tenantSlug && folio && customerPortalBase
+    ? `${customerPortalBase}/t/${encodeURIComponent(tenantSlug)}/portal/${encodeURIComponent(folio)}`
+    : "";
   const message = encodeURIComponent(`Hola, tu equipo ${folio} está en seguimiento. Puedes consultar su estado aquí: ${portalUrl || "portal público"}.`);
   return `https://wa.me/${phone}?text=${message}`;
 }
