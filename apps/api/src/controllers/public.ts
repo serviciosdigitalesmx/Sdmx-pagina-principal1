@@ -28,6 +28,36 @@ type LandingSocialLink = {
   href: string;
 };
 
+type LandingBenefit = {
+  title: string;
+  description: string;
+};
+
+type LandingTestimonial = {
+  clientName: string;
+  rating: number;
+  comment: string;
+  date: string;
+};
+
+type LandingGalleryItem = {
+  id?: string;
+  url: string;
+  alt?: string;
+  caption?: string;
+  type?: 'image' | 'video';
+};
+
+type LandingFaq = {
+  question: string;
+  answer: string;
+};
+
+type LandingSection = {
+  id: string;
+  enabled?: boolean;
+};
+
 type LandingContent = {
   heroTitle?: string;
   heroSubtitle?: string;
@@ -41,6 +71,18 @@ type LandingContent = {
   seoTitle?: string;
   seoDescription?: string;
   services?: LandingService[];
+  benefits?: LandingBenefit[];
+  testimonials?: LandingTestimonial[];
+  gallery?: LandingGalleryItem[];
+  faqs?: LandingFaq[];
+  aboutTitle?: string;
+  aboutDescription?: string;
+  ratingLabel?: string;
+  ratingValue?: string;
+  ratingCountLabel?: string;
+  locationTitle?: string;
+  locationDescription?: string;
+  sections?: LandingSection[];
   socialLinks?: LandingSocialLink[];
   showMap?: boolean;
   mapEmbedUrl?: string;
@@ -59,6 +101,18 @@ type LandingTemplate = {
   contactLabel?: string;
   contactHref?: string;
   services?: LandingService[];
+  benefits?: LandingBenefit[];
+  testimonials?: LandingTestimonial[];
+  gallery?: LandingGalleryItem[];
+  faqs?: LandingFaq[];
+  aboutTitle?: string;
+  aboutDescription?: string;
+  ratingLabel?: string;
+  ratingValue?: string;
+  ratingCountLabel?: string;
+  locationTitle?: string;
+  locationDescription?: string;
+  sections?: LandingSection[];
   socialLinks?: LandingSocialLink[];
   showMap?: boolean;
   mapEmbedUrl?: string;
@@ -282,6 +336,21 @@ function normalizeLandingContent(input: unknown, tenantName: string, tenantSlug:
   const socialLinks = Array.isArray(content.socialLinks)
     ? content.socialLinks.filter((item): item is LandingSocialLink => Boolean(item && item.label && item.href))
     : [];
+  const benefits = Array.isArray(content.benefits)
+    ? content.benefits.filter((item): item is LandingBenefit => Boolean(item && item.title && item.description))
+    : [];
+  const testimonials = Array.isArray(content.testimonials)
+    ? content.testimonials.filter((item): item is LandingTestimonial => Boolean(item && item.clientName && item.comment))
+    : [];
+  const gallery = Array.isArray(content.gallery)
+    ? content.gallery.filter((item): item is LandingGalleryItem => Boolean(item && item.url))
+    : [];
+  const faqs = Array.isArray(content.faqs)
+    ? content.faqs.filter((item): item is LandingFaq => Boolean(item && item.question && item.answer))
+    : [];
+  const sections = Array.isArray(content.sections)
+    ? content.sections.filter((item): item is LandingSection => Boolean(item && item.id))
+    : [];
 
   return {
     heroTitle: content.heroTitle?.trim() || tenantName,
@@ -296,6 +365,18 @@ function normalizeLandingContent(input: unknown, tenantName: string, tenantSlug:
     seoTitle: content.seoTitle?.trim() || tenantName,
     seoDescription: content.seoDescription?.trim() || `Landing pública del taller ${tenantSlug}.`,
     services,
+    benefits,
+    testimonials,
+    gallery,
+    faqs,
+    aboutTitle: content.aboutTitle?.trim() || '',
+    aboutDescription: content.aboutDescription?.trim() || '',
+    ratingLabel: content.ratingLabel?.trim() || '',
+    ratingValue: content.ratingValue?.trim() || '',
+    ratingCountLabel: content.ratingCountLabel?.trim() || '',
+    locationTitle: content.locationTitle?.trim() || '',
+    locationDescription: content.locationDescription?.trim() || '',
+    sections,
     socialLinks,
     showMap: Boolean(content.showMap),
     mapEmbedUrl: content.mapEmbedUrl?.trim() || '',
@@ -326,6 +407,18 @@ function mergeLandingContent(
     seoTitle: normalized.seoTitle,
     seoDescription: normalized.seoDescription,
     services: Array.isArray(template.services) && template.services.length > 0 ? template.services : normalized.services,
+    benefits: Array.isArray(template.benefits) && template.benefits.length > 0 ? template.benefits : normalized.benefits,
+    testimonials: Array.isArray(template.testimonials) && template.testimonials.length > 0 ? template.testimonials : normalized.testimonials,
+    gallery: Array.isArray(template.gallery) && template.gallery.length > 0 ? template.gallery : normalized.gallery,
+    faqs: Array.isArray(template.faqs) && template.faqs.length > 0 ? template.faqs : normalized.faqs,
+    aboutTitle: template.aboutTitle?.trim() || normalized.aboutTitle,
+    aboutDescription: template.aboutDescription?.trim() || normalized.aboutDescription,
+    ratingLabel: template.ratingLabel?.trim() || normalized.ratingLabel,
+    ratingValue: template.ratingValue?.trim() || normalized.ratingValue,
+    ratingCountLabel: template.ratingCountLabel?.trim() || normalized.ratingCountLabel,
+    locationTitle: template.locationTitle?.trim() || normalized.locationTitle,
+    locationDescription: template.locationDescription?.trim() || normalized.locationDescription,
+    sections: Array.isArray(template.sections) && template.sections.length > 0 ? template.sections : normalized.sections,
     socialLinks: Array.isArray(template.socialLinks) && template.socialLinks.length > 0 ? template.socialLinks : normalized.socialLinks,
     showMap: typeof template.showMap === 'boolean' ? template.showMap : normalized.showMap,
     mapEmbedUrl: template.mapEmbedUrl?.trim() || normalized.mapEmbedUrl,
