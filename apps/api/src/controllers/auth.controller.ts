@@ -12,6 +12,8 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   phone: z.string().trim().min(7),
+  address: z.string().trim().min(5),
+  googleMapsUrl: z.string().url().optional().or(z.literal('')),
   origin: z.string().url().optional(),
 });
 
@@ -188,7 +190,7 @@ export const register = async (req: Request, res: Response) => {
     });
   }
 
-  const { workshopName, email, password, phone, origin } = parsed.data;
+  const { workshopName, email, password, phone, address, googleMapsUrl, origin } = parsed.data;
   const requestOrigin = origin ?? (typeof req.headers.origin === 'string' ? req.headers.origin : undefined);
   const appUrl = resolveAppUrl(requestOrigin);
 
@@ -238,6 +240,8 @@ export const register = async (req: Request, res: Response) => {
       p_slug_base: workshopName,
       p_email: email,
       p_phone: phone,
+      p_address: address,
+      p_google_maps_url: googleMapsUrl || null,
     });
 
     if (tenantError) {
@@ -339,6 +343,8 @@ export const redirectGoogleAuth = async (_req: Request, res: Response) => {
 const googleCompleteSchema = z.object({
   workshopName: z.string().trim().min(2),
   phone: z.string().trim().min(7),
+  address: z.string().trim().min(5),
+  googleMapsUrl: z.string().url().optional().or(z.literal('')),
   accessToken: z.string().min(1),
   origin: z.string().url().optional(),
 });
@@ -353,7 +359,7 @@ export const completeGoogleRegistration = async (req: Request, res: Response) =>
     });
   }
 
-  const { workshopName, phone, accessToken, origin } = parsed.data;
+  const { workshopName, phone, address, googleMapsUrl, accessToken, origin } = parsed.data;
   const requestOrigin = origin ?? (typeof req.headers.origin === 'string' ? req.headers.origin : undefined);
   const appUrl = resolveAppUrl(requestOrigin);
 
@@ -383,6 +389,8 @@ export const completeGoogleRegistration = async (req: Request, res: Response) =>
       p_slug_base: workshopName,
       p_email: email,
       p_phone: phone,
+      p_address: address,
+      p_google_maps_url: googleMapsUrl || null,
     });
 
     if (tenantError) {

@@ -11,6 +11,8 @@ type GoogleSessionState = {
   email: string;
   workshopName: string;
   phone: string;
+  address: string;
+  googleMapsUrl: string;
 };
 
 export default function GoogleCallbackPage() {
@@ -18,6 +20,8 @@ export default function GoogleCallbackPage() {
     email: "",
     workshopName: "",
     phone: "",
+    address: "",
+    googleMapsUrl: "",
   });
   const [loadingSession, setLoadingSession] = useState(true);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
@@ -116,6 +120,8 @@ export default function GoogleCallbackPage() {
         body: JSON.stringify({
           workshopName: form.workshopName,
           phone: form.phone,
+          address: form.address,
+          googleMapsUrl: form.googleMapsUrl,
           accessToken,
           origin: window.location.origin,
         }),
@@ -173,6 +179,16 @@ export default function GoogleCallbackPage() {
               readOnly
               className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-slate-300 outline-none"
             />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="address">Dirección del taller</label>
+            <input id="address" name="address" value={form.address} onChange={handleChange} required minLength={5} disabled={loadingSession} className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 outline-none transition focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15 disabled:bg-slate-900/80" />
+          </div>
+
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="googleMapsUrl">URL de Google Maps</label>
+            <input id="googleMapsUrl" name="googleMapsUrl" type="url" value={form.googleMapsUrl} onChange={handleChange} disabled={loadingSession} placeholder="https://maps.google.com/..." className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 outline-none transition focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15 disabled:bg-slate-900/80" />
           </div>
 
           <div>
