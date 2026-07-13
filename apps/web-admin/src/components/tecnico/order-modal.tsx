@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
+import { resolveAdminApiBaseUrl } from "@/lib/api-base-url";
 import { getApiOptions } from "@/lib/tenant";
 import type { Order, OrderChecklist, OrderDocument, OrderEvent } from "@/types";
 import { getTenantSlug } from "@/lib/tenant";
@@ -29,6 +30,11 @@ function formatDate(value?: string | null) {
 
 function buildPdfUrl(order: Order | null) {
   if (!order) return null;
+  const tenantSlug = getTenantSlug();
+  const apiBaseUrl = resolveAdminApiBaseUrl().replace(/\/$/, "");
+  if (tenantSlug && apiBaseUrl && order.folio) {
+    return `${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(order.folio)}/pdf`;
+  }
   return order.receipt_url ?? null;
 }
 
@@ -239,23 +245,27 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
 
                   <SurfaceCard elevated className="p-4">
                     <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Acciones</p>
-                    <div className="mt-3 space-y-2">
-                      <Button className="w-full justify-start gap-2" variant="outline" onClick={() => onOpenChange(false)}>
+                    <div className="mt-3 grid gap-2">
+                      <Button className="justify-start gap-2" variant="outline" onClick={() => onOpenChange(false)}>
                         <X className="h-4 w-4" />
                         Cerrar
                       </Button>
-                      <Button className="w-full justify-start gap-2" variant="outline" onClick={() => window.open(`/dashboard/operativo?order=${encodeURIComponent(currentOrder.id)}`, "_blank")}>
+                      <Button
+                        className="justify-start gap-2"
+                        variant="outline"
+                        onClick={() => window.location.assign(`/dashboard/operativo?order=${encodeURIComponent(currentOrder.id)}`)}
+                      >
                         <Clock3 className="h-4 w-4" />
-                        Ir a operativo
+                        Editar en recepción
                       </Button>
                       {pdfUrl ? (
-                        <Button className="w-full justify-start gap-2" onClick={() => window.open(pdfUrl, "_blank", "noopener,noreferrer")}>
+                        <Button className="justify-start gap-2" onClick={() => window.open(pdfUrl, "_blank", "noopener,noreferrer")}>
                           <FileText className="h-4 w-4" />
                           Ver PDF
                         </Button>
                       ) : null}
                       {whatsappUrl ? (
-                        <Button className="w-full justify-start gap-2 bg-emerald-600 hover:bg-emerald-700" onClick={() => window.open(whatsappUrl, "_blank", "noopener,noreferrer")}>
+                        <Button className="justify-start gap-2 bg-emerald-600 hover:bg-emerald-700" onClick={() => window.open(whatsappUrl, "_blank", "noopener,noreferrer")}>
                           <MessageCircle className="h-4 w-4" />
                           WhatsApp cliente
                         </Button>
