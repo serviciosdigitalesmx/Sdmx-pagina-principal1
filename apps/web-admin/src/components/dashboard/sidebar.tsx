@@ -70,7 +70,8 @@ const DASHBOARD_MODULE_ACCESS: Partial<Record<string, TenantModuleKey>> = {
   sucursales: 'branches',
   seguridad: 'security',
   usuarios: 'users',
-  landing: 'landing',
+  // Every tenant must retain access to configure its public landing.
+  landing: 'settings',
 };
 
 const ROLE_ALLOWED_MODULES: Record<'owner' | 'manager' | 'technician' | 'client', string[] | null> = {
