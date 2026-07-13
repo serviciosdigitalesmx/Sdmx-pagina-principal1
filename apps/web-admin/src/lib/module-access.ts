@@ -36,7 +36,8 @@ const MODULE_KEY_ALIASES: Record<string, TenantModuleKey> = {
   reports: 'reports',
   documents: 'settings',
   portal: 'settings',
-  landing: 'landing',
+  // Landing is tenant configuration, not an optional operational module.
+  landing: 'settings',
   whatsapp: 'settings',
   warranty: 'settings',
   billing: 'settings',
@@ -71,7 +72,7 @@ const MODULE_ROUTE_MAP: Record<string, TenantModuleKey> = {
   '/dashboard/usuarios': 'users',
   '/dashboard/sucursales': 'branches',
   '/dashboard/archivo': 'archive',
-  '/dashboard/landing': 'landing',
+  '/dashboard/landing': 'settings',
 };
 
 export function getEnabledModules(): string[] {

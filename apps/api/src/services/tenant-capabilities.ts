@@ -47,7 +47,8 @@ export const MODULE_REGISTRY: ModuleRegistryEntry[] = [
 
 export const PLAN_REGISTRY: Record<TenantCapabilities['plan_key'], { module_allowlist: string[]; limits: TenantPlanLimits }> = {
   basic: {
-    module_allowlist: ['dashboard', 'customers', 'requests', 'orders', 'assets', 'stock', 'documents', 'portal', 'whatsapp', 'billing', 'settings'],
+    // Every tenant needs to configure and publish its public presence, regardless of plan.
+    module_allowlist: ['dashboard', 'customers', 'requests', 'orders', 'assets', 'stock', 'documents', 'portal', 'landing', 'whatsapp', 'billing', 'settings'],
     limits: { users: 2, sucursales: 1, monthly_orders: 50, storage_mb: 500, public_portal: true, whatsapp_templates: 5, document_templates: 3 },
   },
   pro: {
@@ -73,6 +74,8 @@ export function canonicalModuleKey(key: string) {
 function unique(values: string[]) {
   return Array.from(new Set(values.filter(Boolean)));
 }
+
+const UNIVERSAL_TENANT_MODULES = ['landing', 'portal', 'settings'];
 
 function getIndustryDefaultModules(industryKey?: string | null) {
   const normalized = normalizeKey(industryKey);
@@ -113,7 +116,10 @@ export function resolveTenantCapabilities({
 }): TenantCapabilitiesType {
   const planKey = getPlanKeyFromBilling(billing);
   const accessStatus = getAccessStatus(billing, tenantSlug, tenantEmail);
-  const plan = PLAN_REGISTRY[planKey];
+  // Keep the established trial behavior: tenants can validate the complete
+  // operating flow before plan limits are enforced after their trial.
+  const isTrialAccess = accessStatus === 'trial';
+  const plan = PLAN_REGISTRY[isTrialAccess ? 'scale' : planKey];
 
   const activeModules = runtimeConfig.activeModules.map((module) => canonicalModuleKey(module));
   const enabledModules = runtimeConfig.enabledModules
@@ -121,14 +127,22 @@ export function resolveTenantCapabilities({
     .map((module) => canonicalModuleKey(module.module_key));
   const industryModules = getIndustryDefaultModules(runtimeConfig.industryProfile?.industry_key);
   const baseModules = unique(
-    activeModules.length > 0
-      ? activeModules
-      : enabledModules.length > 0
-        ? enabledModules
-        : industryModules,
+    isTrialAccess
+      ? MODULE_REGISTRY.filter((module) => module.key !== 'movivendor').map((module) => module.key)
+      : activeModules.length > 0
+        ? activeModules
+        : enabledModules.length > 0
+          ? enabledModules
+          : industryModules,
   );
 
-  const requestedActive = unique(baseModules.filter((module) => plan.module_allowlist.includes(module)));
+  // Public presence and its configuration cannot depend on legacy module rows.
+  // Existing tenants may predate `tenant_enabled_modules`, but must still be
+  // able to configure their landing and customer portal.
+  const requestedActive = unique(
+    [...baseModules, ...UNIVERSAL_TENANT_MODULES]
+      .filter((module) => plan.module_allowlist.includes(module)),
+  );
   const locked = unique(MODULE_REGISTRY
     .filter((module) => !requestedActive.includes(module.key))
     .map((module) => module.key));
