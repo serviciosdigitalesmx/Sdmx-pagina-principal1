@@ -900,12 +900,25 @@ async function generateReceiptPdf(options: {
   const primaryColor = options.tenantBranding?.primaryColor || '#2c6e9f';
   const secondaryColor = options.tenantBranding?.secondaryColor || '#0f172a';
   const logoUrl = options.tenantBranding?.logoUrl?.trim() || '';
+  const customer = (options.order.device_info as {
+    customer_name?: string;
+    customer_phone?: string;
+    customer_email?: string;
+    type?: string;
+    brand?: string;
+    model?: string;
+    serial_number?: string;
+  } | undefined) ?? {};
+  const formatValue = (value?: unknown, fallback = 'Sin dato') => {
+    const text = String(value ?? '').trim();
+    return text ? text : fallback;
+  };
 
-  doc.rect(40, 40, 515, 70).fill(primaryColor);
-  doc.fillColor('#ffffff').fontSize(20).text(options.tenantName || 'FIXI', 58, 58, { width: 340 });
-  doc.fillColor('#ffffff').fontSize(10).text('Comprobante de recepción', 58, 82, { width: 340 });
-  doc.fillColor('#ffffff').fontSize(9).text('Documento generado automáticamente', 420, 60, { width: 120, align: 'right' });
-  doc.moveDown(3.5);
+  doc.roundedRect(40, 40, 515, 78, 16).fill(primaryColor);
+  doc.fillColor('#ffffff').fontSize(22).text(options.tenantName || 'FIXI', 58, 56, { width: 330 });
+  doc.fillColor('#ffffff').fontSize(10).text('Comprobante de recepción', 58, 82, { width: 330 });
+  doc.fillColor('#ffffff').fontSize(9).text('Documento generado automáticamente', 404, 56, { width: 130, align: 'right' });
+  doc.fontSize(11).text(`Folio: ${formatValue(options.order.folio)}`, 404, 76, { width: 130, align: 'right' });
 
   if (logoUrl) {
     try {
@@ -920,37 +933,55 @@ async function generateReceiptPdf(options: {
     }
   }
 
-  doc.fillColor(secondaryColor).fontSize(18).text('Comprobante de Recepción', { align: 'left' });
-  doc.moveDown(0.5);
-  doc.fontSize(10).fillColor('#374151').text(`Folio: ${String(options.order.folio ?? '')}`);
-  doc.text(`Cliente: ${String((options.order.device_info as { customer_name?: string } | undefined)?.customer_name ?? '')}`);
-  doc.text(`Teléfono: ${String((options.order.device_info as { customer_phone?: string } | undefined)?.customer_phone ?? '')}`);
-  doc.text(`Correo: ${String((options.order.device_info as { customer_email?: string } | undefined)?.customer_email ?? '')}`);
-  doc.text(`Equipo: ${String((options.order.device_info as { type?: string } | undefined)?.type ?? options.order.device_type ?? '')} - ${String(options.order.device_model ?? '')}`);
-  doc.text(`Problema: ${String(options.order.problem_description ?? '')}`);
-  doc.text(`Estado: ${String(options.order.status ?? '')}`);
-  doc.text(`Fecha: ${new Date().toLocaleString('es-MX')}`);
+  const leftX = 40;
+  const rightX = 314;
+  const topY = 132;
 
-  doc.moveDown(0.75);
-  doc.fontSize(12).fillColor(secondaryColor).text('Evidencia fotográfica', { underline: true });
-  doc.moveDown(0.5);
+  doc.roundedRect(leftX, topY, 250, 214, 16).fillAndStroke('#f8fafc', '#dbe3ea');
+  doc.roundedRect(rightX, topY, 241, 214, 16).fillAndStroke('#ffffff', '#dbe3ea');
+  doc.fontSize(13).fillColor(secondaryColor).text('Datos del cliente', leftX + 16, topY + 16);
+  doc.fontSize(13).fillColor(secondaryColor).text('Datos del equipo', rightX + 16, topY + 16);
+  doc.fontSize(10).fillColor('#334155');
+  doc.text(`Cliente: ${formatValue(customer.customer_name)}`, leftX + 16, topY + 42, { width: 220 });
+  doc.text(`Teléfono: ${formatValue(customer.customer_phone)}`, leftX + 16, topY + 66, { width: 220 });
+  doc.text(`Correo: ${formatValue(customer.customer_email)}`, leftX + 16, topY + 90, { width: 220 });
+  doc.text(`Fecha: ${new Date().toLocaleDateString('es-MX')}`, leftX + 16, topY + 114, { width: 220 });
+  doc.text(`Equipo: ${formatValue(options.order.device_type ?? customer.type)} - ${formatValue(options.order.device_model ?? customer.model)}`, rightX + 16, topY + 42, { width: 210 });
+  doc.text(`Marca: ${formatValue(customer.brand)}`, rightX + 16, topY + 66, { width: 210 });
+  doc.text(`Serie / IMEI: ${formatValue(options.order.serial_number ?? customer.serial_number)}`, rightX + 16, topY + 90, { width: 210 });
+  doc.text(`Estado: ${formatValue(options.order.status)}`, rightX + 16, topY + 114, { width: 210 });
+  doc.text(`Problema:`, rightX + 16, topY + 138, { width: 210 });
+  doc.fontSize(9).fillColor('#475569').text(formatValue(options.order.problem_description), rightX + 16, topY + 154, { width: 210, lineGap: 2 });
+
+  const summaryTop = 366;
+  doc.roundedRect(40, summaryTop, 515, 86, 16).fillAndStroke('#ffffff', '#dbe3ea');
+  doc.fontSize(12).fillColor(secondaryColor).text('Resumen del servicio', 56, summaryTop + 14);
+  doc.fontSize(10).fillColor('#334155');
+  doc.text(`Problema: ${formatValue(options.order.problem_description)}`, 56, summaryTop + 38, { width: 470 });
+  doc.text(`Costo estimado: ${formatValue(options.order.estimated_cost, '$0.00')}`, 56, summaryTop + 58, { width: 230 });
+  doc.text(`Costo final: ${formatValue(options.order.final_cost, '$0.00')}`, 300, summaryTop + 58, { width: 230 });
 
   if (options.photo) {
     try {
-      doc.image(options.photo.buffer, {
-        fit: [500, 280],
+      doc.roundedRect(40, 468, 515, 182, 14).fillAndStroke('#ffffff', '#dbe3ea');
+      doc.fontSize(12).fillColor(secondaryColor).text('Evidencia fotográfica', 56, 484);
+      doc.image(options.photo.buffer, 56, 506, {
+        fit: [480, 130],
         align: 'center',
         valign: 'center',
       });
     } catch {
-      doc.fontSize(10).fillColor('#6b7280').text('La evidencia fotográfica no pudo incrustarse en el PDF, pero sí quedó almacenada como archivo.');
+      doc.roundedRect(40, 468, 515, 182, 14).fillAndStroke('#ffffff', '#dbe3ea');
+      doc.fontSize(12).fillColor(secondaryColor).text('Evidencia fotográfica', 56, 484);
+      doc.fontSize(10).fillColor('#6b7280').text('La evidencia fotográfica no pudo incrustarse en el PDF, pero sí quedó almacenada como archivo.', 56, 520, { width: 480, align: 'center' });
     }
   } else {
-    doc.fontSize(10).fillColor('#6b7280').text('No se recibió evidencia fotográfica en este flujo.');
+    doc.roundedRect(40, 468, 515, 182, 14).fillAndStroke('#ffffff', '#dbe3ea');
+    doc.fontSize(12).fillColor(secondaryColor).text('Evidencia fotográfica', 56, 484);
+    doc.fontSize(10).fillColor('#6b7280').text('No se recibió evidencia fotográfica en este flujo.', 56, 530, { width: 480, align: 'center' });
   }
 
-  doc.moveDown(0.8);
-  doc.fontSize(10).fillColor('#6b7280').text(`Documento generado automáticamente por ${options.tenantName || 'FIXI'}.`);
+  doc.fontSize(10).fillColor('#6b7280').text(`Documento generado automáticamente por ${options.tenantName || 'FIXI'}.`, 40, 664, { width: 515, align: 'center' });
   doc.end();
 
   return ended;
