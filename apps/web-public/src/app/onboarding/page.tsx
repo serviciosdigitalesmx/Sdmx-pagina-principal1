@@ -12,6 +12,8 @@ type RegisterState = {
   email: string;
   password: string;
   phone: string;
+  address: string;
+  googleMapsUrl: string;
 };
 
 const initialState: RegisterState = {
@@ -19,6 +21,8 @@ const initialState: RegisterState = {
   email: "",
   password: "",
   phone: "",
+  address: "",
+  googleMapsUrl: "",
 };
 
 const trialDays = optionalEnv("NEXT_PUBLIC_SAAS_TRIAL_DAYS") ?? "14";
@@ -44,6 +48,8 @@ export default function OnboardingPage() {
         email: form.email.trim(),
         password: form.password,
         phone: form.phone.trim(),
+        address: form.address.trim(),
+        googleMapsUrl: form.googleMapsUrl.trim(),
         origin: resolveAdminUrl() ?? window.location.origin,
       };
 
@@ -135,6 +141,18 @@ export default function OnboardingPage() {
                 className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15"
               />
               <p className="mt-1 text-xs text-slate-400">El nombre comercial de tu taller.</p>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="address">Dirección del taller</label>
+              <input id="address" name="address" type="text" autoComplete="street-address" value={form.address} onChange={handleChange} required minLength={5} className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15" />
+              <p className="mt-1 text-xs text-slate-400">Se mostrará como ubicación real de tu negocio.</p>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="googleMapsUrl">URL de Google Maps</label>
+              <input id="googleMapsUrl" name="googleMapsUrl" type="url" value={form.googleMapsUrl} onChange={handleChange} className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-sky-500/40 focus:ring-2 focus:ring-sky-500/15" placeholder="https://maps.google.com/..." />
+              <p className="mt-1 text-xs text-slate-400">Opcional. Al agregarla, el mapa se publica en tu landing.</p>
             </div>
 
             <div>
