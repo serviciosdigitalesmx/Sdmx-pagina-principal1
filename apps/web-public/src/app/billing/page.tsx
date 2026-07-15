@@ -27,7 +27,7 @@ const plans: Array<{
     name: "Profesional",
     price: "$450",
     description: "Para una operación que necesita crecer y mostrar su negocio.",
-    features: ["Hasta 2 sucursales", "Hasta 3 usuarios", "Landing, compras y reportes"],
+    features: ["Hasta 2 sucursales", "Hasta 5 usuarios", "Landing, branding, compras y reportes"],
   },
   {
     code: "enterprise",

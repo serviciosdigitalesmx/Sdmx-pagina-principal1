@@ -46,7 +46,7 @@ const capabilityGroups = [
   {
     label: "Relación",
     title: "Tu cliente ve tu marca y su servicio.",
-    copy: "Cada tenant cuenta con landing configurable, portal de seguimiento y contacto directo con el negocio.",
+    copy: "El portal mantiene informado al cliente y los planes superiores añaden una landing configurable con la identidad del negocio.",
     items: ["Landing del taller", "Portal del cliente", "Contacto por WhatsApp", "Configuración por tenant"],
   },
 ];
@@ -59,7 +59,8 @@ const planRows = [
   { label: "Integración con WhatsApp", basic: "Sin límite", pro: "Sin límite", scale: "Sin límite" },
   { label: "PDFs y comprobantes", basic: "Incluidos", pro: "Incluidos", scale: "Incluidos" },
   { label: "Seguimiento para clientes", basic: "Incluido", pro: "Incluido", scale: "Incluido" },
-  { label: "Landing pública del taller", basic: "Incluida", pro: "Incluida", scale: "Incluida" },
+  { label: "Landing pública del taller", basic: "—", pro: "Incluida", scale: "Incluida" },
+  { label: "Logo y branding personalizados", basic: "—", pro: "Incluidos", scale: "Incluidos" },
   { label: "Control de refacciones", basic: "Incluido", pro: "Incluido", scale: "Incluido" },
   { label: "Control de compras y gastos", basic: "—", pro: "Incluido", scale: "Incluido" },
   { label: "Indicadores del negocio", basic: "Resumen", pro: "Reportes", scale: "Reportes + finanzas" },
@@ -82,7 +83,7 @@ const pricingPlans = [
     price: "$450",
     eyebrow: "Para un taller creciendo",
     description: "Controla compras, gastos y reportes mientras coordinas más personal.",
-    summary: ["2 sucursales y 5 usuarios", "500 órdenes al mes", "Compras, gastos y reportes"],
+    summary: ["2 sucursales y 5 usuarios", "500 órdenes al mes", "Landing pública y branding", "Compras, gastos y reportes"],
     featured: true,
   },
   {
@@ -104,7 +105,7 @@ const comparisons = [
 
 const faqs = [
   ["¿Puedo probar FIXI antes de elegir un plan?", "Sí. El registro inicia una prueba para que recorras el flujo operativo antes de decidir qué plan necesita tu taller."],
-  ["¿La landing y el portal tienen la marca de mi taller?", "Sí. Cada tenant administra su identidad, datos de contacto, servicios, ubicación y presencia pública desde su propia configuración."],
+  ["¿La landing y el portal tienen la marca de mi taller?", "El Portal del cliente muestra la identidad básica del taller en todos los planes. Desde Profesional puedes publicar una landing y personalizar logo, servicios, ubicación y presencia pública."],
   ["¿El cliente necesita instalar una aplicación?", "No. El seguimiento público se consulta desde un enlace web compartido por el taller."],
   ["¿Puedo cambiar de plan cuando crezca?", "Sí. Los planes están organizados por capacidad de usuarios, sucursales, órdenes, almacenamiento y módulos operativos."],
   ["¿La información de distintos talleres se mezcla?", "No. FIXI opera con información y configuración separadas por tenant."],
@@ -279,7 +280,7 @@ export default function Home() {
           ))}
         </div>
         <div className="fx-tenant-callout">
-          <div><span className="fx-tenant-icon">T</span><div><b>Tu negocio al frente</b><p>Nombre, logo, contacto, servicios, ubicación, landing y portal configurados por tenant.</p></div></div>
+          <div><span className="fx-tenant-icon">T</span><div><b>Tu negocio al frente</b><p>Portal con identidad básica en todos los planes; landing, logo y branding desde Profesional.</p></div></div>
           <Link href={adminOnboardingUrl} className="fx-outline-button fx-outline-button-dark">Crear mi espacio <Arrow /></Link>
         </div>
       </section>
@@ -287,7 +288,7 @@ export default function Home() {
       <section id="planes" className="fx-pricing-section">
         <div className="fx-pricing-intro">
           <div><SectionKicker>Precios transparentes</SectionKicker><h2>Elige por capacidad,<br />no por letras chiquitas.</h2></div>
-          <p>Todos los planes incluyen el núcleo operativo, documentos, portal del cliente, landing del taller y contacto por WhatsApp.</p>
+          <p>Todos los planes incluyen el núcleo operativo, documentos, Portal del cliente y contacto por WhatsApp. La Landing pública y el branding personalizado comienzan en Profesional.</p>
         </div>
         <div className="fx-pricing-grid">
           {pricingPlans.map((plan) => (

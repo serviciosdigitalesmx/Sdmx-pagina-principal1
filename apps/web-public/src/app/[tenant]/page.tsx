@@ -12,6 +12,7 @@ import { buildCustomerPortalUrl } from "@/lib/customer-portal-url";
 type LandingResponse = {
   success: true;
   data: {
+    landingAvailable: boolean;
     tenant: {
       id: string;
       slug: string;
@@ -217,7 +218,7 @@ export async function generateMetadata({
   const { tenant } = await params;
   const data = await getTenantLanding(tenant);
 
-  if (!data) {
+  if (!data || !data.landingAvailable) {
     return { title: "Tenant no encontrado" };
   }
 
@@ -239,7 +240,7 @@ export default async function TenantLandingPage({
   const { tenant: slug } = await params;
   const data = await getTenantLanding(slug);
 
-  if (!data) {
+  if (!data || !data.landingAvailable) {
     notFound();
   }
 
