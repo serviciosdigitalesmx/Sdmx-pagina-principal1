@@ -9,31 +9,113 @@ const adminBaseUrl = resolveAdminUrl();
 const adminLoginUrl = adminBaseUrl ? `${adminBaseUrl}/login` : "/login";
 const adminOnboardingUrl = adminBaseUrl ? `${adminBaseUrl}/login?mode=signup` : "/login?mode=signup";
 
-const productTabs = [
-  { label: "Recepción", eyebrow: "Entrada sin discusiones", title: "Cada equipo llega con evidencia, firma y un folio claro.", copy: "Registra condición, accesorios y falla reportada en una sola ficha. FIXI deja el historial listo desde el primer minuto." },
-  { label: "Seguimiento", eyebrow: "Cliente informado", title: "El estatus del servicio se consulta sin perseguir al taller.", copy: "Comparte un enlace seguro por WhatsApp y mantén cada avance visible para el cliente correcto." },
-  { label: "Operación", eyebrow: "El taller bajo control", title: "Órdenes, técnicos y pendientes en la misma vista.", copy: "Prioriza lo urgente y detecta qué necesita atención sin cambiar de herramienta." },
-  { label: "Negocio", eyebrow: "Decisiones con contexto", title: "Lo que entra, lo que sale y lo que falta por cobrar.", copy: "La operación diaria queda conectada con los datos que necesita la persona dueña del taller." },
+const workflow = [
+  {
+    number: "01",
+    title: "Recibe con evidencia",
+    copy: "Crea la orden, registra el equipo, documenta su condición y deja el checklist en el mismo expediente.",
+    tags: ["Ficha editable", "Fotos", "Checklist"],
+  },
+  {
+    number: "02",
+    title: "Opera sin perder contexto",
+    copy: "Recepción, técnicos y administración trabajan sobre la misma orden y su historial de movimientos.",
+    tags: ["Estados", "Tareas", "Trazabilidad"],
+  },
+  {
+    number: "03",
+    title: "Mantén informado al cliente",
+    copy: "Comparte por WhatsApp el acceso correcto al portal para que consulte avances y documentos de su servicio.",
+    tags: ["WhatsApp", "Portal", "Documentos"],
+  },
 ];
 
-const productPillars = [
-  ["01", "Fichas que sí trabajan", "Campos editables, checklist, fotos y movimientos para que el expediente acompañe a tu operación."],
-  ["02", "Portal con tu marca", "Cada taller configura logo, contacto y landing. El cliente ve a su negocio, no una pantalla genérica."],
-  ["03", "Comunicación directa", "WhatsApp abre el seguimiento correcto y mantiene la conversación entre el taller y su cliente."],
+const capabilityGroups = [
+  {
+    label: "Operación",
+    title: "Cada orden tiene una historia completa.",
+    copy: "Solicitudes, recepción, diagnóstico, seguimiento, garantía y cierre conectados a la misma orden.",
+    items: ["Órdenes y solicitudes", "Clientes y activos", "Tareas y garantías", "Archivo y documentos"],
+  },
+  {
+    label: "Control",
+    title: "Las decisiones salen del taller, no de una hoja aparte.",
+    copy: "Existencias, proveedores, compras, gastos y reportes se organizan dentro de la operación del tenant.",
+    items: ["Stock por sucursal", "Proveedores y compras", "Gastos y finanzas", "Reportes operativos"],
+  },
+  {
+    label: "Relación",
+    title: "Tu cliente ve tu marca y su servicio.",
+    copy: "Cada tenant cuenta con landing configurable, portal de seguimiento y contacto directo con el negocio.",
+    items: ["Landing del taller", "Portal del cliente", "Contacto por WhatsApp", "Configuración por tenant"],
+  },
+];
+
+const planRows = [
+  { label: "Usuarios incluidos", basic: "2", pro: "5", scale: "Ilimitados" },
+  { label: "Sucursales", basic: "1", pro: "2", scale: "Ilimitadas" },
+  { label: "Órdenes mensuales", basic: "50", pro: "500", scale: "Ilimitadas" },
+  { label: "Almacenamiento", basic: "2 GB", pro: "10 GB", scale: "100 GB" },
+  { label: "Integración con WhatsApp", basic: "Sin límite", pro: "Sin límite", scale: "Sin límite" },
+  { label: "PDFs y comprobantes", basic: "Incluidos", pro: "Incluidos", scale: "Incluidos" },
+  { label: "Seguimiento para clientes", basic: "Incluido", pro: "Incluido", scale: "Incluido" },
+  { label: "Landing pública del taller", basic: "Incluida", pro: "Incluida", scale: "Incluida" },
+  { label: "Control de refacciones", basic: "Incluido", pro: "Incluido", scale: "Incluido" },
+  { label: "Control de compras y gastos", basic: "—", pro: "Incluido", scale: "Incluido" },
+  { label: "Indicadores del negocio", basic: "Resumen", pro: "Reportes", scale: "Reportes + finanzas" },
+  { label: "Administración de usuarios y roles", basic: "—", pro: "Incluida", scale: "Incluida" },
+  { label: "Finanzas completas", basic: "—", pro: "—", scale: "Incluidas" },
 ];
 
 const pricingPlans = [
-  { name: "Básico", price: "$300", copy: "Para operar un taller y ordenar la recepción, clientes y seguimiento.", features: ["1 sucursal", "Hasta 2 usuarios", "Portal y landing del taller"] },
-  { name: "Profesional", price: "$450", copy: "Para talleres con más movimiento que necesitan control operativo completo.", features: ["Hasta 2 sucursales", "Hasta 3 usuarios", "Compras y reportes"], featured: true },
-  { name: "Empresarial", price: "$600", copy: "Para negocios que ya coordinan equipos, sucursales y finanzas a escala.", features: ["Sucursales ilimitadas", "Usuarios ilimitados", "Control financiero completo"] },
+  {
+    key: "basic",
+    name: "Básico",
+    price: "$300",
+    eyebrow: "Para un taller pequeño",
+    description: "Recibe equipos, organiza órdenes y mantén informado al cliente.",
+    summary: ["1 sucursal y 2 usuarios", "50 órdenes al mes", "WhatsApp y portal incluidos"],
+  },
+  {
+    key: "pro",
+    name: "Profesional",
+    price: "$450",
+    eyebrow: "Para un taller creciendo",
+    description: "Controla compras, gastos y reportes mientras coordinas más personal.",
+    summary: ["2 sucursales y 5 usuarios", "500 órdenes al mes", "Compras, gastos y reportes"],
+    featured: true,
+  },
+  {
+    key: "scale",
+    name: "Empresarial",
+    price: "$600",
+    eyebrow: "Para un taller establecido",
+    description: "La operación completa con capacidad ilimitada y control financiero.",
+    summary: ["Sucursales y usuarios ilimitados", "Órdenes ilimitadas", "Seguridad y finanzas completas"],
+  },
+];
+
+const comparisons = [
+  ["La condición del equipo queda en mensajes sueltos", "Fotos, checklist y documentos viven en la orden"],
+  ["El cliente llama para preguntar por cada avance", "El cliente consulta el portal de su taller"],
+  ["Cada persona lleva su propia versión del trabajo", "El equipo comparte estados, tareas e historial"],
+  ["Los números se reconstruyen al final del mes", "La operación alimenta reportes y finanzas"],
+];
+
+const faqs = [
+  ["¿Puedo probar FIXI antes de elegir un plan?", "Sí. El registro inicia una prueba para que recorras el flujo operativo antes de decidir qué plan necesita tu taller."],
+  ["¿La landing y el portal tienen la marca de mi taller?", "Sí. Cada tenant administra su identidad, datos de contacto, servicios, ubicación y presencia pública desde su propia configuración."],
+  ["¿El cliente necesita instalar una aplicación?", "No. El seguimiento público se consulta desde un enlace web compartido por el taller."],
+  ["¿Puedo cambiar de plan cuando crezca?", "Sí. Los planes están organizados por capacidad de usuarios, sucursales, órdenes, almacenamiento y módulos operativos."],
+  ["¿La información de distintos talleres se mezcla?", "No. FIXI opera con información y configuración separadas por tenant."],
 ];
 
 function BrandMark() {
   return (
-    <div className="fx-brand-mark" aria-hidden="true">
+    <span className="fx-brand-mark" aria-hidden="true">
       <span>F</span>
       <i />
-    </div>
+    </span>
   );
 }
 
@@ -41,42 +123,50 @@ function Arrow() {
   return <span aria-hidden="true" className="fx-arrow">↗</span>;
 }
 
-function DashboardPreview() {
+function SectionKicker({ children }: { children: React.ReactNode }) {
+  return <p className="fx-kicker">{children}</p>;
+}
+
+function ProductMap() {
   return (
-    <div className="fx-screen" aria-label="Vista ilustrativa de FIXI">
-      <div className="fx-screen-top">
-        <div className="fx-screen-logo"><BrandMark /><span>FIXI</span></div>
-        <div className="fx-screen-search">Buscar por orden, cliente o IMEI</div>
-        <div className="fx-screen-user"><span className="fx-live-dot" /> Taller activo</div>
+    <div className="fx-product-map" aria-label="Mapa visual de los módulos de FIXI">
+      <div className="fx-product-map-bar">
+        <div className="fx-mini-brand"><BrandMark /><b>FIXI</b></div>
+        <span>Operación del taller</span>
+        <i><span />Tenant activo</i>
       </div>
-      <div className="fx-screen-body">
-        <aside className="fx-screen-nav">
-          <span className="fx-nav-current">Resumen</span>
+      <div className="fx-product-map-body">
+        <div className="fx-product-map-nav" aria-hidden="true">
+          <span className="is-active">Resumen</span>
           <span>Recepción</span>
           <span>Técnico</span>
           <span>Clientes</span>
-          <span>Inventario</span>
-        </aside>
-        <div className="fx-screen-main">
-          <div className="fx-screen-heading"><div><small>HOY EN EL TALLER</small><b>Operación en marcha</b></div><button type="button">Nueva orden <Arrow /></button></div>
-          <div className="fx-status-grid">
-            <div><span className="fx-status-icon fx-cyan">⌁</span><p>Por revisar</p><b>Recepciones</b></div>
-            <div><span className="fx-status-icon fx-blue">↗</span><p>En proceso</p><b>Servicio activo</b></div>
-            <div><span className="fx-status-icon fx-orange">✓</span><p>Por entregar</p><b>Cliente informado</b></div>
+          <span>Stock</span>
+          <span>Reportes</span>
+        </div>
+        <div className="fx-product-map-main">
+          <div className="fx-map-heading">
+            <div><small>FLUJO CONECTADO</small><strong>Una orden. Todo el contexto.</strong></div>
+            <span>Nueva orden <Arrow /></span>
           </div>
-          <div className="fx-order-panel">
-            <div className="fx-order-heading"><div><small>ORDEN SRF-1042</small><b>Equipo recibido para diagnóstico</b></div><span>Actualizada</span></div>
-            <div className="fx-order-lines"><i /><i /><i /></div>
-            <div className="fx-order-footer"><span>Checklist completo</span><span>WhatsApp listo</span><span>Portal activo</span></div>
+          <div className="fx-map-steps">
+            <article><i>01</i><small>RECEPCIÓN</small><b>Condición y evidencia</b><span className="is-complete">Listo</span></article>
+            <article><i>02</i><small>OPERACIÓN</small><b>Estado y responsable</b><span>En curso</span></article>
+            <article><i>03</i><small>CLIENTE</small><b>Portal y documentos</b><span>Conectado</span></article>
+          </div>
+          <div className="fx-map-detail">
+            <div className="fx-map-detail-title"><span>Expediente de servicio</span><b>Historial disponible</b></div>
+            <div className="fx-map-detail-grid">
+              <span><i>✓</i>Datos del equipo</span>
+              <span><i>✓</i>Checklist de recepción</span>
+              <span><i>✓</i>Evidencia fotográfica</span>
+              <span><i>✓</i>Seguimiento del cliente</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-}
-
-function SectionKicker({ children }: { children: React.ReactNode }) {
-  return <p className="fx-kicker">{children}</p>;
 }
 
 export default function Home() {
@@ -86,8 +176,8 @@ export default function Home() {
     name: productName,
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
-    description: "Software para talleres de reparación con órdenes, seguimiento al cliente y configuración por tenant.",
-    offers: { "@type": "Offer", price: "300", priceCurrency: "MXN" },
+    description: "Software para talleres de reparación con órdenes, evidencia, seguimiento al cliente y operación separada por tenant.",
+    offers: { "@type": "AggregateOffer", lowPrice: "300", highPrice: "600", priceCurrency: "MXN" },
   };
 
   return (
@@ -95,43 +185,158 @@ export default function Home() {
       <RootAuthHashRedirect />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
 
+      <div className="fx-announcement">
+        <span>Prueba FIXI con el flujo completo</span>
+        <Link href={adminOnboardingUrl}>Crear mi taller <Arrow /></Link>
+      </div>
+
       <header className="fx-header">
         <Link href="#inicio" className="fx-logo" aria-label="Ir al inicio de FIXI"><BrandMark /><span>FIXI</span></Link>
-        <nav aria-label="Navegación principal"><Link href="#producto">Producto</Link><Link href="#flujo">Flujo</Link><Link href="#planes">Planes</Link><Link href="#contacto">Contacto</Link></nav>
-        <div className="fx-header-actions"><Link href={adminLoginUrl} className="fx-login">Iniciar sesión</Link><Link href={adminOnboardingUrl} className="fx-button fx-button-small">Prueba gratis <Arrow /></Link></div>
+        <nav aria-label="Navegación principal">
+          <Link href="#como-funciona">Cómo funciona</Link>
+          <Link href="#producto">Producto</Link>
+          <Link href="#planes">Planes</Link>
+          <Link href="#preguntas">Preguntas</Link>
+        </nav>
+        <div className="fx-header-actions">
+          <Link href={adminLoginUrl} className="fx-login">Iniciar sesión</Link>
+          <Link href={adminOnboardingUrl} className="fx-button fx-button-small">Probar gratis <Arrow /></Link>
+        </div>
       </header>
 
       <section id="inicio" className="fx-hero">
         <div className="fx-hero-copy">
-          <SectionKicker>Software operativo para talleres</SectionKicker>
-          <h1>El control de tu taller,<br /><em>bien hecho.</em></h1>
-          <p>FIXI conecta recepción, operación y seguimiento del cliente para que tu taller trabaje con claridad, no con pendientes sueltos.</p>
-          <div className="fx-hero-actions"><Link href={adminOnboardingUrl} className="fx-button">Crea tu taller <Arrow /></Link><Link href="#producto" className="fx-text-link">Conoce la plataforma <Arrow /></Link></div>
-          <div className="fx-hero-notes"><span><i className="fx-check">✓</i> Configuración inicial guiada</span><span><i className="fx-check">✓</i> Sin tarjeta para empezar</span></div>
+          <SectionKicker>Software para talleres de reparación</SectionKicker>
+          <h1>Cuando un cliente reclama, <em>tu taller tiene cómo responder.</em></h1>
+          <p>FIXI reúne órdenes, fotos, checklist, documentos y seguimiento del cliente para que cada servicio tenga contexto desde la recepción hasta la entrega.</p>
+          <div className="fx-hero-actions">
+            <Link href={adminOnboardingUrl} className="fx-button fx-button-large">Empezar prueba gratis <Arrow /></Link>
+            <Link href="#como-funciona" className="fx-text-link">Ver cómo funciona <span aria-hidden="true">↓</span></Link>
+          </div>
+          <div className="fx-trust-line" aria-label="Ventajas de la prueba">
+            <span><i>✓</i>Sin tarjeta para empezar</span>
+            <span><i>✓</i>Configuración guiada</span>
+            <span><i>✓</i>Cancela cuando quieras</span>
+          </div>
         </div>
-        <div className="fx-hero-product"><div className="fx-orbit fx-orbit-one" /><div className="fx-orbit fx-orbit-two" /><DashboardPreview /><div className="fx-note fx-note-top"><b>Una orden, un expediente</b><span>Fotos, checklist y movimientos.</span></div><div className="fx-note fx-note-bottom"><span className="fx-note-icon">↗</span><div><b>El cliente sigue el avance</b><span>Desde el portal de tu taller.</span></div></div></div>
+        <div className="fx-hero-visual">
+          <div className="fx-visual-glow" />
+          <ProductMap />
+          <div className="fx-proof-note fx-proof-note-left"><span>✓</span><div><b>Evidencia organizada</b><small>Dentro de cada orden</small></div></div>
+          <div className="fx-proof-note fx-proof-note-right"><span>↗</span><div><b>Portal conectado</b><small>Con la marca del taller</small></div></div>
+        </div>
       </section>
 
-      <section className="fx-intro-band"><p>FIXI no sustituye la forma en que trabajas.</p><b>La vuelve visible, ordenada y compartible.</b><span>Operación real · Marca propia · Información por tenant</span></section>
+      <section className="fx-value-strip" aria-label="Áreas cubiertas por FIXI">
+        <span>Recepción</span><i />
+        <span>Operación</span><i />
+        <span>Clientes</span><i />
+        <span>Inventario</span><i />
+        <span>Finanzas</span><i />
+        <span>Portal</span>
+      </section>
 
-      <section id="producto" className="fx-product-section">
-        <div className="fx-section-heading"><div><SectionKicker>La plataforma</SectionKicker><h2>Una vista clara para cada<br />momento del taller.</h2></div><p>Desde la primera ficha hasta la entrega, cada módulo está conectado para que el equipo avance sin duplicar información.</p></div>
-        <div className="fx-tab-row" role="list" aria-label="Módulos principales">{productTabs.map((tab, index) => <a href={`#tab-${index}`} className={index === 0 ? "is-active" : ""} key={tab.label}>{tab.label}</a>)}</div>
-        <div className="fx-feature-layout">
-          <div className="fx-feature-copy">{productTabs.map((tab, index) => <article id={`tab-${index}`} key={tab.label} className={index === 0 ? "fx-feature-active" : "fx-feature-muted"}><SectionKicker>{tab.eyebrow}</SectionKicker><h3>{tab.title}</h3><p>{tab.copy}</p><Link href={adminOnboardingUrl} className="fx-text-link">Configura tu operación <Arrow /></Link></article>)}</div>
-          <div className="fx-receipt-preview"><div className="fx-receipt-top"><span>Ficha de recepción</span><b>SRF-1042</b></div><div className="fx-receipt-device"><div className="fx-device-icon">▣</div><div><small>EQUIPO</small><b>Smartphone · Diagnóstico</b></div><span className="fx-state">Recibido</span></div><div className="fx-receipt-grid"><div><small>CLIENTE</small><b>Información protegida</b></div><div><small>FECHA PROMESA</small><b>Definida por el taller</b></div><div><small>CONDICIÓN</small><b>Fotos y checklist</b></div><div><small>SEGUIMIENTO</small><b>Portal disponible</b></div></div><div className="fx-receipt-track"><div><span>Recepción</span><i className="is-done" /></div><div><span>Diagnóstico</span><i className="is-pending" /></div><div><span>Entrega</span><i /></div></div><div className="fx-receipt-actions"><span>Historial de cambios</span><button type="button">Enviar por WhatsApp <Arrow /></button></div></div>
+      <section id="como-funciona" className="fx-workflow-section">
+        <div className="fx-section-heading">
+          <div><SectionKicker>Así trabaja FIXI</SectionKicker><h2>Tres momentos.<br />Un solo expediente.</h2></div>
+          <p>La información se captura donde nace y acompaña al equipo durante todo el servicio.</p>
+        </div>
+        <div className="fx-workflow-grid">
+          {workflow.map((step) => (
+            <article key={step.number}>
+              <div className="fx-step-top"><span>{step.number}</span><i /></div>
+              <h3>{step.title}</h3>
+              <p>{step.copy}</p>
+              <div>{step.tags.map((tag) => <small key={tag}>{tag}</small>)}</div>
+            </article>
+          ))}
+        </div>
+        <div className="fx-workflow-cta"><p>El resultado: menos información perdida y una operación que se puede revisar.</p><Link href={adminOnboardingUrl} className="fx-text-link fx-text-link-light">Quiero probar el flujo <Arrow /></Link></div>
+      </section>
+
+      <section className="fx-comparison-section">
+        <div className="fx-comparison-copy"><SectionKicker>El costo del desorden</SectionKicker><h2>No necesitas trabajar más.<br />Necesitas dejar de reconstruir lo que pasó.</h2><p>FIXI convierte cada interacción del taller en información consultable para el equipo y para el cliente.</p></div>
+        <div className="fx-comparison-table">
+          <div className="fx-comparison-header"><span>Sin un sistema conectado</span><span>Con FIXI</span></div>
+          {comparisons.map(([before, after]) => <div className="fx-comparison-row" key={before}><p><i>×</i>{before}</p><p><i>✓</i>{after}</p></div>)}
         </div>
       </section>
 
-      <section id="flujo" className="fx-flow-section"><div className="fx-flow-heading"><SectionKicker>Diseñado alrededor de la operación</SectionKicker><h2>Todo lo que pasa en el taller<br />tiene su lugar.</h2></div><div className="fx-pillar-grid">{productPillars.map(([number, title, copy]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{copy}</p><div className="fx-pillar-line" /></article>)}</div></section>
+      <section id="producto" className="fx-capabilities-section">
+        <div className="fx-section-heading fx-section-heading-dark">
+          <div><SectionKicker>Todo el taller conectado</SectionKicker><h2>Una plataforma que sí refleja<br />cómo opera tu negocio.</h2></div>
+          <p>Activa la capacidad que tu plan incluye sin cambiar de herramienta ni duplicar información.</p>
+        </div>
+        <div className="fx-capability-grid">
+          {capabilityGroups.map((group, index) => (
+            <article key={group.label}>
+              <div className="fx-capability-index">0{index + 1}</div>
+              <SectionKicker>{group.label}</SectionKicker>
+              <h3>{group.title}</h3>
+              <p>{group.copy}</p>
+              <ul>{group.items.map((item) => <li key={item}><span>+</span>{item}</li>)}</ul>
+            </article>
+          ))}
+        </div>
+        <div className="fx-tenant-callout">
+          <div><span className="fx-tenant-icon">T</span><div><b>Tu negocio al frente</b><p>Nombre, logo, contacto, servicios, ubicación, landing y portal configurados por tenant.</p></div></div>
+          <Link href={adminOnboardingUrl} className="fx-outline-button fx-outline-button-dark">Crear mi espacio <Arrow /></Link>
+        </div>
+      </section>
 
-      <section className="fx-portal-section"><div className="fx-portal-copy"><SectionKicker>Tu marca al frente</SectionKicker><h2>Un portal que se siente<br />como <em>tu taller.</em></h2><p>FIXI prepara la estructura. El taller administra su nombre, logo, contacto, servicios y ubicación desde su propia configuración.</p><ul><li><span>01</span>Landing pública configurada por tenant</li><li><span>02</span>Cotizador y portal de estatus integrados</li><li><span>03</span>Mapa y contacto reales del negocio</li></ul><Link href={adminOnboardingUrl} className="fx-button">Configura tu presencia <Arrow /></Link></div><div className="fx-portal-card"><div className="fx-tenant-nav"><span className="fx-tenant-logo">TF</span><b>Tu Taller</b><i /><span>Inicio</span><span>Servicios</span><span>Contacto</span></div><div className="fx-tenant-hero"><p>SEGUIMIENTO HECHO SIMPLE</p><h3>Tu equipo.<br /><em>Tu información.</em></h3><button type="button">Consultar estatus <Arrow /></button></div><div className="fx-tenant-footer"><span>Logo y colores del taller</span><span>Portal conectado</span></div></div></section>
+      <section id="planes" className="fx-pricing-section">
+        <div className="fx-pricing-intro">
+          <div><SectionKicker>Precios transparentes</SectionKicker><h2>Elige por capacidad,<br />no por letras chiquitas.</h2></div>
+          <p>Todos los planes incluyen el núcleo operativo, documentos, portal del cliente, landing del taller y contacto por WhatsApp.</p>
+        </div>
+        <div className="fx-pricing-grid">
+          {pricingPlans.map((plan) => (
+            <article className={plan.featured ? "is-featured" : ""} key={plan.key}>
+              {plan.featured && <span className="fx-popular">Recomendado</span>}
+              <p className="fx-plan-eyebrow">{plan.eyebrow}</p>
+              <h3>{plan.name}</h3>
+              <p className="fx-plan-description">{plan.description}</p>
+              <div className="fx-price"><b>{plan.price}</b><span>MXN<br />por mes</span></div>
+              <ul>{plan.summary.map((feature) => <li key={feature}><i>✓</i>{feature}</li>)}</ul>
+              <Link href={adminOnboardingUrl} className={plan.featured ? "fx-button" : "fx-outline-button"}>Elegir {plan.name} <Arrow /></Link>
+            </article>
+          ))}
+        </div>
 
-      <section id="planes" className="fx-pricing-section"><div className="fx-pricing-heading"><div><SectionKicker>Planes claros</SectionKicker><h2>Empieza con lo que<br />tu taller necesita.</h2></div><p>Todos incluyen el portal del cliente y la landing del taller. Crece cuando tu operación lo pida.</p></div><div className="fx-pricing-grid">{pricingPlans.map((plan) => <article className={plan.featured ? "is-featured" : ""} key={plan.name}>{plan.featured && <span className="fx-popular">Más elegido</span>}<h3>{plan.name}</h3><p>{plan.copy}</p><div className="fx-price"><b>{plan.price}</b><span>MXN / mes</span></div><ul>{plan.features.map((feature) => <li key={feature}><i>✓</i>{feature}</li>)}</ul><Link href={adminOnboardingUrl} className={plan.featured ? "fx-button" : "fx-outline-button"}>Comenzar <Arrow /></Link></article>)}</div></section>
+        <div className="fx-plan-comparison" role="region" aria-label="Comparación completa de planes" tabIndex={0}>
+          <div className="fx-plan-row fx-plan-row-header"><b>Todo lo que incluye</b><span>Básico</span><span>Profesional</span><span>Empresarial</span></div>
+          {planRows.map((row) => (
+            <div className="fx-plan-row" key={row.label}><b>{row.label}</b><span>{row.basic}</span><span>{row.pro}</span><span>{row.scale}</span></div>
+          ))}
+        </div>
+        <p className="fx-plan-note">Los límites mostrados corresponden a la configuración vigente de planes en FIXI.</p>
+      </section>
 
-      <section className="fx-cta-section"><div><SectionKicker>Tu siguiente orden puede empezar mejor</SectionKicker><h2>Abre tu taller en FIXI<br />y deja de perseguir información.</h2></div><Link href={adminOnboardingUrl} className="fx-button fx-button-light">Crear mi cuenta <Arrow /></Link></section>
+      <section id="preguntas" className="fx-faq-section">
+        <div className="fx-faq-heading"><SectionKicker>Preguntas frecuentes</SectionKicker><h2>Lo importante,<br />antes de empezar.</h2><p>Si necesitas revisar un caso particular de tu taller, crea tu cuenta y recorre primero el flujo real.</p></div>
+        <div className="fx-faq-list">
+          {faqs.map(([question, answer], index) => <details key={question} open={index === 0}><summary>{question}<span>+</span></summary><p>{answer}</p></details>)}
+        </div>
+      </section>
 
-      <footer id="contacto" className="fx-footer"><div className="fx-footer-brand"><Link href="#inicio" className="fx-logo"><BrandMark /><span>FIXI</span></Link><p>Software operativo para talleres de reparación.</p></div><div><p className="fx-footer-label">PRODUCTO</p><Link href="#producto">Plataforma</Link><Link href="#flujo">Cómo funciona</Link><Link href="#planes">Planes</Link></div><div><p className="fx-footer-label">ACCESO</p><Link href={adminLoginUrl}>Iniciar sesión</Link><Link href={adminOnboardingUrl}>Crear taller</Link><a href={publicUrl}>Sitio público</a></div><div className="fx-footer-note"><p>Tu información se mantiene separada por tenant. Cada taller opera con su propia configuración.</p></div><div className="fx-footer-bottom"><span>© 2026 FIXI</span><span>Hecho para talleres que quieren operar mejor.</span></div></footer>
+      <section className="fx-final-cta">
+        <div className="fx-final-cta-mark"><BrandMark /></div>
+        <SectionKicker>Tu próxima recepción puede quedar completa</SectionKicker>
+        <h2>Deja de perseguir información.<br />Haz que la orden la conserve.</h2>
+        <p>Abre tu taller en FIXI, configura tu operación y prueba el flujo antes de elegir un plan.</p>
+        <Link href={adminOnboardingUrl} className="fx-button fx-button-light fx-button-large">Crear mi taller gratis <Arrow /></Link>
+        <small>Sin tarjeta para empezar · Configuración guiada</small>
+      </section>
+
+      <footer id="contacto" className="fx-footer">
+        <div className="fx-footer-brand"><Link href="#inicio" className="fx-logo fx-logo-light"><BrandMark /><span>FIXI</span></Link><p>Software operativo para talleres de reparación.</p></div>
+        <div><p className="fx-footer-label">PRODUCTO</p><Link href="#como-funciona">Cómo funciona</Link><Link href="#producto">Plataforma</Link><Link href="#planes">Planes</Link></div>
+        <div><p className="fx-footer-label">ACCESO</p><Link href={adminLoginUrl}>Iniciar sesión</Link><Link href={adminOnboardingUrl}>Crear taller</Link><a href={publicUrl}>Sitio público</a></div>
+        <div className="fx-footer-note"><p>Información y configuración separadas por tenant para que cada taller opere con su propia identidad.</p></div>
+        <div className="fx-footer-bottom"><span>© 2026 FIXI</span><span>Hecho para talleres que quieren operar con claridad.</span></div>
+      </footer>
+
+      <div className="fx-mobile-cta"><Link href={adminOnboardingUrl}>Probar FIXI gratis <Arrow /></Link></div>
     </main>
   );
 }
