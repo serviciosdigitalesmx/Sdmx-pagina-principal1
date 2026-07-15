@@ -72,6 +72,7 @@ export interface Order {
   customer_id: string | null;
   customers?: Customer | null;
   folio: string;
+  public_token?: string | null;
   status: string;
   device_info: {
     type?: string;
