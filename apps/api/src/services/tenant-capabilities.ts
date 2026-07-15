@@ -49,15 +49,15 @@ export const PLAN_REGISTRY: Record<TenantCapabilities['plan_key'], { module_allo
   basic: {
     // Every tenant needs to configure and publish its public presence, regardless of plan.
     module_allowlist: ['dashboard', 'customers', 'requests', 'orders', 'assets', 'stock', 'documents', 'portal', 'landing', 'whatsapp', 'billing', 'settings'],
-    limits: { users: 2, sucursales: 1, monthly_orders: 50, storage_mb: 500, public_portal: true, whatsapp_templates: 5, document_templates: 3 },
+    limits: { users: 2, sucursales: 1, monthly_orders: 50, storage_mb: 2048, public_portal: true, whatsapp_templates: null, document_templates: null },
   },
   pro: {
     module_allowlist: ['dashboard', 'customers', 'requests', 'orders', 'appointments', 'assets', 'stock', 'suppliers', 'purchase-orders', 'expenses', 'reports', 'documents', 'portal', 'landing', 'whatsapp', 'warranty', 'billing', 'settings', 'sucursales', 'users', 'tasks', 'security'],
-    limits: { users: 3, sucursales: 2, monthly_orders: 500, storage_mb: 5000, public_portal: true, whatsapp_templates: 50, document_templates: 20 },
+    limits: { users: 5, sucursales: 2, monthly_orders: 500, storage_mb: 10240, public_portal: true, whatsapp_templates: null, document_templates: null },
   },
   scale: {
     module_allowlist: MODULE_REGISTRY.filter((module) => module.key !== 'movivendor').map((module) => module.key),
-    limits: { users: null, sucursales: null, monthly_orders: null, storage_mb: null, public_portal: true, whatsapp_templates: null, document_templates: null },
+    limits: { users: null, sucursales: null, monthly_orders: null, storage_mb: 102400, public_portal: true, whatsapp_templates: null, document_templates: null },
   },
 };
 

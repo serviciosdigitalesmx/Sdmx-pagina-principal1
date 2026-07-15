@@ -33,8 +33,8 @@ function buildPdfUrl(order: Order | null) {
   if (!order) return null;
   const tenantSlug = getTenantSlug();
   const apiBaseUrl = resolveAdminApiBaseUrl().replace(/\/$/, "");
-  if (tenantSlug && apiBaseUrl && order.folio) {
-    return `${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(order.folio)}/pdf`;
+  if (tenantSlug && apiBaseUrl && order.public_token) {
+    return `${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(order.public_token)}/pdf`;
   }
   return order.receipt_url ?? null;
 }
@@ -46,8 +46,8 @@ function buildWhatsappUrl(order: Order | null) {
   const tenantSlug = getTenantSlug();
   const baseDomain = resolveBaseDomain();
   const customerPortalBase = process.env.NEXT_PUBLIC_CUSTOMER_TRACKING_URL?.replace(/\/$/, "") ?? (baseDomain ? `https://clientes.${baseDomain}` : "");
-  const portalUrl = tenantSlug && folio && customerPortalBase
-    ? `${customerPortalBase}/t/${encodeURIComponent(tenantSlug)}/portal/${encodeURIComponent(folio)}`
+  const portalUrl = tenantSlug && order?.public_token && customerPortalBase
+    ? `${customerPortalBase}/t/${encodeURIComponent(tenantSlug)}/portal/${encodeURIComponent(order.public_token)}`
     : "";
   const message = encodeURIComponent(`Hola, tu equipo ${folio} está en seguimiento. Puedes consultar su estado aquí: ${portalUrl || "portal público"}.`);
   return `https://wa.me/${phone}?text=${message}`;
