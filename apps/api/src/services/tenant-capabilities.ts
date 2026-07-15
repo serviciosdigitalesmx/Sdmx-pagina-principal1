@@ -34,7 +34,7 @@ export const MODULE_REGISTRY: ModuleRegistryEntry[] = [
   { key: 'documents', label: 'Documentos', description: 'PDFs y comprobantes', category: 'operations', frontend_routes: ['/dashboard/documentos'], backend_permissions: [], default_enabled_by_industry: ['electronics_repair', 'hvac_service'], required_plan: null, aliases: [] },
   { key: 'movivendor', label: 'Movivendor', description: 'Recargas, servicios y gift cards', category: 'operations', frontend_routes: ['/dashboard/movivendor'], backend_permissions: [], default_enabled_by_industry: [], required_plan: null, aliases: [] },
   { key: 'portal', label: 'Seguimiento', description: 'Seguimiento público', category: 'public', frontend_routes: [], backend_permissions: [], default_enabled_by_industry: ['electronics_repair', 'hvac_service'], required_plan: null, aliases: [] },
-  { key: 'landing', label: 'Landing', description: 'Página pública del tenant', category: 'public', frontend_routes: [], backend_permissions: [], default_enabled_by_industry: ['electronics_repair', 'hvac_service'], required_plan: null, aliases: [] },
+  { key: 'landing', label: 'Landing', description: 'Página pública del tenant', category: 'public', frontend_routes: [], backend_permissions: [], default_enabled_by_industry: ['electronics_repair', 'hvac_service'], required_plan: 'pro', aliases: [] },
   { key: 'whatsapp', label: 'WhatsApp', description: 'Enlaces y plantillas de contacto', category: 'public', frontend_routes: [], backend_permissions: [], default_enabled_by_industry: ['electronics_repair', 'hvac_service'], required_plan: null, aliases: [] },
   { key: 'warranty', label: 'Garantía', description: 'Seguimiento de garantía', category: 'operations', frontend_routes: ['/dashboard/garantia'], backend_permissions: [], default_enabled_by_industry: ['electronics_repair', 'hvac_service'], required_plan: null, aliases: [] },
   { key: 'billing', label: 'Billing', description: 'Plan y facturación', category: 'admin', frontend_routes: ['/dashboard/billing'], backend_permissions: [], default_enabled_by_industry: ['electronics_repair', 'hvac_service'], required_plan: null, aliases: [] },
@@ -47,8 +47,8 @@ export const MODULE_REGISTRY: ModuleRegistryEntry[] = [
 
 export const PLAN_REGISTRY: Record<TenantCapabilities['plan_key'], { module_allowlist: string[]; limits: TenantPlanLimits }> = {
   basic: {
-    // Every tenant needs to configure and publish its public presence, regardless of plan.
-    module_allowlist: ['dashboard', 'customers', 'requests', 'orders', 'assets', 'stock', 'documents', 'portal', 'landing', 'whatsapp', 'billing', 'settings'],
+    // Basic keeps customer tracking and minimum tenant settings, without a public landing or visual branding editor.
+    module_allowlist: ['dashboard', 'customers', 'requests', 'orders', 'assets', 'stock', 'documents', 'portal', 'whatsapp', 'billing', 'settings'],
     limits: { users: 2, sucursales: 1, monthly_orders: 50, storage_mb: 2048, public_portal: true, whatsapp_templates: null, document_templates: null },
   },
   pro: {
@@ -75,7 +75,7 @@ function unique(values: string[]) {
   return Array.from(new Set(values.filter(Boolean)));
 }
 
-const UNIVERSAL_TENANT_MODULES = ['landing', 'portal', 'settings'];
+const UNIVERSAL_TENANT_MODULES = ['portal', 'settings'];
 
 function getIndustryDefaultModules(industryKey?: string | null) {
   const normalized = normalizeKey(industryKey);
@@ -136,9 +136,8 @@ export function resolveTenantCapabilities({
           : industryModules,
   );
 
-  // Public presence and its configuration cannot depend on legacy module rows.
-  // Existing tenants may predate `tenant_enabled_modules`, but must still be
-  // able to configure their landing and customer portal.
+  // Customer tracking and minimum tenant settings cannot depend on legacy
+  // module rows. The public landing remains restricted by the selected plan.
   const requestedActive = unique(
     [...baseModules, ...UNIVERSAL_TENANT_MODULES]
       .filter((module) => plan.module_allowlist.includes(module)),

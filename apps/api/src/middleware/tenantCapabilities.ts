@@ -3,7 +3,7 @@ import { loadTenantBillingSummary } from '../services/tenant-billing';
 import { loadTenantRuntimeConfig } from '../services/tenant-config';
 import { resolveTenantCapabilities } from '../services/tenant-capabilities';
 
-const PUBLIC_MODULE_KEYS = new Set(['landing', 'portal', 'whatsapp']);
+const PUBLIC_MODULE_KEYS = new Set(['portal', 'whatsapp']);
 
 export async function loadTenantCapabilitiesForRequest(req: Request) {
   const tenantId = req.tenantId ?? req.user?.tenantId;

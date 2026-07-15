@@ -1332,22 +1332,29 @@ export async function getPublicTenantLanding(req: Request, res: Response) {
       runtimeConfig,
     });
 
-    if (!capabilities.active_modules.includes('landing')) {
-      return res.status(404).json({ error: 'La landing no está disponible para el plan actual' });
-    }
-
+    const landingAvailable = capabilities.active_modules.includes('landing');
     const landingContent = mergeLandingContent(tenant.landing_content, (runtimeConfig.templates.landing ?? null) as LandingTemplate | null, tenant.name, tenant.slug);
+    const publicConfig = landingAvailable
+      ? runtimeConfig
+      : {
+          ...runtimeConfig,
+          templates: {
+            ...runtimeConfig.templates,
+            landing: {},
+          },
+        };
 
     return res.json({
       success: true,
       data: {
+        landingAvailable,
         tenant: {
           id: tenant.id,
           slug: tenant.slug,
           name: tenant.name,
-          branding: tenant.branding ?? null,
+          branding: landingAvailable ? tenant.branding ?? null : null,
           ...extractContactInfo(tenant.landing_content),
-          config: runtimeConfig,
+          config: publicConfig,
         },
         landingContent,
       },

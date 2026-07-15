@@ -11,7 +11,7 @@ export type TenantLandingPayload = {
 export async function loadTenantLanding(tenantSlug: string): Promise<TenantLandingPayload | null> {
   const payload = await getTenantLanding(tenantSlug);
 
-  if (!payload?.success) {
+  if (!payload?.success || !payload.data?.landingAvailable) {
     return null;
   }
 

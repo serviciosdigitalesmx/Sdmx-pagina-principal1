@@ -157,6 +157,7 @@ export interface LandingContent {
 export interface LandingResponse {
   success: boolean;
   data: {
+    landingAvailable: boolean;
     tenant: Tenant;
     landingContent: LandingContent;
   };
