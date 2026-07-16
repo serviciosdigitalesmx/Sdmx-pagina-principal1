@@ -859,9 +859,15 @@ async function getAllowedOrderStatusKeys(tenantId: string) {
   return new Set(statuses.map((status) => status.key ?? '').filter(Boolean));
 }
 
+const ENSURED_BUCKETS = new Set<string>();
+
 async function ensureBucketExists(bucketName: string) {
+  if (ENSURED_BUCKETS.has(bucketName)) {
+    return;
+  }
   const { error } = await supabaseAdmin.storage.getBucket(bucketName);
   if (!error) {
+    ENSURED_BUCKETS.add(bucketName);
     return;
   }
   const { error: createError } = await supabaseAdmin.storage.createBucket(bucketName, {
@@ -871,6 +877,7 @@ async function ensureBucketExists(bucketName: string) {
   if (createError) {
     throw new Error(`Unable to ensure storage bucket ${bucketName}: ${createError.message}`);
   }
+  ENSURED_BUCKETS.add(bucketName);
 }
 
 async function uploadBufferToStorage(options: {
@@ -933,17 +940,6 @@ async function persistReceiptPdf(options: {
     fileType: 'receipt_pdf',
   });
 
-  const { data: latestReceiptOrder, error: latestReceiptOrderError } = await options.supabase
-    .from('service_orders')
-    .select('evidence_metadata')
-    .eq('tenant_id', options.tenantId)
-    .eq('id', options.orderId)
-    .single();
-
-  if (latestReceiptOrderError) {
-    throw new Error(`Failed to persist receipt evidence: ${latestReceiptOrderError.message}`);
-  }
-
   const receiptDocumentId = randomUUID();
   const receiptDocument = {
     id: receiptDocumentId,
@@ -968,7 +964,7 @@ async function persistReceiptPdf(options: {
     .from('service_orders')
     .update({
       receipt_url: receiptUpload.publicUrl,
-      evidence_metadata: appendEvidenceEntry(latestReceiptOrder?.evidence_metadata, {
+      evidence_metadata: appendEvidenceEntry((options.order as any)?.evidence_metadata, {
         kind: 'document',
         id: receiptDocumentId,
         file_name: 'recepcion.pdf',
@@ -1088,6 +1084,18 @@ export const createOrder = async (req: Request, res: Response) => {
       }
     }
 
+    const createdEventId = randomUUID();
+    const initialEvidenceMetadata = appendEvidenceEntry(undefined, {
+      kind: 'event',
+      id: createdEventId,
+      event_type: 'created',
+      previous_status: null,
+      new_status: 'recibido',
+      note: validatedData.issue,
+      actor_name: req.user?.email ?? req.user?.role ?? 'system',
+      created_at: new Date().toISOString(),
+    });
+
     const { data, error } = await supabase
       .from('service_orders')
       .insert([
@@ -1115,6 +1123,7 @@ export const createOrder = async (req: Request, res: Response) => {
           promised_date: validatedData.promisedDate || null,
           receipt_url: validatedData.receiptUrl || null,
           assigned_user_id: req.user?.role === 'technician' ? req.user.userId ?? null : null,
+          evidence_metadata: initialEvidenceMetadata,
         }
       ])
       .select()
@@ -1160,24 +1169,6 @@ export const createOrder = async (req: Request, res: Response) => {
     }
 
     await auditChecklistChange(req, tenantId, 'orders.checklist_created', null, normalizeChecklistRow(checklistData) as Record<string, unknown>);
-
-    const createdEventId = randomUUID();
-    await supabase
-      .from('service_orders')
-      .update({
-        evidence_metadata: appendEvidenceEntry(data.evidence_metadata, {
-          kind: 'event',
-          id: createdEventId,
-          event_type: 'created',
-          previous_status: null,
-          new_status: 'recibido',
-          note: validatedData.issue,
-          actor_name: req.user?.email ?? req.user?.role ?? 'system',
-          created_at: new Date().toISOString(),
-        }),
-      })
-      .eq('tenant_id', tenantId)
-      .eq('id', data.id);
 
     await insertOrderEvent(supabase, {
       id: createdEventId,
