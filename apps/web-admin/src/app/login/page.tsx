@@ -185,7 +185,6 @@ function LoginScreen() {
       router.push(redirect);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión.');
-    } finally {
       setLoading(false);
     }
   };

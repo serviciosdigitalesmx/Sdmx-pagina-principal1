@@ -1,6 +1,9 @@
-import Link from "next/link";
+"use client";
+
+import { useRouter } from "next/navigation";
 
 export default function NotFound() {
+  const router = useRouter();
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(27,158,94,0.06),_transparent_35%),linear-gradient(180deg,#f8fafc_0%,#f1f5f9_100%)] flex flex-col items-center justify-center px-4 py-16 text-slate-900">
       <div className="w-full max-w-xl text-center space-y-8 px-4">
@@ -50,12 +53,12 @@ export default function NotFound() {
 
         {/* Action Button */}
         <div className="pt-4">
-          <Link
-            href="/"
+          <button
+            onClick={() => router.back()}
             className="inline-flex items-center justify-center rounded-full bg-[#475569] px-8 py-4 text-base font-semibold text-white shadow-[0_12px_30px_rgba(27,158,94,0.25)] hover:bg-[#15804c] hover:shadow-[0_12px_35px_rgba(27,158,94,0.35)] transition-all duration-300 transform hover:-translate-y-0.5"
           >
-            Ir a Consultar Orden
-          </Link>
+            Regresar
+          </button>
         </div>
 
         {/* Trust Seal */}

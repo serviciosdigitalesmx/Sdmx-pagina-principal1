@@ -119,7 +119,7 @@ export default function ClientesPage() {
       fotoAdjunta: false,
     };
     localStorage.setItem('srf_borrador_orden', JSON.stringify(draft));
-    window.location.href = '/dashboard/operativo';
+    router.push('/dashboard/operativo');
   };
 
   const formatPhone = (phone: string) => {
