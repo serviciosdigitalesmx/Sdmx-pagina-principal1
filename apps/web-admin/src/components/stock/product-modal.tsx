@@ -114,7 +114,7 @@ export function ProductModal({ open, onOpenChange, product, onProductSaved }: Pr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto border border-slate-800 bg-slate-950/95 text-slate-100">
+      <DialogContent data-testid="product-dialog" className="max-h-[90vh] max-w-2xl overflow-y-auto border border-slate-800 bg-slate-950/95 text-slate-100">
         <DialogHeader>
           <DialogTitle className="text-slate-50">
             {product ? 'Editar producto' : 'Nuevo producto'}

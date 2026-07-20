@@ -186,6 +186,7 @@ export default function ClientesPage() {
             onClick={() => loadCustomers()}
             variant="outline"
             className="gap-2"
+            data-e2e="btn-refresh-customers"
           >
             <RefreshCw className="w-4 h-4" />
             Actualizar
@@ -196,6 +197,7 @@ export default function ClientesPage() {
               setModalOpen(true);
             }}
             className="gap-2"
+            data-e2e="btn-new-customer"
           >
             <Plus className="w-4 h-4" />
             Nuevo cliente
@@ -224,8 +226,8 @@ export default function ClientesPage() {
       </SurfaceCard>
 
       {/* Customers table */}
-      <SurfaceCard elevated className="overflow-hidden p-0">
-        <table className="w-full text-sm">
+      <SurfaceCard elevated className="overflow-hidden p-0" data-testid="customers-table">
+        <table className="w-full text-sm" data-e2e="table-customers">
           <thead className="border-b border-slate-800 bg-slate-950/70">
             <tr>
               <th className="px-4 py-3 text-left font-semibold text-slate-400">Cliente</th>
@@ -270,6 +272,7 @@ export default function ClientesPage() {
                       onClick={() => handleEdit(customer)}
                       className="rounded p-1 text-sky-300 hover:bg-sky-500/10"
                       title="Editar"
+                      data-e2e="btn-edit-customer"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
@@ -277,6 +280,7 @@ export default function ClientesPage() {
                       onClick={() => handleViewHistory(customer)}
                       className="rounded p-1 text-sky-300 hover:bg-sky-500/10"
                       title="Historial"
+                      data-e2e="btn-customer-history"
                     >
                       <Eye className="w-4 h-4" />
                     </button>
@@ -284,6 +288,7 @@ export default function ClientesPage() {
                       onClick={() => handleNewOrder(customer)}
                       className="rounded p-1 text-cyan-300 hover:bg-cyan-500/10"
                       title="Nueva orden"
+                      data-e2e="btn-customer-new-order"
                     >
                       <Wrench className="w-4 h-4" />
                     </button>

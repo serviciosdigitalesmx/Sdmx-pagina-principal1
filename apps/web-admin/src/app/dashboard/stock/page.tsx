@@ -171,6 +171,7 @@ export default function StockPage() {
             setProductModalOpen(true);
           }}
           className="gap-2"
+          data-e2e="btn-new-product"
         >
           <Plus className="w-4 h-4" />
           Nuevo producto
@@ -257,6 +258,7 @@ export default function StockPage() {
           }}
           variant="outline"
           className="gap-2"
+          data-e2e="btn-refresh-inventory"
         >
           <RefreshCw className="w-4 h-4" />
           Actualizar
@@ -264,8 +266,8 @@ export default function StockPage() {
       </SurfaceCard>
 
       {/* Products table */}
-      <SurfaceCard elevated className="overflow-hidden p-0">
-        <table className="w-full text-sm">
+      <SurfaceCard elevated className="overflow-hidden p-0" data-testid="inventory-table">
+        <table className="w-full text-sm" data-e2e="table-inventory">
           <thead className="border-b border-slate-800 bg-slate-900/70">
             <tr>
               <th className="text-left py-3 px-4">SKU</th>
@@ -313,6 +315,7 @@ export default function StockPage() {
                       }}
                       className="rounded p-1 text-sky-300 hover:bg-sky-500/10"
                       title="Editar"
+                      data-e2e="btn-edit-product"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
@@ -323,6 +326,7 @@ export default function StockPage() {
                       }}
                       className="rounded p-1 text-cyan-300 hover:bg-cyan-500/10"
                       title="Ver Kardex"
+                      data-e2e="btn-product-movements"
                     >
                       <ArrowUpDown className="w-4 h-4" />
                     </button>

@@ -95,7 +95,7 @@ export function UserModal({ open, onOpenChange, user, onUserSaved }: UserModalPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md border border-slate-800 bg-slate-950/95">
+      <DialogContent data-testid="user-dialog" className="max-w-md border border-slate-800 bg-slate-950/95">
         <DialogHeader>
           <DialogTitle className="text-slate-100">
             {user ? 'Editar usuario' : 'Nuevo usuario'}

@@ -71,7 +71,7 @@ export function CustomerModal({ open, onOpenChange, customer, onCustomerSaved }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md border border-slate-800 bg-slate-950/95 text-slate-100">
+      <DialogContent data-testid="customer-dialog" className="max-w-md border border-slate-800 bg-slate-950/95 text-slate-100">
         <DialogHeader>
           <DialogTitle className="text-slate-50">
             {customer ? 'Editar cliente' : 'Nuevo cliente'}

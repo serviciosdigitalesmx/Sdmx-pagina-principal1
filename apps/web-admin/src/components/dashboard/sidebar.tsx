@@ -201,6 +201,7 @@ export function Sidebar({
                   <Link
                     key={module.key}
                     href={module.href}
+                    data-e2e={`nav-${module.key}`}
                     className={`
                       flex items-center gap-3 rounded-2xl border px-3 py-2.5 transition-all duration-200
                       ${isActive
