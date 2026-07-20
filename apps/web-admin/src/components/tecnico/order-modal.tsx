@@ -81,6 +81,8 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
   const [savingChecklist, setSavingChecklist] = useState(false);
   const [savingPayment, setSavingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [savingFinancials, setSavingFinancials] = useState(false);
+  const [financialError, setFinancialError] = useState<string | null>(null);
   const [savingStatus, setSavingStatus] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [statusDraft, setStatusDraft] = useState("");
@@ -88,6 +90,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
   const [pendingBalanceOverrideReason, setPendingBalanceOverrideReason] = useState("");
   const [detailRefreshKey, setDetailRefreshKey] = useState(0);
   const [paymentDraft, setPaymentDraft] = useState({ amount: "", paymentMethod: "efectivo", reference: "", notes: "" });
+  const [financialDraft, setFinancialDraft] = useState({ estimatedCost: "", finalCost: "", note: "" });
   const [detailsDraft, setDetailsDraft] = useState({
     clientName: "",
     clientPhone: "",
@@ -134,8 +137,14 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
           checklist: loaded.checklist ?? null,
           documents: loaded.documents ?? [],
           events: loaded.events ?? [],
+          financialSummary: loaded.financialSummary,
         });
         setStatusDraft(loaded.order.status || "recibido");
+        setFinancialDraft({
+          estimatedCost: String(loaded.order.estimated_cost ?? 0),
+          finalCost: String(loaded.order.final_cost ?? loaded.order.estimated_cost ?? 0),
+          note: "",
+        });
         setDetailsDraft({
           clientName: loaded.order.device_info?.customer_name || "",
           clientPhone: loaded.order.device_info?.customer_phone || "",
@@ -226,6 +235,36 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
       await onOrderUpdated();
     } finally {
       setSavingChecklist(false);
+    }
+  };
+
+  const saveFinancials = async () => {
+    if (!order.id) return;
+    const estimatedCost = Number(financialDraft.estimatedCost);
+    const finalCost = Number(financialDraft.finalCost);
+    if (!Number.isFinite(estimatedCost) || estimatedCost < 0 || !Number.isFinite(finalCost) || finalCost < 0) {
+      setFinancialError("Captura montos válidos mayores o iguales a cero.");
+      return;
+    }
+
+    setSavingFinancials(true);
+    setFinancialError(null);
+    try {
+      await apiClient.patch(
+        `/orders/${encodeURIComponent(order.id)}/financials`,
+        {
+          estimatedCost,
+          finalCost,
+          note: financialDraft.note.trim() || undefined,
+        },
+        getApiOptions(),
+      );
+      setDetailRefreshKey((current) => current + 1);
+      await onOrderUpdated();
+    } catch (error) {
+      setFinancialError(error instanceof Error ? error.message : "No se pudo actualizar la cotización.");
+    } finally {
+      setSavingFinancials(false);
     }
   };
 
@@ -417,6 +456,52 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
                       <div className="mt-4 flex justify-end">
                         <Button onClick={() => void saveDetails()} disabled={savingDetails} className="gap-2">
                           {savingDetails ? "Guardando..." : "Guardar ficha"}
+                        </Button>
+                      </div>
+                    </SurfaceCard>
+                    <SurfaceCard elevated className="p-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Cotización</p>
+                        <p className="mt-1 text-sm text-slate-300">Actualiza el monto después del diagnóstico antes de solicitar autorización.</p>
+                      </div>
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        <div>
+                          <label htmlFor="estimated-cost" className="text-xs font-medium text-slate-400">Costo estimado</label>
+                          <Input
+                            id="estimated-cost"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            inputMode="decimal"
+                            value={financialDraft.estimatedCost}
+                            onChange={(event) => setFinancialDraft((current) => ({ ...current, estimatedCost: event.target.value }))}
+                            className="mt-2"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="final-cost" className="text-xs font-medium text-slate-400">Costo final</label>
+                          <Input
+                            id="final-cost"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            inputMode="decimal"
+                            value={financialDraft.finalCost}
+                            onChange={(event) => setFinancialDraft((current) => ({ ...current, finalCost: event.target.value }))}
+                            className="mt-2"
+                          />
+                        </div>
+                      </div>
+                      <Textarea
+                        className="mt-3 min-h-20"
+                        value={financialDraft.note}
+                        onChange={(event) => setFinancialDraft((current) => ({ ...current, note: event.target.value }))}
+                        placeholder="Nota del diagnóstico o alcance (opcional)"
+                      />
+                      <div className="mt-3 flex items-center justify-between gap-3">
+                        {financialError ? <p className="text-sm text-rose-300" role="alert">{financialError}</p> : <span />}
+                        <Button onClick={() => void saveFinancials()} disabled={savingFinancials}>
+                          {savingFinancials ? "Guardando..." : "Guardar cotización"}
                         </Button>
                       </div>
                     </SurfaceCard>
