@@ -81,6 +81,11 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
   const [savingChecklist, setSavingChecklist] = useState(false);
   const [savingPayment, setSavingPayment] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [savingStatus, setSavingStatus] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
+  const [statusDraft, setStatusDraft] = useState("");
+  const [statusNote, setStatusNote] = useState("");
+  const [pendingBalanceOverrideReason, setPendingBalanceOverrideReason] = useState("");
   const [detailRefreshKey, setDetailRefreshKey] = useState(0);
   const [paymentDraft, setPaymentDraft] = useState({ amount: "", paymentMethod: "efectivo", reference: "", notes: "" });
   const [detailsDraft, setDetailsDraft] = useState({
@@ -130,6 +135,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
           documents: loaded.documents ?? [],
           events: loaded.events ?? [],
         });
+        setStatusDraft(loaded.order.status || "recibido");
         setDetailsDraft({
           clientName: loaded.order.device_info?.customer_name || "",
           clientPhone: loaded.order.device_info?.customer_phone || "",
@@ -252,6 +258,38 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
       setPaymentError(error instanceof Error ? error.message : "No se pudo registrar el pago.");
     } finally {
       setSavingPayment(false);
+    }
+  };
+
+  const saveStatus = async () => {
+    if (!order.id || !statusDraft) return;
+    if (statusDraft === "entregado" && outstandingBalance > 0 && !pendingBalanceOverrideReason.trim()) {
+      setStatusError("Indica el motivo para solicitar una entrega con saldo pendiente.");
+      return;
+    }
+
+    setSavingStatus(true);
+    setStatusError(null);
+    try {
+      await apiClient.patch(
+        `/orders/${encodeURIComponent(order.id)}/status`,
+        {
+          status: statusDraft,
+          note: statusNote.trim() || undefined,
+          pendingBalanceOverrideReason: statusDraft === "entregado" && outstandingBalance > 0
+            ? pendingBalanceOverrideReason.trim()
+            : undefined,
+        },
+        getApiOptions(),
+      );
+      setStatusNote("");
+      setPendingBalanceOverrideReason("");
+      setDetailRefreshKey((current) => current + 1);
+      await onOrderUpdated();
+    } catch (error) {
+      setStatusError(error instanceof Error ? error.message : "No se pudo cambiar el estado.");
+    } finally {
+      setSavingStatus(false);
     }
   };
 
@@ -425,6 +463,47 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
                         placeholder="Nota del pago opcional"
                       />
                       {paymentError ? <p className="mt-3 text-sm text-rose-300" role="alert">{paymentError}</p> : null}
+                    </SurfaceCard>
+                    <SurfaceCard elevated className="p-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Estado de la orden</p>
+                        <p className="mt-1 text-sm text-slate-300">Actualiza el avance operativo. La entrega con saldo requiere autorización.</p>
+                      </div>
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        <select
+                          value={statusDraft}
+                          onChange={(event) => {
+                            setStatusDraft(event.target.value);
+                            setStatusError(null);
+                          }}
+                          className="h-10 rounded-md border border-input bg-transparent px-3 text-sm text-slate-100"
+                        >
+                          <option value="recibido">Recibido</option>
+                          <option value="diagnostico">Diagnóstico</option>
+                          <option value="reparacion">En reparación</option>
+                          <option value="listo">Listo para entrega</option>
+                          <option value="entregado">Entregado</option>
+                        </select>
+                        <Input
+                          value={statusNote}
+                          onChange={(event) => setStatusNote(event.target.value)}
+                          placeholder="Nota del cambio opcional"
+                        />
+                      </div>
+                      {statusDraft === "entregado" && outstandingBalance > 0 ? (
+                        <Textarea
+                          className="mt-3 min-h-20"
+                          value={pendingBalanceOverrideReason}
+                          onChange={(event) => setPendingBalanceOverrideReason(event.target.value)}
+                          placeholder={`Motivo obligatorio para entregar con saldo de $${outstandingBalance.toFixed(2)}`}
+                        />
+                      ) : null}
+                      <div className="mt-3 flex justify-end">
+                        <Button onClick={() => void saveStatus()} disabled={savingStatus || statusDraft === currentOrder.status}>
+                          {savingStatus ? "Actualizando..." : "Actualizar estado"}
+                        </Button>
+                      </div>
+                      {statusError ? <p className="mt-3 text-sm text-rose-300" role="alert">{statusError}</p> : null}
                     </SurfaceCard>
                   </TabsContent>
 
