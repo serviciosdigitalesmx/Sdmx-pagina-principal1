@@ -21,6 +21,20 @@ type Props = {
   onOrderUpdated: () => void;
 };
 
+type OrderFinancialSummary = {
+  total_aplicable: number;
+  total_cobrado: number;
+  saldo_pendiente: number;
+};
+
+type OrderDetailResponse = {
+  order: Order;
+  checklist?: OrderChecklist | null;
+  documents?: OrderDocument[];
+  events?: OrderEvent[];
+  financialSummary?: OrderFinancialSummary;
+};
+
 function formatDate(value?: string | null) {
   if (!value) return "Sin fecha";
   const date = new Date(value);
@@ -61,10 +75,14 @@ function InfoRow({ label, value }: { label: string; value?: string | number | nu
 
 export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props) {
   const [activeTab, setActiveTab] = useState<"details" | "checklist" | "photos" | "history">("details");
-  const [detail, setDetail] = useState<{ order: Order; checklist: OrderChecklist | null; documents: OrderDocument[]; events: OrderEvent[] } | null>(null);
+  const [detail, setDetail] = useState<(OrderDetailResponse & { checklist: OrderChecklist | null; documents: OrderDocument[]; events: OrderEvent[] }) | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [savingDetails, setSavingDetails] = useState(false);
   const [savingChecklist, setSavingChecklist] = useState(false);
+  const [savingPayment, setSavingPayment] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [detailRefreshKey, setDetailRefreshKey] = useState(0);
+  const [paymentDraft, setPaymentDraft] = useState({ amount: "", paymentMethod: "efectivo", reference: "", notes: "" });
   const [detailsDraft, setDetailsDraft] = useState({
     clientName: "",
     clientPhone: "",
@@ -99,7 +117,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
     setLoadingDetail(true);
 
     void apiClient
-      .get<{ data: { order: Order; checklist?: OrderChecklist | null; documents?: OrderDocument[]; events?: OrderEvent[] } }>(
+      .get<{ data: OrderDetailResponse }>(
         `/orders/${encodeURIComponent(order.id)}`,
         getApiOptions(),
       )
@@ -147,7 +165,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
     return () => {
       cancelled = true;
     };
-  }, [open, order?.id]);
+  }, [detailRefreshKey, open, order?.id]);
 
   if (!open || !order) return null;
 
@@ -155,6 +173,11 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
   const checklist = detail?.checklist ?? null;
   const documents = detail?.documents ?? [];
   const events = detail?.events ?? [];
+  const financialSummary = detail?.financialSummary;
+  const outstandingBalance = Math.max(
+    0,
+    Number(financialSummary?.saldo_pendiente ?? (currentOrder.final_cost || currentOrder.estimated_cost || 0)),
+  );
   const device = currentOrder.device_info ?? {};
   const statusLabel = String(currentOrder.status || "recibido").replaceAll("_", " ");
 
@@ -197,6 +220,38 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
       await onOrderUpdated();
     } finally {
       setSavingChecklist(false);
+    }
+  };
+
+  const savePayment = async () => {
+    if (!order.id) return;
+
+    const amount = Number(paymentDraft.amount.replace(",", "."));
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setPaymentError("Ingresa un monto mayor a cero.");
+      return;
+    }
+
+    setSavingPayment(true);
+    setPaymentError(null);
+    try {
+      await apiClient.post(
+        `/orders/${encodeURIComponent(order.id)}/payments`,
+        {
+          amount,
+          paymentMethod: paymentDraft.paymentMethod,
+          reference: paymentDraft.reference.trim() || undefined,
+          notes: paymentDraft.notes.trim() || undefined,
+        },
+        getApiOptions(),
+      );
+      setPaymentDraft({ amount: "", paymentMethod: "efectivo", reference: "", notes: "" });
+      setDetailRefreshKey((current) => current + 1);
+      await onOrderUpdated();
+    } catch (error) {
+      setPaymentError(error instanceof Error ? error.message : "No se pudo registrar el pago.");
+    } finally {
+      setSavingPayment(false);
     }
   };
 
@@ -326,6 +381,50 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
                           {savingDetails ? "Guardando..." : "Guardar ficha"}
                         </Button>
                       </div>
+                    </SurfaceCard>
+                    <SurfaceCard elevated className="p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Cobro</p>
+                          <p className="mt-1 text-sm font-semibold text-slate-100">
+                            Saldo pendiente: ${outstandingBalance.toFixed(2)}
+                          </p>
+                        </div>
+                        {financialSummary ? <p className="text-xs text-slate-400">Cobrado: ${Number(financialSummary.total_cobrado).toFixed(2)}</p> : null}
+                      </div>
+                      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                        <Input
+                          inputMode="decimal"
+                          value={paymentDraft.amount}
+                          onChange={(event) => setPaymentDraft((current) => ({ ...current, amount: event.target.value }))}
+                          placeholder="Monto"
+                        />
+                        <select
+                          value={paymentDraft.paymentMethod}
+                          onChange={(event) => setPaymentDraft((current) => ({ ...current, paymentMethod: event.target.value }))}
+                          className="h-10 rounded-md border border-input bg-transparent px-3 text-sm text-slate-100"
+                        >
+                          <option value="efectivo">Efectivo</option>
+                          <option value="tarjeta">Tarjeta</option>
+                          <option value="transferencia">Transferencia</option>
+                          <option value="otro">Otro</option>
+                        </select>
+                        <Input
+                          value={paymentDraft.reference}
+                          onChange={(event) => setPaymentDraft((current) => ({ ...current, reference: event.target.value }))}
+                          placeholder="Referencia opcional"
+                        />
+                        <Button onClick={() => void savePayment()} disabled={savingPayment || outstandingBalance <= 0}>
+                          {savingPayment ? "Registrando..." : "Registrar pago"}
+                        </Button>
+                      </div>
+                      <Textarea
+                        className="mt-3 min-h-20"
+                        value={paymentDraft.notes}
+                        onChange={(event) => setPaymentDraft((current) => ({ ...current, notes: event.target.value }))}
+                        placeholder="Nota del pago opcional"
+                      />
+                      {paymentError ? <p className="mt-3 text-sm text-rose-300" role="alert">{paymentError}</p> : null}
                     </SurfaceCard>
                   </TabsContent>
 
