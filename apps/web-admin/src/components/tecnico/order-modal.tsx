@@ -33,6 +33,11 @@ type OrderDetailResponse = {
   documents?: OrderDocument[];
   events?: OrderEvent[];
   financialSummary?: OrderFinancialSummary;
+  availableTransitions?: Array<{
+    key: string;
+    label: string;
+    canonicalPhase: string | null;
+  }>;
 };
 
 function formatDate(value?: string | null) {
@@ -138,6 +143,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
           documents: loaded.documents ?? [],
           events: loaded.events ?? [],
           financialSummary: loaded.financialSummary,
+          availableTransitions: loaded.availableTransitions ?? [],
         });
         setStatusDraft(loaded.order.status || "recibido");
         setFinancialDraft({
@@ -195,6 +201,12 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
   );
   const device = currentOrder.device_info ?? {};
   const statusLabel = String(currentOrder.status || "recibido").replaceAll("_", " ");
+  const availableTransitions = detail?.availableTransitions ?? [];
+  const selectedTransition = availableTransitions.find((transition) => transition.key === statusDraft);
+  const requiresSettlementOverride = Boolean(
+    selectedTransition && ["delivered", "closed"].includes(selectedTransition.canonicalPhase ?? "") && outstandingBalance > 0,
+  );
+  const requiresStatusReason = selectedTransition?.canonicalPhase === "cancelled";
 
   const saveDetails = async () => {
     if (!order.id) return;
@@ -302,7 +314,11 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
 
   const saveStatus = async () => {
     if (!order.id || !statusDraft) return;
-    if (statusDraft === "entregado" && outstandingBalance > 0 && !pendingBalanceOverrideReason.trim()) {
+    if (requiresStatusReason && !statusNote.trim()) {
+      setStatusError("Indica el motivo de la cancelación.");
+      return;
+    }
+    if (requiresSettlementOverride && !pendingBalanceOverrideReason.trim()) {
       setStatusError("Indica el motivo para solicitar una entrega con saldo pendiente.");
       return;
     }
@@ -315,7 +331,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
         {
           status: statusDraft,
           note: statusNote.trim() || undefined,
-          pendingBalanceOverrideReason: statusDraft === "entregado" && outstandingBalance > 0
+          pendingBalanceOverrideReason: requiresSettlementOverride
             ? pendingBalanceOverrideReason.trim()
             : undefined,
         },
@@ -563,19 +579,18 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
                           }}
                           className="h-10 rounded-md border border-input bg-transparent px-3 text-sm text-slate-100"
                         >
-                          <option value="recibido">Recibido</option>
-                          <option value="diagnostico">Diagnóstico</option>
-                          <option value="reparacion">En reparación</option>
-                          <option value="listo">Listo para entrega</option>
-                          <option value="entregado">Entregado</option>
+                          <option value={currentOrder.status}>{statusLabel} (actual)</option>
+                          {availableTransitions.map((transition) => (
+                            <option key={transition.key} value={transition.key}>{transition.label}</option>
+                          ))}
                         </select>
                         <Input
                           value={statusNote}
                           onChange={(event) => setStatusNote(event.target.value)}
-                          placeholder="Nota del cambio opcional"
+                          placeholder={requiresStatusReason ? "Motivo obligatorio" : "Nota del cambio opcional"}
                         />
                       </div>
-                      {statusDraft === "entregado" && outstandingBalance > 0 ? (
+                      {requiresSettlementOverride ? (
                         <Textarea
                           className="mt-3 min-h-20"
                           value={pendingBalanceOverrideReason}

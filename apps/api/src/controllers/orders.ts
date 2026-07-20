@@ -24,6 +24,7 @@ import {
   WorkLogError,
 } from '../services/work-logs';
 import { FEATURE_EVIDENCE_MODE } from '../config/feature-flags';
+import { resolveOrderWorkflow, validateOrderTransition } from '../services/order-workflow';
 
 const defaultOrderStatuses = ['recibido', 'diagnostico', 'reparacion', 'listo', 'entregado'] as const;
 const orderStatusSchema = z.string().min(1);
@@ -874,11 +875,6 @@ async function getTenantOperationalStatuses(tenantId: string) {
   return defaultOrderStatuses.map((status) => ({ key: status, label: status, tone: 'zinc' }));
 }
 
-async function getAllowedOrderStatusKeys(tenantId: string) {
-  const statuses = await getTenantOperationalStatuses(tenantId);
-  return new Set(statuses.map((status) => status.key ?? '').filter(Boolean));
-}
-
 async function generateReceiptPdf(options: {
   order: Record<string, unknown>;
   tenantName: string;
@@ -1543,6 +1539,16 @@ export const getOrderById = async (req: Request, res: Response) => {
     const totalCobrado = validPayments.reduce((sum, p) => sum + Number(p.amount), 0);
     const finalCost = Number(orderResult.data.final_cost) > 0 ? Number(orderResult.data.final_cost) : Number(orderResult.data.estimated_cost || 0);
     const saldoPendiente = Math.max(0, finalCost - totalCobrado);
+    const resolvedWorkflow = resolveOrderWorkflow(runtimeConfig.workflowStatuses.filter((status) => status.workflow_key === 'service_orders'));
+    const currentWorkflowStatus = resolvedWorkflow.find((status) => status.status_key === normalizeOrderStatus(orderResult.data.status));
+    const availableTransitions = (currentWorkflowStatus?.nextStatusKeys ?? []).map((statusKey) => {
+      const status = resolvedWorkflow.find((candidate) => candidate.status_key === statusKey);
+      return {
+        key: statusKey,
+        label: runtimeConfig.statusLabels[statusKey] ?? statusKey,
+        canonicalPhase: status?.canonicalPhase ?? null,
+      };
+    });
 
     return res.json({
       success: true,
@@ -1564,6 +1570,7 @@ export const getOrderById = async (req: Request, res: Response) => {
           saldo_pendiente: saldoPendiente,
         },
         payments: validPayments,
+        availableTransitions,
       },
     });
   } catch (error) {
@@ -2519,10 +2526,32 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     const previousStatus = normalizeOrderStatus(order.status);
     const nextStatus = body.status;
-    const allowedStatuses = await getAllowedOrderStatusKeys(tenantId);
+    const runtimeConfig = await loadTenantRuntimeConfig(tenantId);
+    const workflowStatuses = runtimeConfig.workflowStatuses.filter((status) => status.workflow_key === 'service_orders');
+    const allowedStatuses = new Set(workflowStatuses.map((status) => status.status_key));
 
     if (!allowedStatuses.has(nextStatus)) {
       return res.status(400).json({ error: 'Invalid status', details: { allowedStatuses: [...allowedStatuses] } });
+    }
+
+    let transition;
+    try {
+      transition = validateOrderTransition(workflowStatuses, previousStatus, nextStatus);
+    } catch (workflowError) {
+      return res.status(409).json({
+        error: 'Invalid order status transition',
+        details: {
+          code: workflowError instanceof Error ? workflowError.message : 'WORKFLOW_TRANSITION_REJECTED',
+          previousStatus,
+          nextStatus,
+          allowedNextStatuses: resolveOrderWorkflow(workflowStatuses)
+            .find((status) => status.status_key === previousStatus)?.nextStatusKeys ?? [],
+        },
+      });
+    }
+
+    if (transition.next.canonicalPhase === 'cancelled' && !body.note?.trim()) {
+      return res.status(400).json({ error: 'Cancellation reason is required' });
     }
 
     if (normalizeOrderStatus(nextStatus) === 'recibido') {
@@ -2547,7 +2576,9 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
     }
 
     let pendingBalanceOverride: { balance: number; reason: string } | null = null;
-    if (normalizeOrderStatus(nextStatus) === 'entregado') {
+    const requiresFinancialSettlement = ['delivered', 'closed'].includes(transition.next.canonicalPhase)
+      && transition.previous.canonicalPhase !== 'cancelled';
+    if (requiresFinancialSettlement) {
       const { data: payments, error: paymentsError } = await supabase
         .from('customer_payments')
         .select('amount')
@@ -2589,9 +2620,9 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       .from('service_orders')
       .update({
         status: nextStatus,
-        received_at: nextStatus === 'recibido' ? new Date().toISOString() : undefined,
-        completed_at: nextStatus === 'listo' ? new Date().toISOString() : undefined,
-        delivered_at: nextStatus === 'entregado' ? new Date().toISOString() : undefined,
+        received_at: transition.next.canonicalPhase === 'intake' ? new Date().toISOString() : undefined,
+        completed_at: transition.next.canonicalPhase === 'ready' ? new Date().toISOString() : undefined,
+        delivered_at: ['delivered', 'closed'].includes(transition.next.canonicalPhase) ? new Date().toISOString() : undefined,
         updated_by: req.user?.userId ?? null,
       })
       .eq('tenant_id', tenantId)
