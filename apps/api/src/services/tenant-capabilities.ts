@@ -34,7 +34,7 @@ export const MODULE_REGISTRY: ModuleRegistryEntry[] = [
   { key: 'documents', label: 'Documentos', description: 'PDFs y comprobantes', category: 'operations', frontend_routes: ['/dashboard/documentos'], backend_permissions: [], default_enabled_by_industry: ['electronics_repair', 'hvac_service'], required_plan: null, aliases: [] },
   { key: 'movivendor', label: 'Movivendor', description: 'Recargas, servicios y gift cards', category: 'operations', frontend_routes: ['/dashboard/movivendor'], backend_permissions: [], default_enabled_by_industry: [], required_plan: null, aliases: [] },
   { key: 'portal', label: 'Seguimiento', description: 'Seguimiento público', category: 'public', frontend_routes: [], backend_permissions: [], default_enabled_by_industry: ['electronics_repair', 'hvac_service'], required_plan: null, aliases: [] },
-  { key: 'landing', label: 'Landing', description: 'Página pública del tenant', category: 'public', frontend_routes: [], backend_permissions: [], default_enabled_by_industry: ['electronics_repair', 'hvac_service'], required_plan: null, aliases: [] },
+  { key: 'landing', label: 'Landing', description: 'Página pública del tenant', category: 'public', frontend_routes: [], backend_permissions: [], default_enabled_by_industry: ['electronics_repair', 'hvac_service'], required_plan: 'pro', aliases: [] },
   { key: 'whatsapp', label: 'WhatsApp', description: 'Enlaces y plantillas de contacto', category: 'public', frontend_routes: [], backend_permissions: [], default_enabled_by_industry: ['electronics_repair', 'hvac_service'], required_plan: null, aliases: [] },
   { key: 'warranty', label: 'Garantía', description: 'Seguimiento de garantía', category: 'operations', frontend_routes: ['/dashboard/garantia'], backend_permissions: [], default_enabled_by_industry: ['electronics_repair', 'hvac_service'], required_plan: null, aliases: [] },
   { key: 'billing', label: 'Billing', description: 'Plan y facturación', category: 'admin', frontend_routes: ['/dashboard/billing'], backend_permissions: [], default_enabled_by_industry: ['electronics_repair', 'hvac_service'], required_plan: null, aliases: [] },
@@ -47,16 +47,17 @@ export const MODULE_REGISTRY: ModuleRegistryEntry[] = [
 
 export const PLAN_REGISTRY: Record<TenantCapabilities['plan_key'], { module_allowlist: string[]; limits: TenantPlanLimits }> = {
   basic: {
-    module_allowlist: ['dashboard', 'customers', 'requests', 'orders', 'portal', 'landing', 'whatsapp', 'documents'],
-    limits: { users: 3, sucursales: 1, monthly_orders: 50, storage_mb: 500, public_portal: true, whatsapp_templates: 5, document_templates: 3 },
+    // Basic keeps customer tracking and minimum tenant settings, without a public landing or visual branding editor.
+    module_allowlist: ['dashboard', 'customers', 'requests', 'orders', 'assets', 'stock', 'documents', 'portal', 'whatsapp', 'billing', 'settings'],
+    limits: { users: 2, sucursales: 1, monthly_orders: 50, storage_mb: 2048, public_portal: true, whatsapp_templates: null, document_templates: null },
   },
   pro: {
-    module_allowlist: ['dashboard', 'customers', 'requests', 'orders', 'appointments', 'assets', 'stock', 'suppliers', 'purchase-orders', 'expenses', 'reports', 'documents', 'portal', 'landing', 'whatsapp', 'warranty', 'billing', 'settings', 'sucursales', 'tasks', 'security'],
-    limits: { users: 10, sucursales: 5, monthly_orders: 500, storage_mb: 5000, public_portal: true, whatsapp_templates: 50, document_templates: 20 },
+    module_allowlist: ['dashboard', 'customers', 'requests', 'orders', 'appointments', 'assets', 'stock', 'suppliers', 'purchase-orders', 'expenses', 'reports', 'documents', 'portal', 'landing', 'whatsapp', 'warranty', 'billing', 'settings', 'sucursales', 'users', 'tasks', 'security'],
+    limits: { users: 5, sucursales: 2, monthly_orders: 500, storage_mb: 10240, public_portal: true, whatsapp_templates: null, document_templates: null },
   },
   scale: {
-    module_allowlist: MODULE_REGISTRY.map((module) => module.key),
-    limits: { users: null, sucursales: null, monthly_orders: null, storage_mb: null, public_portal: true, whatsapp_templates: null, document_templates: null },
+    module_allowlist: MODULE_REGISTRY.filter((module) => module.key !== 'movivendor').map((module) => module.key),
+    limits: { users: null, sucursales: null, monthly_orders: null, storage_mb: 102400, public_portal: true, whatsapp_templates: null, document_templates: null },
   },
 };
 
@@ -74,6 +75,8 @@ function unique(values: string[]) {
   return Array.from(new Set(values.filter(Boolean)));
 }
 
+const UNIVERSAL_TENANT_MODULES = ['portal', 'settings'];
+
 function getIndustryDefaultModules(industryKey?: string | null) {
   const normalized = normalizeKey(industryKey);
   return MODULE_REGISTRY
@@ -84,9 +87,7 @@ function getIndustryDefaultModules(industryKey?: string | null) {
 function getPlanKeyFromBilling(billing: TenantBillingSummary | null | undefined): TenantCapabilities['plan_key'] {
   if (!billing) return 'basic';
   if (billing.billingExempt) return 'scale';
-  if (billing.subscriptionStatus === 'active') return 'pro';
-  if (billing.isTrialActive) return 'basic';
-  return 'basic';
+  return billing.planKey;
 }
 
 function getAccessStatus(billing: TenantBillingSummary | null | undefined, tenantSlug?: string | null, tenantEmail?: string | null): TenantCapabilities['access_status'] {
@@ -115,9 +116,10 @@ export function resolveTenantCapabilities({
 }): TenantCapabilitiesType {
   const planKey = getPlanKeyFromBilling(billing);
   const accessStatus = getAccessStatus(billing, tenantSlug, tenantEmail);
+  // Keep the established trial behavior: tenants can validate the complete
+  // operating flow before plan limits are enforced after their trial.
   const isTrialAccess = accessStatus === 'trial';
-  const effectivePlanKey: TenantCapabilities['plan_key'] = isTrialAccess ? 'scale' : planKey;
-  const plan = PLAN_REGISTRY[effectivePlanKey];
+  const plan = PLAN_REGISTRY[isTrialAccess ? 'scale' : planKey];
 
   const activeModules = runtimeConfig.activeModules.map((module) => canonicalModuleKey(module));
   const enabledModules = runtimeConfig.enabledModules
@@ -126,7 +128,7 @@ export function resolveTenantCapabilities({
   const industryModules = getIndustryDefaultModules(runtimeConfig.industryProfile?.industry_key);
   const baseModules = unique(
     isTrialAccess
-      ? MODULE_REGISTRY.map((module) => module.key)
+      ? MODULE_REGISTRY.filter((module) => module.key !== 'movivendor').map((module) => module.key)
       : activeModules.length > 0
         ? activeModules
         : enabledModules.length > 0
@@ -134,7 +136,12 @@ export function resolveTenantCapabilities({
           : industryModules,
   );
 
-  const requestedActive = unique(baseModules);
+  // Customer tracking and minimum tenant settings cannot depend on legacy
+  // module rows. The public landing remains restricted by the selected plan.
+  const requestedActive = unique(
+    [...baseModules, ...UNIVERSAL_TENANT_MODULES]
+      .filter((module) => plan.module_allowlist.includes(module)),
+  );
   const locked = unique(MODULE_REGISTRY
     .filter((module) => !requestedActive.includes(module.key))
     .map((module) => module.key));

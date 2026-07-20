@@ -17,24 +17,24 @@ const plans: Array<{
 }> = [
   {
     code: "basic",
-    name: "Plan Essential",
+    name: "Básico",
     price: "$300",
-    description: "Para talleres que necesitan control de recepción y seguimiento.",
-    features: ["Recepción", "Seguimiento público", "Base operativa"],
+    description: "Para un taller que comienza con una sola sucursal.",
+    features: ["1 sucursal", "Hasta 2 usuarios", "Órdenes, clientes y seguimiento"],
   },
   {
     code: "pro",
-    name: "Plan Pro",
+    name: "Profesional",
     price: "$450",
-    description: "Para talleres con inventario, compras y reportes activos.",
-    features: ["Inventario", "Compras", "Reportes"],
+    description: "Para una operación que necesita crecer y mostrar su negocio.",
+    features: ["Hasta 2 sucursales", "Hasta 5 usuarios", "Landing, branding, compras y reportes"],
   },
   {
     code: "enterprise",
-    name: "Plan Business",
+    name: "Empresarial",
     price: "$600",
-    description: "Para operación multi-sucursal con finanzas y permisos avanzados.",
-    features: ["Finanzas", "Seguridad", "Multi-sucursal"],
+    description: "Para operaciones con varias sucursales y control integral.",
+    features: ["Sucursales ilimitadas", "Usuarios ilimitados", "Finanzas y seguridad"],
   },
 ];
 

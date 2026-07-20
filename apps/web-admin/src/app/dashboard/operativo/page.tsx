@@ -10,6 +10,7 @@ import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
 import { getAssetLabel, getCustomerLabel, getNewEntityLabel } from '@/lib/labels';
 import { getTenantSlug } from '@/lib/tenant';
+import { buildCustomerTrackingUrl } from '@/lib/customer-portal-url';
 
 export type SerialFieldDefinition = {
   entity: string;
@@ -69,6 +70,7 @@ export default function OperativoPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [savedFolio, setSavedFolio] = useState<string | null>(null);
+  const [savedPublicToken, setSavedPublicToken] = useState<string | null>(null);
   const [savedPdfUrl, setSavedPdfUrl] = useState<string | null>(null);
   const [serialFieldDefinition, setSerialFieldDefinition] = useState<SerialFieldDefinition | null>(null);
   const [formData, setFormData] = useState<OrderFormData>({
@@ -220,7 +222,8 @@ export default function OperativoPage() {
         data: {
           folio: string;
           id: string;
-          pdf_attachment?: { public_url: string | null } | null;
+          public_token: string;
+          pdf_attachment?: { url: string | null } | null;
         };
       }>(
         '/orders',
@@ -229,10 +232,10 @@ export default function OperativoPage() {
       );
 
       const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
-      const pdfRouteUrl = tenantSlug && apiBaseUrl
-        ? `${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(response.data.folio)}/pdf`
+      const pdfRouteUrl = tenantSlug && apiBaseUrl && response.data.public_token
+        ? `${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(response.data.public_token)}/pdf`
         : null;
-      let pdfUrl: string | null = response.data.pdf_attachment?.public_url ?? pdfRouteUrl;
+      let pdfUrl: string | null = response.data.pdf_attachment?.url ?? pdfRouteUrl;
       if (formData.fotoRecepcion) {
         try {
           const uploadResponse = await apiClient.upload<{
@@ -249,7 +252,7 @@ export default function OperativoPage() {
           );
 
           pdfUrl = uploadResponse.data.find((document) => document.file_type === 'receipt_pdf')?.public_url
-            ?? response.data.pdf_attachment?.public_url
+            ?? response.data.pdf_attachment?.url
             ?? pdfRouteUrl;
         } catch (uploadError) {
           console.error('Failed to upload intake photo:', uploadError);
@@ -257,6 +260,7 @@ export default function OperativoPage() {
       }
 
       setSavedFolio(response.data.folio);
+      setSavedPublicToken(response.data.public_token);
       setSavedPdfUrl(pdfUrl);
       setStep(4);
 
@@ -303,16 +307,14 @@ export default function OperativoPage() {
       fotoPreview: null,
     });
     setSavedFolio(null);
+    setSavedPublicToken(null);
     setSavedPdfUrl(null);
     setStep(1);
     localStorage.removeItem('srf_borrador_orden');
   };
 
-  const publicBaseUrl = process.env.NEXT_PUBLIC_WEB_PUBLIC_URL?.replace(/\/$/, "") ?? "";
   const tenantSlug = getTenantSlug();
-  const trackingUrl = savedFolio && publicBaseUrl && tenantSlug
-    ? `${publicBaseUrl}/${encodeURIComponent(tenantSlug)}/tracking?folio=${encodeURIComponent(savedFolio)}`
-    : null;
+  const trackingUrl = savedPublicToken ? buildCustomerTrackingUrl(tenantSlug, savedPublicToken) || null : null;
 
   return (
     <div className="mx-auto max-w-2xl">

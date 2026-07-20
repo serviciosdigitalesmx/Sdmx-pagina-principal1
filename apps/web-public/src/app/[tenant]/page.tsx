@@ -7,13 +7,12 @@ import { AnimateIn } from "@/hooks/useInView";
 import { ContactCard } from "@/components/ContactCard";
 import { PhoneMockup } from "@/components/PhoneMockup";
 import { ServiceCard } from "@/components/ServiceCard";
-import { StatCounter } from "@/components/StatCounter";
-import { TrustBar } from "@/components/TrustBar";
 import { buildCustomerPortalUrl } from "@/lib/customer-portal-url";
 
 type LandingResponse = {
   success: true;
   data: {
+    landingAvailable: boolean;
     tenant: {
       id: string;
       slug: string;
@@ -141,11 +140,6 @@ function getTenantInitials(name: string) {
   );
 }
 
-function getRealisticRepairCount(name: string) {
-  const hash = hashTenantName(name);
-  return 50 + (hash % 201);
-}
-
 function buildTenantStyles(hue: number): CSSProperties {
   const secondary = (hue + 30) % 360;
   const tertiary = (hue + 40) % 360;
@@ -175,6 +169,20 @@ function resolveWhatsappHref(phone?: string | null) {
   if (!phone) return undefined;
   const digits = phone.replace(/\D/g, "");
   return digits.length > 0 ? `https://wa.me/${digits}` : undefined;
+}
+
+function resolveMapEmbedUrl(value: string) {
+  try {
+    const url = new URL(value);
+    if (url.hostname.endsWith("google.com") && url.pathname.includes("/maps") && !url.pathname.includes("/maps/embed")) {
+      url.searchParams.set("output", "embed");
+      return url.toString();
+    }
+  } catch {
+    return value;
+  }
+
+  return value;
 }
 
 type TenantLandingData = LandingResponse["data"];
@@ -210,7 +218,7 @@ export async function generateMetadata({
   const { tenant } = await params;
   const data = await getTenantLanding(tenant);
 
-  if (!data) {
+  if (!data || !data.landingAvailable) {
     return { title: "Tenant no encontrado" };
   }
 
@@ -232,7 +240,7 @@ export default async function TenantLandingPage({
   const { tenant: slug } = await params;
   const data = await getTenantLanding(slug);
 
-  if (!data) {
+  if (!data || !data.landingAvailable) {
     notFound();
   }
 
@@ -241,7 +249,6 @@ export default async function TenantLandingPage({
   const hue = getTenantHue(tenant.name, tenant.branding);
   const styles = buildTenantStyles(hue);
   const initials = getTenantInitials(tenant.name);
-  const repairCount = getRealisticRepairCount(tenant.name);
   const phone = tenant.contactPhone ?? tenant.contact_phone ?? null;
   const email = tenant.contactEmail ?? tenant.contact_email ?? null;
   const whatsappHref = resolveWhatsappHref(phone ?? landing.contactHref ?? undefined);
@@ -250,32 +257,11 @@ export default async function TenantLandingPage({
   const heroTitleParts = landing.heroTitle.trim().split(/\s+/).filter(Boolean);
   const heroTitleLine1 = heroTitleParts.slice(0, Math.max(1, Math.ceil(heroTitleParts.length / 2))).join(" ");
   const heroTitleLine2 = heroTitleParts.slice(Math.max(1, Math.ceil(heroTitleParts.length / 2))).join(" ");
-  const heroDescription =
-    tenant.branding?.customTagline?.trim() || landing.heroDescription || "Cotización, estado, diagnóstico y contacto directo con marca propia.";
+  const heroDescription = tenant.branding?.customTagline?.trim() || landing.heroDescription;
   const services = landing.services.length > 0 ? landing.services : [];
   const socialLinks = landing.socialLinks ?? [];
   const hasMap = Boolean(landing.showMap && landing.mapEmbedUrl);
-
-  const serviceCards = [
-    {
-      icon: "📱",
-      title: "Celulares",
-      description: "Pantallas, baterías, carga, software y recuperación de datos.",
-      tags: ["iPhone", "Samsung", "Xiaomi"],
-    },
-    {
-      icon: "💻",
-      title: "Computadoras",
-      description: "Laptops, equipos de escritorio, SSD, memoria y limpieza interna.",
-      tags: ["Windows", "MacBook", "Upgrade"],
-    },
-    {
-      icon: "🎮",
-      title: "Consolas",
-      description: "Controles, puertos HDMI, fuentes, ventilación y mantenimiento preventivo.",
-      tags: ["PlayStation", "Xbox", "Nintendo"],
-    },
-  ];
+  const mapEmbedUrl = hasMap ? resolveMapEmbedUrl(landing.mapEmbedUrl) : null;
 
   return (
     <main className="min-h-screen overflow-x-hidden" style={{ ...styles, background: "var(--bg-deep)" }}>
@@ -299,7 +285,7 @@ export default async function TenantLandingPage({
               <p className="text-[11px] uppercase tracking-[0.28em] text-[color:var(--text-secondary)]">FIXI</p>
               <h1 className="truncate text-lg font-bold text-white">{tenant.name}</h1>
               <p className="truncate text-xs text-[color:var(--text-secondary)]">
-                {getDefaultValue(heroDescription, "Reparación profesional de electrónicos")}
+                {heroDescription}
               </p>
             </div>
           </div>
@@ -359,54 +345,25 @@ export default async function TenantLandingPage({
           <AnimateIn delay={0.24}>
             <div className="flex flex-wrap gap-3">
               <Link
-                href={landing.primaryCtaHref || `/${slug}/cotizar`}
+                href={landing.primaryCtaHref}
                 className="inline-flex items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[color:var(--bg-card)] px-5 py-3 text-center text-sm font-semibold text-[color:var(--text-primary)] transition duration-200 hover:-translate-y-0.5 hover:bg-[color:var(--bg-card-hover)] hover:border-[color:var(--border-glow)]"
               >
-                {landing.primaryCtaLabel || "Cotizar ahora"}
+                {landing.primaryCtaLabel}
               </Link>
               <Link
                 href={customerPortalUrl}
                 className="inline-flex items-center justify-center rounded-full border border-sky-400/35 bg-sky-500/15 px-5 py-3 text-center text-sm font-semibold text-sky-100 transition duration-200 hover:border-sky-300/45 hover:bg-sky-500/20"
               >
-                {landing.secondaryCtaLabel || "Ver estado"}
+                {landing.secondaryCtaLabel}
               </Link>
               {hasWhatsApp ? (
                 <a
                   href={whatsappHref}
                   className="inline-flex items-center justify-center rounded-full border border-emerald-400/70 bg-emerald-500 px-5 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-white transition hover:-translate-y-0.5 hover:bg-emerald-400"
                 >
-                  {landing.contactLabel || "Hablar por WhatsApp"}
+                  {landing.contactLabel}
                 </a>
-              ) : (
-                <Link
-                  href={adminLoginUrl}
-                  className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-                >
-                  Configura WhatsApp
-                </Link>
-              )}
-            </div>
-          </AnimateIn>
-
-          <AnimateIn delay={0.3}>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <StatCounter value={repairCount} suffix="+" label="Reparaciones" />
-              <StatCounter value={24} suffix="h" label="Tiempo promedio" />
-              <StatCounter value={30} suffix="d" label="Garantía" />
-              <StatCounter value={hasWhatsApp ? 1 : 0} suffix="" label={hasWhatsApp ? "WhatsApp" : "Panel"} />
-            </div>
-          </AnimateIn>
-
-          <AnimateIn delay={0.36}>
-            <div className="flex flex-wrap gap-2">
-              {["Garantía 30 días", "Diagnóstico gratis", "Reparación express", "WhatsApp directo"].map((badge) => (
-                <span
-                  key={badge}
-                  className="inline-flex items-center rounded-full border border-[color:var(--border-subtle)] bg-white/5 px-4 py-2 text-xs font-semibold text-white/85"
-                >
-                  {badge}
-                </span>
-              ))}
+              ) : null}
             </div>
           </AnimateIn>
         </div>
@@ -420,9 +377,7 @@ export default async function TenantLandingPage({
         </AnimateIn>
       </section>
 
-      <TrustBar />
-
-      <section id="servicios" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-14">
+      {services.length > 0 ? <section id="servicios" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-14">
         <div className="mb-10 text-center">
           <AnimateIn>
             <span className="inline-block rounded-full border border-[color:var(--tenant-primary-glow)] bg-[var(--tenant-primary-dim)] px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.25em] text-[var(--tenant-primary)]">
@@ -433,124 +388,33 @@ export default async function TenantLandingPage({
             <h3 className="mt-4 text-4xl font-black tracking-[-0.02em] text-white sm:text-5xl">¿Qué reparamos?</h3>
           </AnimateIn>
           <AnimateIn delay={0.16}>
-            <p className="mx-auto mt-4 max-w-2xl text-lg text-[color:var(--text-secondary)]">
-              Especialistas en múltiples dispositivos con repuestos y diagnóstico claro.
-            </p>
+            <p className="mx-auto mt-4 max-w-2xl text-lg text-[color:var(--text-secondary)]">Servicios configurados por {tenant.name}.</p>
           </AnimateIn>
         </div>
 
         <div className="grid gap-5 md:grid-cols-3">
-          {(services.length > 0
-            ? services.map((service, index) => ({
-                icon: ["📱", "💻", "🎮", "⌚", "🔧", "⚡"][index % 6] ?? "🔧",
-                title: service.title,
-                description: service.description,
-                tags: ["Diagnóstico", "Calidad", "Garantía"],
-              }))
-            : serviceCards
-          ).map((service, index) => (
+          {services.map((service, index) => (
             <ServiceCard
               key={`${service.title}-${index}`}
-              icon={service.icon}
+              icon={["📱", "💻", "🎮", "⌚", "🔧", "⚡"][index % 6] ?? "🔧"}
               title={service.title}
               description={service.description}
-              tags={service.tags}
+              tags={[]}
               delay={index * 0.08}
             />
           ))}
         </div>
-      </section>
+      </section> : null}
 
-      <section
-        id="cotizar"
-        className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8"
-      >
-        <div className="grid gap-6 lg:grid-cols-[1fr_0.95fr]">
-          <AnimateIn>
-            <section className="rounded-[2rem] border border-[color:var(--border-subtle)] bg-[color:var(--bg-card)] p-6 shadow-[0_18px_55px_rgba(0,0,0,0.24)]">
-              <div className="mb-5 space-y-3">
-                <span className="inline-flex rounded-full border border-[color:var(--border-subtle)] bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--text-secondary)]">
-                  Cotización
-                </span>
-                <h3 className="text-3xl font-black tracking-[-0.02em] text-white sm:text-4xl">
-                  {landing.heroSubtitle || "Cotiza rápido, sin complicarte"}
-                </h3>
-                <p className="max-w-2xl text-base leading-8 text-[color:var(--text-secondary)]">
-                  Cuéntanos qué equipo tienes y te ayudamos a arrancar la reparación.
-                </p>
-              </div>
-
-              <div className="grid gap-4">
-                {[
-                  "Nombre del cliente",
-                  "WhatsApp",
-                  "Tipo de dispositivo",
-                  "Marca / modelo",
-                ].map((label) => (
-                  <label key={label} className="space-y-2">
-                    <span className="text-xs uppercase tracking-[0.24em] text-[color:var(--text-secondary)]">
-                      {label}
-                    </span>
-                    <div className="rounded-[1.2rem] border border-white/10 bg-black/20 px-4 py-3 text-sm text-[color:var(--text-secondary)]">
-                      {label === "WhatsApp"
-                        ? "Agrega tu WhatsApp para recibir cotizaciones"
-                        : "Escribe aquí"}
-                    </div>
-                  </label>
-                ))}
-
-                <label className="space-y-2">
-                  <span className="text-xs uppercase tracking-[0.24em] text-[color:var(--text-secondary)]">
-                    Problema detallado
-                  </span>
-                  <div className="min-h-[120px] rounded-[1.2rem] border border-white/10 bg-black/20 px-4 py-3 text-sm text-[color:var(--text-secondary)]">
-                    Describe la falla, urgencia y equipo. Esto prepara la solicitud para recepción.
-                  </div>
-                </label>
-
-                <div className="flex flex-wrap gap-3">
-                  <Link
-                    href={customerPortalUrl}
-                    className="inline-flex items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[color:var(--bg-card)] px-5 py-3 text-sm font-semibold text-[color:var(--text-primary)] transition hover:bg-[color:var(--bg-card-hover)]"
-                  >
-                    Ver estado
-                  </Link>
-                  <Link
-                    href={adminLoginUrl}
-                    className="inline-flex items-center justify-center rounded-full border border-sky-400/35 bg-sky-500/15 px-5 py-3 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/20"
-                  >
-                    Abrir panel
-                  </Link>
-                </div>
-              </div>
-            </section>
-          </AnimateIn>
-
-          <AnimateIn delay={0.08}>
-            <section className="rounded-[2rem] border border-[color:var(--border-subtle)] bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-6 shadow-[0_24px_80px_rgba(37,99,235,0.14)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--text-secondary)]">
-                Lo que sigue
-              </p>
-              <div className="mt-5 space-y-4">
-                {[
-                  ["1. Cotizar", "El usuario llena datos del equipo y la falla."],
-                  ["2. Ver estado", "Consulta el portal con el folio real."],
-                  ["3. Imprimir / PDF", "Se abre el PDF real de la cotización o reparación."],
-                ].map(([title, copy]) => (
-                  <div
-                    key={title}
-                    className="rounded-2xl border border-white/8 bg-white/4 p-4 transition hover:-translate-y-0.5 hover:border-[color:var(--border-glow)]"
-                  >
-                    <p className="text-sm font-semibold text-slate-100">{title}</p>
-                    <p className="mt-1 text-sm leading-6 text-[color:var(--text-secondary)]">
-                      {copy}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </AnimateIn>
-        </div>
+      <section id="cotizar" className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <AnimateIn>
+          <section className="rounded-[2rem] border border-[color:var(--border-subtle)] bg-[color:var(--bg-card)] p-6 shadow-[0_18px_55px_rgba(0,0,0,0.24)]">
+            <span className="inline-flex rounded-full border border-[color:var(--border-subtle)] bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--text-secondary)]">Cotización</span>
+            <h3 className="mt-4 text-3xl font-black tracking-[-0.02em] text-white sm:text-4xl">Solicita una cotización a {tenant.name}</h3>
+            <p className="mt-3 max-w-2xl text-base leading-8 text-[color:var(--text-secondary)]">La solicitud se registra directamente en el sistema del taller.</p>
+            <Link href={`/${slug}/cotizar`} className="mt-6 inline-flex items-center justify-center rounded-full bg-[var(--tenant-gradient)] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5">{landing.primaryCtaLabel}</Link>
+          </section>
+        </AnimateIn>
       </section>
 
       <section id="estado" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -595,37 +459,18 @@ export default async function TenantLandingPage({
               <section className="overflow-hidden rounded-[2rem] border border-[color:var(--border-subtle)] bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-5 shadow-[0_24px_80px_rgba(37,99,235,0.14)]">
                 <iframe
                   title={`${tenant.name} ubicación`}
-                  src={landing.mapEmbedUrl}
+                  src={mapEmbedUrl ?? landing.mapEmbedUrl}
                   className="h-[420px] w-full rounded-[1.6rem] border-0"
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
                 />
               </section>
-            ) : (
-              <section className="flex h-full min-h-[420px] flex-col justify-between rounded-[2rem] border border-dashed border-white/10 bg-black/25 p-6">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[color:var(--text-secondary)]">
-                    Mapa en espera
-                  </p>
-                  <p className="mt-4 max-w-md text-3xl font-black uppercase leading-tight text-white">
-                    Publica la ubicación real del taller desde el panel del tenant.
-                  </p>
-                </div>
-                <div className="grid gap-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm leading-6 text-[color:var(--text-secondary)]">
-                    Sin mapa embebido no mostramos una dirección inventada.
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm leading-6 text-[color:var(--text-secondary)]">
-                    Configura `landing_content.mapEmbedUrl` o publica enlaces externos reales.
-                  </div>
-                </div>
-              </section>
-            )}
+            ) : null}
           </AnimateIn>
         </div>
       </section>
 
-      <section id="contacto" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {phone || email || socialLinks.length > 0 ? <section id="contacto" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <AnimateIn>
           <section className="rounded-[2rem] border border-[color:var(--border-subtle)] bg-[color:var(--bg-card)] p-6 shadow-[0_18px_55px_rgba(0,0,0,0.24)]">
             <div className="mb-5 space-y-3">
@@ -633,110 +478,65 @@ export default async function TenantLandingPage({
                 Contacto
               </span>
               <h3 className="text-3xl font-black tracking-[-0.02em] text-white sm:text-4xl">
-                Atención del taller sin inventar datos
+                Contacto de {tenant.name}
               </h3>
               <p className="max-w-3xl text-base leading-8 text-[color:var(--text-secondary)]">
-                La ubicación, teléfono y enlaces salen de la configuración real del tenant. Si no hay mapa configurado, mostramos contacto directo.
+                Datos publicados directamente por el taller.
               </p>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-[1fr_0.92fr]">
               <div className="space-y-4">
-                <ContactCard
+                {phone ? <ContactCard
                   icon="💬"
                   label="Teléfono / WhatsApp"
-                  value={phone ?? "Agrega tu WhatsApp para recibir cotizaciones"}
-                  hasData={Boolean(phone)}
-                  ctaText="Configurar"
-                  ctaHref={adminLoginUrl}
-                />
-                <ContactCard
+                  value={phone}
+                  hasData
+                  ctaText="WhatsApp"
+                  ctaHref={whatsappHref}
+                /> : null}
+                {email ? <ContactCard
                   icon="✉️"
                   label="Correo electrónico"
-                  value={email ?? "Configura tu correo de contacto"}
-                  hasData={Boolean(email)}
-                  ctaText="Configurar"
-                  ctaHref={adminLoginUrl}
-                />
-                <ContactCard
-                  icon="📍"
-                  label="Dirección"
-                  value={hasMap ? "Disponible" : "Publica tu ubicación real desde el panel"}
-                  hasData={hasMap}
-                  ctaText="Configurar"
-                  ctaHref={adminLoginUrl}
-                />
-                <ContactCard
+                  value={email}
+                  hasData
+                  ctaText="Correo"
+                  ctaHref={`mailto:${email}`}
+                /> : null}
+                {socialLinks.length > 0 ? <ContactCard
                   icon="🔗"
                   label="Redes sociales"
-                  value={
-                    socialLinks.length > 0
-                      ? `${socialLinks.length} publicados`
-                      : "Conecta tus redes para que te encuentren fácil"
-                  }
-                  hasData={socialLinks.length > 0}
-                  ctaText="Conectar redes"
-                  ctaHref={adminLoginUrl}
-                />
-              </div>
-
-              <div className="rounded-[1.6rem] border border-[color:var(--border-subtle)] bg-[color:var(--bg-card)] p-5">
-                <p className="text-xs uppercase tracking-[0.3em] text-[color:var(--text-secondary)]">
-                  Mapa / Ubicación
-                </p>
-                <div className="mt-4 flex min-h-[340px] flex-col items-center justify-center rounded-[1.4rem] border border-dashed border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.2))] text-center">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--tenant-gradient)] text-2xl font-black text-white shadow-[0_0_30px_var(--tenant-primary-glow)]">
-                    📍
-                  </div>
-                  <p className="mt-4 text-lg font-semibold text-white">
-                    Publica la ubicación real del taller desde el panel
-                  </p>
-                  <p className="mt-2 max-w-sm text-sm leading-7 text-[color:var(--text-secondary)]">
-                    Si no hay mapa configurado, mostramos un placeholder amable en lugar de inventar una dirección.
-                  </p>
-                  <Link
-                    href={adminSignupUrl}
-                    className="mt-5 inline-flex items-center justify-center rounded-full border border-[color:var(--border-subtle)] bg-[color:var(--bg-card)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[color:var(--bg-card-hover)]"
-                  >
-                    Ver planes
-                  </Link>
-                </div>
+                  value={socialLinks.map((item) => item.label).join(", ")}
+                  hasData
+                  ctaText="Abrir"
+                  ctaHref={socialLinks[0]?.href}
+                /> : null}
               </div>
             </div>
           </section>
         </AnimateIn>
-      </section>
+      </section> : null}
 
       <footer className="mx-auto max-w-7xl px-4 pb-10 pt-4 sm:px-6 lg:px-8">
         <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              ["Web pública", `${tenant.slug}.serviciosdigitalesmx.online`],
-              ["Panel administrativo", "Acceso desde el panel"],
-              ["Correo", email ? email : "Configura tu correo de contacto"],
-              ["WhatsApp", phone ? phone : "Agrega tu WhatsApp para recibir cotizaciones"],
-            ].map(([label, value]) => (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {[["Correo", email], ["WhatsApp", phone]].filter((item): item is [string, string] => Boolean(item[1])).map(([label, value]) => (
               <div
                 key={label}
                 className="rounded-[1.25rem] border border-white/10 bg-black/20 p-4"
                 style={{
-                  borderLeft: `4px solid ${phone || email ? `hsl(${hue} 85% 55%)` : "rgba(255,255,255,0.18)"}`,
+                  borderLeft: `4px solid hsl(${hue} 85% 55%)`,
                 }}
               >
                 <p className="text-[11px] uppercase tracking-[0.28em] text-sky-300/80">{label}</p>
                 <p className="mt-2 text-sm font-medium text-white">{value}</p>
-                {((label === "Correo" && !email) || (label === "WhatsApp" && !phone)) ? (
-                  <Link href={adminLoginUrl} className="mt-3 inline-flex text-sm font-semibold text-sky-300 transition hover:text-sky-200">
-                    Configurar →
-                  </Link>
-                ) : null}
               </div>
             ))}
           </div>
           <div className="mt-6 flex flex-col gap-3 border-t border-white/10 pt-5 text-sm text-[color:var(--text-secondary)] sm:flex-row sm:items-center sm:justify-between">
             <p>{tenant.name} · Landing automática con branding del tenant.</p>
             <p>
-              {initials} · {getDefaultValue(tenant.branding?.customTagline, landing.heroSubtitle)}
+              {initials} · {landing.heroSubtitle}
             </p>
           </div>
         </div>

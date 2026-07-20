@@ -1,9 +1,14 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
-import PDFDocument from 'pdfkit';
 import { getTenantClient, supabaseAdmin } from '@white-label/database';
 import { loadTenantRuntimeConfig } from '../services/tenant-config';
+import {
+  renderServiceOrderPdf,
+  resolveTenantOrderDocumentProfile,
+  type OrderDocumentChecklist,
+  type TenantOrderDocumentProfile,
+} from '../services/order-document-pdf';
 import { getRequestIp } from '../lib/request-ip';
 import { calculateOperationalRisk } from '../services/operational-risk';
 import { sendTenantPushNotification } from '../services/pwa-push';
@@ -123,12 +128,6 @@ const checklistPayloadSchema = z.object({
   acceptedAt: z.string().datetime().optional().or(z.literal('')).default(''),
   acceptedByName: z.string().optional().default(''),
 });
-
-type TenantBranding = {
-  primaryColor?: string;
-  secondaryColor?: string;
-  logoUrl?: string;
-};
 
 type OperationalStatus = {
   key?: string;
@@ -844,23 +843,6 @@ async function insertOrderEvent(supabase: ReturnType<typeof getTenantClient>, ro
   }
 }
 
-async function getTenantBranding(tenantId: string): Promise<{ name: string; branding: TenantBranding | null }> {
-  const { data, error } = await supabaseAdmin
-    .from('tenants')
-    .select('name, branding')
-    .eq('id', tenantId)
-    .single();
-
-  if (error || !data) {
-    return { name: 'FIXI', branding: null };
-  }
-
-  return {
-    name: String(data.name ?? 'FIXI'),
-    branding: (data.branding as TenantBranding | null) ?? null,
-  };
-}
-
 async function getTenantOperationalStatuses(tenantId: string) {
   const config = await loadTenantRuntimeConfig(tenantId);
   const statuses = config.statusOptions.service_orders ?? [];
@@ -875,119 +857,20 @@ async function getTenantOperationalStatuses(tenantId: string) {
   return defaultOrderStatuses.map((status) => ({ key: status, label: status, tone: 'zinc' }));
 }
 
-async function generateReceiptPdf(options: {
-  order: Record<string, unknown>;
-  tenantName: string;
-  tenantBranding?: TenantBranding | null;
-  photo?: {
-    buffer: Buffer;
-    mimeType: string;
-    fileName: string;
-  } | null;
-}) {
-  const doc = new PDFDocument({ size: 'A4', margin: 40 });
-  const chunks: Buffer[] = [];
-
-  doc.on('data', (chunk: Buffer | Uint8Array) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
-
-  const ended = new Promise<Buffer>((resolve, reject) => {
-    doc.on('end', () => resolve(Buffer.concat(chunks)));
-    doc.on('error', reject);
-  });
-
-  const primaryColor = options.tenantBranding?.primaryColor || '#2c6e9f';
-  const secondaryColor = options.tenantBranding?.secondaryColor || '#0f172a';
-  const logoUrl = options.tenantBranding?.logoUrl?.trim() || '';
-  const customer = (options.order.device_info as {
-    customer_name?: string;
-    customer_phone?: string;
-    customer_email?: string;
-    type?: string;
-    brand?: string;
-    model?: string;
-    serial_number?: string;
-  } | undefined) ?? {};
-  const formatValue = (value?: unknown, fallback = 'Sin dato') => {
-    const text = String(value ?? '').trim();
-    return text ? text : fallback;
-  };
-
-  doc.roundedRect(40, 40, 515, 78, 16).fill(primaryColor);
-  doc.fillColor('#ffffff').fontSize(22).text(options.tenantName || 'FIXI', 58, 56, { width: 330 });
-  doc.fillColor('#ffffff').fontSize(10).text('Comprobante de recepción', 58, 82, { width: 330 });
-  doc.fillColor('#ffffff').fontSize(9).text('Documento generado automáticamente', 404, 56, { width: 130, align: 'right' });
-  doc.fontSize(11).text(`Folio: ${formatValue(options.order.folio)}`, 404, 76, { width: 130, align: 'right' });
-
-  if (logoUrl) {
-    try {
-      const response = await fetch(logoUrl);
-      if (response.ok) {
-        const arrayBuffer = await response.arrayBuffer();
-        doc.image(Buffer.from(arrayBuffer), 415, 128, { fit: [110, 52] });
-      }
-    } catch {
-      doc.rect(415, 128, 110, 52).lineWidth(1).strokeColor(primaryColor).stroke();
-      doc.fillColor(primaryColor).fontSize(8).text('Logo no disponible', 420, 150, { width: 100, align: 'center' });
-    }
-  }
-
-  const leftX = 40;
-  const rightX = 314;
-  const topY = 132;
-
-  doc.roundedRect(leftX, topY, 250, 214, 16).fillAndStroke('#f8fafc', '#dbe3ea');
-  doc.roundedRect(rightX, topY, 241, 214, 16).fillAndStroke('#ffffff', '#dbe3ea');
-  doc.fontSize(13).fillColor(secondaryColor).text('Datos del cliente', leftX + 16, topY + 16);
-  doc.fontSize(13).fillColor(secondaryColor).text('Datos del equipo', rightX + 16, topY + 16);
-  doc.fontSize(10).fillColor('#334155');
-  doc.text(`Cliente: ${formatValue(customer.customer_name)}`, leftX + 16, topY + 42, { width: 220 });
-  doc.text(`Teléfono: ${formatValue(customer.customer_phone)}`, leftX + 16, topY + 66, { width: 220 });
-  doc.text(`Correo: ${formatValue(customer.customer_email)}`, leftX + 16, topY + 90, { width: 220 });
-  doc.text(`Fecha: ${new Date().toLocaleDateString('es-MX')}`, leftX + 16, topY + 114, { width: 220 });
-  doc.text(`Equipo: ${formatValue(options.order.device_type ?? customer.type)} - ${formatValue(options.order.device_model ?? customer.model)}`, rightX + 16, topY + 42, { width: 210 });
-  doc.text(`Marca: ${formatValue(customer.brand)}`, rightX + 16, topY + 66, { width: 210 });
-  doc.text(`Serie / IMEI: ${formatValue(options.order.serial_number ?? customer.serial_number)}`, rightX + 16, topY + 90, { width: 210 });
-  doc.text(`Estado: ${formatValue(options.order.status)}`, rightX + 16, topY + 114, { width: 210 });
-  doc.text(`Problema:`, rightX + 16, topY + 138, { width: 210 });
-  doc.fontSize(9).fillColor('#475569').text(formatValue(options.order.problem_description), rightX + 16, topY + 154, { width: 210, lineGap: 2 });
-
-  const summaryTop = 366;
-  doc.roundedRect(40, summaryTop, 515, 86, 16).fillAndStroke('#ffffff', '#dbe3ea');
-  doc.fontSize(12).fillColor(secondaryColor).text('Resumen del servicio', 56, summaryTop + 14);
-  doc.fontSize(10).fillColor('#334155');
-  doc.text(`Problema: ${formatValue(options.order.problem_description)}`, 56, summaryTop + 38, { width: 470 });
-  doc.text(`Costo estimado: ${formatValue(options.order.estimated_cost, '$0.00')}`, 56, summaryTop + 58, { width: 230 });
-  doc.text(`Costo final: ${formatValue(options.order.final_cost, '$0.00')}`, 300, summaryTop + 58, { width: 230 });
-
-  if (options.photo) {
-    try {
-      doc.roundedRect(40, 468, 515, 182, 14).fillAndStroke('#ffffff', '#dbe3ea');
-      doc.fontSize(12).fillColor(secondaryColor).text('Evidencia fotográfica', 56, 484);
-      doc.image(options.photo.buffer, 56, 506, {
-        fit: [480, 130],
-        align: 'center',
-        valign: 'center',
-      });
-    } catch {
-      doc.roundedRect(40, 468, 515, 182, 14).fillAndStroke('#ffffff', '#dbe3ea');
-      doc.fontSize(12).fillColor(secondaryColor).text('Evidencia fotográfica', 56, 484);
-      doc.fontSize(10).fillColor('#6b7280').text('La evidencia fotográfica no pudo incrustarse en el PDF, pero sí quedó almacenada como archivo.', 56, 520, { width: 480, align: 'center' });
-    }
-  } else {
-    doc.roundedRect(40, 468, 515, 182, 14).fillAndStroke('#ffffff', '#dbe3ea');
-    doc.fontSize(12).fillColor(secondaryColor).text('Evidencia fotográfica', 56, 484);
-    doc.fontSize(10).fillColor('#6b7280').text('No se recibió evidencia fotográfica en este flujo.', 56, 530, { width: 480, align: 'center' });
-  }
-
-  doc.fontSize(10).fillColor('#6b7280').text(`Documento generado automáticamente por ${options.tenantName || 'FIXI'}.`, 40, 664, { width: 515, align: 'center' });
-  doc.end();
-
-  return ended;
+async function getAllowedOrderStatusKeys(tenantId: string) {
+  const statuses = await getTenantOperationalStatuses(tenantId);
+  return new Set(statuses.map((status) => status.key ?? '').filter(Boolean));
 }
 
+const ENSURED_BUCKETS = new Set<string>();
+
 async function ensureBucketExists(bucketName: string) {
+  if (ENSURED_BUCKETS.has(bucketName)) {
+    return;
+  }
   const { error } = await supabaseAdmin.storage.getBucket(bucketName);
   if (!error) {
+    ENSURED_BUCKETS.add(bucketName);
     return;
   }
   const { error: createError } = await supabaseAdmin.storage.createBucket(bucketName, {
@@ -997,6 +880,7 @@ async function ensureBucketExists(bucketName: string) {
   if (createError) {
     throw new Error(`Unable to ensure storage bucket ${bucketName}: ${createError.message}`);
   }
+  ENSURED_BUCKETS.add(bucketName);
 }
 
 async function uploadBufferToStorage(options: {
@@ -1032,19 +916,22 @@ async function persistReceiptPdf(options: {
   tenantId: string;
   orderId: string;
   bucketName: string;
-  tenantBranding: { name: string; branding: TenantBranding | null };
+  tenantProfile: TenantOrderDocumentProfile;
   order: Record<string, unknown>;
+  checklist?: OrderDocumentChecklist | null;
   photo?: {
     buffer: Buffer;
     mimeType: string;
     fileName: string;
   } | null;
 }) {
-  const receiptPdfBuffer = await generateReceiptPdf({
+  const receiptPdfBuffer = await renderServiceOrderPdf({
     order: options.order,
-    photo: options.photo ?? null,
-    tenantName: options.tenantBranding.name,
-    tenantBranding: options.tenantBranding.branding,
+    checklist: options.checklist ?? null,
+    profile: options.tenantProfile,
+    evidence: options.photo
+      ? [{ fileName: options.photo.fileName, mimeType: options.photo.mimeType, buffer: options.photo.buffer }]
+      : [],
   });
   const receiptUpload = await uploadBufferToStorage({
     tenantId: options.tenantId,
@@ -1055,17 +942,6 @@ async function persistReceiptPdf(options: {
     buffer: receiptPdfBuffer,
     fileType: 'receipt_pdf',
   });
-
-  const { data: latestReceiptOrder, error: latestReceiptOrderError } = await options.supabase
-    .from('service_orders')
-    .select('evidence_metadata')
-    .eq('tenant_id', options.tenantId)
-    .eq('id', options.orderId)
-    .single();
-
-  if (latestReceiptOrderError) {
-    throw new Error(`Failed to persist receipt evidence: ${latestReceiptOrderError.message}`);
-  }
 
   const receiptDocumentId = randomUUID();
   const receiptDocument = {
@@ -1091,7 +967,7 @@ async function persistReceiptPdf(options: {
     .from('service_orders')
     .update({
       receipt_url: receiptUpload.publicUrl,
-      evidence_metadata: appendEvidenceEntry(latestReceiptOrder?.evidence_metadata, {
+      evidence_metadata: appendEvidenceEntry((options.order as any)?.evidence_metadata, {
         kind: 'document',
         id: receiptDocumentId,
         file_name: 'recepcion.pdf',
@@ -1211,6 +1087,18 @@ export const createOrder = async (req: Request, res: Response) => {
       }
     }
 
+    const createdEventId = randomUUID();
+    const initialEvidenceMetadata = appendEvidenceEntry(undefined, {
+      kind: 'event',
+      id: createdEventId,
+      event_type: 'created',
+      previous_status: null,
+      new_status: 'recibido',
+      note: validatedData.issue,
+      actor_name: req.user?.email ?? req.user?.role ?? 'system',
+      created_at: new Date().toISOString(),
+    });
+
     const { data, error } = await supabase
       .from('service_orders')
       .insert([
@@ -1238,6 +1126,7 @@ export const createOrder = async (req: Request, res: Response) => {
           promised_date: validatedData.promisedDate || null,
           receipt_url: validatedData.receiptUrl || null,
           assigned_user_id: req.user?.role === 'technician' ? req.user.userId ?? null : null,
+          evidence_metadata: initialEvidenceMetadata,
         }
       ])
       .select()
@@ -1284,24 +1173,6 @@ export const createOrder = async (req: Request, res: Response) => {
 
     await auditChecklistChange(req, tenantId, 'orders.checklist_created', null, normalizeChecklistRow(checklistData) as Record<string, unknown>);
 
-    const createdEventId = randomUUID();
-    await supabase
-      .from('service_orders')
-      .update({
-        evidence_metadata: appendEvidenceEntry(data.evidence_metadata, {
-          kind: 'event',
-          id: createdEventId,
-          event_type: 'created',
-          previous_status: null,
-          new_status: 'recibido',
-          note: validatedData.issue,
-          actor_name: req.user?.email ?? req.user?.role ?? 'system',
-          created_at: new Date().toISOString(),
-        }),
-      })
-      .eq('tenant_id', tenantId)
-      .eq('id', data.id);
-
     await insertOrderEvent(supabase, {
       id: createdEventId,
       tenant_id: tenantId,
@@ -1319,19 +1190,20 @@ export const createOrder = async (req: Request, res: Response) => {
       try {
         const bucketName = getStorageBucketName();
         await ensureBucketExists(bucketName);
-        const tenantBranding = await getTenantBranding(tenantId);
+        const tenantProfile = await resolveTenantOrderDocumentProfile(tenantId, requestedSucursalId);
         generatedReceiptDocument = await persistReceiptPdf({
           supabase,
           tenantId,
           orderId: data.id,
           bucketName,
-          tenantBranding,
+          tenantProfile,
           order: {
             ...data,
             final_cost: finalCost,
             estimated_cost: estimatedCost,
             sucursal_id: requestedSucursalId,
           },
+          checklist: checklistData as OrderDocumentChecklist | null,
         });
         resolvedReceiptUrl = generatedReceiptDocument.public_url;
       } catch (receiptError) {
@@ -1513,14 +1385,18 @@ export const getOrderById = async (req: Request, res: Response) => {
       try {
         const bucketName = getStorageBucketName();
         await ensureBucketExists(bucketName);
-        const tenantBranding = await getTenantBranding(tenantId);
+        const tenantProfile = await resolveTenantOrderDocumentProfile(
+          tenantId,
+          typeof orderResult.data.sucursal_id === 'string' ? orderResult.data.sucursal_id : null,
+        );
         const generatedReceiptDocument = await persistReceiptPdf({
           supabase,
           tenantId,
           orderId,
           bucketName,
-          tenantBranding,
+          tenantProfile,
           order: orderResult.data,
+          checklist: checklistResult.data as OrderDocumentChecklist | null,
         });
         resolvedReceiptUrl = generatedReceiptDocument.public_url;
         documents = [...documents, generatedReceiptDocument];
@@ -1840,8 +1716,6 @@ export const uploadOrderAttachments = async (req: Request, res: Response) => {
 
     const bucketName = getStorageBucketName();
     await ensureBucketExists(bucketName);
-    const tenantBranding = await getTenantBranding(tenantId);
-
     const createdDocuments = [];
     let uploadedPhoto: { buffer: Buffer; mimeType: string; fileName: string } | null = null;
     for (const file of parsed.files) {
@@ -1946,11 +1820,28 @@ export const uploadOrderAttachments = async (req: Request, res: Response) => {
         return res.status(404).json({ error: 'Order not found', details: latestOrderError?.message ?? 'Not found' });
       }
 
-      const receiptPdfBuffer = await generateReceiptPdf({
+      const [{ data: checklistData, error: checklistError }, tenantProfile] = await Promise.all([
+        supabase
+          .from('service_order_checklists')
+          .select('screen_condition, cosmetic_condition, reported_physical_damage, accessories_received, accepted_at, accepted_by_name')
+          .eq('tenant_id', tenantId)
+          .eq('service_order_id', orderId)
+          .maybeSingle(),
+        resolveTenantOrderDocumentProfile(
+          tenantId,
+          typeof latestOrder.sucursal_id === 'string' ? latestOrder.sucursal_id : null,
+        ),
+      ]);
+
+      if (checklistError) {
+        return res.status(502).json({ error: 'Failed to load order checklist', details: checklistError.message });
+      }
+
+      const receiptPdfBuffer = await renderServiceOrderPdf({
         order: latestOrder,
-        photo: uploadedPhoto,
-        tenantName: tenantBranding.name,
-        tenantBranding: tenantBranding.branding,
+        checklist: checklistData as OrderDocumentChecklist | null,
+        profile: tenantProfile,
+        evidence: [{ fileName: uploadedPhoto.fileName, mimeType: uploadedPhoto.mimeType, buffer: uploadedPhoto.buffer }],
       });
       const receiptUpload = await uploadBufferToStorage({
         tenantId,

@@ -2,285 +2,168 @@ import Link from "next/link";
 import { optionalEnv } from "@white-label/config";
 import { RootAuthHashRedirect } from "@/components/root-auth-hash-redirect";
 import { resolveAdminUrl } from "@/lib/admin-url";
-import { Badge } from "@white-label/ui";
 
 const productName = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_NAME") ?? "FIXI";
-const brandShort = optionalEnv("NEXT_PUBLIC_SAAS_BRAND_SHORT") ?? "FX";
-const hubName = optionalEnv("NEXT_PUBLIC_HUB_NAME") ?? "Hub";
-const publicUrl = optionalEnv("NEXT_PUBLIC_WEB_PUBLIC_URL") ?? "https://app.serviciosdigitalesmx.online";
-const adminUrl = optionalEnv("NEXT_PUBLIC_WEB_ADMIN_URL") ?? "https://admin.serviciosdigitalesmx.online";
-const contactEmail = optionalEnv("NEXT_PUBLIC_SAAS_CONTACT_EMAIL") ?? "";
-const contactPhone = optionalEnv("NEXT_PUBLIC_SAAS_CONTACT_PHONE") ?? "";
+const publicUrl = optionalEnv("NEXT_PUBLIC_WEB_PUBLIC_URL") ?? "https://serviciosdigitalesmx.online";
 const adminBaseUrl = resolveAdminUrl();
 const adminLoginUrl = adminBaseUrl ? `${adminBaseUrl}/login` : "/login";
 const adminOnboardingUrl = adminBaseUrl ? `${adminBaseUrl}/login?mode=signup` : "/login?mode=signup";
 
-const dashboardStats = [
-  ["Ingresos del mes", "$47,350.00", "positive"],
-  ["Egresos del mes", "$18,420.00", "negative"],
-  ["Utilidad bruta", "$28,930.00", "positive"],
-  ["Productividad", "87%", "warning"],
-  ["Órdenes activas", "34", "neutral"],
-  ["Stock bajo", "3 productos", "neutral"],
-  ["Clientes", "156", "neutral"],
-  ["Cuentas por cobrar", "$4,200.00", "neutral"],
-];
-
-const whatsappSteps = [
-  ["1. Registras la orden en 30 segundos", "Nombre, equipo, problema. FIXI genera un folio único. Sin papeleo."],
-  ["2. El cliente recibe su folio por WhatsApp", "Un clic. El mensaje se envía solo. El cliente sabe que su equipo está en buenas manos."],
-  ["3. El cliente consulta solo, tú sigues trabajando", "Entra a tu portal, revisa su folio, ve el estado. Tú no recibes ni un mensaje más."],
-];
-
-const testimonials = [
+const workflow = [
   {
-    name: "Carlos M.",
-    business: "Taller Celular Express",
-    city: "Guadalajara",
-    quote: "Antes tenía un cliente cada semana diciendo que le rompí la pantalla. Desde que uso FIXI, cero reclamos. Tengo las fotos, la firma y la fecha.",
+    number: "01",
+    title: "Recibe con evidencia",
+    copy: "Crea la orden, registra el equipo, documenta su condición y deja el checklist en el mismo expediente.",
+    tags: ["Ficha editable", "Fotos", "Checklist"],
   },
   {
-    name: "Ana L.",
-    business: "TechRepair",
-    city: "Ciudad de México",
-    quote: "Mis clientes dejaron de escribirme a las 11 de la noche preguntando por su equipo. Ahora consultan solos y yo descanso.",
+    number: "02",
+    title: "Opera sin perder contexto",
+    copy: "Recepción, técnicos y administración trabajan sobre la misma orden y su historial de movimientos.",
+    tags: ["Estados", "Tareas", "Trazabilidad"],
   },
   {
-    name: "Luis R.",
-    business: "FixIt Mobile",
-    city: "Monterrey",
-    quote: "Pensé que era solo para control de órdenes. No sabía que me iba a salvar de un juicio por una reparación que ni hice yo.",
+    number: "03",
+    title: "Mantén informado al cliente",
+    copy: "Comparte por WhatsApp el acceso correcto al portal para que consulte avances y documentos de su servicio.",
+    tags: ["WhatsApp", "Portal", "Documentos"],
   },
 ];
 
-const clientLogos = ["Servicio Celular", "Fix Center", "Tecno Móvil", "Taller Digital", "Mobile Pro"];
+const capabilityGroups = [
+  {
+    label: "Operación",
+    title: "Cada orden tiene una historia completa.",
+    copy: "Solicitudes, recepción, diagnóstico, seguimiento, garantía y cierre conectados a la misma orden.",
+    items: ["Órdenes y solicitudes", "Clientes y activos", "Tareas y garantías", "Archivo y documentos"],
+  },
+  {
+    label: "Control",
+    title: "Las decisiones salen del taller, no de una hoja aparte.",
+    copy: "Existencias, proveedores, compras, gastos y reportes se organizan dentro de la operación del tenant.",
+    items: ["Stock por sucursal", "Proveedores y compras", "Gastos y finanzas", "Reportes operativos"],
+  },
+  {
+    label: "Relación",
+    title: "Tu cliente ve tu marca y su servicio.",
+    copy: "El portal mantiene informado al cliente y los planes superiores añaden una landing configurable con la identidad del negocio.",
+    items: ["Landing del taller", "Portal del cliente", "Contacto por WhatsApp", "Configuración por tenant"],
+  },
+];
 
-const comparisonRows = [
-  ["Reclamaciones sin respaldo", "Checklist legal con fotos y firma"],
-  ["Clientes llamando todo el día", "Seguimiento automático por WhatsApp"],
-  ["Excel que no cuadra", "Dashboard en tiempo real"],
-  ["Pérdida de dinero por mal cobro", "Control de ingresos y egresos claro"],
+const planRows = [
+  { label: "Usuarios incluidos", basic: "2", pro: "5", scale: "Ilimitados" },
+  { label: "Sucursales", basic: "1", pro: "2", scale: "Ilimitadas" },
+  { label: "Órdenes mensuales", basic: "50", pro: "500", scale: "Ilimitadas" },
+  { label: "Almacenamiento", basic: "2 GB", pro: "10 GB", scale: "100 GB" },
+  { label: "Integración con WhatsApp", basic: "Sin límite", pro: "Sin límite", scale: "Sin límite" },
+  { label: "PDFs y comprobantes", basic: "Incluidos", pro: "Incluidos", scale: "Incluidos" },
+  { label: "Seguimiento para clientes", basic: "Incluido", pro: "Incluido", scale: "Incluido" },
+  { label: "Landing pública del taller", basic: "—", pro: "Incluida", scale: "Incluida" },
+  { label: "Logo y branding personalizados", basic: "—", pro: "Incluidos", scale: "Incluidos" },
+  { label: "Control de refacciones", basic: "Incluido", pro: "Incluido", scale: "Incluido" },
+  { label: "Control de compras y gastos", basic: "—", pro: "Incluido", scale: "Incluido" },
+  { label: "Indicadores del negocio", basic: "Resumen", pro: "Reportes", scale: "Reportes + finanzas" },
+  { label: "Administración de usuarios y roles", basic: "—", pro: "Incluida", scale: "Incluida" },
+  { label: "Finanzas completas", basic: "—", pro: "—", scale: "Incluidas" },
 ];
 
 const pricingPlans = [
-  { name: "Básico", price: "$299", period: "MXN / mes", description: "Para el taller que empieza. Órdenes, clientes y seguimiento por WhatsApp." },
   {
+    key: "basic",
+    name: "Básico",
+    price: "$300",
+    eyebrow: "Para un taller pequeño",
+    description: "Recibe equipos, organiza órdenes y mantén informado al cliente.",
+    summary: ["1 sucursal y 2 usuarios", "50 órdenes al mes", "WhatsApp y portal incluidos"],
+  },
+  {
+    key: "pro",
     name: "Profesional",
-    price: "$449",
-    period: "MXN / mes",
-    description: "Inventario, reportes detallados y control total de tu operación.",
+    price: "$450",
+    eyebrow: "Para un taller creciendo",
+    description: "Controla compras, gastos y reportes mientras coordinas más personal.",
+    summary: ["2 sucursales y 5 usuarios", "500 órdenes al mes", "Landing pública y branding", "Compras, gastos y reportes"],
     featured: true,
   },
-  { name: "Negocio", price: "$599", period: "MXN / mes", description: "Multi-sucursal, usuarios ilimitados y administración avanzada." },
+  {
+    key: "scale",
+    name: "Empresarial",
+    price: "$600",
+    eyebrow: "Para un taller establecido",
+    description: "La operación completa con capacidad ilimitada y control financiero.",
+    summary: ["Sucursales y usuarios ilimitados", "Órdenes ilimitadas", "Seguridad y finanzas completas"],
+  },
 ];
 
-const faqItems = [
-  ["¿Sirve si solo tengo un local y soy yo solo?", "Sí. FIXI nació pensando en el taller de un solo dueño. Puedes empezar solo y crecer sin cambiar de sistema."],
-  ["¿Mis clientes pueden ver el estado de su reparación sin llamarme?", "Sí. Cada cliente recibe un folio único y una página privada donde ve el estado de su equipo. Tú no haces nada extra."],
-  ["¿Se ve mi marca o se ve FIXI?", "Tu logo, tus colores, tu nombre. FIXI trabaja detrás. El cliente ve tu taller, no nosotros."],
-  ["¿Tengo que cambiar cómo trabajo actualmente?", "No. Si usas WhatsApp, libreta o Excel, FIXI se adapta a ti. No al revés. Migras cuando quieras, no hay presión."],
-  ["¿Qué pasa si no me gusta después de probarlo?", "Cancelas desde tu cuenta. Sin llamar a nadie. Sin preguntas incómodas. Tu dinero de vuelta en 48 horas."],
+const comparisons = [
+  ["La condición del equipo queda en mensajes sueltos", "Fotos, checklist y documentos viven en la orden"],
+  ["El cliente llama para preguntar por cada avance", "El cliente consulta el portal de su taller"],
+  ["Cada persona lleva su propia versión del trabajo", "El equipo comparte estados, tareas e historial"],
+  ["Los números se reconstruyen al final del mes", "La operación alimenta reportes y finanzas"],
 ];
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <Badge variant="neutral">{children}</Badge>;
-}
+const faqs = [
+  ["¿Puedo probar FIXI antes de elegir un plan?", "Sí. El registro inicia una prueba para que recorras el flujo operativo antes de decidir qué plan necesita tu taller."],
+  ["¿La landing y el portal tienen la marca de mi taller?", "El Portal del cliente muestra la identidad básica del taller en todos los planes. Desde Profesional puedes publicar una landing y personalizar logo, servicios, ubicación y presencia pública."],
+  ["¿El cliente necesita instalar una aplicación?", "No. El seguimiento público se consulta desde un enlace web compartido por el taller."],
+  ["¿Puedo cambiar de plan cuando crezca?", "Sí. Los planes están organizados por capacidad de usuarios, sucursales, órdenes, almacenamiento y módulos operativos."],
+  ["¿La información de distintos talleres se mezcla?", "No. FIXI opera con información y configuración separadas por tenant."],
+];
 
-function CTA({
-  href,
-  children,
-  variant = "primary",
-}: {
-  href: string;
-  children: React.ReactNode;
-  variant?: "primary" | "secondary";
-}) {
-  const base = "inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition duration-200";
-  const className =
-    variant === "primary"
-      ? `${base} border border-amber-300/30 bg-amber-400 text-slate-950 shadow-[0_18px_40px_rgba(251,191,36,0.2)] hover:-translate-y-0.5 hover:bg-amber-300`
-      : `${base} border border-white/12 bg-white/5 text-slate-100 hover:-translate-y-0.5 hover:bg-white/10`;
+function BrandMark() {
   return (
-    <Link href={href} className={className}>
-      {children}
-    </Link>
+    <span className="fx-brand-mark" aria-hidden="true">
+      <span>F</span>
+      <i />
+    </span>
   );
 }
 
-function Pill({ children }: { children: React.ReactNode }) {
-  return <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-medium text-slate-200">{children}</span>;
+function Arrow() {
+  return <span aria-hidden="true" className="fx-arrow">↗</span>;
 }
 
-function FlowIllustration() {
-  return (
-    <div className="rounded-[1.5rem] border border-white/10 bg-black/20 p-4">
-      <svg viewBox="0 0 520 220" className="h-48 w-full" role="img" aria-label="Ilustración del flujo de recepción a WhatsApp y portal">
-        <defs>
-          <linearGradient id="flowLine" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#38bdf8" />
-            <stop offset="100%" stopColor="#f59e0b" />
-          </linearGradient>
-        </defs>
-        <rect x="18" y="18" width="140" height="184" rx="24" fill="#0b1220" stroke="rgba(255,255,255,0.12)" />
-        <rect x="190" y="18" width="140" height="184" rx="24" fill="#0b1220" stroke="rgba(255,255,255,0.12)" />
-        <rect x="362" y="18" width="140" height="184" rx="24" fill="#0b1220" stroke="rgba(255,255,255,0.12)" />
-        <path d="M166 110H186M338 110H358" stroke="url(#flowLine)" strokeWidth="5" strokeLinecap="round" />
-        <circle cx="90" cy="76" r="26" fill="rgba(56,189,248,0.16)" stroke="#38bdf8" />
-        <circle cx="262" cy="76" r="26" fill="rgba(245,158,11,0.16)" stroke="#f59e0b" />
-        <circle cx="434" cy="76" r="26" fill="rgba(34,197,94,0.16)" stroke="#22c55e" />
-        <rect x="52" y="130" width="76" height="10" rx="5" fill="rgba(255,255,255,0.18)" />
-        <rect x="224" y="130" width="76" height="10" rx="5" fill="rgba(255,255,255,0.18)" />
-        <rect x="396" y="130" width="76" height="10" rx="5" fill="rgba(255,255,255,0.18)" />
-        <text x="90" y="172" textAnchor="middle" fill="#e2e8f0" fontSize="13" fontWeight="700">Recepción</text>
-        <text x="262" y="172" textAnchor="middle" fill="#e2e8f0" fontSize="13" fontWeight="700">WhatsApp</text>
-        <text x="434" y="172" textAnchor="middle" fill="#e2e8f0" fontSize="13" fontWeight="700">Portal</text>
-      </svg>
-    </div>
-  );
+function SectionKicker({ children }: { children: React.ReactNode }) {
+  return <p className="fx-kicker">{children}</p>;
 }
 
-function TrustIllustration() {
+function ProductMap() {
   return (
-    <div className="rounded-[1.5rem] border border-white/10 bg-black/20 p-4">
-      <svg viewBox="0 0 520 180" className="h-40 w-full" role="img" aria-label="Ilustración de métricas de confianza">
-        <rect x="12" y="12" width="496" height="156" rx="24" fill="#0b1220" stroke="rgba(255,255,255,0.12)" />
-        <path d="M52 128C112 94 138 110 176 84C214 58 244 70 282 54C320 38 350 54 402 40C440 30 464 34 476 28" fill="none" stroke="#38bdf8" strokeWidth="4" strokeLinecap="round" />
-        <circle cx="176" cy="84" r="7" fill="#38bdf8" />
-        <circle cx="282" cy="54" r="7" fill="#f59e0b" />
-        <circle cx="402" cy="40" r="7" fill="#22c55e" />
-        <text x="52" y="154" fill="#cbd5e1" fontSize="13" fontWeight="700">50,000+ órdenes</text>
-        <text x="202" y="154" fill="#cbd5e1" fontSize="13" fontWeight="700">200+ talleres</text>
-        <text x="360" y="154" fill="#cbd5e1" fontSize="13" fontWeight="700">98% menos reclamos</text>
-      </svg>
-    </div>
-  );
-}
-
-function ProductMockup() {
-  return (
-    <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-4 shadow-[0_24px_80px_rgba(15,23,42,0.45)]">
-      <div className="rounded-[1.4rem] border border-white/10 bg-[#08111f] p-4">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.28em] text-sky-300/75">{hubName} / Live</p>
-            <p className="mt-1 text-xl font-black tracking-tight text-white">Tu taller, sin caos</p>
-          </div>
-          <div className="rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-200">Activo</div>
-        </div>
-
-        <div className="mt-4 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-          <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-[0.24em] text-sky-300/75">Mañana en el taller</p>
-            <div className="mt-4 grid gap-3">
-              {dashboardStats.slice(0, 4).map(([label, value, tone]) => (
-                <div key={label} className="flex items-center justify-between rounded-2xl border border-white/8 bg-black/20 px-4 py-3">
-                  <span className="text-sm text-slate-300">{label}</span>
-                  <span className={`text-sm font-semibold ${tone === "positive" ? "text-emerald-400" : tone === "negative" ? "text-rose-400" : tone === "warning" ? "text-amber-300" : "text-sky-200"}`}>{value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="grid gap-4">
-            <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-[0.24em] text-sky-300/75">Flujo de trabajo</p>
-              <p className="mt-2 text-sm leading-7 text-slate-300">Registrar orden, enviar por WhatsApp y dejar el portal listo para el cliente final.</p>
-            </div>
-            <div className="rounded-[1.4rem] border border-white/10 bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-[0.24em] text-sky-300/75">Seguridad</p>
-              <p className="mt-2 text-sm leading-7 text-slate-300">Datos encriptados, respaldo legal y trazabilidad por orden.</p>
-            </div>
-            <FlowIllustration />
-            <div className="rounded-[1.4rem] border border-white/10 bg-black/20 p-4">
-              <p className="text-xs uppercase tracking-[0.24em] text-sky-300/75">Cliente consulta</p>
-              <div className="mt-3 rounded-[1.2rem] border border-white/10 bg-slate-950/80 p-4">
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Portal móvil</p>
-                <div className="mt-3 h-28 rounded-[1rem] bg-[linear-gradient(135deg,rgba(59,130,246,0.22),rgba(16,185,129,0.1))] p-3">
-                  <div className="h-full rounded-[0.85rem] border border-white/10 bg-slate-950/70 p-3">
-                    <p className="text-xs text-slate-400">Folio SRF-MQV0ISEK</p>
-                    <p className="mt-2 text-sm font-semibold text-white">En reparación</p>
-                    <div className="mt-3 h-2 rounded-full bg-white/10">
-                      <div className="h-2 w-2/3 rounded-full bg-amber-400" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="fx-product-map" aria-label="Mapa visual de los módulos de FIXI">
+      <div className="fx-product-map-bar">
+        <div className="fx-mini-brand"><BrandMark /><b>FIXI</b></div>
+        <span>Operación del taller</span>
+        <i><span />Tenant activo</i>
       </div>
-    </div>
-  );
-}
-
-function SocialProof() {
-  return (
-    <section className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5">
-        <p className="text-xs uppercase tracking-[0.28em] text-sky-300/75">Talleres que ya usan FIXI</p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          {clientLogos.map((logo) => (
-            <div key={logo} className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-center text-sm font-semibold text-slate-200">
-              {logo}
+      <div className="fx-product-map-body">
+        <div className="fx-product-map-nav" aria-hidden="true">
+          <span className="is-active">Resumen</span>
+          <span>Recepción</span>
+          <span>Técnico</span>
+          <span>Clientes</span>
+          <span>Stock</span>
+          <span>Reportes</span>
+        </div>
+        <div className="fx-product-map-main">
+          <div className="fx-map-heading">
+            <div><small>FLUJO CONECTADO</small><strong>Una orden. Todo el contexto.</strong></div>
+            <span>Nueva orden <Arrow /></span>
+          </div>
+          <div className="fx-map-steps">
+            <article><i>01</i><small>RECEPCIÓN</small><b>Condición y evidencia</b><span className="is-complete">Listo</span></article>
+            <article><i>02</i><small>OPERACIÓN</small><b>Estado y responsable</b><span>En curso</span></article>
+            <article><i>03</i><small>CLIENTE</small><b>Portal y documentos</b><span>Conectado</span></article>
+          </div>
+          <div className="fx-map-detail">
+            <div className="fx-map-detail-title"><span>Expediente de servicio</span><b>Historial disponible</b></div>
+            <div className="fx-map-detail-grid">
+              <span><i>✓</i>Datos del equipo</span>
+              <span><i>✓</i>Checklist de recepción</span>
+              <span><i>✓</i>Evidencia fotográfica</span>
+              <span><i>✓</i>Seguimiento del cliente</span>
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-6 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
-        <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6">
-          <SectionLabel>Prueba social</SectionLabel>
-          <h3 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl">Más de 50,000 órdenes gestionadas · 200+ talleres activos · 98% reducción en reclamos documentados</h3>
-          <p className="mt-4 text-base leading-8 text-slate-300">La confianza no se promete. Se muestra con resultados, contexto real y señales claras de operación.</p>
-          <div className="mt-5">
-            <TrustIllustration />
           </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            {["50,000+ órdenes", "200+ talleres activos", "98% menos reclamos"].map((metric) => (
-              <div key={metric} className="rounded-[1.2rem] border border-white/10 bg-black/20 p-4 text-sm font-semibold text-white">
-                {metric}
-              </div>
-            ))}
-          </div>
-          <div className="mt-5 flex flex-wrap gap-3 text-xs text-slate-400">
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2">Datos encriptados</span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2">Cumplimiento legal mexicano</span>
-          </div>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          {testimonials.map((item) => (
-            <article key={item.name} className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-5">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 overflow-hidden rounded-full border border-white/10 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.35),transparent_30%),linear-gradient(135deg,#0ea5e9,#22c55e)]" />
-                <div>
-                  <p className="font-semibold text-white">{item.name}</p>
-                  <p className="text-sm text-slate-400">{item.business} · {item.city}</p>
-                </div>
-              </div>
-              <p className="mt-4 text-sm leading-7 text-slate-300">{item.quote}</p>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function StickyBar() {
-  return (
-    <div className="sticky top-0 z-40 border-b border-white/10 bg-slate-950/80 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-sky-500/15 text-sm font-black text-sky-100">{brandShort.slice(0, 2)}</div>
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.28em] text-sky-300/75">FIXI</p>
-            <p className="text-sm font-semibold text-white">Software para talleres de reparación</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          <Link href="#precios" className="hidden text-sm text-slate-300 transition hover:text-white sm:inline">
-            Precios
-          </Link>
-          <CTA href={adminOnboardingUrl}>Empieza tu prueba gratis de 14 días</CTA>
         </div>
       </div>
     </div>
@@ -294,286 +177,167 @@ export default function Home() {
     name: productName,
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
-    description:
-      "Software para talleres de reparación con control de órdenes, seguimiento por WhatsApp, portal del cliente y respaldo legal.",
-    offers: {
-      "@type": "Offer",
-      price: "300",
-      priceCurrency: "MXN",
-    },
-    featureList: [
-      "Control de órdenes",
-      "Seguimiento por WhatsApp",
-      "Portal del cliente",
-      "Checklist legal",
-      "Dashboard en tiempo real",
-    ],
+    description: "Software para talleres de reparación con órdenes, evidencia, seguimiento al cliente y operación separada por tenant.",
+    offers: { "@type": "AggregateOffer", lowPrice: "300", highPrice: "600", priceCurrency: "MXN" },
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.16),_transparent_28%),radial-gradient(circle_at_80%_10%,_rgba(251,191,36,0.08),_transparent_24%),linear-gradient(180deg,#050608_0%,#09090b_46%,#0f1117_100%)] text-slate-100">
+    <main className="fx-site">
       <RootAuthHashRedirect />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
-      <StickyBar />
 
-      <section className="mx-auto w-full max-w-7xl px-4 pb-10 pt-8 sm:px-6 lg:px-8 lg:pt-12">
-        <div className="grid gap-8 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
-          <div className="space-y-7">
-            <Pill>Sin tarjeta de crédito · Configuración en 5 min · Cancela cuando quieras</Pill>
-            <div className="space-y-5">
-              <h1 className="max-w-2xl text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
-                FIXI — El software que protege tu taller antes de que el cliente reclame
-              </h1>
-              <p className="max-w-2xl text-lg leading-8 text-slate-300">
-                Cada reparación documentada. Cada cliente informado. Cada peso controlado.
-              </p>
-              <p className="max-w-2xl text-base leading-8 text-slate-300">¿Y si el cliente dice que le rompiste la pantalla? Con FIXI, eso ya no es tu problema.</p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <CTA href={adminOnboardingUrl}>Empieza tu prueba gratis de 14 días</CTA>
-              <CTA href={adminLoginUrl} variant="secondary">
-                Ver cómo funciona (2 min)
-              </CTA>
-              <Link href="#comparativa" className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-slate-100 transition hover:bg-white/10">
-                Ver comparativa
-              </Link>
-            </div>
-            <div className="flex flex-wrap gap-3 text-xs text-slate-400">
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2">14 días gratis, sin tarjeta</span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2">Datos encriptados</span>
-              <span className="rounded-full border border-white/10 bg-white/5 px-3 py-2">+200 talleres en México</span>
-            </div>
+      <div className="fx-announcement">
+        <span>Prueba FIXI con el flujo completo</span>
+        <Link href={adminOnboardingUrl}>Crear mi taller <Arrow /></Link>
+      </div>
+
+      <header className="fx-header">
+        <Link href="#inicio" className="fx-logo" aria-label="Ir al inicio de FIXI"><BrandMark /><span>FIXI</span></Link>
+        <nav aria-label="Navegación principal">
+          <Link href="#como-funciona">Cómo funciona</Link>
+          <Link href="#producto">Producto</Link>
+          <Link href="#planes">Planes</Link>
+          <Link href="#preguntas">Preguntas</Link>
+        </nav>
+        <div className="fx-header-actions">
+          <Link href={adminLoginUrl} className="fx-login">Iniciar sesión</Link>
+          <Link href={adminOnboardingUrl} className="fx-button fx-button-small">Probar gratis <Arrow /></Link>
+        </div>
+      </header>
+
+      <section id="inicio" className="fx-hero">
+        <div className="fx-hero-copy">
+          <SectionKicker>Software para talleres de reparación</SectionKicker>
+          <h1>Cuando un cliente reclama, <em>tu taller tiene cómo responder.</em></h1>
+          <p>FIXI reúne órdenes, fotos, checklist, documentos y seguimiento del cliente para que cada servicio tenga contexto desde la recepción hasta la entrega.</p>
+          <div className="fx-hero-actions">
+            <Link href={adminOnboardingUrl} className="fx-button fx-button-large">Empezar prueba gratis <Arrow /></Link>
+            <Link href="#como-funciona" className="fx-text-link">Ver cómo funciona <span aria-hidden="true">↓</span></Link>
           </div>
-
-          <ProductMockup />
+          <div className="fx-trust-line" aria-label="Ventajas de la prueba">
+            <span><i>✓</i>Sin tarjeta para empezar</span>
+            <span><i>✓</i>Configuración guiada</span>
+            <span><i>✓</i>Cancela cuando quieras</span>
+          </div>
+        </div>
+        <div className="fx-hero-visual">
+          <div className="fx-visual-glow" />
+          <ProductMap />
+          <div className="fx-proof-note fx-proof-note-left"><span>✓</span><div><b>Evidencia organizada</b><small>Dentro de cada orden</small></div></div>
+          <div className="fx-proof-note fx-proof-note-right"><span>↗</span><div><b>Portal conectado</b><small>Con la marca del taller</small></div></div>
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid gap-4 md:grid-cols-3">
-          {[
-            ["Dolor", "¿Y si el cliente dice que le rompiste la pantalla?"],
-            ["Solución", "FIXI guarda fotos, firmas y seguimiento por cada orden."],
-            ["Resultado", "Menos reclamos, menos llamadas y más claridad para cobrar."],
-          ].map(([title, copy]) => (
-            <div key={title} className="rounded-[1.8rem] border border-white/10 bg-white/5 p-5">
-              <p className="text-xs uppercase tracking-[0.28em] text-sky-300/80">{title}</p>
-              <p className="mt-3 text-base leading-7 text-slate-200">{copy}</p>
-            </div>
-          ))}
-        </div>
+      <section className="fx-value-strip" aria-label="Áreas cubiertas por FIXI">
+        <span>Recepción</span><i />
+        <span>Operación</span><i />
+        <span>Clientes</span><i />
+        <span>Inventario</span><i />
+        <span>Finanzas</span><i />
+        <span>Portal</span>
       </section>
 
-      <section id="dashboard" className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-          <div className="space-y-4">
-            <SectionLabel>Tu mañana en el taller</SectionLabel>
-            <h2 className="text-4xl font-black tracking-tight text-white sm:text-5xl">Despierta sabiendo exactamente cómo amaneció tu negocio</h2>
-            <p className="max-w-xl text-base leading-8 text-slate-300">¿Cuánto entró ayer? ¿Cuánto salió? ¿Te quedó algo? Una pantalla. Toda la verdad.</p>
-            <p className="max-w-xl text-sm leading-7 text-slate-400">Tus números se actualizan solos. Tú solo tienes que mirarlos. ¿Tienes 2, 3 o 5 sucursales? Cambia de taller con un clic. Los datos nunca se mezclan.</p>
-          </div>
-          <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-5 shadow-[0_24px_80px_rgba(37,99,235,0.14)]">
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {dashboardStats.map(([label, value, tone]) => (
-                <div key={label} className="rounded-[1.2rem] border border-white/10 bg-black/20 p-4">
-                  <p className="text-xs uppercase tracking-[0.24em] text-slate-500">{label}</p>
-                  <p className={`mt-3 text-3xl font-black tracking-tight ${tone === "positive" ? "text-emerald-400" : tone === "negative" ? "text-rose-400" : tone === "warning" ? "text-amber-300" : "text-white"}`}>{value}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+      <section id="como-funciona" className="fx-workflow-section">
+        <div className="fx-section-heading">
+          <div><SectionKicker>Así trabaja FIXI</SectionKicker><h2>Tres momentos.<br />Un solo expediente.</h2></div>
+          <p>La información se captura donde nace y acompaña al equipo durante todo el servicio.</p>
         </div>
-      </section>
-
-      <section id="whatsapp" className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6">
-            <SectionLabel>Seguimiento automático</SectionLabel>
-            <h2 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">Tu cliente deja de llamarte. Y tú dejas de perder tiempo.</h2>
-            <p className="mt-4 max-w-xl text-base leading-8 text-slate-300">El seguimiento automático que tus clientes ya quieren.</p>
-            <div className="mt-5 space-y-3">
-              {whatsappSteps.map(([title, copy]) => (
-                <div key={title} className="rounded-[1.25rem] border border-white/10 bg-black/20 p-4">
-                  <p className="font-semibold text-white">{title}</p>
-                  <p className="mt-1 text-sm leading-7 text-slate-400">{copy}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-[2rem] border border-sky-400/25 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-6 shadow-[0_24px_80px_rgba(37,99,235,0.14)]">
-            <div className="rounded-[1.6rem] border border-white/10 bg-white/5 p-4">
-              <p className="text-xs uppercase tracking-[0.24em] text-sky-300/80">Mensaje generado</p>
-              <p className="mt-3 text-sm leading-7 text-slate-300">
-                Hola Juan, tu iPhone 14 fue recibido en Taller Digital MX. Tu folio es <span className="text-white">SRF-MQV0ISEK</span>. Consulta el estado aquí: fixi.mx/srf-mqv0isek
-              </p>
-              <div className="mt-4 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-center text-sm font-semibold text-emerald-200">📱 Enviar notificación ahora</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6">
-            <SectionLabel>Recepción legal</SectionLabel>
-            <h2 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">Recepción con respaldo legal. Porque la palabra no alcanza.</h2>
-            <p className="mt-4 max-w-xl text-base leading-8 text-slate-300">Cuando el cliente diga &quot;me lo entregaron roto&quot;, tú muestras las fotos, el checklist y su firma. Fin de la discusión.</p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              {[
-                "✓ Estado físico del equipo (fotografiado)",
-                "✓ Daños preexistentes documentados",
-                "✓ Accesorios entregados (cargador, funda, chip)",
-                "✓ Firma digital del cliente con fecha y hora",
-              ].map((item) => (
-                <div key={item} className="rounded-[1.25rem] border border-white/10 bg-black/20 p-4">
-                  <p className="text-sm font-semibold text-white">{item}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] p-6 shadow-[0_24px_80px_rgba(37,99,235,0.14)]">
-            <div className="rounded-[1.6rem] border border-white/10 bg-black/20 p-5">
-              <p className="text-xs uppercase tracking-[0.24em] text-sky-300/80">Módulos visibles</p>
-              <p className="mt-3 text-2xl font-black tracking-tight text-white">Hub, recepción y portal del cliente</p>
-              <div className="mt-5 grid gap-3">
-                {[
-                  "iPhone 14 Pro — Registrado",
-                  "Checklist de recepción — Completado",
-                  "Condición física — Documentada con 4 fotos",
-                  "Daños previos — Reportados por cliente",
-                  "Accesorios — Cargador + funda",
-                  "Firma del cliente — 01/07/2026 10:30 a.m.",
-                ].map((label) => (
-                  <div key={label} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-                    <span className="text-sm text-slate-300">{label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <SocialProof />
-
-      <section id="comparativa" className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-white/10 bg-white/5 p-6">
-          <SectionLabel>Comparativa</SectionLabel>
-          <h2 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">Antes y después de FIXI.</h2>
-          <div className="mt-6 overflow-hidden rounded-[1.5rem] border border-white/10">
-            <div className="grid grid-cols-2 bg-black/30 px-4 py-3 text-xs uppercase tracking-[0.28em] text-slate-400">
-              <div>Sin FIXI</div>
-              <div>Con FIXI</div>
-            </div>
-            {comparisonRows.map(([left, right]) => (
-              <div key={left} className="grid grid-cols-2 gap-4 border-t border-white/10 bg-black/15 px-4 py-4 text-sm text-slate-200">
-                <div>{left}</div>
-                <div>{right}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="precios" className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <SectionLabel>Planes</SectionLabel>
-            <h2 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">Precios que entiende cualquier taller</h2>
-          </div>
-          <p className="max-w-xl text-sm leading-7 text-slate-400">Sin letras chiquitas. Sin sorpresas. Paga lo que usas.</p>
-        </div>
-          <div className="mt-8 grid gap-5 xl:grid-cols-3">
-          {pricingPlans.map((plan) => (
-            <article
-              key={plan.name}
-              className={`rounded-[2rem] border p-6 ${plan.featured ? "border-amber-300/40 bg-[linear-gradient(180deg,rgba(15,23,42,0.98),rgba(2,6,23,0.96))] shadow-[0_24px_80px_rgba(251,191,36,0.08)]" : "border-white/10 bg-white/5"}`}
-            >
-              {plan.name === "Profesional" ? <Pill>⭐ El preferido por talleres en crecimiento</Pill> : null}
-              <h3 className="mt-4 text-2xl font-semibold text-white">{plan.name}</h3>
-              <div className="mt-3 flex items-end gap-2">
-                <span className="text-5xl font-black tracking-tight text-white">{plan.price}</span>
-                <span className="pb-1 text-sm text-slate-400">{plan.period}</span>
-              </div>
-              <p className="mt-4 text-sm leading-7 text-slate-400">{plan.description}</p>
-              <div className="mt-6">
-                <CTA href={plan.name === "Negocio" ? adminLoginUrl : adminOnboardingUrl} variant={plan.name === "Profesional" ? "primary" : "secondary"}>
-                  {plan.name === "Negocio" ? "Hablar con ventas" : "Empieza gratis"}
-                </CTA>
-              </div>
+        <div className="fx-workflow-grid">
+          {workflow.map((step) => (
+            <article key={step.number}>
+              <div className="fx-step-top"><span>{step.number}</span><i /></div>
+              <h3>{step.title}</h3>
+              <p>{step.copy}</p>
+              <div>{step.tags.map((tag) => <small key={tag}>{tag}</small>)}</div>
             </article>
           ))}
         </div>
+        <div className="fx-workflow-cta"><p>El resultado: menos información perdida y una operación que se puede revisar.</p><Link href={adminOnboardingUrl} className="fx-text-link fx-text-link-light">Quiero probar el flujo <Arrow /></Link></div>
       </section>
 
-      <section id="faq" className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid gap-6 rounded-[2rem] border border-white/10 bg-white/5 p-6 lg:grid-cols-[0.8fr_1.2fr] lg:p-8">
-          <div>
-            <SectionLabel>FAQ</SectionLabel>
-            <h2 className="mt-3 text-4xl font-black tracking-tight text-white">Preguntas que otros dueños de taller ya hicieron</h2>
-            <p className="mt-4 text-base leading-8 text-slate-300">Respuestas directas. Sin vueltas.</p>
-          </div>
-          <div className="grid gap-3">
-            {faqItems.map(([question, answer]) => (
-              <details key={question} className="group rounded-[1.4rem] border border-white/10 bg-black/20 p-4">
-                <summary className="cursor-pointer list-none text-sm font-semibold text-white">{question}</summary>
-                <p className="mt-3 text-sm leading-7 text-slate-400">{answer}</p>
-              </details>
-            ))}
-          </div>
+      <section className="fx-comparison-section">
+        <div className="fx-comparison-copy"><SectionKicker>El costo del desorden</SectionKicker><h2>No necesitas trabajar más.<br />Necesitas dejar de reconstruir lo que pasó.</h2><p>FIXI convierte cada interacción del taller en información consultable para el equipo y para el cliente.</p></div>
+        <div className="fx-comparison-table">
+          <div className="fx-comparison-header"><span>Sin un sistema conectado</span><span>Con FIXI</span></div>
+          {comparisons.map(([before, after]) => <div className="fx-comparison-row" key={before}><p><i>×</i>{before}</p><p><i>✓</i>{after}</p></div>)}
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="rounded-[2rem] border border-white/10 bg-[linear-gradient(135deg,rgba(15,23,42,0.96),rgba(2,6,23,0.96))] p-6 sm:p-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="max-w-2xl">
-              <SectionLabel>Listo para operar</SectionLabel>
-              <p className="mt-3 text-3xl font-black tracking-tight text-white sm:text-4xl">Tu taller ya debería estar así de organizado</p>
-              <p className="mt-4 text-base leading-8 text-slate-300">Deja de vivir con el miedo a reclamos. Deja de perder tiempo en llamadas. Deja de adivinar tus números.</p>
-              <p className="mt-4 text-base leading-8 text-slate-300">Empieza hoy. Configura tu taller en 5 minutos. Prueba 14 días gratis. Si no te convence, te vas sin deber nada.</p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <CTA href={adminOnboardingUrl}>Empieza tu prueba gratis de 14 días</CTA>
-              <CTA href={adminLoginUrl} variant="secondary">
-                O agenda una demo de 10 min con nuestro equipo
-              </CTA>
-            </div>
-          </div>
+      <section id="producto" className="fx-capabilities-section">
+        <div className="fx-section-heading fx-section-heading-dark">
+          <div><SectionKicker>Todo el taller conectado</SectionKicker><h2>Una plataforma que sí refleja<br />cómo opera tu negocio.</h2></div>
+          <p>Activa la capacidad que tu plan incluye sin cambiar de herramienta ni duplicar información.</p>
+        </div>
+        <div className="fx-capability-grid">
+          {capabilityGroups.map((group, index) => (
+            <article key={group.label}>
+              <div className="fx-capability-index">0{index + 1}</div>
+              <SectionKicker>{group.label}</SectionKicker>
+              <h3>{group.title}</h3>
+              <p>{group.copy}</p>
+              <ul>{group.items.map((item) => <li key={item}><span>+</span>{item}</li>)}</ul>
+            </article>
+          ))}
+        </div>
+        <div className="fx-tenant-callout">
+          <div><span className="fx-tenant-icon">T</span><div><b>Tu negocio al frente</b><p>Portal con identidad básica en todos los planes; landing, logo y branding desde Profesional.</p></div></div>
+          <Link href={adminOnboardingUrl} className="fx-outline-button fx-outline-button-dark">Crear mi espacio <Arrow /></Link>
         </div>
       </section>
 
-      <footer id="contacto" className="mx-auto w-full max-w-7xl px-4 pb-10 pt-4 sm:px-6 lg:px-8">
-        <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6">
-          <div className="grid gap-4 sm:grid-cols-[1.2fr_0.8fr] sm:items-start">
-            <div>
-              <p className="text-xl font-black tracking-tight text-white">FIXI</p>
-              <p className="mt-2 text-sm text-slate-300">Software para talleres de reparación en México</p>
-            </div>
-            <div className="rounded-[1.2rem] border border-white/10 bg-black/20 p-4 text-sm text-slate-300">
-              <p>¿Dudas? Configura tu WhatsApp o correo desde el panel para mostrar un contacto real.</p>
-              <p className="mt-1">No mostramos teléfonos inventados en la landing pública.</p>
-            </div>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              ["Web pública", publicUrl || "No configurada"],
-              ["Panel administrativo", adminUrl || "No configurado"],
-              ["Correo", contactEmail || "No configurado"],
-              ["WhatsApp", contactPhone || "No configurado"],
-            ].map(([label, value]) => (
-              <div key={label} className="rounded-[1.25rem] border border-white/10 bg-black/20 p-4">
-                <p className="text-[11px] uppercase tracking-[0.28em] text-sky-300/80">{label}</p>
-                <p className="mt-2 text-sm font-medium text-white">{value}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-6 flex flex-col gap-3 border-t border-white/10 pt-5 text-sm text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-            <p>Términos de servicio · Política de privacidad · Aviso de cookies</p>
-            <p>© 2026 FIXI. Hecho para talleres de México.</p>
-          </div>
+      <section id="planes" className="fx-pricing-section">
+        <div className="fx-pricing-intro">
+          <div><SectionKicker>Precios transparentes</SectionKicker><h2>Elige por capacidad,<br />no por letras chiquitas.</h2></div>
+          <p>Todos los planes incluyen el núcleo operativo, documentos, Portal del cliente y contacto por WhatsApp. La Landing pública y el branding personalizado comienzan en Profesional.</p>
         </div>
+        <div className="fx-pricing-grid">
+          {pricingPlans.map((plan) => (
+            <article className={plan.featured ? "is-featured" : ""} key={plan.key}>
+              {plan.featured && <span className="fx-popular">Recomendado</span>}
+              <p className="fx-plan-eyebrow">{plan.eyebrow}</p>
+              <h3>{plan.name}</h3>
+              <p className="fx-plan-description">{plan.description}</p>
+              <div className="fx-price"><b>{plan.price}</b><span>MXN<br />por mes</span></div>
+              <ul>{plan.summary.map((feature) => <li key={feature}><i>✓</i>{feature}</li>)}</ul>
+              <Link href={adminOnboardingUrl} className={plan.featured ? "fx-button" : "fx-outline-button"}>Elegir {plan.name} <Arrow /></Link>
+            </article>
+          ))}
+        </div>
+
+        <div className="fx-plan-comparison" role="region" aria-label="Comparación completa de planes" tabIndex={0}>
+          <div className="fx-plan-row fx-plan-row-header"><b>Todo lo que incluye</b><span>Básico</span><span>Profesional</span><span>Empresarial</span></div>
+          {planRows.map((row) => (
+            <div className="fx-plan-row" key={row.label}><b>{row.label}</b><span>{row.basic}</span><span>{row.pro}</span><span>{row.scale}</span></div>
+          ))}
+        </div>
+        <p className="fx-plan-note">Los límites mostrados corresponden a la configuración vigente de planes en FIXI.</p>
+      </section>
+
+      <section id="preguntas" className="fx-faq-section">
+        <div className="fx-faq-heading"><SectionKicker>Preguntas frecuentes</SectionKicker><h2>Lo importante,<br />antes de empezar.</h2><p>Si necesitas revisar un caso particular de tu taller, crea tu cuenta y recorre primero el flujo real.</p></div>
+        <div className="fx-faq-list">
+          {faqs.map(([question, answer], index) => <details key={question} open={index === 0}><summary>{question}<span>+</span></summary><p>{answer}</p></details>)}
+        </div>
+      </section>
+
+      <section className="fx-final-cta">
+        <div className="fx-final-cta-mark"><BrandMark /></div>
+        <SectionKicker>Tu próxima recepción puede quedar completa</SectionKicker>
+        <h2>Deja de perseguir información.<br />Haz que la orden la conserve.</h2>
+        <p>Abre tu taller en FIXI, configura tu operación y prueba el flujo antes de elegir un plan.</p>
+        <Link href={adminOnboardingUrl} className="fx-button fx-button-light fx-button-large">Crear mi taller gratis <Arrow /></Link>
+        <small>Sin tarjeta para empezar · Configuración guiada</small>
+      </section>
+
+      <footer id="contacto" className="fx-footer">
+        <div className="fx-footer-brand"><Link href="#inicio" className="fx-logo fx-logo-light"><BrandMark /><span>FIXI</span></Link><p>Software operativo para talleres de reparación.</p></div>
+        <div><p className="fx-footer-label">PRODUCTO</p><Link href="#como-funciona">Cómo funciona</Link><Link href="#producto">Plataforma</Link><Link href="#planes">Planes</Link></div>
+        <div><p className="fx-footer-label">ACCESO</p><Link href={adminLoginUrl}>Iniciar sesión</Link><Link href={adminOnboardingUrl}>Crear taller</Link><a href={publicUrl}>Sitio público</a></div>
+        <div className="fx-footer-note"><p>Información y configuración separadas por tenant para que cada taller opere con su propia identidad.</p></div>
+        <div className="fx-footer-bottom"><span>© 2026 FIXI</span><span>Hecho para talleres que quieren operar con claridad.</span></div>
       </footer>
+
+      <div className="fx-mobile-cta"><Link href={adminOnboardingUrl}>Probar FIXI gratis <Arrow /></Link></div>
     </main>
   );
 }

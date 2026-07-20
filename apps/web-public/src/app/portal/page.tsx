@@ -22,7 +22,7 @@ export default function PortalEntryPage() {
           <div className="rounded-[1.5rem] border border-slate-700/70 bg-black/20 p-5">
             <p className="text-sm font-semibold text-zinc-100">Para talleres</p>
             <p className="mt-2 text-sm leading-7 text-zinc-400">
-              El portal se personaliza desde el panel del tenant. Ahí puedes configurar la landing y el acceso público.
+              El portal usa la identidad básica del taller. La landing y el branding personalizado se habilitan desde el plan Profesional.
             </p>
           </div>
         </div>

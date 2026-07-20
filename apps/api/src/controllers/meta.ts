@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { supabaseAdmin } from '@white-label/database';
 import { loadTenantBillingSummary } from '../services/tenant-billing';
-import { getIndustryTemplate, listAvailableIndustries, loadTenantRuntimeConfig } from '../services/tenant-config';
+import { getIndustryTemplate, listAvailableIndustries, loadTenantRuntimeConfig, invalidateTenantRuntimeConfigCache } from '../services/tenant-config';
 import { resolveTenantCapabilities } from '../services/tenant-capabilities';
 import { resolveEffectiveUserRole } from '../lib/user-roles';
 import { runDependencyHealthCheck } from '../services/observability';
@@ -552,6 +552,7 @@ export const updateTenantSettings = async (req: Request, res: Response) => {
       billing,
       runtimeConfig: config,
     });
+    invalidateTenantRuntimeConfigCache(data.id);
 
     return res.status(200).json({
       success: true,
@@ -654,6 +655,8 @@ export const uploadTenantBrandingAsset = async (req: Request, res: Response) => 
         details: updateError?.message ?? 'Unknown error',
       });
     }
+
+    invalidateTenantRuntimeConfigCache(tenantRow.id);
 
     return res.status(200).json({
       success: true,

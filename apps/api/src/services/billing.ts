@@ -180,10 +180,11 @@ async function updateOrganizationSubscription(input: {
   tenantId: string;
   tenantSlug: string;
   status: string;
+  plan: BillingPlanCode;
 }) {
   // Use adapter to write subscription status (feature-flag controlled in caller)
   const { upsertSubscriptionStatus } = await import('./billing-adapter');
-  await upsertSubscriptionStatus(input.tenantId, input.status, (process.env.BILLING_ADAPTER_MODE as any) ?? 'legacy');
+  await upsertSubscriptionStatus(input.tenantId, input.status, (process.env.BILLING_ADAPTER_MODE as any) ?? 'legacy', input.plan);
 }
 
 export async function createBillingCheckout(authUserId: string | null, request: CheckoutRequest): Promise<CheckoutResponse> {
@@ -302,6 +303,7 @@ export async function handleMercadoPagoWebhook(payload: unknown, signature?: str
       tenantId,
       tenantSlug,
       status: mappedStatus,
+      plan,
     });
   }
 

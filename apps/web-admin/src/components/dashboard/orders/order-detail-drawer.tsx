@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { OrderTimeline } from "./order-timeline";
 import { getTenantSlug } from "@/lib/tenant";
+import { resolveBaseDomain } from "@white-label/config";
 
 export type OrderDetailData = {
   order?: {
@@ -95,19 +96,22 @@ type Props = {
 };
 
 function buildTrackingUrl(customerPortalUrl?: string | null, folio?: string | null, publicToken?: string | null) {
-  const publicBase = process.env.NEXT_PUBLIC_WEB_PUBLIC_URL?.replace(/\/$/, "") ?? "";
+  const baseDomain = resolveBaseDomain();
+  const customerPortalBase = process.env.NEXT_PUBLIC_CUSTOMER_TRACKING_URL?.replace(/\/$/, "") ?? (baseDomain ? `https://clientes.${baseDomain}` : "");
   const tenantSlug = getTenantSlug();
   if (publicToken && tenantSlug) {
     const tokenPath = `/t/${encodeURIComponent(tenantSlug)}/portal?token=${encodeURIComponent(publicToken)}`;
-    return publicBase ? `${publicBase}${tokenPath}` : tokenPath;
+    return customerPortalBase ? `${customerPortalBase}${tokenPath}` : tokenPath;
   }
 
-  const resolvedBase = customerPortalUrl || (publicBase && tenantSlug ? `${publicBase}/${encodeURIComponent(tenantSlug)}` : "");
+  if (customerPortalBase && tenantSlug && folio) {
+    return `${customerPortalBase}/t/${encodeURIComponent(tenantSlug)}/portal/${encodeURIComponent(folio)}`;
+  }
+
+  const resolvedBase = customerPortalUrl?.replace(/\/$/, "");
   if (!resolvedBase) return "";
-  const trimmed = resolvedBase.replace(/\/$/, "");
-  const trackingUrl = trimmed.endsWith("/portal") ? trimmed.replace(/\/portal$/, "/tracking") : trimmed;
-  const separator = trackingUrl.includes("?") ? "&" : "?";
-  return `${trackingUrl}${folio ? `${separator}folio=${encodeURIComponent(folio)}` : ""}`;
+  const separator = resolvedBase.includes("?") ? "&" : "?";
+  return `${resolvedBase}${folio ? `${separator}folio=${encodeURIComponent(folio)}` : ""}`;
 }
 
 function whatsappLink(phone?: string | null, folio?: string | null, customerPortalUrl?: string | null, publicToken?: string | null) {

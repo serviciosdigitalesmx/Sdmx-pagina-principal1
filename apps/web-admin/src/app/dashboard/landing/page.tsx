@@ -5,6 +5,7 @@ import { Globe, RefreshCw, Save, Eye, Copy, ExternalLink } from "lucide-react";
 import { SurfaceCard } from "@white-label/ui";
 import { apiGateway } from "@/services/apiGateway";
 import { tenantSettingsService } from "@/services/tenant-settings/tenantSettingsService";
+import { buildTenantLandingUrl } from "@/lib/customer-portal-url";
 
 type LandingService = {
   title: string;
@@ -15,6 +16,12 @@ type SocialLink = {
   label: string;
   href: string;
 };
+
+type LandingBenefit = { title: string; description: string };
+type LandingTestimonial = { clientName: string; rating: number; comment: string; date: string };
+type LandingGalleryItem = { id?: string; url: string; alt?: string; caption?: string; type?: "image" | "video" };
+type LandingFaq = { question: string; answer: string };
+type LandingSection = { id: string; enabled?: boolean };
 
 type LandingContent = {
   heroTitle: string;
@@ -29,6 +36,18 @@ type LandingContent = {
   seoTitle: string;
   seoDescription: string;
   services: LandingService[];
+  benefits: LandingBenefit[];
+  testimonials: LandingTestimonial[];
+  gallery: LandingGalleryItem[];
+  faqs: LandingFaq[];
+  aboutTitle: string;
+  aboutDescription: string;
+  ratingLabel: string;
+  ratingValue: string;
+  ratingCountLabel: string;
+  locationTitle: string;
+  locationDescription: string;
+  sections: LandingSection[];
   socialLinks: SocialLink[];
   showMap: boolean;
   mapEmbedUrl: string;
@@ -77,23 +96,54 @@ type TenantLandingSettings = {
 const emptyService: LandingService = { title: "", description: "" };
 const emptySocial: SocialLink = { label: "", href: "" };
 const DEFAULT_INDUSTRY_KEY = "electronics_repair";
+const advancedLandingKeys = ["benefits", "testimonials", "gallery", "faqs", "aboutTitle", "aboutDescription", "sections"] as const;
 
 const defaultLandingContent: LandingContent = {
   heroTitle: "Reparación profesional de electrónicos",
-  heroSubtitle: "Celulares, computadoras, consolas y tablets",
-  heroDescription: "Cotización, seguimiento y contacto directo con marca propia.",
-  primaryCtaLabel: "Cotizar ahora",
-  primaryCtaHref: "/cotizar",
+  heroSubtitle: "Diagnóstico, reparación y seguimiento técnico",
+  heroDescription: "Especialistas en recuperar tu tecnología con diagnóstico claro, comunicación directa y seguimiento de principio a fin.",
+  primaryCtaLabel: "Cotizar",
+  primaryCtaHref: "#cotizar",
   secondaryCtaLabel: "Ver estatus",
-  secondaryCtaHref: "/tracking",
+  secondaryCtaHref: "/portal",
   contactLabel: "WhatsApp / contacto",
   contactHref: "",
   seoTitle: "Taller de reparación",
   seoDescription: "Landing pública por tenant para talleres de reparación de electrónicos.",
   services: [
-    { title: "Celulares", description: "Pantallas, baterías, carga y software." },
-    { title: "Computadoras", description: "Laptops, desktops, SSD, memoria y limpieza." },
-    { title: "Consolas", description: "Puertos, fuentes, ventilación y controles." },
+    { title: "Laptops y Surface", description: "Pantallas, teclados, placas, almacenamiento y equipos de trabajo." },
+    { title: "Tarjetas de video", description: "Diagnóstico avanzado, mantenimiento y reparación de componentes gráficos." },
+    { title: "Consolas y controles", description: "Puertos, fuentes, ventilación, joysticks y botones." },
+    { title: "Smartphones y tablets", description: "Pantallas, baterías, puertos de carga y daños por líquido." },
+    { title: "PCs de escritorio", description: "Mantenimiento, ensamblado y reparación de componentes." },
+    { title: "Diagnóstico técnico", description: "Evaluación inicial y explicación clara de opciones de reparación." },
+  ],
+  benefits: [
+    { title: "Seguimiento claro", description: "El cliente consulta el avance de su equipo desde el portal." },
+    { title: "Comunicación directa", description: "WhatsApp y datos de contacto propios del taller." },
+    { title: "Documentos disponibles", description: "Comprobantes y archivos públicos vinculados a cada servicio." },
+  ],
+  testimonials: [],
+  gallery: [],
+  faqs: [
+    { question: "¿Cómo consulto el estado de mi equipo?", answer: "Ingresa al portal del cliente con el folio compartido por el taller." },
+    { question: "¿Cómo solicito una cotización?", answer: "Completa el formulario de esta página y el taller recibirá tu solicitud." },
+  ],
+  aboutTitle: "",
+  aboutDescription: "",
+  ratingLabel: "",
+  ratingValue: "",
+  ratingCountLabel: "",
+  locationTitle: "",
+  locationDescription: "",
+  sections: [
+    { id: "hero", enabled: true },
+    { id: "services", enabled: true },
+    { id: "benefits", enabled: true },
+    { id: "testimonials", enabled: false },
+    { id: "gallery", enabled: false },
+    { id: "contact", enabled: true },
+    { id: "quote", enabled: true },
   ],
   socialLinks: [emptySocial],
   showMap: false,
@@ -116,6 +166,18 @@ function normalizeLandingContent(input?: Partial<LandingContent> | null): Landin
     seoTitle: input?.seoTitle?.trim() || defaultLandingContent.seoTitle,
     seoDescription: input?.seoDescription?.trim() || defaultLandingContent.seoDescription,
     services: Array.isArray(input?.services) && input?.services.length > 0 ? input.services : [emptyService],
+    benefits: Array.isArray(input?.benefits) ? input.benefits : [],
+    testimonials: Array.isArray(input?.testimonials) ? input.testimonials : [],
+    gallery: Array.isArray(input?.gallery) ? input.gallery : [],
+    faqs: Array.isArray(input?.faqs) ? input.faqs : [],
+    aboutTitle: input?.aboutTitle?.trim() || "",
+    aboutDescription: input?.aboutDescription?.trim() || "",
+    ratingLabel: input?.ratingLabel?.trim() || "",
+    ratingValue: input?.ratingValue?.trim() || "",
+    ratingCountLabel: input?.ratingCountLabel?.trim() || "",
+    locationTitle: input?.locationTitle?.trim() || "",
+    locationDescription: input?.locationDescription?.trim() || "",
+    sections: Array.isArray(input?.sections) ? input.sections : defaultLandingContent.sections,
     socialLinks: Array.isArray(input?.socialLinks) && input?.socialLinks.length > 0 ? input.socialLinks : [emptySocial],
     showMap: Boolean(input?.showMap),
     mapEmbedUrl: input?.mapEmbedUrl?.trim() || defaultLandingContent.mapEmbedUrl,
@@ -140,6 +202,7 @@ export default function LandingSettingsPage() {
   const [success, setSuccess] = useState("");
   const [settings, setSettings] = useState<TenantLandingSettings | null>(null);
   const [landingContent, setLandingContent] = useState<LandingContent>(defaultLandingContent);
+  const [advancedLandingJson, setAdvancedLandingJson] = useState("");
   const [industryKey, setIndustryKey] = useState<string>(DEFAULT_INDUSTRY_KEY);
   const branding = settings?.tenant.branding ?? null;
 
@@ -149,7 +212,9 @@ export default function LandingSettingsPage() {
       setError("");
       const result = await tenantSettingsService.getTenantLandingSettings();
       setSettings(result.data);
-      setLandingContent(normalizeLandingContent(result.data.tenant.landing_content ?? null));
+      const normalizedLanding = normalizeLandingContent(result.data.tenant.landing_content ?? null);
+      setLandingContent(normalizedLanding);
+      setAdvancedLandingJson(JSON.stringify(Object.fromEntries(advancedLandingKeys.map((key) => [key, normalizedLanding[key]])), null, 2));
       setIndustryKey(typeof result.data.tenant.industry_profile?.industry_key === "string" ? result.data.tenant.industry_profile.industry_key : DEFAULT_INDUSTRY_KEY);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar la landing");
@@ -168,8 +233,7 @@ export default function LandingSettingsPage() {
     secondaryHref: toPublicHref(tenantSlug, landingContent.secondaryCtaHref),
     contactHref: toPublicHref(tenantSlug, landingContent.contactHref),
   }), [landingContent.contactHref, landingContent.primaryCtaHref, landingContent.secondaryCtaHref, tenantSlug]);
-  const publicBaseUrl = process.env.NEXT_PUBLIC_WEB_PUBLIC_URL?.replace(/\/$/, "") ?? "";
-  const tenantPublicUrl = publicBaseUrl && tenantSlug ? `${publicBaseUrl}/${encodeURIComponent(tenantSlug)}` : "";
+  const tenantPublicUrl = buildTenantLandingUrl(tenantSlug);
 
   const updateField = <K extends keyof LandingContent>(key: K, value: LandingContent[K]) => {
     setLandingContent((current) => ({ ...current, [key]: value }));
@@ -214,6 +278,14 @@ export default function LandingSettingsPage() {
   };
 
   async function handleSave() {
+    let contentToSave = landingContent;
+    try {
+      const parsed = advancedLandingJson.trim() ? JSON.parse(advancedLandingJson) as Partial<LandingContent> : {};
+      contentToSave = { ...landingContent, ...Object.fromEntries(advancedLandingKeys.map((key) => [key, parsed[key] ?? landingContent[key]])) };
+    } catch {
+      setError("La configuración avanzada debe ser JSON válido.");
+      return;
+    }
     setSaving(true);
     setError("");
     setSuccess("");
@@ -222,7 +294,7 @@ export default function LandingSettingsPage() {
       const selectedIndustry = settings?.availableIndustries?.find((item) => item.key === industryKey) ?? null;
       const result = await tenantSettingsService.updateTenantLandingSettings({
         branding: settings?.tenant.branding ?? undefined,
-        landingContent,
+        landingContent: contentToSave,
         industryProfile: {
           industry_key: industryKey,
           industry_label: selectedIndustry?.label ?? settings?.tenant.industry_profile?.industry_label ?? null,
@@ -239,7 +311,9 @@ export default function LandingSettingsPage() {
       });
 
       setSettings(result.data);
-      setLandingContent(normalizeLandingContent(result.data.tenant.landing_content ?? null));
+      const normalizedLanding = normalizeLandingContent(result.data.tenant.landing_content ?? null);
+      setLandingContent(normalizedLanding);
+      setAdvancedLandingJson(JSON.stringify(Object.fromEntries(advancedLandingKeys.map((key) => [key, normalizedLanding[key]])), null, 2));
       setSuccess("Landing guardada correctamente.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al guardar landing");
@@ -419,6 +493,33 @@ export default function LandingSettingsPage() {
               <input value={landingContent.seoTitle} onChange={(e) => updateField("seoTitle", e.target.value)} className="input md:col-span-2" placeholder="SEO title" />
               <textarea value={landingContent.seoDescription} onChange={(e) => updateField("seoDescription", e.target.value)} className="input min-h-20 md:col-span-2" placeholder="SEO description" />
             </div>
+          </SurfaceCard>
+
+          <SurfaceCard elevated className="space-y-3 p-4">
+            <h2 className="text-lg font-semibold text-slate-50">Reputación y ubicación</h2>
+            <div className="grid gap-3 md:grid-cols-2">
+              <input value={landingContent.ratingLabel} onChange={(e) => updateField("ratingLabel", e.target.value)} className="input" placeholder="Etiqueta de reputación" />
+              <input value={landingContent.ratingValue} onChange={(e) => updateField("ratingValue", e.target.value)} className="input" placeholder="Calificación, por ejemplo 5.0" />
+              <input value={landingContent.ratingCountLabel} onChange={(e) => updateField("ratingCountLabel", e.target.value)} className="input md:col-span-2" placeholder="Texto de opiniones verificadas" />
+              <input value={landingContent.locationTitle} onChange={(e) => updateField("locationTitle", e.target.value)} className="input" placeholder="Título de ubicación" />
+              <input value={landingContent.locationDescription} onChange={(e) => updateField("locationDescription", e.target.value)} className="input" placeholder="Descripción de ubicación" />
+              <label className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-slate-200">
+                <input type="checkbox" checked={landingContent.showMap} onChange={(e) => updateField("showMap", e.target.checked)} />
+                Mostrar mapa
+              </label>
+              <input value={landingContent.mapEmbedUrl} onChange={(e) => updateField("mapEmbedUrl", e.target.value)} className="input" placeholder="URL de mapa embebido" />
+              <label className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-slate-200">
+                <input type="checkbox" checked={landingContent.showVideo} onChange={(e) => updateField("showVideo", e.target.checked)} />
+                Ofrecer transmisión en vivo
+              </label>
+              <input value={landingContent.videoUrl} onChange={(e) => updateField("videoUrl", e.target.value)} className="input" placeholder="URL de transmisión" />
+            </div>
+          </SurfaceCard>
+
+          <SurfaceCard elevated className="space-y-3 p-4">
+            <h2 className="text-lg font-semibold text-slate-50">Bloques avanzados</h2>
+            <p className="text-sm text-slate-400">Configura beneficios, reseñas, galería, preguntas frecuentes y la sección institucional. Se guarda en la configuración real de la landing.</p>
+            <textarea value={advancedLandingJson} onChange={(e) => setAdvancedLandingJson(e.target.value)} className="input min-h-80 font-mono text-xs" spellCheck={false} />
           </SurfaceCard>
 
           <SurfaceCard elevated className="space-y-3 p-4">

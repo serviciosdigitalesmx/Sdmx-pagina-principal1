@@ -23,9 +23,9 @@ type BillingStatusResponse = {
 };
 
 const PLANS = [
-  { code: "basic", name: "Básico", price: "$300 MXN/mes", description: "Para talleres que comienzan a operar y necesitan control esencial." },
-  { code: "pro", name: "PRO", price: "$450 MXN/mes", description: "Para operación diaria con módulos ampliados y mayor capacidad." },
-  { code: "enterprise", name: "Avanzado", price: "$600 MXN/mes", description: "Para equipos con más volumen, sucursales y control integral." },
+  { code: "basic", name: "Básico", price: "$300 MXN/mes", description: "1 sucursal y hasta 2 usuarios. Órdenes, clientes, inventario básico y seguimiento." },
+  { code: "pro", name: "Profesional", price: "$450 MXN/mes", description: "Hasta 2 sucursales y 5 usuarios. Landing y branding del negocio, compras, reportes y operación ampliada." },
+  { code: "enterprise", name: "Empresarial", price: "$600 MXN/mes", description: "Sucursales y usuarios ilimitados, con control financiero y administrativo completo." },
 ] satisfies Array<{ code: BillingPlanCode; name: string; price: string; description: string }>;
 
 const SELECTED_PLAN_KEY = "fixi:selected-billing-plan";
