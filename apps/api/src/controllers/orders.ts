@@ -8,6 +8,7 @@ import { getRequestIp } from '../lib/request-ip';
 import { calculateOperationalRisk } from '../services/operational-risk';
 import { sendTenantPushNotification } from '../services/pwa-push';
 import { writeAuditLog } from '../services/security-backoffice';
+import { userHasPermission } from '../services/permissions';
 import { cleanTenantTextField, getMissingRequiredTextField } from '../services/tenant-fields';
 import { getEvidenceMetadata, type EvidenceEntry } from '../services/evidence-adapter';
 import { createWhatsAppDraft, listWhatsAppMessages, WhatsAppMessageError } from '../services/whatsapp-messages';
@@ -86,6 +87,7 @@ const commissionRulePatchSchema = commissionRuleSchema.partial();
 const statusRequestSchema = z.object({
   status: orderStatusSchema,
   note: z.string().optional(),
+  pendingBalanceOverrideReason: z.string().trim().min(1).optional(),
 });
 
 const financialUpdateSchema = z.object({
@@ -2502,7 +2504,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     const { data: order, error: orderError } = await supabase
       .from('service_orders')
-      .select('id, status, evidence_metadata')
+      .select('id, status, evidence_metadata, final_cost, estimated_cost')
       .eq('tenant_id', tenantId)
       .eq('id', orderId)
       .eq(
@@ -2544,6 +2546,45 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       }
     }
 
+    let pendingBalanceOverride: { balance: number; reason: string } | null = null;
+    if (normalizeOrderStatus(nextStatus) === 'entregado') {
+      const { data: payments, error: paymentsError } = await supabase
+        .from('customer_payments')
+        .select('amount')
+        .eq('tenant_id', tenantId)
+        .eq('service_order_id', orderId);
+
+      if (paymentsError) {
+        return res.status(502).json({ error: 'Failed to inspect order payments', details: paymentsError.message });
+      }
+
+      const totalCobrado = (payments ?? []).reduce((sum, payment) => sum + Number(payment.amount), 0);
+      const orderFinancials = order as Record<string, unknown>;
+      const finalCost = Number(orderFinancials.final_cost);
+      const totalAplicable = finalCost > 0 ? finalCost : Number(orderFinancials.estimated_cost ?? 0);
+      const saldoPendiente = Math.max(0, totalAplicable - totalCobrado);
+
+      if (saldoPendiente > 0) {
+        const reason = body.pendingBalanceOverrideReason?.trim();
+        if (!reason) {
+          return res.status(400).json({
+            error: 'No se puede entregar una orden con saldo pendiente sin un motivo de autorización.',
+            details: { saldoPendiente },
+          });
+        }
+
+        const canOverride = await userHasPermission(req.user?.role, 'orders.override_pending_balance');
+        if (!canOverride) {
+          return res.status(403).json({
+            error: 'Missing permission: orders.override_pending_balance',
+            details: { saldoPendiente },
+          });
+        }
+
+        pendingBalanceOverride = { balance: saldoPendiente, reason };
+      }
+    }
+
     const { data, error } = await supabase
       .from('service_orders')
       .update({
@@ -2560,6 +2601,37 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     if (error) {
       return res.status(502).json({ error: 'Failed to update order status', details: error.message });
+    }
+
+    if (pendingBalanceOverride) {
+      try {
+        await writeAuditLog({
+          tenantId,
+          userId: req.user?.userId ?? null,
+          action: 'orders.pending_balance_delivery_overridden',
+          ipAddress: getRequestIp(req.headers, req.ip),
+          userAgent: req.get('user-agent') ?? null,
+          dataBefore: {
+            orderId,
+            status: previousStatus,
+            saldoPendiente: pendingBalanceOverride.balance,
+          },
+          dataAfter: {
+            orderId,
+            status: nextStatus,
+            saldoPendiente: pendingBalanceOverride.balance,
+            motivo: pendingBalanceOverride.reason,
+          },
+        });
+      } catch (auditError) {
+        await supabase
+          .from('service_orders')
+          .update({ status: order.status, delivered_at: null, updated_by: req.user?.userId ?? null })
+          .eq('tenant_id', tenantId)
+          .eq('id', orderId);
+        console.error('Failed to audit pending balance delivery override:', auditError);
+        return res.status(502).json({ error: 'No se pudo auditar la autorización de entrega; la entrega fue revertida.' });
+      }
     }
 
     const statusEventId = randomUUID();
