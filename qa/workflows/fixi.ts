@@ -1,0 +1,26 @@
+import { registerWorkflow } from "../core/workflows.js";
+import { runFunctionalAudit } from "../tests/functional.js";
+import { runVisualAudit } from "../tests/visual.js";
+import { runPerformanceAudit } from "../tests/performance.js";
+import { runAccessibilityAudit } from "../tests/accessibility.js";
+import { runSeoAudit } from "../tests/seo.js";
+import { runMultitenantAudit } from "../tests/multitenant.js";
+import { runStressAudit } from "../tests/stress.js";
+import { runClientesAudit } from "../tests/clientes.js";
+import { runInventarioAudit } from "../tests/inventario.js";
+import { runComprasAudit } from "../tests/compras.js";
+import { runFinanzasAudit } from "../tests/finanzas.js";
+import { runUsuariosAudit } from "../tests/usuarios.js";
+
+registerWorkflow("functional", { title: "Auditoria funcional", execute: async (context) => runFunctionalAudit(context.runId) });
+registerWorkflow("clientes", { title: "Clientes", execute: async (context) => runClientesAudit(context.runId) });
+registerWorkflow("inventario", { title: "Inventario", execute: async (context) => runInventarioAudit(context.runId) });
+registerWorkflow("compras", { title: "Compras", execute: async (context) => runComprasAudit(context.runId) });
+registerWorkflow("finanzas", { title: "Finanzas", execute: async (context) => runFinanzasAudit(context.runId) });
+registerWorkflow("usuarios", { title: "Usuarios", execute: async (context) => runUsuariosAudit(context.runId) });
+registerWorkflow("visual", { title: "Auditoria visual", execute: async (context) => runVisualAudit(context.runId) });
+registerWorkflow("performance", { title: "Auditoria performance", execute: async (context) => runPerformanceAudit(context.runId) });
+registerWorkflow("accessibility", { title: "Auditoria accesibilidad", execute: async (context) => runAccessibilityAudit(context.runId) });
+registerWorkflow("seo", { title: "Auditoria seo", execute: async (context) => runSeoAudit(context.runId) });
+registerWorkflow("multitenant", { title: "Auditoria multitenant", execute: async () => runMultitenantAudit() });
+registerWorkflow("stress", { title: "Stress test", execute: async () => runStressAudit() });
