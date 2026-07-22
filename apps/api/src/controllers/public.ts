@@ -448,6 +448,11 @@ function isMissingDocumentVisibilitySchema(error: { message?: string } | null | 
   return /service_order_documents\.(is_customer_visible|retention_expires_at)|column .*service_order_documents.*(is_customer_visible|retention_expires_at).*does not exist/i.test(message);
 }
 
+function isMissingChecklistCosmeticConditionSchema(error: { message?: string } | null | undefined) {
+  const message = error?.message ?? '';
+  return /service_order_checklists\.cosmetic_condition|column .*service_order_checklists.*cosmetic_condition.*does not exist/i.test(message);
+}
+
 async function fetchPublicVisibleOrderDocuments(
   client: ReturnType<typeof getTenantClient>,
   tenantId: string,
@@ -469,6 +474,39 @@ async function fetchPublicVisibleOrderDocuments(
   }
 
   return result;
+}
+
+async function fetchPublicOrderChecklist(
+  client: ReturnType<typeof getTenantClient>,
+  tenantId: string,
+  orderId: string,
+) {
+  const fullSelect = 'screen_condition, cosmetic_condition, reported_physical_damage, accessories_received, accepted_at, accepted_by_name';
+  const fallbackSelect = 'screen_condition, reported_physical_damage, accessories_received, accepted_at, accepted_by_name';
+
+  const primaryResult = await client
+    .from('service_order_checklists')
+    .select(fullSelect)
+    .eq('tenant_id', tenantId)
+    .eq('service_order_id', orderId)
+    .maybeSingle();
+
+  if (!primaryResult.error) {
+    return primaryResult;
+  }
+
+  if (!isMissingChecklistCosmeticConditionSchema(primaryResult.error)) {
+    return primaryResult;
+  }
+
+  const fallbackResult = await client
+    .from('service_order_checklists')
+    .select(fallbackSelect)
+    .eq('tenant_id', tenantId)
+    .eq('service_order_id', orderId)
+    .maybeSingle();
+
+  return fallbackResult;
 }
 
 export async function createPublicQuote(req: Request, res: Response) {
@@ -1119,12 +1157,7 @@ export async function getPublicOrderPdf(req: Request, res: Response) {
 
     const [documentsResult, checklistResult, tenantProfile] = await Promise.all([
       fetchPublicVisibleOrderDocuments(supabase, tenant.id, data.id, new Date().toISOString()),
-      supabase
-        .from('service_order_checklists')
-        .select('screen_condition, cosmetic_condition, reported_physical_damage, accessories_received, accepted_at, accepted_by_name')
-        .eq('tenant_id', tenant.id)
-        .eq('service_order_id', data.id)
-        .maybeSingle(),
+      fetchPublicOrderChecklist(supabase, tenant.id, data.id),
       resolveTenantOrderDocumentProfile(tenant.id, data.sucursal_id),
     ]);
 

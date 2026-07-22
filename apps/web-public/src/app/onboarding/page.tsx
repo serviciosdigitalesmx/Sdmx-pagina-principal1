@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import Link from "next/link";
 import { ShellBadge, StatCard, srFixTheme } from "@/components/srfix-theme";
 import { optionalEnv } from "@white-label/config";
@@ -26,11 +26,62 @@ const initialState: RegisterState = {
 };
 
 const trialDays = optionalEnv("NEXT_PUBLIC_SAAS_TRIAL_DAYS") ?? "14";
+const draftStorageKey = "fixi:onboarding:draft:v1";
+
+function readDraftFromLocation(): Partial<RegisterState> {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  return {
+    workshopName: params.get("workshopName")?.trim() ?? "",
+    email: params.get("email")?.trim() ?? "",
+    phone: params.get("phone")?.trim() ?? "",
+    address: params.get("address")?.trim() ?? "",
+    googleMapsUrl: params.get("googleMapsUrl")?.trim() ?? "",
+  };
+}
 
 export default function OnboardingPage() {
   const [form, setForm] = useState<RegisterState>(initialState);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [draftReady, setDraftReady] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem(draftStorageKey);
+      const storedDraft = stored ? (JSON.parse(stored) as Partial<RegisterState>) : {};
+      const locationDraft = readDraftFromLocation();
+
+      setForm((current) => ({
+        ...current,
+        ...storedDraft,
+        ...locationDraft,
+      }));
+    } catch {
+      setForm((current) => ({ ...current, ...readDraftFromLocation() }));
+    } finally {
+      setDraftReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!draftReady || typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(draftStorageKey, JSON.stringify(form));
+    } catch {
+      // Draft persistence is best effort.
+    }
+  }, [draftReady, form]);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;

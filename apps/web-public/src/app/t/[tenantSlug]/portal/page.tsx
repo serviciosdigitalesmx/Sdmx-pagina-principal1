@@ -458,7 +458,6 @@ export default function PortalPage() {
                       href={pdfAttachment.url}
                       target="_blank"
                       rel="noreferrer"
-                      download={pdfAttachment.fileName ?? undefined}
                       className="inline-flex items-center justify-center rounded-2xl bg-zinc-500 px-5 py-4 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:-translate-y-0.5 hover:bg-zinc-400"
                     >
                       Imprimir / Guardar
