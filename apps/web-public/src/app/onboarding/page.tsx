@@ -34,13 +34,15 @@ function readDraftFromLocation(): Partial<RegisterState> {
   }
 
   const params = new URLSearchParams(window.location.search);
-  return {
-    workshopName: params.get("workshopName")?.trim() ?? "",
-    email: params.get("email")?.trim() ?? "",
-    phone: params.get("phone")?.trim() ?? "",
-    address: params.get("address")?.trim() ?? "",
-    googleMapsUrl: params.get("googleMapsUrl")?.trim() ?? "",
-  };
+  const draft: Partial<RegisterState> = {};
+
+  if (params.has("workshopName")) draft.workshopName = params.get("workshopName")?.trim() ?? "";
+  if (params.has("email")) draft.email = params.get("email")?.trim() ?? "";
+  if (params.has("phone")) draft.phone = params.get("phone")?.trim() ?? "";
+  if (params.has("address")) draft.address = params.get("address")?.trim() ?? "";
+  if (params.has("googleMapsUrl")) draft.googleMapsUrl = params.get("googleMapsUrl")?.trim() ?? "";
+
+  return draft;
 }
 
 export default function OnboardingPage() {

@@ -226,7 +226,7 @@ const publicCheckoutSchema = z.object({
 async function resolveTenantIdBySlug(slug: string) {
   const { data, error } = await supabaseAdmin
     .from('tenants')
-    .select('id, slug, name, branding, landing_content')
+    .select('id, slug, name, branding, landing_content, contact_phone')
     .eq('slug', slug)
     .maybeSingle();
 
@@ -299,7 +299,7 @@ async function loadPublicCatalog(tenantId: string) {
   });
 }
 
-function extractContactInfo(input: unknown): ContactInfo {
+function extractContactInfo(input: unknown, fallbackPhone?: string | null): ContactInfo {
   const content = input && typeof input === 'object' ? (input as LandingContent) : {};
   const rawHref = typeof content.contactHref === 'string' ? content.contactHref.trim() : '';
   let contactPhone: string | null = null;
@@ -320,10 +320,12 @@ function extractContactInfo(input: unknown): ContactInfo {
     }
   }
 
+  const resolvedPhone = contactPhone ?? (typeof fallbackPhone === 'string' && fallbackPhone.trim() ? fallbackPhone.trim() : null);
+
   return {
-    contactPhone,
+    contactPhone: resolvedPhone,
     contactEmail,
-    contact_phone: contactPhone,
+    contact_phone: resolvedPhone,
     contact_email: contactEmail,
   };
 }
@@ -492,11 +494,11 @@ async function fetchPublicOrderChecklist(
     .maybeSingle();
 
   if (!primaryResult.error) {
-    return primaryResult;
+    return primaryResult.data ?? null;
   }
 
   if (!isMissingChecklistCosmeticConditionSchema(primaryResult.error)) {
-    return primaryResult;
+    return null;
   }
 
   const fallbackResult = await client
@@ -506,7 +508,11 @@ async function fetchPublicOrderChecklist(
     .eq('service_order_id', orderId)
     .maybeSingle();
 
-  return fallbackResult;
+  if (fallbackResult.error) {
+    return null;
+  }
+
+  return fallbackResult.data ?? null;
 }
 
 export async function createPublicQuote(req: Request, res: Response) {
@@ -622,7 +628,7 @@ export async function trackPublicOrder(req: Request, res: Response) {
         slug: tenant.slug,
         name: tenant.name,
         branding: tenant.branding ?? null,
-        ...extractContactInfo(tenant.landing_content),
+        ...extractContactInfo(tenant.landing_content, tenant.contact_phone),
         config: runtimeConfig,
       },
       data,
@@ -786,7 +792,7 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
         slug: tenant.slug,
         name: tenant.name,
         branding: tenant.branding ?? null,
-        ...extractContactInfo(tenant.landing_content),
+        ...extractContactInfo(tenant.landing_content, tenant.contact_phone),
         config: runtimeConfig,
       },
       data: {
@@ -1155,7 +1161,7 @@ export async function getPublicOrderPdf(req: Request, res: Response) {
       return res.status(404).json({ error: 'No encontramos una orden con ese enlace', details: error?.message });
     }
 
-    const [documentsResult, checklistResult, tenantProfile] = await Promise.all([
+    const [documentsResult, checklist, tenantProfile] = await Promise.all([
       fetchPublicVisibleOrderDocuments(supabase, tenant.id, data.id, new Date().toISOString()),
       fetchPublicOrderChecklist(supabase, tenant.id, data.id),
       resolveTenantOrderDocumentProfile(tenant.id, data.sucursal_id),
@@ -1165,14 +1171,10 @@ export async function getPublicOrderPdf(req: Request, res: Response) {
       return res.status(502).json({ error: 'Failed to load documents', details: documentsResult.error.message });
     }
 
-    if (checklistResult.error) {
-      return res.status(502).json({ error: 'Failed to load order checklist', details: checklistResult.error.message });
-    }
-
     const pdfBuffer = await renderServiceOrderPdf({
       profile: tenantProfile,
       order: data,
-      checklist: checklistResult.data,
+      checklist,
       evidence: (documentsResult.data ?? []).map((entry) => ({
         fileName: entry.file_name,
         mimeType: entry.mime_type,
@@ -1215,7 +1217,7 @@ export async function getPublicStoreCatalog(req: Request, res: Response) {
         slug: tenant.slug,
         name: tenant.name,
         branding: tenant.branding ?? null,
-        ...extractContactInfo(tenant.landing_content),
+        ...extractContactInfo(tenant.landing_content, tenant.contact_phone),
         config: runtimeConfig,
       },
       data: {
@@ -1325,7 +1327,7 @@ export async function createPublicStoreOrder(req: Request, res: Response) {
         slug: tenant.slug,
         name: tenant.name,
         branding: tenant.branding ?? null,
-        ...extractContactInfo(tenant.landing_content),
+        ...extractContactInfo(tenant.landing_content, tenant.contact_phone),
       },
       data: {
         order: createdOrder,
@@ -1381,14 +1383,14 @@ export async function getPublicTenantLanding(req: Request, res: Response) {
       success: true,
       data: {
         landingAvailable,
-        tenant: {
-          id: tenant.id,
-          slug: tenant.slug,
-          name: tenant.name,
-          branding: landingAvailable ? tenant.branding ?? null : null,
-          ...extractContactInfo(tenant.landing_content),
-          config: publicConfig,
-        },
+      tenant: {
+        id: tenant.id,
+        slug: tenant.slug,
+        name: tenant.name,
+        branding: landingAvailable ? tenant.branding ?? null : null,
+        ...extractContactInfo(tenant.landing_content, tenant.contact_phone),
+        config: publicConfig,
+      },
         landingContent,
       },
     });
