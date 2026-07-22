@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useEffect, useCallback, type FormEvent } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef, type FormEvent } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { optionalEnv } from "@white-label/config";
 import { getPublicApiPath } from "@/lib/public-api";
@@ -125,10 +125,12 @@ export default function PortalPage() {
   const [loadingTenant, setLoadingTenant] = useState(true);
   const [tenantError, setTenantError] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const autoSearchDone = useRef(false);
 
-  const pdfAttachment = useMemo(() => {
-    return result?.pdf_attachment ?? result?.attachments?.[0] ?? null;
-  }, [result]);
+  const pdfHref = useMemo(() => {
+    if (!result || !tenantSlug) return null;
+    return getPublicApiPath(`/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(result.order.folio)}/pdf`);
+  }, [result, tenantSlug]);
 
   const publicWhatsappHref = useMemo(() => resolveContactWhatsapp(tenant, portalTemplate), [tenant, portalTemplate]);
 
@@ -218,13 +220,14 @@ export default function PortalPage() {
 
   // Auto-search on mount if folio query parameter exists
   useEffect(() => {
-    if (initialFolio) {
+    if (initialFolio && !loadingTenant && !autoSearchDone.current) {
+      autoSearchDone.current = true;
       const timeout = window.setTimeout(() => {
         void executeSearch(initialFolio);
       }, 0);
       return () => window.clearTimeout(timeout);
     }
-  }, [initialFolio, executeSearch]);
+  }, [initialFolio, executeSearch, loadingTenant]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -453,9 +456,9 @@ export default function PortalPage() {
                   >
                     Contactar por WhatsApp
                   </a>
-                  {pdfAttachment ? (
+                  {pdfHref ? (
                     <a
-                      href={pdfAttachment.url}
+                      href={pdfHref}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-flex items-center justify-center rounded-2xl bg-zinc-500 px-5 py-4 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:-translate-y-0.5 hover:bg-zinc-400"
