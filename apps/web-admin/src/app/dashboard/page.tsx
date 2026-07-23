@@ -73,6 +73,13 @@ export default function DashboardPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [mounted, setMounted] = useState(false);
 
+  const safeNumber = (value: unknown, fallback = 0) => {
+    const parsed = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+
+  const safeArray = <T,>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
+
   const loadData = async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
     try {
@@ -122,20 +129,30 @@ export default function DashboardPage() {
   // Preparar datos para gráficos
   const statusData = Object.entries(summary.statusCounts || {}).map(([name, value]) => ({
     name: name === 'entregado' ? 'Entregado' : name === 'listo' ? 'Listo' : name,
-    value,
+    value: safeNumber(value),
     color: STATUS_COLORS[name as keyof typeof STATUS_COLORS] || CHART_COLORS.muted,
   }));
 
   // Datos de actividad reciente (órdenes atrasadas)
-  const overdueOrders = summary.overduePromisedOrders || [];
+  const overdueOrders = safeArray<NonNullable<ReportsSummary['overduePromisedOrders']>[number]>(summary.overduePromisedOrders);
 
   // Productos más usados
-  const topProducts = (summary.topProductsUsed || []).slice(0, 5);
+  const topProducts = safeArray<NonNullable<ReportsSummary['topProductsUsed']>[number]>(summary.topProductsUsed).slice(0, 5);
 
   // Órdenes por técnico
   const technicianData = Object.entries(summary.ordersByTechnician || {})
-    .map(([name, count]) => ({ name: name.split(' ')[0] || name.slice(0, 10), count }))
+    .map(([name, count]) => ({ name: name.split(' ')[0] || name.slice(0, 10), count: safeNumber(count) }))
     .slice(0, 6);
+
+  const safeOrdersCount = safeNumber(summary.ordersCount);
+  const safeCustomersCount = safeNumber(summary.customersCount);
+  const safeLowStockCount = safeNumber(summary.lowStockCount);
+  const safeAccountsReceivable = safeNumber(summary.accountsReceivable);
+  const safeInventoryValuation = safeNumber(summary.inventoryValuation);
+  const safeTotalIncome = safeNumber(summary.totalIncome);
+  const safeTotalExpense = safeNumber(summary.totalExpense);
+  const safeTotalBalance = safeNumber(summary.totalBalance);
+  const safeProductivity = safeNumber(summary.productivity);
 
   return (
     <div className="space-y-6">
@@ -179,18 +196,18 @@ export default function DashboardPage() {
             </div>
             <div className="rounded-2xl border border-emerald-400/15 bg-emerald-500/10 p-4">
               <p className="text-xs uppercase tracking-[0.24em] text-emerald-200">Estado</p>
-              <p className="mt-2 text-2xl font-bold text-emerald-300">{summary.productivity}%</p>
+              <p className="mt-2 text-2xl font-bold text-emerald-300">{safeProductivity}%</p>
               <p className="mt-1 text-xs text-emerald-100/80">Productividad operativa actual.</p>
             </div>
             <div className="rounded-2xl border border-sky-400/15 bg-sky-500/10 p-4">
               <p className="text-xs uppercase tracking-[0.24em] text-sky-200">Órdenes activas</p>
-              <p className="mt-2 text-2xl font-bold text-sky-100">{summary.ordersCount}</p>
+              <p className="mt-2 text-2xl font-bold text-sky-100">{safeOrdersCount}</p>
               <p className="mt-1 text-xs text-sky-100/80">{ordersLabel} en taller</p>
             </div>
             <div className="rounded-2xl border border-amber-400/15 bg-amber-500/10 p-4">
               <p className="text-xs uppercase tracking-[0.24em] text-amber-100">Pendientes de revisión</p>
               <p className="mt-2 text-2xl font-bold text-amber-100">
-                {summary.lowStockCount + (summary.overduePromisedOrders?.length ?? 0)}
+                {safeLowStockCount + overdueOrders.length}
               </p>
               <p className="mt-1 text-xs text-amber-100/80">Inventario y promesas por revisar.</p>
             </div>
@@ -202,56 +219,56 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KPICard
           title="Ingresos del mes"
-          value={`$${summary.totalIncome.toFixed(2)}`}
+          value={`$${safeTotalIncome.toFixed(2)}`}
           icon={<TrendingUp className="w-6 h-6" />}
           trend="up"
           color="success"
         />
         <KPICard
           title="Egresos del mes"
-          value={`$${summary.totalExpense.toFixed(2)}`}
+          value={`$${safeTotalExpense.toFixed(2)}`}
           icon={<TrendingDown className="w-6 h-6" />}
           trend="down"
           color="danger"
         />
         <KPICard
           title="Utilidad bruta"
-          value={`$${summary.totalBalance.toFixed(2)}`}
+          value={`$${safeTotalBalance.toFixed(2)}`}
           icon={<DollarSign className="w-6 h-6" />}
-          trend={summary.totalBalance > 0 ? 'up' : 'down'}
-          color={summary.totalBalance > 0 ? 'success' : 'danger'}
+          trend={safeTotalBalance > 0 ? 'up' : 'down'}
+          color={safeTotalBalance > 0 ? 'success' : 'danger'}
         />
         <KPICard
           title="Productividad"
-          value={`${summary.productivity}%`}
+          value={`${safeProductivity}%`}
           icon={<CheckCircle className="w-6 h-6" />}
-          color={summary.productivity >= 70 ? 'success' : summary.productivity >= 50 ? 'warning' : 'danger'}
+          color={safeProductivity >= 70 ? 'success' : safeProductivity >= 50 ? 'warning' : 'danger'}
         />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <SimpleCard
           title={`${ordersLabel} activas`}
-          value={summary.ordersCount}
+          value={safeOrdersCount}
           icon={<ClipboardList className="w-5 h-5" />}
           onClick={() => router.push('/dashboard/tecnico')}
         />
         <SimpleCard
           title={customersLabel}
-          value={summary.customersCount}
+          value={safeCustomersCount}
           icon={<Users className="w-5 h-5" />}
           onClick={() => router.push('/dashboard/clientes')}
         />
         <SimpleCard
           title="Stock bajo"
-          value={summary.lowStockCount}
+          value={safeLowStockCount}
           icon={<Package className="w-5 h-5" />}
-          variant={summary.lowStockCount > 0 ? 'warning' : 'default'}
+          variant={safeLowStockCount > 0 ? 'warning' : 'default'}
           onClick={() => router.push('/dashboard/stock')}
         />
         <SimpleCard
           title="Cuentas por cobrar"
-          value={`$${summary.accountsReceivable.toFixed(2)}`}
+          value={`$${safeAccountsReceivable.toFixed(2)}`}
           icon={<Truck className="w-5 h-5" />}
           onClick={() => router.push('/dashboard/finanzas')}
         />
@@ -362,16 +379,16 @@ export default function DashboardPage() {
           </h3>
           <div className="text-center py-6">
             <p className="text-4xl font-bold text-sky-300">
-              ${summary.inventoryValuation.toLocaleString()}
+              ${safeInventoryValuation.toLocaleString()}
             </p>
             <p className="mt-2 text-sm text-slate-400">
-              {summary.inventoryCount} productos activos
+              {safeNumber(summary.inventoryCount)} productos activos
             </p>
           </div>
           <div className="mt-4 border-t border-slate-800 pt-4">
             <div className="flex justify-between text-sm">
               <span className="text-slate-400">Stock crítico</span>
-              <span className="font-semibold text-rose-400">{summary.lowStockCount}</span>
+              <span className="font-semibold text-rose-400">{safeLowStockCount}</span>
             </div>
           </div>
         </SurfaceCard>

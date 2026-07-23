@@ -446,6 +446,7 @@ export interface ReportsSummary {
     promisedDate: string | null;
     createdAt: string | null;
   }>;
+  degradedSources?: string[];
 }
 
 // Tipos de gastos

@@ -23,6 +23,26 @@ function parseReportDate(value: string | undefined, fallback: Date) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+type QueryResult<T> = {
+  data: T[];
+  error: { message?: string } | null;
+};
+
+async function runSafeQuery<T>(promise: PromiseLike<{ data: T[] | null; error: { message?: string } | null }>) {
+  try {
+    const result = await promise;
+    return {
+      data: result.data ?? [],
+      error: result.error ?? null,
+    } satisfies QueryResult<T>;
+  } catch (error) {
+    return {
+      data: [],
+      error: { message: error instanceof Error ? error.message : String(error) },
+    } satisfies QueryResult<T>;
+  }
+}
+
 export const getReportsSummary = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
@@ -63,17 +83,23 @@ export const getReportsSummary = async (req: Request, res: Response) => {
       movementsQuery = movementsQuery.eq('sucursal_id', effectiveSucursalId);
     }
 
-    const [ordersResult, customersResult, inventoryResult, financeResult, requestsResult, usersResult, movementsResult] = await Promise.all([
-      ordersQuery,
-      customersQuery,
-      inventoryQuery,
-      financeQuery,
-      requestsQuery,
-      usersQuery,
-      movementsQuery,
+    const [
+      ordersResult,
+      customersResult,
+      inventoryResult,
+      financeResult,
+      requestsResult,
+      usersResult,
+      movementsResult,
+    ] = await Promise.all([
+      runSafeQuery(ordersQuery),
+      runSafeQuery(customersQuery),
+      runSafeQuery(inventoryQuery),
+      runSafeQuery(financeQuery),
+      runSafeQuery(requestsQuery),
+      runSafeQuery(usersQuery),
+      runSafeQuery(movementsQuery),
     ]);
-
-    const errors = [ordersResult.error, customersResult.error, inventoryResult.error, financeResult.error, requestsResult.error, usersResult.error, movementsResult.error].filter(Boolean);
 
     console.log('REPORTS_SUMMARY_RESULTS', {
       ordersError: ordersResult.error?.message,
@@ -91,13 +117,6 @@ export const getReportsSummary = async (req: Request, res: Response) => {
       usersRows: usersResult.data?.length,
       movementsRows: movementsResult.data?.length,
     });
-
-    if (errors.length > 0) {
-      return res.status(502).json({
-        error: 'Failed to build reports summary',
-        details: errors.map((item) => (item as Error).message ?? String(item)),
-      });
-    }
 
     const orders = ordersResult.data ?? [];
     const customers = customersResult.data ?? [];
@@ -221,6 +240,16 @@ export const getReportsSummary = async (req: Request, res: Response) => {
         createdAt: (order as { created_at?: string | null }).created_at ?? null,
       }));
 
+    const degradedSources = [
+      ordersResult.error ? 'service_orders' : null,
+      customersResult.error ? 'customers' : null,
+      inventoryResult.error ? 'sucursal_inventory' : null,
+      financeResult.error ? 'finances' : null,
+      requestsResult.error ? 'service_requests' : null,
+      usersResult.error ? 'users' : null,
+      movementsResult.error ? 'inventory_movements' : null,
+    ].filter(Boolean) as string[];
+
     return res.json({
       success: true,
       data: {
@@ -242,6 +271,7 @@ export const getReportsSummary = async (req: Request, res: Response) => {
         topProductsUsed: topProductsUsedList,
         overduePromisedOrders,
         lastUpdatedAt: finances[0]?.created_at ?? orders[0]?.created_at ?? null,
+        degradedSources,
       },
     });
   } catch (error) {

@@ -49,6 +49,7 @@ type ReportsSummary = {
     createdAt: string | null;
   }>;
   lastUpdatedAt?: string | null;
+  degradedSources?: string[];
 };
 
 type BoardStatus = "recibido" | "diagnostico" | "reparacion" | "espera_refaccion" | "listo" | "entregado";
@@ -125,6 +126,15 @@ function topMetricTone(index: number) {
   return "from-amber-500/20 to-orange-500/10";
 }
 
+function safeNumber(value: unknown, fallback = 0) {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function safeArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
 function BoardCard({ order }: { order: OrderRecord }) {
   const status = normalizeStatus(order.status) as BoardStatus;
   return (
@@ -160,6 +170,7 @@ export function OperationalHub() {
   const [summary, setSummary] = useState<ReportsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const degradedSources = safeArray<string>(summary?.degradedSources);
 
   useEffect(() => {
     let cancelled = false;
@@ -171,7 +182,7 @@ export function OperationalHub() {
       try {
         const [ordersResult, reportsResult] = await Promise.all([ordersService.getOrders(), reportsService.getReportsSummary()]);
         if (cancelled) return;
-        setOrders(ordersResult as OrderRecord[]);
+        setOrders(safeArray<OrderRecord>(ordersResult));
         setSummary(reportsResult as ReportsSummary);
       } catch (loadError) {
         if (cancelled) return;
@@ -191,10 +202,10 @@ export function OperationalHub() {
 
   const metrics = useMemo(() => {
     return [
-      { label: `${ordersLabel} activas`, value: String(summary?.ordersCount ?? orders.length), helper: "Trabajo vivo en recepción." },
-      { label: "Listas para entrega", value: String(summary?.statusCounts?.listo ?? 0), helper: "Pendientes de salida o cobro." },
+      { label: `${ordersLabel} activas`, value: String(safeNumber(summary?.ordersCount, orders.length)), helper: "Trabajo vivo en recepción." },
+      { label: "Listas para entrega", value: String(safeNumber(summary?.statusCounts?.listo)), helper: "Pendientes de salida o cobro." },
       { label: "Ingresos del mes", value: formatMoney(summary?.totalIncome), helper: "Cobros confirmados en el tenant." },
-      { label: `${customerLabel}s nuevos`, value: String(summary?.customersCount ?? 0), helper: "Relación comercial del tenant." },
+      { label: `${customerLabel}s nuevos`, value: String(safeNumber(summary?.customersCount)), helper: "Relación comercial del tenant." },
     ];
   }, [orders.length, summary]);
 
@@ -226,6 +237,12 @@ export function OperationalHub() {
 
   return (
     <div className="space-y-4">
+      {degradedSources.length > 0 ? (
+        <section className="rounded-[1.35rem] border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          Algunas métricas están degradadas por datos parciales en: <strong>{degradedSources.join(", ")}</strong>. El panel sigue funcionando con el resto de la información disponible.
+        </section>
+      ) : null}
+
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric, index) => (
           <article
