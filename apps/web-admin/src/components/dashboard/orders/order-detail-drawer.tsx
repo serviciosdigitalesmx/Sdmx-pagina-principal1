@@ -66,6 +66,19 @@ export type OrderDetailData = {
     actor_name?: string | null;
     created_at?: string;
   }>;
+  financialSummary?: {
+    total_aplicable?: number | null;
+    total_cobrado?: number | null;
+    saldo_pendiente?: number | null;
+  } | null;
+  payments?: Array<{
+    id?: string;
+    amount?: number | null;
+    payment_method?: string | null;
+    reference?: string | null;
+    paid_at?: string | null;
+    source?: string | null;
+  }>;
 };
 
 type Props = {
@@ -252,6 +265,8 @@ export function OrderDetailDrawer({
   const portalUrl = buildTrackingUrl(customerPortalUrl, order?.folio, publicToken);
   const metadataEntries = Object.entries((order?.metadata as Record<string, unknown> | undefined) ?? {}).filter(([, value]) => value !== undefined && value !== null && value !== "");
   const operationalRisk = order?.operational_risk ?? null;
+  const financialSummary = data?.financialSummary ?? null;
+  const payments = data?.payments ?? [];
 
   function getDeviceInfoValue(key: "customer_name" | "customer_phone" | "customer_email" | "type" | "brand" | "model" | "serial_number") {
     return String((order?.device_info as Record<string, unknown> | undefined)?.[key] ?? "");
@@ -493,6 +508,38 @@ export function OrderDetailDrawer({
                           <InlineEditButton onClick={onEditFinancials} />
                         </div>
                         <div className="mt-2 text-sm text-zinc-300">${Number(order?.estimated_cost ?? 0).toFixed(2)}</div>
+                      </div>
+                      <div className="rounded-2xl border border-emerald-500/15 bg-emerald-500/5 p-4">
+                        <div className="text-xs uppercase tracking-[0.2em] text-emerald-200/70">Resumen de cobros</div>
+                        <div className="mt-3 grid gap-2 text-sm">
+                          <div className="flex items-center justify-between gap-3 text-zinc-300">
+                            <span>Total aplicable</span>
+                            <span className="font-semibold text-zinc-100">${Number(financialSummary?.total_aplicable ?? order?.final_cost ?? order?.estimated_cost ?? 0).toFixed(2)}</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3 text-zinc-300">
+                            <span>Total cobrado</span>
+                            <span className="font-semibold text-emerald-200">${Number(financialSummary?.total_cobrado ?? 0).toFixed(2)}</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-3 border-t border-emerald-500/15 pt-2 text-zinc-300">
+                            <span>Saldo pendiente</span>
+                            <span className={`font-black ${Number(financialSummary?.saldo_pendiente ?? 0) > 0 ? "text-amber-200" : "text-emerald-200"}`}>
+                              ${Number(financialSummary?.saldo_pendiente ?? 0).toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                        {payments.length > 0 ? (
+                          <div className="mt-3 space-y-2 border-t border-emerald-500/15 pt-3">
+                            <div className="text-[10px] uppercase tracking-[0.18em] text-zinc-500">Últimos cobros</div>
+                            {payments.slice(0, 3).map((payment) => (
+                              <div key={payment.id ?? `${payment.paid_at}-${payment.amount}`} className="flex items-center justify-between gap-3 text-xs text-zinc-400">
+                                <span>{payment.payment_method ?? "Cobro"}</span>
+                                <span className="text-zinc-200">${Number(payment.amount ?? 0).toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="mt-3 border-t border-emerald-500/15 pt-3 text-xs text-zinc-500">Sin cobros registrados.</div>
+                        )}
                       </div>
                       <div className="rounded-2xl border border-sky-500/15 bg-black/20 p-4">
                         <div className="flex items-center justify-between gap-3">
