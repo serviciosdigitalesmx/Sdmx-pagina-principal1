@@ -180,7 +180,7 @@ export function Sidebar({
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+      <nav className="flex-1 flex flex-col gap-1 overflow-y-auto p-3">
         {MODULE_GROUPS.map((group) => {
           const groupModules = group.keys
             .map((key) => visibleModuleByKey.get(key))
@@ -189,7 +189,7 @@ export function Sidebar({
           if (groupModules.length === 0) return null;
 
           return (
-            <div key={group.label} className="space-y-1">
+            <div key={group.label} className="flex flex-col gap-1">
               {!collapsed && (
                 <div className="px-3 pt-4 pb-1 text-xs font-semibold text-slate-500">
                   {group.label}

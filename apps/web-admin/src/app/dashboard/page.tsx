@@ -157,7 +157,7 @@ export default function DashboardPage() {
   const safeProductivity = safeNumber(summary.productivity);
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6">
       <SurfaceCard elevated className="overflow-hidden border border-sky-500/15 bg-[linear-gradient(135deg,rgba(14,165,233,0.16),rgba(15,23,42,0.86)_44%,rgba(8,47,73,0.28))] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.36)]">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
