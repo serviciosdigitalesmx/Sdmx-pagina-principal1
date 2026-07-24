@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from "@white-label/ui/dialog";
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge, SurfaceCard } from "@white-label/ui";
 import { Button } from "@/components/ui/button";

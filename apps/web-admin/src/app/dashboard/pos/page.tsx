@@ -6,6 +6,7 @@ import { SurfaceCard } from '@white-label/ui';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
+import { apiGateway } from '@/services/apiGateway';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
 import { getCurrentSession } from '@/lib/session';
@@ -111,26 +112,23 @@ export default function PosPage() {
         serialNumber: '',
         issue: 'Venta de accesorios/refacciones en mostrador',
         estimatedCost: total,
-        sucursalId: session?.sucursalId || undefined,
+        sucursalId: session?.branchId || undefined,
         checklist: {
           notes: `Venta Mostrador:\n${notes}`
         }
       };
-
-      const result = await apiClient.createOrder(payload);
-      
+      const result = (await apiGateway.createOrder(payload)) as any;
       // Creamos el pago (ingreso) automático
       if (total > 0 && result.id) {
-        await apiClient.createOrderPayment(result.id, {
+        await apiGateway.createOrderPayment(result.id, {
           amount: total,
           paymentMethod: 'cash',
-          notes: 'Venta directa en mostrador'
+          notes: 'Venta de mostrador POS',
         });
-        
+      }  
         // Aquí idealmente consumiríamos el inventario usando createInventoryReservation + consume
         // pero por simplicidad de la prueba de concepto, con la nota en la orden basta por ahora.
-      }
-
+      
       toast.success('¡Venta registrada con éxito!');
       setCart([]);
       setCustomerPhone('');

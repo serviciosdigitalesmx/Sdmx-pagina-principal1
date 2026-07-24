@@ -5,7 +5,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@white-label/ui/dialog";
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { apiGateway } from "@/services/apiGateway";
 

@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@white-label/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { User, Smartphone, DollarSign, Loader2, Save } from "lucide-react";
-import { apiClient } from "@/lib/api-client";
+import { apiGateway } from "@/services/apiGateway";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getCurrentSession } from "@/lib/session";
@@ -54,17 +54,17 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
         serialNumber: formData.serialNumber,
         issue: formData.issue,
         estimatedCost: Number(formData.estimatedCost) || 0,
-        sucursalId: session?.sucursalId || undefined,
+        sucursalId: session?.branchId || undefined,
         checklist: {
           notes: formData.notes
         }
       };
 
-      const result = await apiClient.createOrder(payload);
+      const result = (await apiGateway.createOrder(payload)) as any;
       
       // If there's a deposit, create a payment
       if (formData.deposit && Number(formData.deposit) > 0 && result.id) {
-        await apiClient.createOrderPayment(result.id, {
+        await apiGateway.createOrderPayment(result.id, {
           amount: Number(formData.deposit),
           paymentMethod: "cash",
           notes: "Abono inicial en recepción rápida"

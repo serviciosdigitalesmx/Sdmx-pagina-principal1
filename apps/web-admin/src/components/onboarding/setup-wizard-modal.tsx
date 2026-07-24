@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@white-label/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Store, ArrowRight, Loader2, Rocket } from "lucide-react";
 import { apiClient } from "@/lib/api-client";
+import { getApiOptions } from "@/lib/tenant";
 import { useRouter } from "next/navigation";
 import { getCurrentSession } from "@/lib/session";
 
@@ -25,7 +26,8 @@ export function SetupWizardModal() {
         const session = getCurrentSession();
         if (session?.role !== 'owner') return; // Only prompt owner
         
-        const sucursales = await apiClient.getSucursales();
+        const res = await apiClient.get<{data: any[]}>("/sucursales", getApiOptions());
+        const sucursales = res.data || [];
         if (sucursales.length === 0) {
           setOpen(true);
         }
@@ -46,11 +48,11 @@ export function SetupWizardModal() {
     if (!formData.name) return;
     setLoading(true);
     try {
-      await apiClient.createSucursal({
+      await apiClient.post("/sucursales", {
         name: formData.name,
         phone: formData.phone,
         address: formData.address,
-      });
+      }, getApiOptions());
       setStep(2);
     } catch (err) {
       console.error(err);
@@ -67,7 +69,7 @@ export function SetupWizardModal() {
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      <DialogContent className="border-slate-800 bg-slate-950 sm:max-w-[500px] [&>button]:hidden">
+      <DialogContent className="sm:max-w-[500px] [&>button]:hidden">
         {step === 1 && (
           <>
             <DialogHeader>
