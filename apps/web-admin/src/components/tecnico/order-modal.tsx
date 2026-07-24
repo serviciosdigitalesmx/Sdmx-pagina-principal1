@@ -657,29 +657,31 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
                             </div>
                             <div className="flex flex-col items-end gap-1">
                               <div className="font-bold text-emerald-300">${Number(payment.amount ?? 0).toFixed(2)}</div>
-                              <Button 
-                                variant="ghost"
-                                size="sm"
-                                disabled={isMutating}
-                                onClick={async () => {
-                                  if (confirm("¿Reembolsar este pago?")) {
-                                    try {
-                                      setIsMutating(true);
-                                      await ordersService.refundOrderPayment(order!.id, payment.id as string, { amount: Number(payment.amount), reason: "Solicitud del operador" });
-                                      await onOrderUpdated();
-                                      const response = await apiClient.get<{ data: { payments?: OrderPayment[] } }>(`/orders/${encodeURIComponent(order!.id)}`, getApiOptions());
-                                      setDetail(prev => prev ? { ...prev, payments: response.data.payments ?? [] } : null);
-                                    } catch (e) {
-                                      alert("Error al reembolsar");
-                                    } finally {
-                                      setIsMutating(false);
+                              {Number(payment.amount ?? 0) > 0 && (
+                                <Button 
+                                  variant="ghost"
+                                  size="sm"
+                                  disabled={isMutating}
+                                  onClick={async () => {
+                                    if (confirm("¿Reembolsar este pago?")) {
+                                      try {
+                                        setIsMutating(true);
+                                        await ordersService.refundOrderPayment(order!.id, payment.id as string, { amount: Math.abs(Number(payment.amount)), reason: "Solicitud del operador" });
+                                        await onOrderUpdated();
+                                        const response = await apiClient.get<{ data: { payments?: OrderPayment[] } }>(`/orders/${encodeURIComponent(order!.id)}`, getApiOptions());
+                                        setDetail(prev => prev ? { ...prev, payments: response.data.payments ?? [] } : null);
+                                      } catch (e) {
+                                        alert("Error al reembolsar");
+                                      } finally {
+                                        setIsMutating(false);
+                                      }
                                     }
-                                  }
-                                }}
-                                className="h-6 px-2 text-[10px] text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
-                              >
-                                Reembolsar
-                              </Button>
+                                  }}
+                                  className="h-6 px-2 text-[10px] text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
+                                >
+                                  Reembolsar
+                                </Button>
+                              )}
                             </div>
                           </div>
                         )) : (
