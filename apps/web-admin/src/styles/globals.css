@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@source "../app";
-@source "../components";
+@source "../";
+@source "../../../packages/ui/src";
 
 :root {
   --srf-bg: #fafafa;
