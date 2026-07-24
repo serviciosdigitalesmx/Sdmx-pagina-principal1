@@ -80,13 +80,13 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   }, [refreshOfflineState]);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/8 bg-slate-950/70 backdrop-blur-2xl">
+    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/80 backdrop-blur-2xl">
       <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <button
             type="button"
             onClick={onMenuClick}
-            className="inline-flex items-center justify-center rounded-xl border border-slate-800 bg-slate-900/70 p-2 text-slate-100 transition hover:bg-slate-800 lg:hidden"
+            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-2 text-slate-900 transition hover:bg-slate-100 lg:hidden"
             aria-label="Abrir navegación"
           >
             <Menu className="h-5 w-5" />
@@ -94,38 +94,38 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           <BranchSelector />
           <Link
             href="/dashboard"
-            className="hidden items-center gap-2 rounded-full border border-sky-500/15 bg-sky-500/10 px-3 py-2 text-xs font-medium text-slate-300 transition hover:border-sky-400/30 hover:bg-sky-500/15 hover:text-slate-100 md:inline-flex"
+            className="hidden items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 md:inline-flex"
             title="Volver al hub"
           >
-            <Building2 className="h-4 w-4 text-sky-400" />
+            <Building2 className="h-4 w-4 text-slate-900" />
             Hub
           </Link>
         </div>
 
-        <div className="hidden min-w-0 items-center gap-2 rounded-full border border-white/8 bg-white/5 px-3 py-2 text-xs text-slate-300 md:flex">
-          <span className={`h-2.5 w-2.5 rounded-full ${isOnline ? 'bg-emerald-400' : 'bg-amber-400'} shadow-[0_0_18px_currentColor]`} />
-          <Building2 className="h-4 w-4 text-sky-400" />
+        <div className="hidden min-w-0 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 md:flex">
+          <span className={`h-2.5 w-2.5 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'} shadow-[0_0_8px_currentColor]`} />
+          <Building2 className="h-4 w-4 text-slate-900" />
           <span className="truncate">{identity?.tenantName || 'Mi taller'}</span>
         </div>
         {(queuedOfflineRequests > 0 || !isOnline) ? (
-          <div className="hidden items-center gap-2 rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-2 text-[11px] font-semibold text-amber-100 md:flex">
-            <span className={`h-2 w-2 rounded-full ${isOnline ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />
+          <div className="hidden items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold text-amber-800 md:flex">
+            <span className={`h-2 w-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
             {isOnline ? `${queuedOfflineRequests} cambios pendientes` : `Sin conexión${queuedOfflineRequests ? ` · ${queuedOfflineRequests} pendientes` : ''}`}
           </div>
         ) : null}
         <div className="relative">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center gap-3 rounded-2xl border border-white/8 bg-white/5 px-3 py-2 transition hover:border-sky-400/25 hover:bg-white/8"
+            className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-3 py-2 transition hover:bg-slate-50"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/15">
-              <User className="w-4 h-4 text-sky-400" />
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100">
+              <User className="w-4 h-4 text-slate-900" />
             </div>
             <div className="hidden text-left sm:block">
-              <p className="max-w-40 truncate text-sm font-medium">{user.name || user.email}</p>
-              <p className="text-xs text-slate-400">{roleLabels[user.role] || user.role}</p>
+              <p className="max-w-40 truncate text-sm font-medium text-slate-900">{user.name || user.email}</p>
+              <p className="text-xs text-slate-500">{roleLabels[user.role] || user.role}</p>
             </div>
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+            <ChevronDown className="w-4 h-4 text-slate-500" />
           </button>
 
           {showUserMenu && (
@@ -134,14 +134,14 @@ export function Header({ user, onMenuClick }: HeaderProps) {
                 className="fixed inset-0 z-40"
                 onClick={() => setShowUserMenu(false)}
               />
-              <div className="absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950/95 shadow-[0_20px_60px_rgba(2,6,23,0.45)]">
-                <div className="border-b border-slate-800 p-3">
-                  <p className="text-sm font-medium truncate">{user.email}</p>
-                  <p className="text-xs text-slate-400 mt-1">Tenant: {identity?.tenantName}</p>
+              <div className="absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
+                <div className="border-b border-slate-100 p-3">
+                  <p className="text-sm font-medium truncate text-slate-900">{user.email}</p>
+                  <p className="text-xs text-slate-500 mt-1">Tenant: {identity?.tenantName}</p>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="flex w-full items-center gap-3 px-4 py-3 text-sm text-slate-400 transition-colors hover:bg-slate-800 hover:text-slate-100"
+                  className="flex w-full items-center gap-3 px-4 py-3 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
                 >
                   <LogOut className="w-4 h-4" />
                   Cerrar sesión

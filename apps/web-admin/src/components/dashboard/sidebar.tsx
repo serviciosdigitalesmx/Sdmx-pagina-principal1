@@ -123,22 +123,22 @@ export function Sidebar({
   const visibleModuleByKey = new Map(visibleModules.map((module) => [module.key, module]));
 
   const sidebarContent = (
-    <div className="flex h-full flex-col bg-slate-950/95">
-      <div className="flex items-center justify-between border-b border-white/8 bg-white/[0.02] p-4">
+    <div className="flex h-full flex-col bg-slate-50 border-r border-slate-200">
+      <div className="flex items-center justify-between border-b border-slate-200 bg-white p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,rgba(96,165,250,0.95),rgba(34,211,238,0.85))] shadow-[0_12px_28px_rgba(37,99,235,0.22)]">
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-900 shadow-sm">
             <span className="text-xs font-black text-white">{platformBrand.substring(0, 2).toUpperCase()}</span>
           </div>
           {!collapsed && (
-            <span className="font-semibold tracking-[0.08em] text-slate-100">
-              {platformBrand.substring(0, 2)}<span className="text-sky-400">{platformBrand.substring(2)}</span>
+            <span className="font-semibold tracking-[0.08em] text-slate-900">
+              {platformBrand.substring(0, 2)}<span className="text-sky-600">{platformBrand.substring(2)}</span>
             </span>
           )}
         </div>
         {!collapsed && (
           <button
             onClick={() => setCollapsed(true)}
-            className="rounded-xl p-1 text-slate-400 hover:bg-slate-800"
+            className="rounded-xl p-1 text-slate-500 hover:bg-slate-200"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -146,7 +146,7 @@ export function Sidebar({
         {collapsed && (
           <button
             onClick={() => setCollapsed(false)}
-            className="rounded-xl p-1 text-slate-400 hover:bg-slate-800"
+            className="rounded-xl p-1 text-slate-500 hover:bg-slate-200"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
@@ -157,10 +157,10 @@ export function Sidebar({
         <div className="px-3 pt-3">
           <Link
             href="/dashboard"
-            className="flex items-center gap-3 rounded-2xl border border-sky-500/20 bg-[linear-gradient(135deg,rgba(30,64,175,0.28),rgba(8,145,178,0.18))] px-3 py-3 text-sm font-medium text-slate-100 transition hover:border-sky-400/30 hover:shadow-[0_18px_40px_rgba(37,99,235,0.16)]"
+            className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-medium text-slate-900 transition hover:border-slate-300 hover:shadow-sm"
             title="Ir al tablero"
           >
-            <LayoutDashboard className="h-5 w-5 text-sky-400" />
+            <LayoutDashboard className="h-5 w-5 text-slate-900" />
             <span>Ir al tablero</span>
           </Link>
         </div>
@@ -168,13 +168,13 @@ export function Sidebar({
 
       {/* Sucursal indicator */}
       {!collapsed && !isLoading && identity && (
-        <div className="mx-4 mt-4 rounded-2xl border border-white/8 bg-white/[0.03] p-3 text-center">
-          <p className="text-xs text-slate-400">Sucursal activa</p>
-          <p className="text-sm font-semibold text-sky-400 truncate">
+        <div className="mx-4 mt-4 rounded-xl border border-slate-200 bg-white p-3 text-center shadow-sm">
+          <p className="text-xs text-slate-500 font-medium">Sucursal activa</p>
+          <p className="text-sm font-semibold text-slate-900 truncate">
             {identity.branchName}
           </p>
           {showConsolidated && activeSucursalId !== 'GLOBAL' && (
-            <p className="mt-1 text-xs text-slate-400">Puedes volver a la vista general</p>
+            <p className="mt-1 text-xs text-slate-500">Puedes volver a la vista general</p>
           )}
         </div>
       )}
@@ -191,7 +191,7 @@ export function Sidebar({
           return (
             <div key={group.label} className="space-y-1">
               {!collapsed && (
-                <div className="px-3 pt-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-500">
+                <div className="px-3 pt-4 pb-1 text-xs font-semibold text-slate-500">
                   {group.label}
                 </div>
               )}
@@ -204,20 +204,20 @@ export function Sidebar({
                     key={module.key}
                     href={module.href}
                     className={`
-                      flex items-center gap-3 rounded-2xl border px-3 py-2.5 transition-all duration-200
+                      flex items-center gap-3 rounded-xl px-3 py-2 transition-all duration-200
                       ${isActive
-                        ? 'border-sky-500/30 bg-[linear-gradient(135deg,rgba(14,165,233,0.18),rgba(59,130,246,0.08))] text-slate-50 shadow-[0_12px_30px_rgba(59,130,246,0.12)]'
-                        : 'border-transparent text-slate-400 hover:border-white/8 hover:bg-white/[0.03] hover:text-slate-100'
+                        ? 'bg-slate-100 text-slate-900 font-medium'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                       }
                       ${collapsed ? 'justify-center' : ''}
                     `}
                     title={collapsed ? module.label : undefined}
                   >
-                    <span className={`flex h-9 w-9 items-center justify-center rounded-2xl ${isActive ? 'bg-sky-500/15 text-sky-300' : 'bg-white/[0.03] text-slate-400'}`}>
-                      <Icon className="h-5 w-5" />
+                    <span className={`flex h-8 w-8 items-center justify-center rounded-lg ${isActive ? 'text-slate-900' : 'text-slate-500'}`}>
+                      <Icon className="h-4 w-4" />
                     </span>
                     {!collapsed && (
-                      <span className="text-sm font-medium">{module.label}</span>
+                      <span className="text-sm">{module.label}</span>
                     )}
                   </Link>
                 );
@@ -229,20 +229,17 @@ export function Sidebar({
 
       {!collapsed && (
         <div className="px-3 pb-4">
-          <div className="rounded-3xl border border-sky-500/15 bg-[linear-gradient(180deg,rgba(30,64,175,0.18),rgba(2,6,23,0.6))] p-4 shadow-[0_20px_60px_rgba(37,99,235,0.12)]">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.24em] text-sky-300">
-              <Sparkles className="h-4 w-4" />
-              SaaS ready
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-900">
+              <Sparkles className="h-4 w-4 text-amber-500" />
+              Plan Pro
             </div>
-            <p className="mt-2 text-sm font-semibold text-slate-50">Ajusta branding, sucursales y flujo operativo desde aquí.</p>
-            <p className="mt-1 text-xs leading-5 text-slate-400">
-              La navegación está ordenada por operación, relación y administración para que el panel se sienta más limpio.
-            </p>
+            <p className="mt-2 text-sm text-slate-600">Ajusta branding, sucursales y flujo operativo.</p>
             <Link
               href="/dashboard/billing"
-              className="mt-3 inline-flex w-full items-center justify-center rounded-2xl border border-sky-400/20 bg-sky-500/10 px-3 py-2 text-sm font-semibold text-sky-100 transition hover:bg-sky-500/15"
+              className="mt-3 inline-flex w-full items-center justify-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-900 transition hover:bg-slate-100"
             >
-              Ver planes
+              Administrar plan
             </Link>
           </div>
         </div>

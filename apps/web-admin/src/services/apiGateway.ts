@@ -663,6 +663,36 @@ class ApiGateway {
     return this.normalizeCustomerRow(result.data);
   }
 
+  public async updateCustomer(id: string, data: JsonRecord): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath(`/customers/${encodeURIComponent(id)}`),
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    );
+    return this.normalizeCustomerRow(result.data);
+  }
+
+  public async updateCustomerConsent(id: string, consent: boolean): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath(`/customers/${encodeURIComponent(id)}/consent`),
+      {
+        method: 'POST',
+        body: JSON.stringify({ consent }),
+      }
+    );
+    return result.data;
+  }
+
+  public async getCustomerHistory(id: string): Promise<JsonRecord[]> {
+    const result = await this.request<ApiListResponse<JsonRecord[]>>(
+      this.apiPath(`/customers/${encodeURIComponent(id)}/history`),
+      { method: 'GET' }
+    );
+    return result.data || [];
+  }
+
   public async createOrder(data: JsonRecord): Promise<JsonRecord> {
     const result = await this.request<ApiListResponse<JsonRecord>>(
       this.apiPath('/orders'),
@@ -712,6 +742,73 @@ class ApiGateway {
       }
     );
     return result.data;
+  }
+
+  public async startOrderWorkLog(orderId: string): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/worklogs/start`),
+      { method: 'POST' }
+    );
+    return result.data;
+  }
+
+  public async pauseOrderWorkLog(orderId: string): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/worklogs/pause`),
+      { method: 'POST' }
+    );
+    return result.data;
+  }
+
+  public async resumeOrderWorkLog(orderId: string): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/worklogs/resume`),
+      { method: 'POST' }
+    );
+    return result.data;
+  }
+
+  public async stopOrderWorkLog(orderId: string): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/worklogs/stop`),
+      { method: 'POST' }
+    );
+    return result.data;
+  }
+
+  public async listOrderWorkLogs(orderId: string): Promise<JsonRecord[]> {
+    const result = await this.request<ApiListResponse<JsonRecord[]>>(
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/worklogs`),
+      { method: 'GET' }
+    );
+    return result.data || [];
+  }
+
+  public async createOrderWhatsAppDraft(orderId: string, templateKey: string): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/whatsapp/draft`),
+      {
+        method: 'POST',
+        body: JSON.stringify({ templateKey }),
+      }
+    );
+    return result.data;
+  }
+
+  public async listOrderWhatsAppMessages(orderId: string): Promise<JsonRecord[]> {
+    const result = await this.request<ApiListResponse<JsonRecord[]>>(
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/whatsapp/messages`),
+      { method: 'GET' }
+    );
+    return result.data || [];
+  }
+
+  public async listTechnicianCommissionRules(): Promise<JsonRecord[]> {
+    const result = await this.request<ApiListResponse<JsonRecord[]>>(
+      this.apiPath('/commissions/rules'),
+      { method: 'GET' }
+    );
+    return result.data || [];
   }
 
   public async updateOrderStatus(orderId: string, status: string, note?: string, deliveryData?: { deliveredToName?: string; deliveredToRelationship?: string }): Promise<JsonRecord> {
@@ -854,6 +951,14 @@ class ApiGateway {
   public async getInventoryReservations(orderId: string): Promise<JsonRecord[]> {
     const result = await this.request<ApiListResponse<JsonRecord[]>>(
       this.apiPath(`/inventory/reservations?serviceOrderId=${encodeURIComponent(orderId)}`),
+      { method: 'GET' }
+    );
+    return result.data ?? [];
+  }
+
+  public async listInventoryReservations(): Promise<JsonRecord[]> {
+    const result = await this.request<ApiListResponse<JsonRecord[]>>(
+      this.apiPath('/inventory/reservations'),
       { method: 'GET' }
     );
     return result.data ?? [];
@@ -1091,6 +1196,37 @@ class ApiGateway {
       { method: 'GET' }
     );
     return this.normalizeReportsSummary(result.data);
+  }
+
+  public async getProductivityReport(startDate?: string, endDate?: string): Promise<JsonRecord> {
+    const query = new URLSearchParams();
+    if (startDate) query.set('startDate', startDate);
+    if (endDate) query.set('endDate', endDate);
+    
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath(`/reports/productivity?${query.toString()}`),
+      { method: 'GET' }
+    );
+    return result.data;
+  }
+
+  public async getBillingStatus(): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath('/billing/status'),
+      { method: 'GET' }
+    );
+    return result.data;
+  }
+
+  public async createCheckout(priceId: string): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath('/billing/checkout'),
+      {
+        method: 'POST',
+        body: JSON.stringify({ priceId }),
+      }
+    );
+    return result.data;
   }
 
   public async getSuppliers(params: SupplierQueryParams = {}): Promise<JsonRecord[] & { page: number; pageSize: number; total: number; hasMore: boolean; }> {

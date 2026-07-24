@@ -7,9 +7,9 @@ export interface SurfaceCardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function SurfaceCard({ elevated = false, subtle = false, className = "", children, ...props }: SurfaceCardProps) {
   const classes = [
-    "overflow-hidden rounded-[1.6rem] bg-[linear-gradient(180deg,rgba(15,23,42,0.96),rgba(2,6,23,0.98))]",
-    subtle ? "border border-white/8" : "border border-white/10",
-    elevated ? "shadow-[0_24px_80px_rgba(2,6,23,0.36)]" : "shadow-[0_16px_48px_rgba(2,6,23,0.22)]",
+    "overflow-hidden rounded-2xl bg-white",
+    subtle ? "border border-slate-100" : "border border-slate-200",
+    elevated ? "shadow-md" : "shadow-sm",
     className,
   ]
     .filter(Boolean)
@@ -24,7 +24,7 @@ export function SurfaceCard({ elevated = false, subtle = false, className = "", 
 
 export function SurfaceHeader({ className = "", children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={`border-b border-white/10 px-5 py-4 ${className}`} {...props}>
+    <div className={`border-b border-slate-100 px-5 py-4 bg-slate-50/50 ${className}`} {...props}>
       {children}
     </div>
   );
@@ -32,7 +32,7 @@ export function SurfaceHeader({ className = "", children, ...props }: React.HTML
 
 export function SurfaceTitle({ className = "", children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h3 className={`text-[1.05rem] font-semibold tracking-tight text-slate-50 ${className}`} {...props}>
+    <h3 className={`text-[1.05rem] font-semibold tracking-tight text-slate-900 ${className}`} {...props}>
       {children}
     </h3>
   );
