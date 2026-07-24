@@ -305,7 +305,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
       await onOrderUpdated();
       
       // refetch details to update payments
-      const response = await apiClient.get<{ data: { payments?: any[] } }>(`/orders/${encodeURIComponent(order.id)}`, getApiOptions());
+      const response = await apiClient.get<{ data: { payments?: OrderPayment[] } }>(`/orders/${encodeURIComponent(order.id)}`, getApiOptions());
       setDetail(prev => prev ? { ...prev, payments: response.data.payments ?? [] } : null);
     } catch (err) {
       console.error(err);
@@ -542,7 +542,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
                           <p className="text-xs font-semibold text-slate-200">Crear Reserva de Refacción</p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="space-y-1">
-                              <label className="text-[10px] uppercase tracking-wider text-slate-500">ID del Producto (SKU)</label>
+                              <label className="text-[10px] uppercase tracking-wider text-slate-500">ID del Producto</label>
                               <Input 
                                 placeholder="Ej: REF-001" 
                                 value={newReservationData.productId}
@@ -667,7 +667,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
                                       setIsMutating(true);
                                       await ordersService.refundOrderPayment(order!.id, payment.id as string, { amount: Number(payment.amount), reason: "Solicitud del operador" });
                                       await onOrderUpdated();
-                                      const response = await apiClient.get<{ data: { payments?: any[] } }>(`/orders/${encodeURIComponent(order!.id)}`, getApiOptions());
+                                      const response = await apiClient.get<{ data: { payments?: OrderPayment[] } }>(`/orders/${encodeURIComponent(order!.id)}`, getApiOptions());
                                       setDetail(prev => prev ? { ...prev, payments: response.data.payments ?? [] } : null);
                                     } catch (e) {
                                       alert("Error al reembolsar");
