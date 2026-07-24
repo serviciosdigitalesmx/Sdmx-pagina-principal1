@@ -257,29 +257,76 @@ export function OrderDetailDrawer({
   onEditDetails,
   onEditChecklist,
   onArchive,
-}: Props) {
+  ...props
+}: Props & { onOrderUpdated?: () => void }) {
   const order = data?.order;
   const [activeTab, setActiveTab] = useState<"details" | "notes" | "checklist" | "history" | "inventory" | "payments">("details");
   const [editingField, setEditingField] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [inventoryReservations, setInventoryReservations] = useState<any[]>(data?.inventoryReservations ?? []);
-  const [loadingReservations, setLoadingReservations] = useState(false);
+  
+  // Mutations UI state
+  const [isMutating, setIsMutating] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
 
-  useEffect(() => {
-    let mounted = true;
-    if (open && activeTab === "inventory" && order?.id) {
-      setLoadingReservations(true);
-      inventoryService.getInventoryReservations(order.id)
-        .then((res) => {
-          if (mounted) setInventoryReservations(res);
-        })
-        .catch((err) => console.error("Error loading reservations:", err))
-        .finally(() => {
-          if (mounted) setLoadingReservations(false);
-        });
+  const inventoryReservations = data?.inventoryReservations ?? [];
+  const payments = data?.payments ?? [];
+
+  const handleConsume = async (reservationId: string, quantity: number) => {
+    if (!order?.id || isMutating) return;
+    setIsMutating(true);
+    try {
+      await inventoryService.consumeInventoryReservation(reservationId, { 
+        quantity, 
+        idempotencyKey: `consume-${Date.now()}` 
+      });
+      // Optionally notify parent
+      if (typeof (props as any).onOrderUpdated === 'function') {
+        (props as any).onOrderUpdated();
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error al consumir");
+    } finally {
+      setIsMutating(false);
     }
-    return () => { mounted = false; };
-  }, [open, activeTab, order?.id]);
+  };
+
+  const handleRelease = async (reservationId: string, quantity: number) => {
+    if (!order?.id || isMutating) return;
+    setIsMutating(true);
+    try {
+      await inventoryService.releaseInventoryReservation(reservationId, { quantity });
+      if (typeof (props as any).onOrderUpdated === 'function') {
+        (props as any).onOrderUpdated();
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error al liberar");
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleAddPayment = async () => {
+    if (!order?.id || isMutating || !paymentAmount) return;
+    setIsMutating(true);
+    try {
+      await ordersService.createOrderPayment(order.id, { 
+        amount: Number(paymentAmount), 
+        paymentMethod 
+      });
+      setPaymentAmount("");
+      if (typeof (props as any).onOrderUpdated === 'function') {
+        (props as any).onOrderUpdated();
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error al registrar pago");
+    } finally {
+      setIsMutating(false);
+    }
+  };
 
   if (!open) {
     return null;
@@ -295,7 +342,6 @@ export function OrderDetailDrawer({
   const metadataEntries = Object.entries((order?.metadata as Record<string, unknown> | undefined) ?? {}).filter(([, value]) => value !== undefined && value !== null && value !== "");
   const operationalRisk = order?.operational_risk ?? null;
   const financialSummary = data?.financialSummary ?? null;
-  const payments = data?.payments ?? [];
 
   function getDeviceInfoValue(key: "customer_name" | "customer_phone" | "customer_email" | "type" | "brand" | "model" | "serial_number") {
     return String((order?.device_info as Record<string, unknown> | undefined)?.[key] ?? "");
@@ -691,14 +737,15 @@ export function OrderDetailDrawer({
                     <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-100/70">Refacciones Reservadas</h4>
                     <div className="mt-2 flex items-center justify-between">
                       <p className="text-xs text-zinc-400">Las acciones de inventario (reservar, consumir) están disponibles para operaciones en sucursal.</p>
-                      <button className="rounded-full border border-sky-500/40 px-3 py-1 text-xs font-semibold text-sky-100">
+                      <button 
+                        onClick={() => alert("Implementar modal de nueva reserva")}
+                        className="rounded-full border border-sky-500/40 px-3 py-1 text-xs font-semibold text-sky-100 disabled:opacity-50"
+                      >
                         + Nueva reserva
                       </button>
                     </div>
                     <div className="rounded-2xl border border-zinc-800 bg-black/30 p-4 text-sm text-zinc-300">
-                      {loadingReservations ? (
-                        <div className="text-zinc-500">Cargando reservas...</div>
-                      ) : inventoryReservations?.length ? (
+                      {inventoryReservations?.length ? (
                         <div className="space-y-3">
                           {inventoryReservations.map((res) => (
                             <div key={res.id} className="flex items-center justify-between border-b border-zinc-800 pb-2">
@@ -711,8 +758,20 @@ export function OrderDetailDrawer({
                                 <div className="flex gap-2">
                                   {res.status !== 'consumed' && res.status !== 'released' && (
                                     <>
-                                      <button className="rounded border border-emerald-500/30 px-2 py-1 text-[10px] text-emerald-300">Consumir</button>
-                                      <button className="rounded border border-amber-500/30 px-2 py-1 text-[10px] text-amber-300">Liberar</button>
+                                      <button 
+                                        disabled={isMutating}
+                                        onClick={() => handleConsume(res.id as string, Number(res.reserved_quantity) - Number(res.consumed_quantity))}
+                                        className="rounded border border-emerald-500/30 px-2 py-1 text-[10px] text-emerald-300 disabled:opacity-50"
+                                      >
+                                        Consumir
+                                      </button>
+                                      <button 
+                                        disabled={isMutating}
+                                        onClick={() => handleRelease(res.id as string, Number(res.reserved_quantity) - Number(res.consumed_quantity))}
+                                        className="rounded border border-amber-500/30 px-2 py-1 text-[10px] text-amber-300 disabled:opacity-50"
+                                      >
+                                        Liberar
+                                      </button>
                                     </>
                                   )}
                                 </div>
@@ -732,12 +791,34 @@ export function OrderDetailDrawer({
                     <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-100/70">Historial de Pagos</h4>
                     <div className="mt-2 flex items-center justify-between">
                       <p className="text-xs text-zinc-400">Añade o reembolsa pagos para esta orden.</p>
-                      <button className="rounded-full border border-sky-500/40 px-3 py-1 text-xs font-semibold text-sky-100">
-                        + Registrar pago
-                      </button>
+                      <div className="flex gap-2">
+                        <input 
+                          type="number" 
+                          placeholder="Monto" 
+                          value={paymentAmount}
+                          onChange={(e) => setPaymentAmount(e.target.value)}
+                          className="w-24 rounded border border-zinc-800 bg-transparent px-2 py-1 text-xs text-zinc-200"
+                        />
+                        <select 
+                          value={paymentMethod}
+                          onChange={(e) => setPaymentMethod(e.target.value)}
+                          className="rounded border border-zinc-800 bg-transparent px-2 py-1 text-xs text-zinc-200"
+                        >
+                          <option value="cash">Efectivo</option>
+                          <option value="card">Tarjeta</option>
+                          <option value="transfer">Transferencia</option>
+                        </select>
+                        <button 
+                          disabled={isMutating}
+                          onClick={handleAddPayment}
+                          className="rounded-full border border-sky-500/40 px-3 py-1 text-xs font-semibold text-sky-100 disabled:opacity-50"
+                        >
+                          + Registrar pago
+                        </button>
+                      </div>
                     </div>
                     <div className="rounded-2xl border border-zinc-800 bg-black/30 p-4 text-sm text-zinc-300">
-                      {payments.length ? (
+                      {payments?.length ? (
                         <div className="space-y-3">
                           {payments.map((payment) => (
                             <div key={payment.id} className="flex items-center justify-between border-b border-zinc-800 pb-2">
@@ -745,7 +826,28 @@ export function OrderDetailDrawer({
                                 <div className="font-semibold text-zinc-200">{payment.payment_method ?? "Cobro"}</div>
                                 <div className="text-xs text-zinc-400">{payment.paid_at ? new Date(payment.paid_at).toLocaleString("es-MX") : "-"}</div>
                               </div>
-                              <div className="font-bold text-emerald-300">${Number(payment.amount ?? 0).toFixed(2)}</div>
+                              <div className="flex flex-col items-end gap-1">
+                                <div className="font-bold text-emerald-300">${Number(payment.amount ?? 0).toFixed(2)}</div>
+                                <button 
+                                  disabled={isMutating}
+                                  onClick={async () => {
+                                    if (confirm("¿Reembolsar este pago?")) {
+                                      try {
+                                        setIsMutating(true);
+                                        await ordersService.refundOrderPayment(order!.id as string, payment.id as string, { amount: Number(payment.amount), reason: "Solicitud del operador" });
+                                        if (typeof props.onOrderUpdated === 'function') props.onOrderUpdated();
+                                      } catch (e) {
+                                        alert("Error al reembolsar");
+                                      } finally {
+                                        setIsMutating(false);
+                                      }
+                                    }
+                                  }}
+                                  className="text-[10px] text-rose-400 underline disabled:opacity-50"
+                                >
+                                  Reembolsar
+                                </button>
+                              </div>
                             </div>
                           ))}
                         </div>
