@@ -65,15 +65,33 @@ function InfoRow({ label, value }: { label: string; value?: string | number | nu
   );
 }
 
+export interface InventoryReservation {
+  id?: string;
+  product_id?: string;
+  reserved_quantity?: number;
+  consumed_quantity?: number;
+  released_quantity?: number;
+  status?: string;
+}
+
+export interface OrderPayment {
+  id?: string;
+  amount?: number | string;
+  payment_method?: string;
+  paid_at?: string;
+}
+
 export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props) {
   const [activeTab, setActiveTab] = useState<"details" | "checklist" | "photos" | "history" | "inventory" | "payments">("details");
-  const [detail, setDetail] = useState<{ order: Order; checklist: OrderChecklist | null; documents: OrderDocument[]; events: OrderEvent[]; payments: any[]; inventoryReservations: any[] } | null>(null);
+  const [detail, setDetail] = useState<{ order: Order; checklist: OrderChecklist | null; documents: OrderDocument[]; events: OrderEvent[]; payments: OrderPayment[]; inventoryReservations: InventoryReservation[] } | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [savingDetails, setSavingDetails] = useState(false);
   const [savingChecklist, setSavingChecklist] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [showNewReservation, setShowNewReservation] = useState(false);
+  const [newReservationData, setNewReservationData] = useState({ productId: "", quantity: 1, reason: "" });
   const [detailsDraft, setDetailsDraft] = useState({
     clientName: "",
     clientPhone: "",
@@ -246,6 +264,30 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
     } catch (err) {
       console.error(err);
       alert("Error al liberar");
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleCreateReservation = async () => {
+    if (!order?.id || isMutating || !newReservationData.productId || newReservationData.quantity < 1) return;
+    setIsMutating(true);
+    try {
+      await inventoryService.createInventoryReservation({
+        serviceOrderId: order.id,
+        productId: newReservationData.productId,
+        quantity: newReservationData.quantity,
+        reason: newReservationData.reason || undefined,
+      });
+      setShowNewReservation(false);
+      setNewReservationData({ productId: "", quantity: 1, reason: "" });
+      await onOrderUpdated();
+      
+      const reservations = await inventoryService.getInventoryReservations(order.id).catch(() => []);
+      setDetail(prev => prev ? { ...prev, inventoryReservations: reservations ?? [] } : null);
+    } catch (err) {
+      console.error(err);
+      alert("Error al crear reserva");
     } finally {
       setIsMutating(false);
     }
@@ -487,13 +529,54 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
                         <Button 
                           size="sm"
                           variant="outline"
-                          onClick={() => alert("Implementar modal de nueva reserva")}
+                          onClick={() => setShowNewReservation(true)}
                           disabled={isMutating}
                           className="gap-2 text-xs"
                         >
                           + Nueva reserva
                         </Button>
                       </div>
+                      
+                      {showNewReservation && (
+                        <div className="mt-3 rounded-2xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
+                          <p className="text-xs font-semibold text-slate-200">Crear Reserva de Refacción</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <label className="text-[10px] uppercase tracking-wider text-slate-500">ID del Producto (SKU)</label>
+                              <Input 
+                                placeholder="Ej: REF-001" 
+                                value={newReservationData.productId}
+                                onChange={(e) => setNewReservationData(prev => ({ ...prev, productId: e.target.value }))}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-[10px] uppercase tracking-wider text-slate-500">Cantidad</label>
+                              <Input 
+                                type="number"
+                                min={1}
+                                value={newReservationData.quantity}
+                                onChange={(e) => setNewReservationData(prev => ({ ...prev, quantity: parseInt(e.target.value) || 1 }))}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                            <div className="sm:col-span-2 space-y-1">
+                              <label className="text-[10px] uppercase tracking-wider text-slate-500">Motivo (Opcional)</label>
+                              <Input 
+                                placeholder="Razón de la reserva..."
+                                value={newReservationData.reason}
+                                onChange={(e) => setNewReservationData(prev => ({ ...prev, reason: e.target.value }))}
+                                className="h-8 text-xs"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex justify-end gap-2 mt-2">
+                            <Button size="sm" variant="ghost" onClick={() => setShowNewReservation(false)} disabled={isMutating} className="h-7 text-xs">Cancelar</Button>
+                            <Button size="sm" onClick={handleCreateReservation} disabled={isMutating || !newReservationData.productId} className="h-7 text-xs">Crear Reserva</Button>
+                          </div>
+                        </div>
+                      )}
+
                       <div className="mt-3 space-y-2">
                         {inventoryReservations.length > 0 ? inventoryReservations.map((res) => (
                           <div key={res.id} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3 flex items-center justify-between">
