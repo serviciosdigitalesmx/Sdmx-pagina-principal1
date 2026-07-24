@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { supabaseAdmin } from '@white-label/database';
 import { loadTenantBillingSummary } from '../services/tenant-billing';
 
 function normalize(value: string | null | undefined) {
@@ -12,6 +13,7 @@ export async function requireTenantBillingActive(req: Request, res: Response, ne
   const masterAccountEmail = normalize(process.env.MASTER_ACCOUNT_EMAIL);
   const currentTenantSlug = normalize(tenantSlug);
   const currentUserEmail = normalize(req.user?.email);
+  const masterTenantNames = new Set(['senor fix', 'señor fix']);
 
   if (!tenantId) {
     return res.status(400).json({ error: 'Missing tenant identification' });
@@ -19,6 +21,23 @@ export async function requireTenantBillingActive(req: Request, res: Response, ne
 
   if ((masterTenantSlug && currentTenantSlug && currentTenantSlug === masterTenantSlug) || (masterAccountEmail && currentUserEmail && currentUserEmail === masterAccountEmail)) {
     return next();
+  }
+
+  try {
+    const { data: tenantRow } = await supabaseAdmin
+      .from('tenants')
+      .select('name, slug, billing_exempt')
+      .eq('id', tenantId)
+      .maybeSingle();
+
+    const tenantName = normalize(tenantRow?.name);
+    const tenantSlugFromDb = normalize(tenantRow?.slug);
+
+    if (tenantRow?.billing_exempt || masterTenantNames.has(tenantName) || (masterTenantSlug && tenantSlugFromDb === masterTenantSlug)) {
+      return next();
+    }
+  } catch {
+    // fall through to the standard billing gate below
   }
 
   try {
