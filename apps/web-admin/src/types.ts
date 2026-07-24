@@ -538,6 +538,55 @@ export interface SecuritySession {
   ipAddress: string | null;
   userAgent: string | null;
   lastActivityAt: string;
-  createdAt: string;
   user: SecurityUser | null;
+}
+
+export interface WarrantyClaim {
+  id: string;
+  tenant_id: string;
+  original_order_id: string;
+  claim_order_id: string | null;
+  warranty_until: string | null;
+  eligibility_status: 'active' | 'expired' | 'no_warranty' | 'unknown';
+  status: 'open' | 'under_review' | 'approved' | 'rejected' | 'resolved' | 'cancelled';
+  coverage_scope: 'full' | 'labor' | 'parts' | 'diagnosis' | 'other';
+  claim_reason: string;
+  reported_issue: string | null;
+  requested_resolution: string | null;
+  resolution_notes: string | null;
+  created_by: string | null;
+  approved_by: string | null;
+  rejected_by: string | null;
+  resolved_by: string | null;
+  cancelled_by: string | null;
+  created_at: string;
+  updated_at: string;
+  approved_at: string | null;
+  rejected_at: string | null;
+  resolved_at: string | null;
+  cancelled_at: string | null;
+}
+
+export interface DeviceHistoryItem {
+  id: string;
+  tenant_id: string;
+  folio: string;
+  status: string;
+  priority: string;
+  customer_id: string;
+  device_info: Record<string, unknown>;
+  device_type: string | null;
+  device_brand: string | null;
+  device_model: string | null;
+  serial_number: string | null;
+  reported_issue: string | null;
+  internal_diagnosis: string | null;
+  estimated_cost: number | null;
+  final_cost: number | null;
+  promised_date: string | null;
+  received_at: string | null;
+  completed_at: string | null;
+  delivered_at: string | null;
+  created_at: string;
+  updated_at: string;
 }

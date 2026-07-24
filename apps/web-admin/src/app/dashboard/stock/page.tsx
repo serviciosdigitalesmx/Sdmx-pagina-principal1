@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, Search, RefreshCw, Edit2, Package, AlertTriangle, ArrowUpDown, Filter, Layers3 } from 'lucide-react';
+import { Plus, Search, RefreshCw, Edit2, Package, AlertTriangle, ArrowUpDown, Filter, Layers3, ArrowRightLeft } from 'lucide-react';
 import { Badge, SurfaceCard } from '@white-label/ui';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ProductModal } from '@/components/stock/product-modal';
 import { MovementModal } from '@/components/stock/movement-modal';
+import { TransferModal } from '@/components/stock/transfer-modal';
 import type { Product, StockAlert } from '@/types';
 
 export default function StockPage() {
@@ -24,6 +25,8 @@ export default function StockPage() {
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [movementModalOpen, setMovementModalOpen] = useState(false);
   const [movementProduct, setMovementProduct] = useState<Product | null>(null);
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
+  const [transferProduct, setTransferProduct] = useState<Product | null>(null);
   const [categories, setCategories] = useState<string[]>([]);
 
   const stats = useMemo(() => {
@@ -326,6 +329,16 @@ export default function StockPage() {
                     >
                       <ArrowUpDown className="w-4 h-4" />
                     </button>
+                    <button
+                      onClick={() => {
+                        setTransferProduct(product);
+                        setTransferModalOpen(true);
+                      }}
+                      className="rounded p-1 text-purple-300 hover:bg-purple-500/10"
+                      title="Transferir"
+                    >
+                      <ArrowRightLeft className="w-4 h-4" />
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -357,6 +370,16 @@ export default function StockPage() {
         onOpenChange={setMovementModalOpen}
         product={movementProduct}
         onMovementSaved={() => {
+          loadProducts();
+          loadAlerts();
+        }}
+      />
+
+      <TransferModal
+        open={transferModalOpen}
+        onOpenChange={setTransferModalOpen}
+        product={transferProduct}
+        onTransferSuccess={() => {
           loadProducts();
           loadAlerts();
         }}

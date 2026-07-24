@@ -16,6 +16,9 @@ import { getTenantSlug } from "@/lib/tenant";
 import { resolveBaseDomain } from "@white-label/config";
 import { inventoryService } from "@/services/inventory/inventoryService";
 import { ordersService } from "@/services/orders/ordersService";
+import { History, AlertTriangle } from "lucide-react";
+import { DeviceHistoryModal } from "./device-history-modal";
+import { WarrantyClaimModal } from "./warranty-claim-modal";
 
 type Props = {
   open: boolean;
@@ -118,6 +121,9 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
 
   const pdfUrl = buildPdfUrl(order);
   const whatsappUrl = buildWhatsappUrl(order);
+
+  const [deviceHistoryOpen, setDeviceHistoryOpen] = useState(false);
+  const [warrantyClaimOpen, setWarrantyClaimOpen] = useState(false);
 
   useEffect(() => {
     if (!open || !order?.id) return;
@@ -316,8 +322,9 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[calc(100vw-1rem)] border border-slate-800 bg-slate-950/96 p-0 shadow-[0_30px_120px_rgba(2,6,23,0.65)] sm:max-w-[920px]">
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-[calc(100vw-1rem)] border border-slate-800 bg-slate-950/96 p-0 shadow-[0_30px_120px_rgba(2,6,23,0.65)] sm:max-w-[920px]">
         <div className="flex h-[calc(100dvh-1rem)] max-h-[calc(100dvh-1rem)] flex-col overflow-hidden">
           <div className="border-b border-slate-800/80 px-4 py-3 sm:px-5">
             <DialogHeader className="mb-0">
@@ -373,6 +380,24 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
                         <Clock3 className="h-4 w-4" />
                         Editar en recepción
                       </Button>
+                      <Button
+                        className="justify-start gap-2"
+                        variant="outline"
+                        onClick={() => setDeviceHistoryOpen(true)}
+                        disabled={!(device.serial_number || currentOrder.serial_number)}
+                      >
+                        <History className="h-4 w-4" />
+                        Historial de equipo
+                      </Button>
+                      {currentOrder.warranty_until && (
+                        <Button 
+                          className="justify-start gap-2 bg-amber-600 hover:bg-amber-700" 
+                          onClick={() => setWarrantyClaimOpen(true)}
+                        >
+                          <AlertTriangle className="h-4 w-4" />
+                          Garantía
+                        </Button>
+                      )}
                       {pdfUrl ? (
                         <Button className="justify-start gap-2" onClick={() => window.open(pdfUrl, "_blank", "noopener,noreferrer")}>
                           <FileText className="h-4 w-4" />
@@ -712,5 +737,26 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
         </div>
       </DialogContent>
     </Dialog>
+
+      {deviceHistoryOpen && (
+        <DeviceHistoryModal
+          open={deviceHistoryOpen}
+          onOpenChange={setDeviceHistoryOpen}
+          serialNumber={device.serial_number || currentOrder?.serial_number || null}
+          currentOrderId={currentOrder?.id}
+        />
+      )}
+
+      {warrantyClaimOpen && currentOrder?.id && (
+        <WarrantyClaimModal
+          open={warrantyClaimOpen}
+          onOpenChange={setWarrantyClaimOpen}
+          orderId={currentOrder.id}
+          orderFolio={currentOrder.folio}
+          warrantyUntil={currentOrder.warranty_until}
+          onSuccess={() => void onOrderUpdated()}
+        />
+      )}
+    </>
   );
 }

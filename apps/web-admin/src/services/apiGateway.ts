@@ -635,6 +635,17 @@ class ApiGateway {
     return result.data ?? [];
   }
 
+  public async transferInventory(data: { sku: string; sucursalOrigen: string; sucursalDestino: string; cantidad: number; motivo?: string; notas?: string }): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath('/inventory/transfer'),
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return result.data;
+  }
+
   public async createCustomer(data: JsonRecord): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
       this.apiPath('/customers'),
@@ -766,6 +777,44 @@ class ApiGateway {
       }
     );
     return result.data;
+  }
+
+  public async getOrderWarrantySummary(orderId: string): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/warranty`),
+      { method: 'GET' }
+    );
+    return result.data;
+  }
+
+  public async createOrderWarrantyClaim(orderId: string, data: { claimReason: string; reportedIssue?: string; requestedResolution?: string; coverageScope?: string }): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/warranty/claims`),
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return result.data;
+  }
+
+  public async updateOrderWarrantyClaimStatus(orderId: string, claimId: string, status: string, resolutionNotes?: string): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/warranty/claims/${encodeURIComponent(claimId)}/status`),
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ status, resolutionNotes }),
+      }
+    );
+    return result.data;
+  }
+
+  public async getDeviceHistoryBySerial(serialNumber: string, limit: number = 50): Promise<JsonRecord[]> {
+    const result = await this.request<ApiListResponse<JsonRecord[]>>(
+      this.apiPath(`/orders/device-history?serialNumber=${encodeURIComponent(serialNumber)}&limit=${limit}`),
+      { method: 'GET' }
+    );
+    return result.data ?? [];
   }
 
   public async getOrders(): Promise<JsonRecord[]> {
