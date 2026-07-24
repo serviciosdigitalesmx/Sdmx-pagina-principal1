@@ -33,4 +33,10 @@ export const ordersService = {
 
   updateOrderWarranty: (...args: Parameters<typeof apiGateway.updateOrderWarranty>) =>
     apiGateway.updateOrderWarranty(...args),
+
+  createOrderPayment: (...args: Parameters<typeof apiGateway.createOrderPayment>) =>
+    apiGateway.createOrderPayment(...args),
+
+  refundOrderPayment: (...args: Parameters<typeof apiGateway.refundOrderPayment>) =>
+    apiGateway.refundOrderPayment(...args),
 };

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { OrderTimeline } from "./order-timeline";
 import { getTenantSlug } from "@/lib/tenant";
 import { resolveBaseDomain } from "@white-label/config";
+import { inventoryService } from "@/services/inventory/inventoryService";
+import { ordersService } from "@/services/orders/ordersService";
 
 export type OrderDetailData = {
   order?: {
@@ -78,6 +80,15 @@ export type OrderDetailData = {
     reference?: string | null;
     paid_at?: string | null;
     source?: string | null;
+  }>;
+  inventoryReservations?: Array<{
+    id?: string;
+    product_id?: string;
+    reserved_quantity?: number;
+    consumed_quantity?: number;
+    released_quantity?: number;
+    status?: string;
+    reservation_reason?: string | null;
   }>;
 };
 
@@ -248,9 +259,27 @@ export function OrderDetailDrawer({
   onArchive,
 }: Props) {
   const order = data?.order;
-  const [activeTab, setActiveTab] = useState<"details" | "notes" | "checklist" | "history">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "notes" | "checklist" | "history" | "inventory" | "payments">("details");
   const [editingField, setEditingField] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [inventoryReservations, setInventoryReservations] = useState<any[]>(data?.inventoryReservations ?? []);
+  const [loadingReservations, setLoadingReservations] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    if (open && activeTab === "inventory" && order?.id) {
+      setLoadingReservations(true);
+      inventoryService.getInventoryReservations(order.id)
+        .then((res) => {
+          if (mounted) setInventoryReservations(res);
+        })
+        .catch((err) => console.error("Error loading reservations:", err))
+        .finally(() => {
+          if (mounted) setLoadingReservations(false);
+        });
+    }
+    return () => { mounted = false; };
+  }, [open, activeTab, order?.id]);
 
   if (!open) {
     return null;
@@ -339,6 +368,8 @@ export function OrderDetailDrawer({
                   { key: "notes", label: "Notas internas" },
                   { key: "checklist", label: "Checklist recepción" },
                   { key: "history", label: "Historial" },
+                  { key: "inventory", label: "Refacciones" },
+                  { key: "payments", label: "Pagos" },
                 ].map((tab) => (
                   <button
                     key={tab.key}
@@ -651,6 +682,76 @@ export function OrderDetailDrawer({
                     <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-100/70">Últimos movimientos</h4>
                     <div className="mt-3">
                       <OrderTimeline events={data?.events ?? []} />
+                    </div>
+                  </section>
+                ) : null}
+
+                {activeTab === "inventory" ? (
+                  <section className="space-y-4">
+                    <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-100/70">Refacciones Reservadas</h4>
+                    <div className="mt-2 flex items-center justify-between">
+                      <p className="text-xs text-zinc-400">Las acciones de inventario (reservar, consumir) están disponibles para operaciones en sucursal.</p>
+                      <button className="rounded-full border border-sky-500/40 px-3 py-1 text-xs font-semibold text-sky-100">
+                        + Nueva reserva
+                      </button>
+                    </div>
+                    <div className="rounded-2xl border border-zinc-800 bg-black/30 p-4 text-sm text-zinc-300">
+                      {loadingReservations ? (
+                        <div className="text-zinc-500">Cargando reservas...</div>
+                      ) : inventoryReservations?.length ? (
+                        <div className="space-y-3">
+                          {inventoryReservations.map((res) => (
+                            <div key={res.id} className="flex items-center justify-between border-b border-zinc-800 pb-2">
+                              <div>
+                                <div className="font-semibold text-zinc-200">Producto ID: {res.product_id}</div>
+                                <div className="text-xs text-zinc-400">Reservadas: {res.reserved_quantity} | Consumidas: {res.consumed_quantity}</div>
+                              </div>
+                              <div className="flex flex-col items-end gap-2">
+                                <div className="text-xs text-sky-400">{res.status}</div>
+                                <div className="flex gap-2">
+                                  {res.status !== 'consumed' && res.status !== 'released' && (
+                                    <>
+                                      <button className="rounded border border-emerald-500/30 px-2 py-1 text-[10px] text-emerald-300">Consumir</button>
+                                      <button className="rounded border border-amber-500/30 px-2 py-1 text-[10px] text-amber-300">Liberar</button>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div>No hay refacciones reservadas para esta orden.</div>
+                      )}
+                    </div>
+                  </section>
+                ) : null}
+
+                {activeTab === "payments" ? (
+                  <section className="space-y-4">
+                    <h4 className="text-sm font-semibold uppercase tracking-[0.2em] text-amber-100/70">Historial de Pagos</h4>
+                    <div className="mt-2 flex items-center justify-between">
+                      <p className="text-xs text-zinc-400">Añade o reembolsa pagos para esta orden.</p>
+                      <button className="rounded-full border border-sky-500/40 px-3 py-1 text-xs font-semibold text-sky-100">
+                        + Registrar pago
+                      </button>
+                    </div>
+                    <div className="rounded-2xl border border-zinc-800 bg-black/30 p-4 text-sm text-zinc-300">
+                      {payments.length ? (
+                        <div className="space-y-3">
+                          {payments.map((payment) => (
+                            <div key={payment.id} className="flex items-center justify-between border-b border-zinc-800 pb-2">
+                              <div>
+                                <div className="font-semibold text-zinc-200">{payment.payment_method ?? "Cobro"}</div>
+                                <div className="text-xs text-zinc-400">{payment.paid_at ? new Date(payment.paid_at).toLocaleString("es-MX") : "-"}</div>
+                              </div>
+                              <div className="font-bold text-emerald-300">${Number(payment.amount ?? 0).toFixed(2)}</div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div>No hay pagos registrados para esta orden.</div>
+                      )}
                     </div>
                   </section>
                 ) : null}

@@ -324,6 +324,29 @@ export interface InventoryMovement {
   created_at: string;
 }
 
+export interface InventoryReservation {
+  id: string;
+  tenant_id: string;
+  sucursal_id: string | null;
+  service_order_id: string;
+  product_id: string;
+  reserved_quantity: number;
+  consumed_quantity: number;
+  released_quantity: number;
+  status: 'active' | 'consumed' | 'released' | 'expired';
+  idempotency_key: string | null;
+  reservation_reason: string | null;
+  reserved_by: string | null;
+  consumed_by: string | null;
+  released_by: string | null;
+  reserved_at: string;
+  consumed_at: string | null;
+  released_at: string | null;
+  expires_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface StockAlert {
   id: string;
   tenant_id: string;

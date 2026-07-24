@@ -796,6 +796,69 @@ class ApiGateway {
     return result.data ?? [];
   }
 
+  public async getInventoryReservations(orderId: string): Promise<JsonRecord[]> {
+    const result = await this.request<ApiListResponse<JsonRecord[]>>(
+      this.apiPath(`/inventory/reservations?serviceOrderId=${encodeURIComponent(orderId)}`),
+      { method: 'GET' }
+    );
+    return result.data ?? [];
+  }
+
+  public async createInventoryReservation(data: { serviceOrderId: string; productId: string; quantity: number; reason?: string }): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath('/inventory/reservations'),
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return result.data;
+  }
+
+  public async consumeInventoryReservation(reservationId: string, data: { quantity: number; idempotencyKey: string; reason?: string }): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath(`/inventory/reservations/${encodeURIComponent(reservationId)}/consume`),
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return result.data;
+  }
+
+  public async releaseInventoryReservation(reservationId: string, data: { quantity: number; reason?: string }): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath(`/inventory/reservations/${encodeURIComponent(reservationId)}/release`),
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    );
+    return result.data;
+  }
+
+  public async createOrderPayment(orderId: string, data: { amount: number; paymentMethod: string; reference?: string; notes?: string }): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/payments`),
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return result.data;
+  }
+
+  public async refundOrderPayment(orderId: string, paymentId: string, data: { amount: number; reason: string }): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/payments/${encodeURIComponent(paymentId)}/refund`),
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return result.data;
+  }
+
   public async getExpenses(): Promise<JsonRecord[]> {
     const result = await this.request<ApiListResponse<JsonRecord[]>>(
       this.apiPath('/finance/balance'),

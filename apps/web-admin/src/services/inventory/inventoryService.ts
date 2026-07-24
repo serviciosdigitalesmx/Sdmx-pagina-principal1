@@ -18,4 +18,16 @@ export const inventoryService = {
 
   acknowledgeStockAlert: (...args: Parameters<typeof apiGateway.acknowledgeStockAlert>) =>
     apiGateway.acknowledgeStockAlert(...args),
+
+  getInventoryReservations: (...args: Parameters<typeof apiGateway.getInventoryReservations>) =>
+    apiGateway.getInventoryReservations(...args),
+
+  createInventoryReservation: (...args: Parameters<typeof apiGateway.createInventoryReservation>) =>
+    apiGateway.createInventoryReservation(...args),
+
+  consumeInventoryReservation: (...args: Parameters<typeof apiGateway.consumeInventoryReservation>) =>
+    apiGateway.consumeInventoryReservation(...args),
+
+  releaseInventoryReservation: (...args: Parameters<typeof apiGateway.releaseInventoryReservation>) =>
+    apiGateway.releaseInventoryReservation(...args),
 };
