@@ -12,6 +12,7 @@ import { TenantIdentityProvider } from '@/providers/TenantIdentityProvider';
 import { ModuleRouteGuard } from '@/components/guard/module-route-guard';
 import { BillingExpiredScreen } from '@/components/billing/billing-expired-screen';
 import { PlanLimitModal } from '@/components/billing/plan-limit-modal';
+import { SetupWizardModal } from '@/components/onboarding/setup-wizard-modal';
 import { isBillingExpired, onBillingExpired } from '@/lib/billing-expired';
 
 function getSessionUser() {
@@ -94,6 +95,7 @@ export default function DashboardLayout({
           </div>
         </div>
         <PlanLimitModal />
+        <SetupWizardModal />
       </AppShell>
     </TenantIdentityProvider>
   );

@@ -1,17 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
 import { loadTenantBillingSummary } from '../services/tenant-billing';
 
+function normalize(value: string | null | undefined) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
 export async function requireTenantBillingActive(req: Request, res: Response, next: NextFunction) {
   const tenantId = req.tenantId ?? req.user?.tenantId;
   const tenantSlug = req.user?.tenantSlug ?? req.params.tenantSlug ?? null;
-  const masterTenantSlug = process.env.MASTER_TENANT_SLUG?.trim() ?? '';
-  const masterAccountEmail = process.env.MASTER_ACCOUNT_EMAIL?.trim() ?? '';
+  const masterTenantSlug = normalize(process.env.MASTER_TENANT_SLUG);
+  const masterAccountEmail = normalize(process.env.MASTER_ACCOUNT_EMAIL);
+  const currentTenantSlug = normalize(tenantSlug);
+  const currentUserEmail = normalize(req.user?.email);
 
   if (!tenantId) {
     return res.status(400).json({ error: 'Missing tenant identification' });
   }
 
-  if ((masterTenantSlug && tenantSlug && tenantSlug === masterTenantSlug) || (masterAccountEmail && req.user?.email && req.user.email === masterAccountEmail)) {
+  if ((masterTenantSlug && currentTenantSlug && currentTenantSlug === masterTenantSlug) || (masterAccountEmail && currentUserEmail && currentUserEmail === masterAccountEmail)) {
     return next();
   }
 

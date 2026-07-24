@@ -40,6 +40,7 @@ import { isModuleEnabled } from '@/lib/module-access';
 import { useTenantIdentity } from '@/providers/TenantIdentityProvider';
 import type { ReportsSummary } from '@/types';
 import { SurfaceCard } from '@white-label/ui';
+import { QuickReceiveModal } from '@/components/ordenes/quick-receive-modal';
 
 // Colores para gráficos
 const CHART_COLORS = {
@@ -72,6 +73,7 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<ReportsSummary | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [quickReceiveOpen, setQuickReceiveOpen] = useState(false);
 
   const safeNumber = (value: unknown, fallback = 0) => {
     const parsed = typeof value === 'number' ? value : Number(value);
@@ -168,11 +170,12 @@ export default function DashboardPage() {
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <button
-                onClick={() => router.push('/dashboard/operativo')}
+                onClick={() => setQuickReceiveOpen(true)}
                 className="btn-primary"
               >
                 Nueva orden
               </button>
+              <QuickReceiveModal open={quickReceiveOpen} onOpenChange={setQuickReceiveOpen} />
               <button
                 onClick={() => router.push('/dashboard/tecnico')}
                 className="btn-outline"
