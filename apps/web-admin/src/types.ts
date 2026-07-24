@@ -46,6 +46,7 @@ export interface DashboardModule {
 }
 
 export const DASHBOARD_MODULES: DashboardModule[] = [
+  { key: 'pos', label: 'Mini POS', icon: 'ShoppingCart', href: '/dashboard/pos', enabled: true },
   { key: 'operativo', label: 'Recepción', icon: 'ClipboardList', href: '/dashboard/operativo', enabled: true },
   { key: 'tecnico', label: 'Técnico', icon: 'Wrench', href: '/dashboard/tecnico', enabled: true },
   { key: 'solicitudes', label: 'Solicitudes', icon: 'FileText', href: '/dashboard/solicitudes', enabled: true },

@@ -55,6 +55,7 @@ const getIcon = (iconName: string) => {
 };
 
 const DASHBOARD_MODULE_ACCESS: Partial<Record<string, TenantModuleKey>> = {
+  pos: 'orders',
   operativo: 'orders',
   tecnico: 'orders',
   solicitudes: 'requests',
@@ -81,7 +82,7 @@ const ROLE_ALLOWED_MODULES: Record<'owner' | 'manager' | 'technician' | 'client'
 };
 
 const MODULE_GROUPS: Array<{ label: string; keys: string[] }> = [
-  { label: 'Operación', keys: ['dashboard', 'operativo', 'tecnico', 'solicitudes', 'archivo'] },
+  { label: 'Operación', keys: ['dashboard', 'pos', 'operativo', 'tecnico', 'solicitudes', 'archivo'] },
   { label: 'Relación', keys: ['landing', 'clientes', 'tareas'] },
   { label: 'Administración', keys: ['stock', 'proveedores', 'compras', 'gastos', 'finanzas', 'reportes', 'sucursales', 'seguridad', 'usuarios'] },
 ];

@@ -187,16 +187,26 @@ export default function SeguridadPage() {
             <Users className="w-5 h-5" />
             Usuarios internos
           </h2>
-          <Button
-            onClick={() => {
-              setSelectedUser(null);
-              setUserModalOpen(true);
-            }}
-            className="gap-2 text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            Nuevo usuario
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={loadData}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              Actualizar
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => window.location.href = '/dashboard/seguridad/roles'}>
+              <Shield className="mr-2 h-4 w-4 text-emerald-400" />
+              Matriz de Roles
+            </Button>
+            <Button
+              onClick={() => {
+                setSelectedUser(null);
+                setUserModalOpen(true);
+              }}
+              className="gap-2 text-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Nuevo usuario
+            </Button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
