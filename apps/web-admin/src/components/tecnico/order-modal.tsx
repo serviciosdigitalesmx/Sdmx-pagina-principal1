@@ -14,6 +14,8 @@ import { getApiOptions } from "@/lib/tenant";
 import type { Order, OrderChecklist, OrderDocument, OrderEvent } from "@/types";
 import { getTenantSlug } from "@/lib/tenant";
 import { resolveBaseDomain } from "@white-label/config";
+import { inventoryService } from "@/services/inventory/inventoryService";
+import { ordersService } from "@/services/orders/ordersService";
 
 type Props = {
   open: boolean;
@@ -64,11 +66,14 @@ function InfoRow({ label, value }: { label: string; value?: string | number | nu
 }
 
 export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props) {
-  const [activeTab, setActiveTab] = useState<"details" | "checklist" | "photos" | "history">("details");
-  const [detail, setDetail] = useState<{ order: Order; checklist: OrderChecklist | null; documents: OrderDocument[]; events: OrderEvent[] } | null>(null);
+  const [activeTab, setActiveTab] = useState<"details" | "checklist" | "photos" | "history" | "inventory" | "payments">("details");
+  const [detail, setDetail] = useState<{ order: Order; checklist: OrderChecklist | null; documents: OrderDocument[]; events: OrderEvent[]; payments: any[]; inventoryReservations: any[] } | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [savingDetails, setSavingDetails] = useState(false);
   const [savingChecklist, setSavingChecklist] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
   const [detailsDraft, setDetailsDraft] = useState({
     clientName: "",
     clientPhone: "",
@@ -102,12 +107,17 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
     let cancelled = false;
     setLoadingDetail(true);
 
-    void apiClient
-      .get<{ data: { order: Order; checklist?: OrderChecklist | null; documents?: OrderDocument[]; events?: OrderEvent[] } }>(
+    void Promise.all([
+      apiClient.get<{ data: { order: Order; checklist?: OrderChecklist | null; documents?: OrderDocument[]; events?: OrderEvent[]; payments?: any[] } }>(
         `/orders/${encodeURIComponent(order.id)}`,
         getApiOptions(),
-      )
-      .then((response) => {
+      ),
+      inventoryService.getInventoryReservations(order.id).catch((err) => {
+        console.error("Failed to load inventory reservations:", err);
+        return [];
+      }),
+    ])
+      .then(([response, reservations]) => {
         if (cancelled) return;
         const loaded = response.data;
         setDetail({
@@ -115,6 +125,8 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
           checklist: loaded.checklist ?? null,
           documents: loaded.documents ?? [],
           events: loaded.events ?? [],
+          payments: loaded.payments ?? [],
+          inventoryReservations: reservations ?? [],
         });
         setDetailsDraft({
           clientName: loaded.order.device_info?.customer_name || "",
@@ -159,6 +171,8 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
   const checklist = detail?.checklist ?? null;
   const documents = detail?.documents ?? [];
   const events = detail?.events ?? [];
+  const payments = detail?.payments ?? [];
+  const inventoryReservations = detail?.inventoryReservations ?? [];
   const device = currentOrder.device_info ?? {};
   const statusLabel = String(currentOrder.status || "recibido").replaceAll("_", " ");
 
@@ -201,6 +215,61 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
       await onOrderUpdated();
     } finally {
       setSavingChecklist(false);
+    }
+  };
+
+  const handleConsume = async (reservationId: string, quantity: number) => {
+    if (!order?.id || isMutating) return;
+    setIsMutating(true);
+    try {
+      await inventoryService.consumeInventoryReservation(reservationId, { 
+        quantity, 
+        idempotencyKey: `consume-${Date.now()}` 
+      });
+      await onOrderUpdated();
+      setDetail(prev => prev ? { ...prev, inventoryReservations: prev.inventoryReservations.map(r => r.id === reservationId ? { ...r, consumed_quantity: Number(r.consumed_quantity || 0) + quantity, status: Number(r.consumed_quantity || 0) + quantity >= Number(r.reserved_quantity || 0) ? 'consumed' : r.status } : r) } : null);
+    } catch (err) {
+      console.error(err);
+      alert("Error al consumir");
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleRelease = async (reservationId: string, quantity: number) => {
+    if (!order?.id || isMutating) return;
+    setIsMutating(true);
+    try {
+      await inventoryService.releaseInventoryReservation(reservationId, { quantity });
+      await onOrderUpdated();
+      setDetail(prev => prev ? { ...prev, inventoryReservations: prev.inventoryReservations.map(r => r.id === reservationId ? { ...r, released_quantity: Number(r.released_quantity || 0) + quantity, status: Number(r.released_quantity || 0) + quantity >= Number(r.reserved_quantity || 0) ? 'released' : r.status } : r) } : null);
+    } catch (err) {
+      console.error(err);
+      alert("Error al liberar");
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleAddPayment = async () => {
+    if (!order?.id || isMutating || !paymentAmount) return;
+    setIsMutating(true);
+    try {
+      await ordersService.createOrderPayment(order.id, { 
+        amount: Number(paymentAmount), 
+        paymentMethod 
+      });
+      setPaymentAmount("");
+      await onOrderUpdated();
+      
+      // refetch details to update payments
+      const response = await apiClient.get<{ data: { payments?: any[] } }>(`/orders/${encodeURIComponent(order.id)}`, getApiOptions());
+      setDetail(prev => prev ? { ...prev, payments: response.data.payments ?? [] } : null);
+    } catch (err) {
+      console.error(err);
+      alert("Error al registrar pago");
+    } finally {
+      setIsMutating(false);
     }
   };
 
@@ -283,11 +352,13 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
                 </div>
 
                 <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)}>
-                  <TabsList className="sticky top-0 z-10 grid w-full grid-cols-4 border border-slate-800 bg-slate-950/95 p-1 backdrop-blur-xl">
+                  <TabsList className="sticky top-0 z-10 grid w-full grid-cols-6 border border-slate-800 bg-slate-950/95 p-1 backdrop-blur-xl">
                     <TabsTrigger value="details" className="rounded-xl text-xs text-slate-400 data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-50">Detalles</TabsTrigger>
                     <TabsTrigger value="checklist" className="rounded-xl text-xs text-slate-400 data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-50">Checklist</TabsTrigger>
                     <TabsTrigger value="photos" className="rounded-xl text-xs text-slate-400 data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-50">Fotos</TabsTrigger>
                     <TabsTrigger value="history" className="rounded-xl text-xs text-slate-400 data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-50">Historial</TabsTrigger>
+                    <TabsTrigger value="inventory" className="rounded-xl text-xs text-slate-400 data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-50">Refacciones</TabsTrigger>
+                    <TabsTrigger value="payments" className="rounded-xl text-xs text-slate-400 data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-50">Pagos</TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="details" className="mt-4 space-y-4">
@@ -404,6 +475,132 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
                           </div>
                         )) : (
                           <p className="py-4 text-center text-slate-400">Sin historial de eventos</p>
+                        )}
+                      </div>
+                    </SurfaceCard>
+                  </TabsContent>
+
+                  <TabsContent value="inventory" className="mt-4 space-y-4">
+                    <SurfaceCard elevated className="p-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Refacciones Reservadas</p>
+                        <Button 
+                          size="sm"
+                          variant="outline"
+                          onClick={() => alert("Implementar modal de nueva reserva")}
+                          disabled={isMutating}
+                          className="gap-2 text-xs"
+                        >
+                          + Nueva reserva
+                        </Button>
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {inventoryReservations.length > 0 ? inventoryReservations.map((res) => (
+                          <div key={res.id} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3 flex items-center justify-between">
+                            <div>
+                              <div className="font-semibold text-slate-200">Producto ID: {res.product_id}</div>
+                              <div className="text-xs text-slate-400">Reservadas: {res.reserved_quantity} | Consumidas: {res.consumed_quantity}</div>
+                            </div>
+                            <div className="flex flex-col items-end gap-2">
+                              <span className="text-xs text-sky-300">{res.status}</span>
+                              <div className="flex gap-2">
+                                {res.status !== 'consumed' && res.status !== 'released' && (
+                                  <>
+                                    <Button 
+                                      size="sm"
+                                      disabled={isMutating}
+                                      onClick={() => handleConsume(res.id as string, Number(res.reserved_quantity) - Number(res.consumed_quantity))}
+                                      className="h-7 border border-emerald-500/30 bg-emerald-500/10 px-2 text-[10px] text-emerald-300 hover:bg-emerald-500/20"
+                                    >
+                                      Consumir
+                                    </Button>
+                                    <Button 
+                                      size="sm"
+                                      disabled={isMutating}
+                                      onClick={() => handleRelease(res.id as string, Number(res.reserved_quantity) - Number(res.consumed_quantity))}
+                                      className="h-7 border border-amber-500/30 bg-amber-500/10 px-2 text-[10px] text-amber-300 hover:bg-amber-500/20"
+                                    >
+                                      Liberar
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )) : (
+                          <p className="py-4 text-center text-slate-400">No hay refacciones reservadas para esta orden.</p>
+                        )}
+                      </div>
+                    </SurfaceCard>
+                  </TabsContent>
+
+                  <TabsContent value="payments" className="mt-4 space-y-4">
+                    <SurfaceCard elevated className="p-4">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                        <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Historial de Pagos</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Input 
+                            type="number" 
+                            placeholder="Monto" 
+                            value={paymentAmount}
+                            onChange={(e) => setPaymentAmount(e.target.value)}
+                            className="h-9 w-24 text-xs"
+                          />
+                          <select 
+                            value={paymentMethod}
+                            onChange={(e) => setPaymentMethod(e.target.value)}
+                            className="h-9 rounded-md border border-slate-800 bg-slate-950/60 px-3 text-xs text-slate-200"
+                          >
+                            <option value="cash">Efectivo</option>
+                            <option value="card">Tarjeta</option>
+                            <option value="transfer">Transferencia</option>
+                          </select>
+                          <Button 
+                            size="sm"
+                            disabled={isMutating || !paymentAmount}
+                            onClick={handleAddPayment}
+                            className="h-9 gap-2 text-xs"
+                          >
+                            Registrar pago
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="mt-3 space-y-2">
+                        {payments.length > 0 ? payments.map((payment) => (
+                          <div key={payment.id} className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3 flex items-center justify-between">
+                            <div>
+                              <div className="font-semibold text-slate-200">{payment.payment_method ?? "Cobro"}</div>
+                              <div className="text-xs text-slate-400">{payment.paid_at ? new Date(payment.paid_at).toLocaleString("es-MX") : "-"}</div>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <div className="font-bold text-emerald-300">${Number(payment.amount ?? 0).toFixed(2)}</div>
+                              <Button 
+                                variant="ghost"
+                                size="sm"
+                                disabled={isMutating}
+                                onClick={async () => {
+                                  if (confirm("¿Reembolsar este pago?")) {
+                                    try {
+                                      setIsMutating(true);
+                                      await ordersService.refundOrderPayment(order!.id, payment.id as string, { amount: Number(payment.amount), reason: "Solicitud del operador" });
+                                      await onOrderUpdated();
+                                      const response = await apiClient.get<{ data: { payments?: any[] } }>(`/orders/${encodeURIComponent(order!.id)}`, getApiOptions());
+                                      setDetail(prev => prev ? { ...prev, payments: response.data.payments ?? [] } : null);
+                                    } catch (e) {
+                                      alert("Error al reembolsar");
+                                    } finally {
+                                      setIsMutating(false);
+                                    }
+                                  }
+                                }}
+                                className="h-6 px-2 text-[10px] text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
+                              >
+                                Reembolsar
+                              </Button>
+                            </div>
+                          </div>
+                        )) : (
+                          <p className="py-4 text-center text-slate-400">No hay pagos registrados para esta orden.</p>
                         )}
                       </div>
                     </SurfaceCard>
