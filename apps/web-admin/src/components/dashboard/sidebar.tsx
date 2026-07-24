@@ -204,6 +204,15 @@ export function Sidebar({
                     key={module.key}
                     href={module.href}
                     data-e2e={`nav-${module.key}`}
+                    onClick={(e) => {
+                      if (module.key === 'operativo') {
+                        e.preventDefault();
+                        window.dispatchEvent(new CustomEvent('open-quick-receive'));
+                        if (onMobileOpenChange) {
+                          onMobileOpenChange(false);
+                        }
+                      }
+                    }}
                     className={`
                       flex items-center gap-3 rounded-xl px-3 py-2 transition-all duration-200
                       ${isActive

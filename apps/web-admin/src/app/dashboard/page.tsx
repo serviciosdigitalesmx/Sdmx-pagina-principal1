@@ -158,14 +158,14 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <SurfaceCard elevated className="overflow-hidden border border-sky-500/15 bg-[linear-gradient(135deg,rgba(14,165,233,0.16),rgba(15,23,42,0.86)_44%,rgba(8,47,73,0.28))] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.36)]">
+      <SurfaceCard elevated className="overflow-hidden border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <p className="text-xs uppercase tracking-[0.32em] text-sky-300/80">Hub operativo</p>
-            <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-50 sm:text-5xl">
+            <p className="text-xs uppercase tracking-[0.32em] text-slate-500 font-medium">Hub operativo</p>
+            <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl">
               Panel de Control
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500">
               Resumen operativo del taller en tiempo real con métricas, órdenes activas, inventario y caja en una sola vista.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">

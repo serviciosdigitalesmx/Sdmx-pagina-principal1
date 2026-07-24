@@ -15,6 +15,8 @@ import { PlanLimitModal } from '@/components/billing/plan-limit-modal';
 import { SetupWizardModal } from '@/components/onboarding/setup-wizard-modal';
 import { isBillingExpired, onBillingExpired } from '@/lib/billing-expired';
 
+import { GlobalQuickReceiveModal } from '@/components/ordenes/global-quick-receive';
+
 function getSessionUser() {
   const session = getCurrentSession();
 
@@ -96,6 +98,7 @@ export default function DashboardLayout({
         </div>
         <PlanLimitModal />
         <SetupWizardModal />
+        <GlobalQuickReceiveModal />
       </AppShell>
     </TenantIdentityProvider>
   );

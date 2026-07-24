@@ -219,8 +219,8 @@ export default function OrdersPage() {
       <SurfaceCard elevated className="space-y-4 p-4 lg:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-50">{ordersLabel}</h1>
-            <p className="mt-1 text-sm text-slate-400">Lista, búsqueda, kanban y detalle con API real.</p>
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{ordersLabel}</h1>
+            <p className="mt-1 text-sm text-slate-500">Lista, búsqueda, kanban y detalle con API real.</p>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -232,7 +232,7 @@ export default function OrdersPage() {
               {viewMode === 'kanban' ? <List className="h-4 w-4" /> : <Grid2X2 className="h-4 w-4" />}
               {viewMode === 'kanban' ? 'Ver lista' : 'Ver kanban'}
             </Button>
-            <Button onClick={() => router.push('/dashboard/operativo')} className="gap-2">
+            <Button onClick={() => window.dispatchEvent(new CustomEvent('open-quick-receive'))} className="gap-2">
               <Plus className="h-4 w-4" />
               Nueva {orderLabel.toLowerCase()}
             </Button>
@@ -246,13 +246,13 @@ export default function OrdersPage() {
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Buscar folio, cliente, equipo o teléfono..."
-              className="input pl-9"
+              className="input pl-9 bg-white border-slate-200 text-slate-900"
             />
           </div>
 
           <div className="relative">
             <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="input pl-9">
+            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="input pl-9 bg-white border-slate-200 text-slate-900">
               <option value="all">Todos los estados</option>
               {orderedStatusKeys.map((status) => (
                 <option key={status} value={status}>
