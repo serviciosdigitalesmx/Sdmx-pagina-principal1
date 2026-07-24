@@ -48,6 +48,7 @@ type CustomerHistoryOrderRow = {
     customer_phone?: string | null;
     customer_email?: string | null;
   } | null;
+  serial_number: string | null;
   problem_description: string | null;
   final_cost: number | null;
   estimated_cost: number | null;
@@ -524,7 +525,7 @@ export const getCustomerHistory = async (req: Request, res: Response) => {
 
     let ordersQuery = supabase
       .from('service_orders')
-      .select('id, folio, status, device_info, problem_description, final_cost, estimated_cost, promised_date, created_at, updated_at, receipt_url, internal_notes, metadata')
+      .select('id, folio, status, device_info, serial_number, problem_description, final_cost, estimated_cost, promised_date, created_at, updated_at, receipt_url, internal_notes, metadata')
       .eq('tenant_id', tenantId)
       .eq('customer_id', customerId)
       .order('created_at', { ascending: false })
@@ -557,6 +558,7 @@ export const getCustomerHistory = async (req: Request, res: Response) => {
       FOLIO: order.folio,
       TIPO: String(order.device_info?.type ?? ''),
       MODELO: String(order.device_info?.model ?? order.device_info?.brand ?? ''),
+      SERIE: order.serial_number ?? '',
       FALLA: String(order.problem_description ?? ''),
       DIAGNOSTICO: String((order.metadata?.diagnosis ?? order.metadata?.diagnostico ?? order.internal_notes ?? '') || ''),
       ESTADO: String(order.status ?? 'recibido'),

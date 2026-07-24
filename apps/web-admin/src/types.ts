@@ -185,6 +185,7 @@ export interface CustomerHistory {
     FOLIO: string;
     TIPO: string;
     MODELO: string;
+    SERIE?: string;
     FALLA: string;
     DIAGNOSTICO: string;
     ESTADO: string;

@@ -115,6 +115,7 @@ export function CustomerHistory({ open, onOpenChange, customer }: CustomerHistor
                       <tr>
                         <th className="text-left py-2">Folio</th>
                         <th className="text-left py-2">Equipo</th>
+                        <th className="text-left py-2">Serie / IMEI</th>
                         <th className="text-left py-2">Estado</th>
                         <th className="text-left py-2">Fecha</th>
                         <th className="text-right py-2">Costo</th>
@@ -125,6 +126,7 @@ export function CustomerHistory({ open, onOpenChange, customer }: CustomerHistor
                         <tr key={equipo.FOLIO} className="border-b border-slate-800/80">
                           <td className="py-2 font-mono text-sky-300">{equipo.FOLIO}</td>
                           <td className="py-2">{equipo.TIPO} {equipo.MODELO}</td>
+                          <td className="py-2 font-mono text-xs text-slate-400">{equipo.SERIE || 'Sin dato'}</td>
                           <td className="py-2">{equipo.ESTADO}</td>
                           <td className="py-2">{formatDate(equipo.FECHA_INGRESO)}</td>
                           <td className="py-2 text-right">${equipo.COSTO_ESTIMADO.toFixed(2)}</td>
