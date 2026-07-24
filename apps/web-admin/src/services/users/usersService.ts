@@ -15,6 +15,9 @@ export const usersService = {
   deactivateUser: (...args: Parameters<typeof apiGateway.deactivateUser>) =>
     apiGateway.deactivateUser(...args),
 
+  assignUserToSucursal: (...args: Parameters<typeof apiGateway.assignUserToSucursal>) =>
+    apiGateway.assignUserToSucursal(...args),
+
   getUserPurchaseOrders: (...args: Parameters<typeof apiGateway.getUserPurchaseOrders>) =>
     apiGateway.getUserPurchaseOrders(...args),
 };

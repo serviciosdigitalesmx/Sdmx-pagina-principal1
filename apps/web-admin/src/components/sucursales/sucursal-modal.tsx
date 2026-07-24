@@ -30,7 +30,6 @@ export function SucursalModal({ open, onOpenChange, sucursal, onSucursalSaved }:
     city: '',
     state: '',
     phone: '',
-    email: '',
     is_active: true,
   });
 
@@ -43,7 +42,6 @@ export function SucursalModal({ open, onOpenChange, sucursal, onSucursalSaved }:
         city: sucursal.city || '',
         state: sucursal.state || '',
         phone: sucursal.phone || '',
-        email: ('email' in sucursal ? (sucursal as Sucursal & { email?: string | null }).email : '') || '',
         is_active: sucursal.is_active,
       });
     } else {
@@ -54,7 +52,6 @@ export function SucursalModal({ open, onOpenChange, sucursal, onSucursalSaved }:
         city: '',
         state: '',
         phone: '',
-        email: '',
         is_active: true,
       });
     }
@@ -76,8 +73,7 @@ export function SucursalModal({ open, onOpenChange, sucursal, onSucursalSaved }:
         city: formData.city || null,
         state: formData.state || null,
         phone: formData.phone || null,
-        email: formData.email || null,
-        is_active: formData.is_active,
+        isActive: formData.is_active,
       };
 
       if (sucursal) {
@@ -152,23 +148,13 @@ export function SucursalModal({ open, onOpenChange, sucursal, onSucursalSaved }:
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Teléfono</Label>
-              <Input
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="81 1234 5678"
-              />
-            </div>
-            <div>
-              <Label>Email</Label>
-              <Input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
+          <div>
+            <Label>Teléfono</Label>
+            <Input
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              placeholder="81 1234 5678"
+            />
           </div>
 
           <label className="flex items-center gap-2">

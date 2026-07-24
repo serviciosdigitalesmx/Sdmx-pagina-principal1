@@ -15,6 +15,7 @@ type UserRow = {
   activo: boolean;
   ultimo_acceso: string | null;
   last_login_at: string | null;
+  sucursalId: string | null;
 };
 
 type UserHistoryRow = {
@@ -186,6 +187,26 @@ export default function UsuariosPage() {
     }
   }
 
+  async function assignSucursal(user: UserRow, sucursalId: string) {
+    if (!sucursalId || sucursalId === user.sucursalId) return;
+    const sucursal = sucursales.find((row) => row.id === sucursalId);
+    if (!sucursal) return;
+    if (!window.confirm(`Asignar a ${user.name} a ${sucursal.name}?`)) return;
+
+    try {
+      setError("");
+      await usersService.assignUserToSucursal(sucursalId, user.id);
+      await loadUsers();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo asignar la sucursal");
+    }
+  }
+
+  function sucursalLabel(sucursalId: string | null) {
+    if (!sucursalId) return "Todas las sucursales";
+    return sucursales.find((sucursal) => sucursal.id === sucursalId)?.name ?? "Sucursal no disponible";
+  }
+
   async function deactivateUser(user: UserRow) {
     if (!window.confirm(`Desactivar a ${user.name}?`)) return;
     try {
@@ -291,6 +312,7 @@ export default function UsuariosPage() {
               <tr>
                 <th className="px-4 py-3 text-left">Usuario</th>
                 <th className="px-4 py-3 text-left">Rol</th>
+                <th className="px-4 py-3 text-left">Sucursal</th>
                 <th className="px-4 py-3 text-left">Estado</th>
                 <th className="px-4 py-3 text-left">Último acceso</th>
                 <th className="px-4 py-3 text-left">Acciones</th>
@@ -304,6 +326,22 @@ export default function UsuariosPage() {
                     <div className="text-xs text-slate-400">{user.email}</div>
                   </td>
                   <td className="px-4 py-3"><Badge variant="primary">{roleLabel(user.role)}</Badge></td>
+                  <td className="px-4 py-3">
+                    <select
+                      value={user.sucursalId ?? ""}
+                      onChange={(event) => void assignSucursal(user, event.target.value)}
+                      className="input min-w-44 text-xs"
+                      aria-label={`Sucursal de ${user.name}`}
+                      disabled={!user.activo || sucursales.length === 0}
+                    >
+                      {!user.sucursalId ? <option value="">{sucursalLabel(null)}</option> : null}
+                      {sucursales.filter((sucursal) => sucursal.is_active).map((sucursal) => (
+                        <option key={sucursal.id} value={sucursal.id}>
+                          {sucursal.name}{sucursal.code ? ` (${sucursal.code})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
                   <td className="px-4 py-3"><Badge variant={user.activo ? "success" : "danger"}>{user.activo ? "Activo" : "Inactivo"}</Badge></td>
                   <td className="px-4 py-3 text-slate-400">{formatDate(user.ultimo_acceso ?? user.last_login_at)}</td>
                   <td className="px-4 py-3">
