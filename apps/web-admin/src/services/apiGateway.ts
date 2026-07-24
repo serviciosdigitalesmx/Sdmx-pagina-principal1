@@ -421,6 +421,12 @@ class ApiGateway {
         }
       }
 
+      if (response.status === 403 && /limit exceeded/i.test(message)) {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('plan_limit_exceeded', { detail: (payload as any).details }));
+        }
+      }
+
       throw new Error(`${message}${details}`);
     }
 
@@ -708,12 +714,12 @@ class ApiGateway {
     return result.data;
   }
 
-  public async updateOrderStatus(orderId: string, status: string, note?: string): Promise<JsonRecord> {
+  public async updateOrderStatus(orderId: string, status: string, note?: string, deliveryData?: { deliveredToName?: string; deliveredToRelationship?: string }): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
       this.apiPath(`/orders/${encodeURIComponent(orderId)}/status`),
       {
         method: 'PATCH',
-        body: JSON.stringify({ status, note }),
+        body: JSON.stringify({ status, note, ...deliveryData }),
       }
     );
     return result.data;
@@ -933,6 +939,22 @@ class ApiGateway {
   }): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
       this.apiPath('/finance/expense'),
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+    return result.data;
+  }
+
+  public async createAdjustment(payload: {
+    sucursalId: string;
+    amount: number;
+    description: string;
+    category: string;
+  }): Promise<JsonRecord> {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath('/finance/adjustment'),
       {
         method: 'POST',
         body: JSON.stringify(payload),

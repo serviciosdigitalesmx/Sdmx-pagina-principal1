@@ -74,3 +74,68 @@ export function requireTenantModule(moduleKey: string) {
     }
   };
 }
+
+import { getTenantClient } from '@white-label/database';
+
+export function enforcePlanQuota(resource: 'users' | 'sucursales' | 'orders') {
+  return async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const capabilities = req.tenantCapabilities ?? await loadTenantCapabilitiesForRequest(req);
+      if (!capabilities) {
+        return res.status(400).json({ error: 'Missing tenant capabilities' });
+      }
+
+      if (capabilities.access_status === 'master' || capabilities.access_status === 'billing_exempt') {
+        return next();
+      }
+
+      const limitKey = resource === 'orders' ? 'monthly_orders' : resource;
+      const limit = capabilities.limits[limitKey];
+      
+      // If limit is null, it means unlimited for this plan
+      if (limit === null) {
+        return next();
+      }
+
+      const tenantId = req.tenantId ?? req.user?.tenantId;
+      if (!tenantId) {
+        return res.status(400).json({ error: 'Missing tenant identification for quota check' });
+      }
+
+      const supabase = getTenantClient(tenantId);
+      let count = 0;
+
+      if (resource === 'users') {
+        const { count: c, error } = await supabase.from('user_profiles').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId);
+        if (error) throw error;
+        count = c || 0;
+      } else if (resource === 'sucursales') {
+        const { count: c, error } = await supabase.from('sucursales').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId);
+        if (error) throw error;
+        count = c || 0;
+      } else if (resource === 'orders') {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        const { count: c, error } = await supabase.from('service_orders')
+          .select('*', { count: 'exact', head: true })
+          .eq('tenant_id', tenantId)
+          .gte('created_at', startOfMonth.toISOString());
+        if (error) throw error;
+        count = c || 0;
+      }
+
+      if (count >= limit) {
+        return res.status(403).json({ 
+          error: 'Plan limit exceeded', 
+          details: { resource, limit, current: count, planKey: capabilities.plan_key } 
+        });
+      }
+
+      return next();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to validate plan quota';
+      return res.status(502).json({ error: message });
+    }
+  };
+}

@@ -10,6 +10,13 @@ const createExpenseSchema = z.object({
   date: z.string().optional(),
 });
 
+const createAdjustmentSchema = z.object({
+  sucursalId: z.string().min(1, 'sucursalId is required'),
+  amount: z.number().refine(val => val !== 0, 'amount cannot be zero'),
+  description: z.string().min(1, 'description is required'),
+  category: z.string().min(1, 'category is required'),
+});
+
 function toDayKey(value?: string | null) {
   return value ? value.slice(0, 10) : new Date().toISOString().slice(0, 10);
 }
@@ -207,6 +214,55 @@ export const createExpense = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'Invalid payload', details: error.errors });
     }
     console.error('Error creating expense:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const createAdjustment = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    if (!tenantId) return res.status(401).json({ error: 'Tenant context is required' });
+
+    const body = createAdjustmentSchema.parse(req.body);
+    const scope = req.scope;
+    const tokenSucursalId = scope?.sucursalId ?? '';
+    const supabase = getTenantClient(tenantId);
+
+    if (!(await assertSucursalOwnership(supabase, tenantId, body.sucursalId))) {
+      return res.status(403).json({ error: 'Sucursal mismatch' });
+    }
+
+    if (scope?.mode === 'branch' && tokenSucursalId && body.sucursalId !== tokenSucursalId) {
+      return res.status(403).json({ error: 'Sucursal mismatch' });
+    }
+
+    const isIncome = body.amount > 0;
+    const absAmount = Math.abs(body.amount);
+
+    const { data, error } = await supabase
+      .from('finances')
+      .insert([
+        {
+          tenant_id: tenantId,
+          sucursal_id: body.sucursalId,
+          balance: Number(body.amount.toFixed(2)),
+          income: isIncome ? absAmount : 0,
+          expense: isIncome ? 0 : absAmount,
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      return res.status(502).json({ error: 'Failed to create adjustment', details: error.message });
+    }
+
+    return res.status(201).json({ success: true, data });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Invalid payload', details: error.errors });
+    }
+    console.error('Error creating adjustment:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };

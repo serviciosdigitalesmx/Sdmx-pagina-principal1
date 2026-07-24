@@ -16,6 +16,9 @@ export const financeService = {
   createExpense: (...args: Parameters<typeof apiGateway.createExpense>) =>
     apiGateway.createExpense(...args),
 
+  createAdjustment: (...args: Parameters<typeof apiGateway.createAdjustment>) =>
+    apiGateway.createAdjustment(...args),
+
   deleteExpense: (...args: Parameters<typeof apiGateway.deleteExpense>) =>
     apiGateway.deleteExpense(...args),
 };

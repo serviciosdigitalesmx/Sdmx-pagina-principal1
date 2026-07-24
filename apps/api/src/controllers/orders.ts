@@ -91,6 +91,8 @@ const commissionRulePatchSchema = commissionRuleSchema.partial();
 const statusRequestSchema = z.object({
   status: orderStatusSchema,
   note: z.string().optional(),
+  deliveredToName: z.string().optional(),
+  deliveredToRelationship: z.string().optional(),
 });
 
 const financialUpdateSchema = z.object({
@@ -2446,6 +2448,10 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
         received_at: nextStatus === 'recibido' ? new Date().toISOString() : undefined,
         completed_at: nextStatus === 'listo' ? new Date().toISOString() : undefined,
         delivered_at: nextStatus === 'entregado' ? new Date().toISOString() : undefined,
+        delivered_to_name: nextStatus === 'entregado' && body.deliveredToName ? body.deliveredToName : undefined,
+        delivered_to_relationship: nextStatus === 'entregado' && body.deliveredToRelationship ? body.deliveredToRelationship : undefined,
+        delivery_confirmed_at: nextStatus === 'entregado' ? new Date().toISOString() : undefined,
+        delivery_confirmed_by: nextStatus === 'entregado' ? (req.user?.userId ?? null) : undefined,
         updated_by: req.user?.userId ?? null,
       })
       .eq('tenant_id', tenantId)

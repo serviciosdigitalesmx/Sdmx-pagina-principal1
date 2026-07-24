@@ -6,6 +6,7 @@ import { Badge, SurfaceCard } from '@white-label/ui';
 import { financeService } from '@/services/finance/financeService';
 import { ordersService } from '@/services/orders/ordersService';
 import { getActiveScope } from '@/lib/scope';
+import { AdjustmentModal } from '@/components/dashboard/finanzas/adjustment-modal';
 import type { FinanceBalance, Order } from '@/types';
 
 function currency(value: number | string | null | undefined) {
@@ -31,11 +32,13 @@ function paymentState(order: Order) {
 
 export default function FinanzasPage() {
   const scope = getActiveScope();
+  const currentSucursal = scope?.sucursalId ?? '';
   const [rows, setRows] = useState<FinanceBalance[]>([]);
   const [cashflow, setCashflow] = useState<FinanceBalance[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [adjustmentModalOpen, setAdjustmentModalOpen] = useState(false);
 
   const refresh = async () => {
     setLoading(true);
@@ -142,16 +145,20 @@ export default function FinanzasPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="text-xs uppercase tracking-[0.28em] text-sky-400/70">Finanzas</p>
-          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-50">Caja y finanzas</h1>
-          <p className="mt-1 text-sm text-slate-400">Balance real del tenant, flujo por sucursal y validación visual de cobros de órdenes</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-50">Finanzas</h1>
+          <p className="mt-1 text-sm text-slate-400">Resumen y validación de cobros.</p>
         </div>
-        <button onClick={() => void refresh()} className="btn-outline inline-flex items-center gap-2">
-          <RefreshCw className="h-4 w-4" />
-          Actualizar
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setAdjustmentModalOpen(true)} className="btn-outline inline-flex items-center gap-2">
+            Nuevo Ajuste
+          </button>
+          <button onClick={() => void refresh()} className="btn-outline inline-flex items-center gap-2">
+            <RefreshCw className="h-4 w-4" />
+            Actualizar
+          </button>
+        </div>
       </div>
 
       {error ? (
@@ -160,6 +167,13 @@ export default function FinanzasPage() {
           {error}
         </div>
       ) : null}
+
+      <AdjustmentModal
+        open={adjustmentModalOpen}
+        onOpenChange={setAdjustmentModalOpen}
+        sucursalId={currentSucursal}
+        onSuccess={() => void refresh()}
+      />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <SurfaceCard elevated className="p-5">

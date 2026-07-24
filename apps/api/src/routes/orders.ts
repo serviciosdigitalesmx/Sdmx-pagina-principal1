@@ -4,7 +4,7 @@ import { validateTenant } from '../middleware/validateTenant';
 import { attachScope } from '../middleware/scope';
 import { requireTenantBillingActive } from '../middleware/tenantBilling';
 import { requireRole } from '../middleware/requireRole';
-import { attachTenantCapabilities, requireTenantModule } from '../middleware/tenantCapabilities';
+import { attachTenantCapabilities, requireTenantModule, enforcePlanQuota } from '../middleware/tenantCapabilities';
 import { addOrderMessage, addOrderNote, createOrder, createOrderWarrantyClaim, createOrderWhatsAppDraft, createTechnicianCommissionRule, getDeviceHistoryBySerial, getOrderAuthorizations, getOrderById, getOrderChecklist, getOrderWarrantySummary, listOrderWhatsAppMessages, listOrderWorkLogs, listOrders, listTechnicianCommissionRules, pauseOrderWorkLog, resumeOrderWorkLog, startOrderWorkLog, stopOrderWorkLog, updateOrderChecklist, updateOrderDetails, updateOrderFinancials, updateOrderStatus, updateOrderWarranty, updateOrderWarrantyClaimStatus, updateTechnicianCommissionRule, uploadOrderAttachments, createOrderPayment, refundOrderPayment, updateOrderDocumentVisibility } from '../controllers/orders';
 
 const router = Router({ mergeParams: true });
@@ -16,7 +16,7 @@ router.use(requireTenantBillingActive);
 router.use(attachTenantCapabilities);
 
 router.get('/', requireTenantModule('orders'), listOrders);
-router.post('/', requireTenantModule('orders'), createOrder);
+router.post('/', requireTenantModule('orders'), enforcePlanQuota('orders'), createOrder);
 router.get('/device-history', requireTenantModule('orders'), requireRole('owner', 'manager', 'technician'), getDeviceHistoryBySerial);
 router.get('/commission-rules', requireTenantModule('reports'), requireRole('owner', 'manager'), listTechnicianCommissionRules);
 router.post('/commission-rules', requireTenantModule('reports'), requireRole('owner', 'manager'), createTechnicianCommissionRule);

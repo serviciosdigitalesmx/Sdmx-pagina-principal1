@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle, Clock3, FileText, MessageCircle, Shield, X } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@white-label/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge, SurfaceCard } from "@white-label/ui";
 import { Button } from "@/components/ui/button";
@@ -124,6 +131,12 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
 
   const [deviceHistoryOpen, setDeviceHistoryOpen] = useState(false);
   const [warrantyClaimOpen, setWarrantyClaimOpen] = useState(false);
+  
+  // Status update states
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [deliveryModalOpen, setDeliveryModalOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [deliveryDraft, setDeliveryDraft] = useState({ name: "", relationship: "" });
 
   useEffect(() => {
     if (!open || !order?.id) return;
@@ -242,6 +255,34 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
     }
   };
 
+  const handleStatusChange = async (newStatus: string) => {
+    if (newStatus === currentOrder.status) return;
+    
+    if (newStatus === "entregado") {
+      setPendingStatus(newStatus);
+      setDeliveryModalOpen(true);
+      return;
+    }
+    
+    await commitStatusChange(newStatus);
+  };
+
+  const commitStatusChange = async (newStatus: string, deliveryData?: { deliveredToName?: string; deliveredToRelationship?: string }) => {
+    if (!order.id || updatingStatus) return;
+    setUpdatingStatus(true);
+    try {
+      await ordersService.updateOrderStatus(order.id, newStatus, undefined, deliveryData);
+      await onOrderUpdated();
+      setDeliveryModalOpen(false);
+      setPendingStatus(null);
+    } catch (err) {
+      console.error(err);
+      alert("Error al cambiar de estado");
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   const handleConsume = async (reservationId: string, quantity: number) => {
     if (!order?.id || isMutating) return;
     setIsMutating(true);
@@ -333,7 +374,23 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
                   <FileText className="h-5 w-5 text-sky-300" />
                   Orden {currentOrder.folio}
                 </span>
-                <Badge variant="success">{statusLabel}</Badge>
+                <div className="flex items-center gap-2">
+                  {updatingStatus && <span className="text-xs text-slate-400">Actualizando...</span>}
+                  <select 
+                    value={currentOrder.status || "recibido"} 
+                    onChange={(e) => void handleStatusChange(e.target.value)}
+                    disabled={updatingStatus}
+                    className="input h-8 py-0 pl-2 pr-8 text-xs font-medium uppercase tracking-wider"
+                  >
+                    <option value="recibido">Recibido</option>
+                    <option value="diagnostico">Diagnóstico</option>
+                    <option value="cotizado">Cotizado</option>
+                    <option value="reparacion">Reparación</option>
+                    <option value="listo">Listo</option>
+                    <option value="entregado">Entregado</option>
+                    <option value="cancelado">Cancelado</option>
+                  </select>
+                </div>
               </DialogTitle>
             </DialogHeader>
           </div>
@@ -756,6 +813,57 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
           warrantyUntil={currentOrder.warranty_until}
           onSuccess={() => void onOrderUpdated()}
         />
+      )}
+
+      {deliveryModalOpen && (
+        <Dialog open={deliveryModalOpen} onOpenChange={setDeliveryModalOpen}>
+          <DialogContent className="border-slate-800 bg-slate-950 sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Confirmar Entrega</DialogTitle>
+              <DialogDescription>
+                Registra la identidad de la persona que recibe el equipo.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-300">Nombre de quien recibe</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="Ej. Juan Pérez"
+                  value={deliveryDraft.name}
+                  onChange={(e) => setDeliveryDraft((prev) => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-300">Parentesco / Relación</label>
+                <select
+                  className="input"
+                  value={deliveryDraft.relationship}
+                  onChange={(e) => setDeliveryDraft((prev) => ({ ...prev, relationship: e.target.value }))}
+                >
+                  <option value="">Seleccione...</option>
+                  <option value="titular">Titular</option>
+                  <option value="familiar">Familiar</option>
+                  <option value="empleado">Empleado</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeliveryModalOpen(false)}>Cancelar</Button>
+              <Button 
+                onClick={() => void commitStatusChange(pendingStatus!, { 
+                  deliveredToName: deliveryDraft.name, 
+                  deliveredToRelationship: deliveryDraft.relationship 
+                })}
+                disabled={!deliveryDraft.name || !deliveryDraft.relationship || updatingStatus}
+              >
+                Confirmar Entrega
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );
