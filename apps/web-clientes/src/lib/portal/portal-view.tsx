@@ -11,6 +11,7 @@ import { TenantBrandingProvider } from "@/lib/theme/tenant-branding-provider";
 import { OrderTimeline } from "@/components/portal/order-timeline";
 import { EvidenceGallery } from "@/components/portal/evidence-gallery";
 import { DocumentList } from "@/components/portal/document-list";
+import { AuthorizationPanel } from "@/components/portal/authorization-panel";
 import { Badge, SurfaceCard } from "@white-label/ui";
 import { isApiError, resolveApiBaseUrl } from "@white-label/config";
 
@@ -142,6 +143,7 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
             if (!portalPayload.success) throw new Error("No encontramos una orden con ese token");
             setActivePublicToken(cleanValue);
             setResult(normalizePortalOrderDetail(portalPayload.data));
+            setActivePublicToken(cleanValue);
             return;
           } catch (tokenError) {
             if (lookupMode === "token") throw tokenError;
@@ -156,9 +158,11 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
         setTenant(payload.tenant);
         setActivePublicToken(null);
         setResult(normalizeOrderDetail(payload.data));
+        setActivePublicToken(null);
       } catch (submitError) {
         setError(resolveLookupError(submitError, effectiveLookupMode));
         setResult(null);
+        setActivePublicToken(null);
       } finally {
         setLoading(false);
       }
@@ -469,6 +473,13 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
               </article>
 
               <aside className="space-y-4">
+                {activePublicToken ? (
+                  <AuthorizationPanel
+                    tenantSlug={tenantSlug}
+                    publicToken={activePublicToken}
+                    onDecision={() => executeSearch(activePublicToken, "token")}
+                  />
+                ) : null}
                 {result.authorization ? (
                   <section className="rounded-[1.75rem] border border-sky-400/15 bg-white/5 p-6 shadow-[0_20px_70px_rgba(0,0,0,0.2)]">
                     <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-500">Autorización</p>

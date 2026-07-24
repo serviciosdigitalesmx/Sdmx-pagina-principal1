@@ -1011,7 +1011,7 @@ export async function getPublicOrderAuthorization(req: Request, res: Response) {
 
     const { data: order, error: orderError } = await supabaseAdmin
       .from('service_orders')
-      .select('id, tenant_id, folio, status, device_info, device_type, device_brand, device_model, serial_number, reported_issue, problem_description, estimated_cost, final_cost')
+      .select('id, tenant_id, folio, status, device_info, serial_number, problem_description, estimated_cost, final_cost')
       .eq('tenant_id', tenant.id)
       .eq('public_token', publicToken.trim())
       .maybeSingle();
@@ -1048,14 +1048,14 @@ export async function getPublicOrderAuthorization(req: Request, res: Response) {
           folio: order.folio,
           status: order.status,
           device: {
-            type: String(deviceInfo.type ?? deviceInfo.device_type ?? order.device_type ?? ''),
-            brand: String(deviceInfo.brand ?? deviceInfo.device_brand ?? order.device_brand ?? ''),
-            model: String(deviceInfo.model ?? deviceInfo.device_model ?? order.device_model ?? ''),
+            type: String(deviceInfo.type ?? deviceInfo.device_type ?? ''),
+            brand: String(deviceInfo.brand ?? deviceInfo.device_brand ?? ''),
+            model: String(deviceInfo.model ?? deviceInfo.device_model ?? ''),
             serialNumber: String(deviceInfo.serialNumber ?? deviceInfo.serial_number ?? order.serial_number ?? ''),
           },
           estimatedCost: Number.isFinite(estimatedCost) ? estimatedCost : 0,
           finalCost: Number.isFinite(finalCost) && finalCost > 0 ? finalCost : null,
-          reportedIssue: String(order.problem_description ?? order.reported_issue ?? ''),
+          reportedIssue: String(order.problem_description ?? ''),
         },
         authorization: {
           hasAcceptedAuthorization: latestAuthorization?.status === 'accepted',

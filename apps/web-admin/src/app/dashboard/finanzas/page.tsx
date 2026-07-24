@@ -154,7 +154,7 @@ export default function FinanzasPage() {
           <button onClick={() => setAdjustmentModalOpen(true)} className="btn-outline inline-flex items-center gap-2">
             Nuevo Ajuste
           </button>
-          <button onClick={() => void refresh()} className="btn-outline inline-flex items-center gap-2">
+          <button onClick={() => void refresh()} className="btn-outline inline-flex items-center gap-2" data-e2e="btn-refresh-finanzas">
             <RefreshCw className="h-4 w-4" />
             Actualizar
           </button>
@@ -216,8 +216,8 @@ export default function FinanzasPage() {
             <h2 className="text-lg font-semibold text-slate-50">Movimientos de caja</h2>
             <span className="text-xs text-slate-400">Solo lectura desde API real</span>
           </div>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-sm">
+          <div className="mt-4 overflow-x-auto" data-testid="finance-cashflow">
+            <table className="w-full text-sm" data-e2e="table-finance-cashflow">
               <thead className="border-b border-slate-800 text-slate-400">
                 <tr>
                   <th className="px-4 py-3 text-left">Fecha</th>
@@ -243,7 +243,7 @@ export default function FinanzasPage() {
         </SurfaceCard>
 
         <div className="space-y-4">
-          <SurfaceCard elevated className="p-5">
+          <SurfaceCard elevated className="p-5" data-testid="finance-payments">
             <h2 className="text-lg font-semibold text-slate-50">Validación de cobros</h2>
             <div className="mt-3 space-y-3">
               {recentOrders.length === 0 ? (

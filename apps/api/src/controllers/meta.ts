@@ -3,10 +3,11 @@ import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { supabaseAdmin } from '@white-label/database';
 import { loadTenantBillingSummary } from '../services/tenant-billing';
-import { getIndustryTemplate, listAvailableIndustries, loadTenantRuntimeConfig } from '../services/tenant-config';
+import { getIndustryTemplate, listAvailableIndustries, loadTenantRuntimeConfig, invalidateTenantRuntimeConfigCache } from '../services/tenant-config';
 import { resolveTenantCapabilities } from '../services/tenant-capabilities';
 import { resolveEffectiveUserRole } from '../lib/user-roles';
 import { runDependencyHealthCheck } from '../services/observability';
+import { validateWorkflowConfiguration } from '../services/order-workflow';
 
 export const getApiRoot = (_req: Request, res: Response) => {
   const apiName = process.env.API_NAME ?? 'White-label API';
@@ -413,6 +414,15 @@ export const updateTenantSettings = async (req: Request, res: Response) => {
         })
         .filter((item) => item.workflow_key.length > 0 && item.status_key.length > 0 && item.label.length > 0);
 
+      try {
+        validateWorkflowConfiguration(rows.filter((item) => item.workflow_key === 'service_orders'));
+      } catch (workflowError) {
+        return res.status(400).json({
+          error: 'Invalid service order workflow configuration',
+          details: workflowError instanceof Error ? workflowError.message : 'WORKFLOW_CONFIGURATION_REJECTED',
+        });
+      }
+
       if (Array.isArray(workflowStatuses) || industryChanged) {
         const { error: deleteWorkflowsError } = await supabaseAdmin
           .from('tenant_workflow_statuses')
@@ -542,6 +552,7 @@ export const updateTenantSettings = async (req: Request, res: Response) => {
       billing,
       runtimeConfig: config,
     });
+    invalidateTenantRuntimeConfigCache(data.id);
 
     return res.status(200).json({
       success: true,
@@ -644,6 +655,8 @@ export const uploadTenantBrandingAsset = async (req: Request, res: Response) => 
         details: updateError?.message ?? 'Unknown error',
       });
     }
+
+    invalidateTenantRuntimeConfigCache(tenantRow.id);
 
     return res.status(200).json({
       success: true,

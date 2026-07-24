@@ -85,13 +85,22 @@ function statusLabel(status: unknown, labels: Record<string, string>) {
   return labels[key] ?? readText(status) ?? '';
 }
 
+const LOGO_BUFFER_CACHE = new Map<string, { buffer: Buffer; expiresAt: number }>();
+
 async function fetchBuffer(url: string | null | undefined) {
   if (!url) return null;
+
+  const cached = LOGO_BUFFER_CACHE.get(url);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.buffer;
+  }
 
   try {
     const response = await fetch(url);
     if (!response.ok) return null;
-    return Buffer.from(await response.arrayBuffer());
+    const buffer = Buffer.from(await response.arrayBuffer());
+    LOGO_BUFFER_CACHE.set(url, { buffer, expiresAt: Date.now() + 300000 }); // 5 minutes cache
+    return buffer;
   } catch {
     return null;
   }

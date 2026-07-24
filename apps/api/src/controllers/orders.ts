@@ -13,6 +13,7 @@ import { getRequestIp } from '../lib/request-ip';
 import { calculateOperationalRisk } from '../services/operational-risk';
 import { sendTenantPushNotification } from '../services/pwa-push';
 import { writeAuditLog } from '../services/security-backoffice';
+import { userHasPermission } from '../services/permissions';
 import { cleanTenantTextField, getMissingRequiredTextField } from '../services/tenant-fields';
 import { getEvidenceMetadata, type EvidenceEntry } from '../services/evidence-adapter';
 import { createWhatsAppDraft, listWhatsAppMessages, WhatsAppMessageError } from '../services/whatsapp-messages';
@@ -28,6 +29,7 @@ import {
   WorkLogError,
 } from '../services/work-logs';
 import { FEATURE_EVIDENCE_MODE } from '../config/feature-flags';
+import { resolveOrderWorkflow, validateOrderTransition } from '../services/order-workflow';
 
 const defaultOrderStatuses = ['recibido', 'diagnostico', 'reparacion', 'listo', 'entregado'] as const;
 const orderStatusSchema = z.string().min(1);
@@ -93,6 +95,7 @@ const statusRequestSchema = z.object({
   note: z.string().optional(),
   deliveredToName: z.string().optional(),
   deliveredToRelationship: z.string().optional(),
+  pendingBalanceOverrideReason: z.string().trim().min(1).optional(),
 });
 
 const financialUpdateSchema = z.object({
@@ -861,9 +864,15 @@ async function getAllowedOrderStatusKeys(tenantId: string) {
   return new Set(statuses.map((status) => status.key ?? '').filter(Boolean));
 }
 
+const ENSURED_BUCKETS = new Set<string>();
+
 async function ensureBucketExists(bucketName: string) {
+  if (ENSURED_BUCKETS.has(bucketName)) {
+    return;
+  }
   const { error } = await supabaseAdmin.storage.getBucket(bucketName);
   if (!error) {
+    ENSURED_BUCKETS.add(bucketName);
     return;
   }
   const { error: createError } = await supabaseAdmin.storage.createBucket(bucketName, {
@@ -873,6 +882,7 @@ async function ensureBucketExists(bucketName: string) {
   if (createError) {
     throw new Error(`Unable to ensure storage bucket ${bucketName}: ${createError.message}`);
   }
+  ENSURED_BUCKETS.add(bucketName);
 }
 
 async function uploadBufferToStorage(options: {
@@ -935,17 +945,6 @@ async function persistReceiptPdf(options: {
     fileType: 'receipt_pdf',
   });
 
-  const { data: latestReceiptOrder, error: latestReceiptOrderError } = await options.supabase
-    .from('service_orders')
-    .select('evidence_metadata')
-    .eq('tenant_id', options.tenantId)
-    .eq('id', options.orderId)
-    .single();
-
-  if (latestReceiptOrderError) {
-    throw new Error(`Failed to persist receipt evidence: ${latestReceiptOrderError.message}`);
-  }
-
   const receiptDocumentId = randomUUID();
   const receiptDocument = {
     id: receiptDocumentId,
@@ -970,7 +969,7 @@ async function persistReceiptPdf(options: {
     .from('service_orders')
     .update({
       receipt_url: receiptUpload.publicUrl,
-      evidence_metadata: appendEvidenceEntry(latestReceiptOrder?.evidence_metadata, {
+      evidence_metadata: appendEvidenceEntry((options.order as any)?.evidence_metadata, {
         kind: 'document',
         id: receiptDocumentId,
         file_name: 'recepcion.pdf',
@@ -1090,6 +1089,18 @@ export const createOrder = async (req: Request, res: Response) => {
       }
     }
 
+    const createdEventId = randomUUID();
+    const initialEvidenceMetadata = appendEvidenceEntry(undefined, {
+      kind: 'event',
+      id: createdEventId,
+      event_type: 'created',
+      previous_status: null,
+      new_status: 'recibido',
+      note: validatedData.issue,
+      actor_name: req.user?.email ?? req.user?.role ?? 'system',
+      created_at: new Date().toISOString(),
+    });
+
     const { data, error } = await supabase
       .from('service_orders')
       .insert([
@@ -1117,6 +1128,7 @@ export const createOrder = async (req: Request, res: Response) => {
           promised_date: validatedData.promisedDate || null,
           receipt_url: validatedData.receiptUrl || null,
           assigned_user_id: req.user?.role === 'technician' ? req.user.userId ?? null : null,
+          evidence_metadata: initialEvidenceMetadata,
         }
       ])
       .select()
@@ -1162,24 +1174,6 @@ export const createOrder = async (req: Request, res: Response) => {
     }
 
     await auditChecklistChange(req, tenantId, 'orders.checklist_created', null, normalizeChecklistRow(checklistData) as Record<string, unknown>);
-
-    const createdEventId = randomUUID();
-    await supabase
-      .from('service_orders')
-      .update({
-        evidence_metadata: appendEvidenceEntry(data.evidence_metadata, {
-          kind: 'event',
-          id: createdEventId,
-          event_type: 'created',
-          previous_status: null,
-          new_status: 'recibido',
-          note: validatedData.issue,
-          actor_name: req.user?.email ?? req.user?.role ?? 'system',
-          created_at: new Date().toISOString(),
-        }),
-      })
-      .eq('tenant_id', tenantId)
-      .eq('id', data.id);
 
     await insertOrderEvent(supabase, {
       id: createdEventId,
@@ -1423,6 +1417,16 @@ export const getOrderById = async (req: Request, res: Response) => {
     const totalCobrado = validPayments.reduce((sum, p) => sum + Number(p.amount), 0);
     const finalCost = Number(orderResult.data.final_cost) > 0 ? Number(orderResult.data.final_cost) : Number(orderResult.data.estimated_cost || 0);
     const saldoPendiente = Math.max(0, finalCost - totalCobrado);
+    const resolvedWorkflow = resolveOrderWorkflow(runtimeConfig.workflowStatuses.filter((status) => status.workflow_key === 'service_orders'));
+    const currentWorkflowStatus = resolvedWorkflow.find((status) => status.status_key === normalizeOrderStatus(orderResult.data.status));
+    const availableTransitions = (currentWorkflowStatus?.nextStatusKeys ?? []).map((statusKey) => {
+      const status = resolvedWorkflow.find((candidate) => candidate.status_key === statusKey);
+      return {
+        key: statusKey,
+        label: runtimeConfig.statusLabels[statusKey] ?? statusKey,
+        canonicalPhase: status?.canonicalPhase ?? null,
+      };
+    });
 
     return res.json({
       success: true,
@@ -1444,6 +1448,7 @@ export const getOrderById = async (req: Request, res: Response) => {
           saldo_pendiente: saldoPendiente,
         },
         payments: validPayments,
+        availableTransitions,
       },
     });
   } catch (error) {
@@ -2399,7 +2404,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     const { data: order, error: orderError } = await supabase
       .from('service_orders')
-      .select('id, status, evidence_metadata')
+      .select('id, status, evidence_metadata, final_cost, estimated_cost')
       .eq('tenant_id', tenantId)
       .eq('id', orderId)
       .eq(
@@ -2414,10 +2419,32 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     const previousStatus = normalizeOrderStatus(order.status);
     const nextStatus = body.status;
-    const allowedStatuses = await getAllowedOrderStatusKeys(tenantId);
+    const runtimeConfig = await loadTenantRuntimeConfig(tenantId);
+    const workflowStatuses = runtimeConfig.workflowStatuses.filter((status) => status.workflow_key === 'service_orders');
+    const allowedStatuses = new Set(workflowStatuses.map((status) => status.status_key));
 
     if (!allowedStatuses.has(nextStatus)) {
       return res.status(400).json({ error: 'Invalid status', details: { allowedStatuses: [...allowedStatuses] } });
+    }
+
+    let transition;
+    try {
+      transition = validateOrderTransition(workflowStatuses, previousStatus, nextStatus);
+    } catch (workflowError) {
+      return res.status(409).json({
+        error: 'Invalid order status transition',
+        details: {
+          code: workflowError instanceof Error ? workflowError.message : 'WORKFLOW_TRANSITION_REJECTED',
+          previousStatus,
+          nextStatus,
+          allowedNextStatuses: resolveOrderWorkflow(workflowStatuses)
+            .find((status) => status.status_key === previousStatus)?.nextStatusKeys ?? [],
+        },
+      });
+    }
+
+    if (transition.next.canonicalPhase === 'cancelled' && !body.note?.trim()) {
+      return res.status(400).json({ error: 'Cancellation reason is required' });
     }
 
     if (normalizeOrderStatus(nextStatus) === 'recibido') {
@@ -2441,17 +2468,58 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       }
     }
 
+    let pendingBalanceOverride: { balance: number; reason: string } | null = null;
+    const requiresFinancialSettlement = ['delivered', 'closed'].includes(transition.next.canonicalPhase)
+      && transition.previous.canonicalPhase !== 'cancelled';
+    if (requiresFinancialSettlement) {
+      const { data: payments, error: paymentsError } = await supabase
+        .from('customer_payments')
+        .select('amount')
+        .eq('tenant_id', tenantId)
+        .eq('service_order_id', orderId);
+
+      if (paymentsError) {
+        return res.status(502).json({ error: 'Failed to inspect order payments', details: paymentsError.message });
+      }
+
+      const totalCobrado = (payments ?? []).reduce((sum, payment) => sum + Number(payment.amount), 0);
+      const orderFinancials = order as Record<string, unknown>;
+      const finalCost = Number(orderFinancials.final_cost);
+      const totalAplicable = finalCost > 0 ? finalCost : Number(orderFinancials.estimated_cost ?? 0);
+      const saldoPendiente = Math.max(0, totalAplicable - totalCobrado);
+
+      if (saldoPendiente > 0) {
+        const reason = body.pendingBalanceOverrideReason?.trim();
+        if (!reason) {
+          return res.status(400).json({
+            error: 'No se puede entregar una orden con saldo pendiente sin un motivo de autorización.',
+            details: { saldoPendiente },
+          });
+        }
+
+        const canOverride = await userHasPermission(req.user?.role, 'orders.override_pending_balance');
+        if (!canOverride) {
+          return res.status(403).json({
+            error: 'Missing permission: orders.override_pending_balance',
+            details: { saldoPendiente },
+          });
+        }
+
+        pendingBalanceOverride = { balance: saldoPendiente, reason };
+      }
+    }
+
     const { data, error } = await supabase
       .from('service_orders')
       .update({
         status: nextStatus,
-        received_at: nextStatus === 'recibido' ? new Date().toISOString() : undefined,
-        completed_at: nextStatus === 'listo' ? new Date().toISOString() : undefined,
-        delivered_at: nextStatus === 'entregado' ? new Date().toISOString() : undefined,
-        delivered_to_name: nextStatus === 'entregado' && body.deliveredToName ? body.deliveredToName : undefined,
-        delivered_to_relationship: nextStatus === 'entregado' && body.deliveredToRelationship ? body.deliveredToRelationship : undefined,
-        delivery_confirmed_at: nextStatus === 'entregado' ? new Date().toISOString() : undefined,
-        delivery_confirmed_by: nextStatus === 'entregado' ? (req.user?.userId ?? null) : undefined,
+        received_at: transition.next.canonicalPhase === 'intake' || nextStatus === 'recibido' ? new Date().toISOString() : undefined,
+        completed_at: transition.next.canonicalPhase === 'ready' || nextStatus === 'listo' ? new Date().toISOString() : undefined,
+        delivered_at: ['delivered', 'closed'].includes(transition.next.canonicalPhase) || nextStatus === 'entregado' ? new Date().toISOString() : undefined,
+        delivered_to_name: (['delivered', 'closed'].includes(transition.next.canonicalPhase) || nextStatus === 'entregado') && body.deliveredToName ? body.deliveredToName : undefined,
+        delivered_to_relationship: (['delivered', 'closed'].includes(transition.next.canonicalPhase) || nextStatus === 'entregado') && body.deliveredToRelationship ? body.deliveredToRelationship : undefined,
+        delivery_confirmed_at: (['delivered', 'closed'].includes(transition.next.canonicalPhase) || nextStatus === 'entregado') ? new Date().toISOString() : undefined,
+        delivery_confirmed_by: (['delivered', 'closed'].includes(transition.next.canonicalPhase) || nextStatus === 'entregado') ? (req.user?.userId ?? null) : undefined,
         updated_by: req.user?.userId ?? null,
       })
       .eq('tenant_id', tenantId)
@@ -2461,6 +2529,37 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     if (error) {
       return res.status(502).json({ error: 'Failed to update order status', details: error.message });
+    }
+
+    if (pendingBalanceOverride) {
+      try {
+        await writeAuditLog({
+          tenantId,
+          userId: req.user?.userId ?? null,
+          action: 'orders.pending_balance_delivery_overridden',
+          ipAddress: getRequestIp(req.headers, req.ip),
+          userAgent: req.get('user-agent') ?? null,
+          dataBefore: {
+            orderId,
+            status: previousStatus,
+            saldoPendiente: pendingBalanceOverride.balance,
+          },
+          dataAfter: {
+            orderId,
+            status: nextStatus,
+            saldoPendiente: pendingBalanceOverride.balance,
+            motivo: pendingBalanceOverride.reason,
+          },
+        });
+      } catch (auditError) {
+        await supabase
+          .from('service_orders')
+          .update({ status: order.status, delivered_at: null, updated_by: req.user?.userId ?? null })
+          .eq('tenant_id', tenantId)
+          .eq('id', orderId);
+        console.error('Failed to audit pending balance delivery override:', auditError);
+        return res.status(502).json({ error: 'No se pudo auditar la autorización de entrega; la entrega fue revertida.' });
+      }
     }
 
     const statusEventId = randomUUID();

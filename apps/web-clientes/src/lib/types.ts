@@ -303,6 +303,35 @@ export type PortalAuthorizationSummary = {
   authorizedAmount: number | null;
 };
 
+export type PublicAuthorizationResponse = {
+  success: boolean;
+  data: {
+    order: {
+      folio: string;
+      status: string;
+      device: {
+        type: string;
+        brand: string;
+        model: string;
+        serialNumber: string;
+      };
+      estimatedCost: number;
+      finalCost: number | null;
+      reportedIssue: string;
+    };
+    authorization: {
+      hasAcceptedAuthorization: boolean;
+      latestStatus: string | null;
+      latestDecisionAt: string | null;
+      latestAuthorizationType: string | null;
+    };
+    terms: {
+      version: string;
+      text: string;
+    };
+  };
+};
+
 export type PortalWarrantySummary = {
   warrantyUntil: string | null;
   isWarrantyActive: boolean;

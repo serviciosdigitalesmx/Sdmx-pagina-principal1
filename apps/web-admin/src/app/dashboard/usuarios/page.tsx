@@ -237,11 +237,11 @@ export default function UsuariosPage() {
           <p className="mt-1 text-sm text-slate-400">{users.length} visibles · {activeUsers} activos</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => void loadUsers()} className="btn-outline inline-flex items-center gap-2">
+          <button onClick={() => void loadUsers()} className="btn-outline inline-flex items-center gap-2" data-e2e="btn-refresh-users">
             <RefreshCw className="w-4 h-4" />
             Actualizar
           </button>
-          <button onClick={() => showInvite ? setShowInvite(false) : openInviteForm()} className="btn-primary inline-flex items-center gap-2">
+          <button onClick={() => showInvite ? setShowInvite(false) : openInviteForm()} className="btn-primary inline-flex items-center gap-2" data-e2e="btn-invite-user">
             <Plus className="w-4 h-4" />
             Invitar usuario
           </button>
@@ -275,7 +275,7 @@ export default function UsuariosPage() {
       </div>
 
       {showInvite ? (
-        <SurfaceCard elevated className="space-y-4 p-4">
+        <SurfaceCard elevated className="space-y-4 p-4" data-testid="invite-user-form">
           <form onSubmit={submitInvite} className="space-y-4">
           <div className="text-lg font-semibold text-slate-50">Invitar usuario</div>
           <div className="grid gap-4 md:grid-cols-2">
@@ -306,8 +306,8 @@ export default function UsuariosPage() {
       ) : null}
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(340px,1fr)]">
-        <SurfaceCard elevated className="overflow-hidden p-0">
-          <table className="w-full text-sm">
+        <SurfaceCard elevated className="overflow-hidden p-0" data-testid="users-table">
+          <table className="w-full text-sm" data-e2e="table-users">
             <thead className="border-b border-slate-800 bg-slate-950/70 text-slate-400">
               <tr>
                 <th className="px-4 py-3 text-left">Usuario</th>
@@ -346,15 +346,15 @@ export default function UsuariosPage() {
                   <td className="px-4 py-3 text-slate-400">{formatDate(user.ultimo_acceso ?? user.last_login_at)}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
-                      <button className="btn-ghost inline-flex items-center gap-2 text-sky-300" onClick={() => setHistoryUser(user)}>
+                      <button className="btn-ghost inline-flex items-center gap-2 text-sky-300" onClick={() => setHistoryUser(user)} data-e2e="btn-user-history">
                         <History className="w-4 h-4" />
                         Historial
                       </button>
-                      <button className="btn-ghost inline-flex items-center gap-2 text-sky-300" onClick={() => void changeRole(user, user.role === "tecnico" ? "operador" : "tecnico")}>
+                      <button className="btn-ghost inline-flex items-center gap-2 text-sky-300" onClick={() => void changeRole(user, user.role === "tecnico" ? "operador" : "tecnico")} data-e2e="btn-user-role">
                         <Shield className="w-4 h-4" />
                         Cambiar rol
                       </button>
-                      <button className="btn-ghost inline-flex items-center gap-2 text-red-400" onClick={() => void deactivateUser(user)}>
+                      <button className="btn-ghost inline-flex items-center gap-2 text-red-400" onClick={() => void deactivateUser(user)} data-e2e="btn-user-deactivate">
                         <UserX className="w-4 h-4" />
                         Desactivar
                       </button>

@@ -149,11 +149,11 @@ export default function ComprasPage() {
           <p className="mt-1 text-sm text-slate-400">{orders.length} órdenes de compra · {suppliers.length} proveedores</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => void loadData()} className="btn-outline inline-flex items-center gap-2">
+          <button onClick={() => void loadData()} className="btn-outline inline-flex items-center gap-2" data-e2e="btn-refresh-purchases">
             <RefreshCw className="w-4 h-4" />
             Actualizar
           </button>
-          <button onClick={() => setShowForm((value) => !value)} className="btn-primary inline-flex items-center gap-2">
+          <button onClick={() => setShowForm((value) => !value)} className="btn-primary inline-flex items-center gap-2" data-e2e="btn-new-purchase">
             <Plus className="w-4 h-4" />
             Nueva compra
           </button>
@@ -163,7 +163,7 @@ export default function ComprasPage() {
       {error ? <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-3 text-sm text-rose-100">{error}</div> : null}
 
       {showForm ? (
-        <SurfaceCard elevated className="space-y-4 p-5">
+        <SurfaceCard elevated className="space-y-4 p-5" data-testid="purchase-form">
           <form onSubmit={submitPurchase} className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-slate-50">Crear orden de compra</h2>
@@ -209,7 +209,7 @@ export default function ComprasPage() {
         </SurfaceCard>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 xl:grid-cols-2" data-testid="purchase-orders-grid">
         {orders.map((order) => (
           <SurfaceCard key={order.id} elevated className="space-y-4 p-5">
             <div className="flex items-start justify-between gap-3">

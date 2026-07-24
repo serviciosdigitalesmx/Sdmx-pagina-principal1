@@ -599,6 +599,13 @@ function readFieldDefinitionsFromOperationalSettings(operationalSettings: Record
     .filter(Boolean) as TenantFieldDefinition[];
 }
 
+const RUNTIME_CONFIG_CACHE = new Map<string, { data: any; expiresAt: number }>();
+const CACHE_TTL_MS = 30000; // 30 seconds
+
+export function invalidateTenantRuntimeConfigCache(tenantId: string) {
+  RUNTIME_CONFIG_CACHE.delete(tenantId);
+}
+
 export async function loadTenantRuntimeConfig(tenantId: string): Promise<{
   tenant: TenantRow | null;
   industryProfile: TenantIndustryProfile | null;
@@ -614,6 +621,11 @@ export async function loadTenantRuntimeConfig(tenantId: string): Promise<{
   activeModules: string[];
   capabilities: null;
 }> {
+  const cached = RUNTIME_CONFIG_CACHE.get(tenantId);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
+
   const [
     tenantResult,
     industryResult,
@@ -745,7 +757,7 @@ export async function loadTenantRuntimeConfig(tenantId: string): Promise<{
     return acc;
   }, {});
 
-  return {
+  const config = {
     tenant,
     industryProfile,
     enabledModules: resolvedEnabledModules,
@@ -760,4 +772,7 @@ export async function loadTenantRuntimeConfig(tenantId: string): Promise<{
     activeModules: resolvedEnabledModules.map((item) => item.module_key),
     capabilities: null,
   };
+
+  RUNTIME_CONFIG_CACHE.set(tenantId, { data: config, expiresAt: Date.now() + CACHE_TTL_MS });
+  return config;
 }
