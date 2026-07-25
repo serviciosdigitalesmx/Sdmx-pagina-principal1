@@ -65,10 +65,14 @@ export function SetupWizardModal() {
         sucursalId = nuevaSucursal.id;
       }
 
-      // TODO: Implementar endpoint en apiGateway para crear cash_registers directamente
-      // Por ahora, simulamos el delay de la creación
-      await new Promise(resolve => setTimeout(resolve, 800));
-
+      // Check if register already exists to ensure idempotency
+      const existingRegisters = await apiGateway.getCashRegisters();
+      if (existingRegisters.length === 0) {
+        await apiGateway.createCashRegister({
+          name: registerName,
+          sucursalId: String(sucursalId)
+        });
+      }
       // 2. Subir Logo (Branding)
       if (logoFile) {
         await apiGateway.uploadTenantBrandingAsset({
@@ -101,11 +105,9 @@ export function SetupWizardModal() {
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
-      {/* onInteractOutside y onEscapeKeyDown bloqueados para obligar a terminar */}
+      {/* Dialog permanece abierto hasta completar el wizard */}
       <DialogContent 
         className="bg-white max-w-2xl p-0 overflow-hidden rounded-[2rem] border-slate-200 shadow-2xl"
-        onInteractOutside={(e) => e.preventDefault()}
-        onEscapeKeyDown={(e) => e.preventDefault()}
       >
         <div className="flex flex-col md:flex-row h-full">
           {/* Lado Izquierdo: Progreso */}

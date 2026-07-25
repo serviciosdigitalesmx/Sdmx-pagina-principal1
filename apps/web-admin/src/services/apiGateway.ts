@@ -433,6 +433,28 @@ class ApiGateway {
     return response.json() as Promise<T>;
   }
 
+  /** Public request — no auth token required. For customer portal endpoints. */
+  private async publicRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+    const headers = new Headers(init.headers);
+    headers.set('Content-Type', 'application/json');
+
+    const response = await fetch(`${this.apiUrl}${path}`, {
+      ...init,
+      headers,
+    });
+
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({} as ApiErrorResponse));
+      const message =
+        (payload && typeof (payload as any).message === 'string' && (payload as any).message) ||
+        (payload && typeof payload.error === 'string' && payload.error) ||
+        `HTTP ${response.status}`;
+      throw new Error(message);
+    }
+
+    return response.json() as Promise<T>;
+  }
+
   private normalizeCustomerRow(row: JsonRecord): JsonRecord {
     return {
       ...row,
@@ -1845,6 +1867,13 @@ class ApiGateway {
     return this.request<any>(`/api/cash/registers`, { method: 'GET' });
   }
 
+  public async createCashRegister(data: { name: string; sucursalId: string }) {
+    return this.request<any>(`/api/cash/registers`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   public async openCashShift(cashRegisterId: string, initialCash: number) {
     return this.request<any>(`/api/cash/shifts/open`, {
       method: 'POST',
@@ -1906,20 +1935,20 @@ class ApiGateway {
   // --- Portal del Cliente e Inbound MP (Fase 4) ---
 
   public async getPublicOrderDetails(publicToken: string) {
-    return this.request<any>(`/api/public-portal/order/${encodeURIComponent(publicToken)}`, { method: 'GET' });
+    return this.publicRequest<any>(`/api/public-portal/order/${encodeURIComponent(publicToken)}`, { method: 'GET' });
   }
 
-  public async authorizeOrder(publicToken: string, data: { decision: 'accepted' | 'rejected', acceptedByName?: string, acceptedByPhone?: string, acceptedByEmail?: string }) {
-    return this.request<any>(`/api/public-portal/order/${encodeURIComponent(publicToken)}/authorize`, {
+  public async authorizeOrder(publicToken: string, data: { decision: 'accepted' | 'rejected', acceptedByName?: string, acceptedByPhone?: string, acceptedByEmail?: string, signatureDataUrl?: string, termsVersion?: string }) {
+    return this.publicRequest<any>(`/api/public-portal/order/${encodeURIComponent(publicToken)}/authorize`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
-  public async createPublicOrderPayment(publicToken: string, amount: number, paymentMethod: string) {
-    return this.request<any>(`/api/public-portal/order/${encodeURIComponent(publicToken)}/payment`, {
+  public async createPublicOrderPayment(publicToken: string, paymentMethod: string) {
+    return this.publicRequest<any>(`/api/public-portal/order/${encodeURIComponent(publicToken)}/payment`, {
       method: 'POST',
-      body: JSON.stringify({ amount, paymentMethod }),
+      body: JSON.stringify({ paymentMethod }),
     });
   }
 
@@ -1932,6 +1961,13 @@ class ApiGateway {
   public async createAutomationRule(data: { name: string, event_type: string, condition?: any, action_type: string, action_config: any, is_active?: boolean }) {
     return this.request<any>(`/api/automation/rules`, {
       method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async updateAutomationRule(id: string, data: Partial<{ name: string, event_type: string, condition: any, action_type: string, action_config: any, is_active: boolean }>) {
+    return this.request<any>(`/api/automation/rules/${id}`, {
+      method: 'PATCH',
       body: JSON.stringify(data),
     });
   }

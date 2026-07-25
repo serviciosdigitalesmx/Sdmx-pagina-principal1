@@ -3,8 +3,7 @@ import { getTenantClient } from '@white-label/database';
 
 // Rules CRUD
 export async function getRules(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string || req.tenantId;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
+  const tenantId = req.tenantId as string;
 
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase.from('automation_rules').select('*').eq('tenant_id', tenantId).order('created_at');
@@ -13,9 +12,8 @@ export async function getRules(req: Request, res: Response) {
 }
 
 export async function createRule(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string || req.tenantId;
+  const tenantId = req.tenantId as string;
   const { name, event_type, condition, action_type, action_config, is_active } = req.body;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase
@@ -29,10 +27,9 @@ export async function createRule(req: Request, res: Response) {
 }
 
 export async function updateRule(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string || req.tenantId;
+  const tenantId = req.tenantId as string;
   const { id } = req.params;
   const { name, event_type, condition, action_type, action_config, is_active } = req.body;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase
@@ -48,8 +45,7 @@ export async function updateRule(req: Request, res: Response) {
 
 // Templates CRUD
 export async function getTemplates(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string || req.tenantId;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
+  const tenantId = req.tenantId as string;
 
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase.from('message_templates').select('*').eq('tenant_id', tenantId).order('name');
@@ -58,9 +54,8 @@ export async function getTemplates(req: Request, res: Response) {
 }
 
 export async function createTemplate(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string || req.tenantId;
+  const tenantId = req.tenantId as string;
   const { name, channel, subject, body, variables } = req.body;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase
@@ -75,8 +70,7 @@ export async function createTemplate(req: Request, res: Response) {
 
 // Logs List
 export async function getLogs(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string || req.tenantId;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
+  const tenantId = req.tenantId as string;
 
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase.from('automation_logs').select('*, rule:rule_id(*)').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(100);

@@ -2,10 +2,9 @@ import { Request, Response } from 'express';
 import { getTenantClient } from '@white-label/database';
 
 export async function searchOmni(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const query = req.query.q as string;
 
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
   if (!query || query.length < 2) return res.json({ customers: [], orders: [], catalogs: [] });
 
   const supabase = getTenantClient(tenantId);

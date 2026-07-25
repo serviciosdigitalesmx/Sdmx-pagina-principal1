@@ -14,7 +14,7 @@ router.use(requireTenantBillingActive);
 
 router.get('/rules', getRules);
 router.post('/rules', createRule);
-router.put('/rules/:id', updateRule);
+router.patch('/rules/:id', updateRule);
 
 router.get('/templates', getTemplates);
 router.post('/templates', createTemplate);

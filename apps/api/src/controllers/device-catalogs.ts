@@ -3,8 +3,7 @@ import { getTenantClient } from '@white-label/database';
 
 // --- FAMILIES ---
 export async function getFamilies(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
+  const tenantId = req.tenantId as string;
 
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase.from('catalog_families').select('*').order('name');
@@ -13,9 +12,8 @@ export async function getFamilies(req: Request, res: Response) {
 }
 
 export async function createFamily(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { name, description } = req.body;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
   
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase.from('catalog_families').insert({ tenant_id: tenantId, name, description }).select().single();
@@ -24,10 +22,9 @@ export async function createFamily(req: Request, res: Response) {
 }
 
 export async function updateFamily(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { id } = req.params;
   const { name, description } = req.body;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase.from('catalog_families').update({ name, description }).eq('id', id).select().single();
@@ -36,9 +33,8 @@ export async function updateFamily(req: Request, res: Response) {
 }
 
 export async function deleteFamily(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { id } = req.params;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { error } = await supabase.from('catalog_families').delete().eq('id', id);
@@ -48,9 +44,8 @@ export async function deleteFamily(req: Request, res: Response) {
 
 // --- BRANDS ---
 export async function getBrands(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { familyId } = req.query;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
   if (!familyId) return res.status(400).json({ error: 'familyId query parameter required' });
 
   const supabase = getTenantClient(tenantId);
@@ -60,9 +55,8 @@ export async function getBrands(req: Request, res: Response) {
 }
 
 export async function createBrand(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { family_id, name, logo_url } = req.body;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase.from('catalog_brands').insert({ tenant_id: tenantId, family_id, name, logo_url }).select().single();
@@ -71,10 +65,9 @@ export async function createBrand(req: Request, res: Response) {
 }
 
 export async function updateBrand(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { id } = req.params;
   const { name, logo_url } = req.body;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase.from('catalog_brands').update({ name, logo_url }).eq('id', id).select().single();
@@ -83,9 +76,8 @@ export async function updateBrand(req: Request, res: Response) {
 }
 
 export async function deleteBrand(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { id } = req.params;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { error } = await supabase.from('catalog_brands').delete().eq('id', id);
@@ -95,9 +87,8 @@ export async function deleteBrand(req: Request, res: Response) {
 
 // --- MODELS ---
 export async function getModels(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { brandId } = req.query;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
   if (!brandId) return res.status(400).json({ error: 'brandId query parameter required' });
 
   const supabase = getTenantClient(tenantId);
@@ -107,9 +98,8 @@ export async function getModels(req: Request, res: Response) {
 }
 
 export async function createModel(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { brand_id, name, reference_image_url } = req.body;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase.from('catalog_models').insert({ tenant_id: tenantId, brand_id, name, reference_image_url }).select().single();
@@ -118,10 +108,9 @@ export async function createModel(req: Request, res: Response) {
 }
 
 export async function updateModel(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { id } = req.params;
   const { name, reference_image_url } = req.body;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase.from('catalog_models').update({ name, reference_image_url }).eq('id', id).select().single();
@@ -130,9 +119,8 @@ export async function updateModel(req: Request, res: Response) {
 }
 
 export async function deleteModel(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { id } = req.params;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { error } = await supabase.from('catalog_models').delete().eq('id', id);
@@ -142,9 +130,8 @@ export async function deleteModel(req: Request, res: Response) {
 
 // --- FAULTS ---
 export async function getFaults(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { modelId } = req.query;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
   if (!modelId) return res.status(400).json({ error: 'modelId query parameter required' });
 
   const supabase = getTenantClient(tenantId);
@@ -154,9 +141,8 @@ export async function getFaults(req: Request, res: Response) {
 }
 
 export async function createFault(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { model_id, name, description, estimated_labor_minutes, default_cost } = req.body;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase.from('catalog_faults').insert({ tenant_id: tenantId, model_id, name, description, estimated_labor_minutes, default_cost }).select().single();
@@ -165,10 +151,9 @@ export async function createFault(req: Request, res: Response) {
 }
 
 export async function updateFault(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { id } = req.params;
   const { name, description, estimated_labor_minutes, default_cost } = req.body;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase.from('catalog_faults').update({ name, description, estimated_labor_minutes, default_cost }).eq('id', id).select().single();
@@ -177,9 +162,8 @@ export async function updateFault(req: Request, res: Response) {
 }
 
 export async function deleteFault(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { id } = req.params;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { error } = await supabase.from('catalog_faults').delete().eq('id', id);
@@ -189,9 +173,8 @@ export async function deleteFault(req: Request, res: Response) {
 
 // --- PARTS ---
 export async function getParts(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { faultId } = req.query;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
   if (!faultId) return res.status(400).json({ error: 'faultId query parameter required' });
 
   const supabase = getTenantClient(tenantId);
@@ -201,9 +184,8 @@ export async function getParts(req: Request, res: Response) {
 }
 
 export async function createPart(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { fault_id, name, sku, default_cost, product_id } = req.body;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase.from('catalog_parts').insert({ tenant_id: tenantId, fault_id, name, sku, default_cost, product_id }).select().single();
@@ -212,10 +194,9 @@ export async function createPart(req: Request, res: Response) {
 }
 
 export async function updatePart(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { id } = req.params;
   const { name, sku, default_cost, product_id } = req.body;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { data, error } = await supabase.from('catalog_parts').update({ name, sku, default_cost, product_id }).eq('id', id).select().single();
@@ -224,9 +205,8 @@ export async function updatePart(req: Request, res: Response) {
 }
 
 export async function deletePart(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { id } = req.params;
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
   const { error } = await supabase.from('catalog_parts').delete().eq('id', id);
@@ -235,10 +215,9 @@ export async function deletePart(req: Request, res: Response) {
 }
 
 export async function getChecklists(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { familyId } = req.query;
 
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
   if (!familyId) return res.status(400).json({ error: 'familyId query parameter required' });
 
   const supabase = getTenantClient(tenantId);
