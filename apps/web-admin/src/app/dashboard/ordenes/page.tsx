@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { Search, RefreshCw, Filter, Grid2X2, List, Clock3, MessageSquare, Eye, Plus } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Search, RefreshCw, Filter, Grid2X2, List, Clock3, MessageSquare, Eye, Plus, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { ordersService } from '@/services/orders/ordersService';
 import type { Order } from '@/types';
 import { OrderCard } from '@/components/tecnico/order-card';
 import { OrderModal } from '@/components/tecnico/order-modal';
@@ -13,6 +12,10 @@ import { StatusBadge } from '@/components/base/badges';
 import { SurfaceCard } from '@white-label/ui';
 import { Button } from '@/components/ui/button';
 import { getOrderLabel } from '@/lib/labels';
+import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from 'use-debounce';
+import { apiGateway } from '@/services/apiGateway';
+import { useSupabaseRealtime } from '@/hooks/useSupabaseRealtime';
 
 type ViewMode = 'kanban' | 'list';
 
@@ -56,119 +59,56 @@ function normalizeOrderStatus(status: string) {
   return String(status || '').toLowerCase().trim();
 }
 
-function getCustomerLabel(order: Order) {
-  return order.device_info?.customer_name?.trim() || 'Cliente sin nombre';
-}
-
-function getDeviceLabel(order: Order) {
-  const type = order.device_info?.type?.trim() || '';
-  const model = order.device_info?.model?.trim() || '';
-  return [type, model].filter(Boolean).join(' ') || 'Equipo sin especificar';
-}
-
 function formatMoney(value: number) {
   return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(Number(value ?? 0) || 0);
-}
-
-function formatDate(value: string | null) {
-  if (!value) return 'Sin fecha';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Sin fecha';
-  return date.toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
-}
-
-function getRiskTone(order: Order) {
-  const color = order.color ?? 'gris';
-  if (color === 'rojo') return 'danger';
-  if (color === 'amarillo') return 'warning';
-  if (color === 'verde') return 'success';
-  return 'neutral';
 }
 
 export default function OrdersPage() {
   const router = useRouter();
   const orderLabel = getOrderLabel();
   const ordersLabel = getOrderLabel({ plural: true });
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | string>('all');
+  const [debouncedSearch] = useDebounce(search, 500);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [page, setPage] = useState(1);
   const [viewMode, setViewMode] = useState<ViewMode>('kanban');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
-  async function loadOrders(showRefresh = false) {
-    if (showRefresh) setRefreshing(true);
-    try {
-      setError(null);
-      const rows = await ordersService.getOrders();
-      setOrders(rows as unknown as Order[]);
-    } catch (loadError) {
-      setOrders([]);
-      setError(loadError instanceof Error ? loadError.message : 'No se pudieron cargar las órdenes');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }
+  // Activate Realtime sync
+  useSupabaseRealtime();
 
-  useEffect(() => {
-    void loadOrders();
-  }, []);
+  // Load orders using TanStack useQuery
+  const { data, isLoading, isError, error, refetch, isRefetching } = useQuery({
+    queryKey: ['orders', debouncedSearch, statusFilter, page],
+    queryFn: () => apiGateway.getOrders({
+      search: debouncedSearch,
+      status: statusFilter,
+      page,
+      limit: 50
+    }),
+  });
 
-  const visibleOrders = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return orders.filter((order) => {
-      const status = normalizeOrderStatus(order.status);
-      if (statusFilter !== 'all' && status !== statusFilter) return false;
-      if (!term) return true;
-      const haystack = [
-        order.folio,
-        order.problem_description,
-        order.device_info?.customer_name,
-        order.device_info?.customer_phone,
-        order.device_info?.customer_email,
-        order.device_info?.type,
-        order.device_info?.model,
-        order.assigned_user_id,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(term);
-    });
-  }, [orders, search, statusFilter]);
+  const orders = (data?.data ?? []) as unknown as Order[];
+  const meta = data?.meta || { total: 0 };
 
   const groupedOrders = useMemo(() => {
     const groups = new Map<string, Order[]>();
-    for (const order of visibleOrders) {
+    for (const order of orders) {
       const status = normalizeOrderStatus(order.status) || 'recibido';
       if (!groups.has(status)) groups.set(status, []);
       groups.get(status)?.push(order);
     }
-
-    for (const order of visibleOrders) {
-      const status = normalizeOrderStatus(order.status) || 'recibido';
-      if (!STATUS_ORDER.includes(status) && !groups.has('otros')) {
-        groups.set('otros', []);
-      }
-      if (!STATUS_ORDER.includes(status)) {
-        groups.get('otros')?.push(order);
-      }
-    }
-
     return groups;
-  }, [visibleOrders]);
+  }, [orders]);
 
-  const statusCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const order of orders) {
-      const status = normalizeOrderStatus(order.status) || 'recibido';
-      counts[status] = (counts[status] ?? 0) + 1;
-    }
-    return counts;
+  const orderedStatusKeys = useMemo(() => {
+    const present = new Set(orders.map((order) => normalizeOrderStatus(order.status) || 'recibido'));
+    return [
+      ...STATUS_ORDER.filter((status) => present.has(status)),
+      ...Array.from(present).filter((status) => !STATUS_ORDER.includes(status)),
+    ];
   }, [orders]);
 
   const totalBalance = useMemo(() => orders.reduce((sum, order) => sum + Number(order.final_cost || order.estimated_cost || 0), 0), [orders]);
@@ -177,29 +117,21 @@ export default function OrdersPage() {
     [orders],
   );
 
-  const orderedStatusKeys = useMemo(() => {
-    const present = new Set(visibleOrders.map((order) => normalizeOrderStatus(order.status) || 'recibido'));
-    return [
-      ...STATUS_ORDER.filter((status) => present.has(status)),
-      ...Array.from(present).filter((status) => !STATUS_ORDER.includes(status)),
-    ];
-  }, [visibleOrders]);
-
   function openDetail(order: Order) {
     setSelectedOrder(order);
     setDetailOpen(true);
   }
 
-  if (loading) {
+  if (isLoading) {
     return <LoadingState label="Cargando órdenes reales..." />;
   }
 
-  if (error && orders.length === 0) {
+  if (isError) {
     return (
       <ErrorState
-        message={error}
+        message={error instanceof Error ? error.message : 'Error al cargar las órdenes'}
         action={
-          <Button variant="outline" onClick={() => void loadOrders(true)} className="gap-2">
+          <Button variant="outline" onClick={() => refetch()} className="gap-2">
             <RefreshCw className="h-4 w-4" />
             Reintentar
           </Button>
@@ -209,30 +141,31 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-slate-50 p-6 min-h-[calc(100vh-64px)] text-slate-900">
       <div className="grid gap-4 lg:grid-cols-4">
         <MoneyCard label={`${ordersLabel} activas`} value={String(activeCount)} helper="No entregadas o canceladas" />
-        <MoneyCard label={`${ordersLabel} visibles`} value={String(visibleOrders.length)} helper="Filtradas en la vista actual" />
+        <MoneyCard label={`${ordersLabel} visibles`} value={String(orders.length)} helper="Filtradas en la vista actual" />
         <MoneyCard label="Estados activos" value={String(orderedStatusKeys.length)} helper="Estados reales detectados" />
         <MoneyCard label="Valor estimado" value={formatMoney(totalBalance)} helper="Suma de coste estimado/final" accent />
       </div>
-      <SurfaceCard elevated className="space-y-4 p-4 lg:p-5">
+
+      <SurfaceCard className="space-y-4 p-5 bg-white border border-slate-200 shadow-sm rounded-xl">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{ordersLabel}</h1>
-            <p className="mt-1 text-sm text-slate-500">Lista, búsqueda, kanban y detalle con API real.</p>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{ordersLabel}</h1>
+            <p className="mt-1 text-sm text-slate-500">Lista, búsqueda, kanban y detalle en tiempo real con WebSockets.</p>
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => void loadOrders(true)} className="gap-2">
-              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <Button variant="outline" onClick={() => refetch()} className="gap-2 border-slate-200">
+              <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
               Actualizar
             </Button>
-            <Button variant="outline" onClick={() => setViewMode((current) => (current === 'kanban' ? 'list' : 'kanban'))} className="gap-2">
+            <Button variant="outline" onClick={() => setViewMode((current) => (current === 'kanban' ? 'list' : 'kanban'))} className="gap-2 border-slate-200">
               {viewMode === 'kanban' ? <List className="h-4 w-4" /> : <Grid2X2 className="h-4 w-4" />}
               {viewMode === 'kanban' ? 'Ver lista' : 'Ver kanban'}
             </Button>
-            <Button onClick={() => window.dispatchEvent(new CustomEvent('open-quick-receive'))} className="gap-2">
+            <Button onClick={() => window.dispatchEvent(new CustomEvent('open-quick-receive'))} className="gap-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl">
               <Plus className="h-4 w-4" />
               Nueva {orderLabel.toLowerCase()}
             </Button>
@@ -245,16 +178,20 @@ export default function OrdersPage() {
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar folio, cliente, equipo o teléfono..."
-              className="input pl-9 bg-white border-slate-200 text-slate-900"
+              placeholder="Búsqueda profunda (Folio, Falla, Serie)..."
+              className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pl-9 text-sm focus:outline-none text-slate-900"
             />
           </div>
 
           <div className="relative">
             <Filter className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="input pl-9 bg-white border-slate-200 text-slate-900">
+            <select
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pl-9 text-sm focus:outline-none text-slate-900"
+            >
               <option value="all">Todos los estados</option>
-              {orderedStatusKeys.map((status) => (
+              {STATUS_ORDER.map((status) => (
                 <option key={status} value={status}>
                   {STATUS_LABELS[status] ?? status}
                 </option>
@@ -262,22 +199,20 @@ export default function OrdersPage() {
             </select>
           </div>
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-950/60 px-4 py-3 text-xs text-slate-400">
-            <div className="flex items-center gap-2 font-semibold text-slate-200">
-              <Clock3 className="h-4 w-4 text-sky-300" />
-              Estados reales
+          <div className="rounded-xl border border-sky-100 bg-sky-50/50 px-4 py-3 text-xs text-sky-800">
+            <div className="flex items-center gap-2 font-semibold">
+              <Clock3 className="h-4 w-4 text-sky-600" />
+              Tiempo Real Activo
             </div>
-            <div className="mt-1">Se muestran solo estados detectados en los datos.</div>
+            <div className="mt-1">Las actualizaciones se sincronizan automáticamente sin refrescar la pantalla.</div>
           </div>
         </div>
-
-        {error ? <ErrorState message={error} /> : null}
       </SurfaceCard>
 
-      {visibleOrders.length === 0 ? (
+      {orders.length === 0 ? (
         <EmptyState
           title="No hay órdenes para mostrar"
-          description="No encontramos órdenes con los filtros actuales. Ajusta la búsqueda o revisa si la API respondió sin datos."
+          description="No encontramos órdenes con los filtros actuales."
           action={
             <Button variant="outline" onClick={() => { setSearch(''); setStatusFilter('all'); }} className="gap-2">
               Limpiar filtros
@@ -292,7 +227,7 @@ export default function OrdersPage() {
             const items = groupedOrders.get(status) ?? [];
             if (items.length === 0) return null;
             return (
-              <SurfaceCard key={status} elevated className="p-4">
+              <SurfaceCard key={status} className="p-5 bg-white border border-slate-200 shadow-sm rounded-xl">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     <StatusBadge tone={STATUS_TONES[status] ?? 'neutral'}>{STATUS_LABELS[status] ?? status}</StatusBadge>
@@ -312,7 +247,7 @@ export default function OrdersPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => router.push(`/dashboard/operativo?order=${encodeURIComponent(order.id)}`)}
-                          className="gap-2"
+                          className="gap-2 text-slate-500 hover:text-slate-900"
                         >
                           <MessageSquare className="h-4 w-4" />
                           Operativo
@@ -327,7 +262,7 @@ export default function OrdersPage() {
         </div>
       ) : (
         <div className="grid gap-4 xl:grid-cols-2 2xl:grid-cols-3">
-          {visibleOrders.map((order) => (
+          {orders.map((order) => (
             <div key={order.id} className="space-y-2">
               <OrderCard order={order} onClick={() => openDetail(order)} />
               <div className="flex flex-wrap gap-2">
@@ -339,7 +274,7 @@ export default function OrdersPage() {
                   variant="ghost"
                   size="sm"
                   onClick={() => router.push(`/dashboard/operativo?order=${encodeURIComponent(order.id)}`)}
-                  className="gap-2"
+                  className="gap-2 text-slate-500 hover:text-slate-900"
                 >
                   <MessageSquare className="h-4 w-4" />
                   Operativo
@@ -350,12 +285,25 @@ export default function OrdersPage() {
         </div>
       )}
 
+      {/* Pagination Controls */}
+      <div className="flex justify-between items-center text-sm text-slate-500 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+        <span>Mostrando {orders.length} resultados (Pág. {page})</span>
+        <div className="flex gap-2">
+          <Button disabled={page === 1} onClick={() => setPage(p => p - 1)} variant="outline" className="flex items-center gap-1">
+            <ArrowLeft className="h-4 w-4" /> Anterior
+          </Button>
+          <Button disabled={orders.length < 50} onClick={() => setPage(p => p + 1)} variant="outline" className="flex items-center gap-1">
+            Siguiente <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
       {selectedOrder ? (
         <OrderModal
           open={detailOpen}
           onOpenChange={setDetailOpen}
           order={selectedOrder}
-          onOrderUpdated={() => void loadOrders(true)}
+          onOrderUpdated={() => void refetch()}
         />
       ) : null}
     </div>

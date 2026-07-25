@@ -1266,29 +1266,40 @@ export const createOrder = async (req: Request, res: Response) => {
 export const listOrders = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
-    const scope = getRequestScope(req);
-
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context is required' });
     }
 
+    const { search, status, page = '1', limit = '50' } = req.query;
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
+    const offset = (pageNum - 1) * limitNum;
+
     const supabase = getTenantClient(tenantId);
     let query = supabase
       .from('service_orders')
-      .select('*, service_order_checklists(*), customers(*)')
-      .eq('tenant_id', tenantId)
-      .order('created_at', { ascending: false })
-      .limit(50);
+      .select('*, service_order_checklists(*), customers(*)', { count: 'exact' })
+      .eq('tenant_id', tenantId);
 
+    // 1. Filtrado Server-Side
+    if (status && status !== 'all') {
+      query = query.eq('status', status);
+    }
+
+    // 2. Búsqueda Difusa (Fuzzy Search)
+    if (search) {
+      const searchTerm = `%${(search as string).trim()}%`;
+      query = query.or(`folio.ilike.${searchTerm},problem_description.ilike.${searchTerm},serial_number.ilike.${searchTerm}`);
+    }
+
+    // 3. Permisos y Paginación
     query = applyOrderAccessScope(query, req);
+    query = query.order('created_at', { ascending: false }).range(offset, offset + limitNum - 1);
 
-    const { data, error } = await query;
+    const { data, error, count } = await query;
 
     if (error) {
-      return res.status(502).json({
-        error: 'Failed to fetch orders',
-        details: error.message,
-      });
+      return res.status(502).json({ error: 'Failed to fetch orders', details: error.message });
     }
 
     const runtimeConfig = await loadTenantRuntimeConfig(tenantId);
@@ -1300,6 +1311,7 @@ export const listOrders = async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       data: enrichedData,
+      meta: { page: pageNum, limit: limitNum, total: count ?? 0 }
     });
   } catch (error) {
     console.error('Error listing orders:', error);

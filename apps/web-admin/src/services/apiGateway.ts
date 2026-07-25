@@ -920,12 +920,23 @@ class ApiGateway {
     return result.data ?? [];
   }
 
-  public async getOrders(): Promise<JsonRecord[]> {
-    const result = await this.request<ApiListResponse<JsonRecord[]>>(
-      this.apiPath('/orders'),
+  public async getOrders(params: { page?: number; limit?: number; search?: string; status?: string } = {}): Promise<{ data: JsonRecord[], meta: any }> {
+    const searchParams = new URLSearchParams();
+    if (params.page) searchParams.set('page', String(params.page));
+    if (params.limit) searchParams.set('limit', String(params.limit));
+    if (params.search) searchParams.set('search', params.search);
+    if (params.status && params.status !== 'all') searchParams.set('status', params.status);
+
+    const query = searchParams.toString();
+    const result = await this.request<{ success: true; data: JsonRecord[]; meta: any }>(
+      this.apiPath(`/orders${query ? `?${query}` : ''}`),
       { method: 'GET' }
     );
-    return (result.data ?? []).map((row) => this.normalizeOrderRow(row));
+    
+    return {
+      data: (result.data ?? []).map((row) => this.normalizeOrderRow(row)),
+      meta: result.meta
+    };
   }
 
   public async getBalance(): Promise<JsonRecord[]> {
