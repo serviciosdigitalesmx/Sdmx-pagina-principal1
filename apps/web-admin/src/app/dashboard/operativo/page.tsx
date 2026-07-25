@@ -7,7 +7,7 @@ import { QuickReceiveModal } from '@/components/ordenes/quick-receive-modal';
 import { getNewEntityLabel } from '@/lib/labels';
 
 export default function OperativoPage() {
-  const [modalOpen, setModalOpen] = useState(true); // Arrancamos con el modal abierto por velocidad
+  const [modalOpen, setModalOpen] = useState(true); // Arranca abierto para ahorrar 1 clic
   const newOrderLabel = getNewEntityLabel();
 
   return (
@@ -20,8 +20,8 @@ export default function OperativoPage() {
         <div>
           <h1 className="text-3xl font-black tracking-tight text-slate-900">Módulo de Recepción</h1>
           <p className="mt-3 text-slate-500 leading-relaxed">
-            Hemos actualizado el sistema a la nueva versión <strong>Single-Pane Reception</strong>. 
-            Ahora puedes capturar equipos, firmar y subir fotografías 10 veces más rápido en una sola pantalla, sin riesgo de perder datos.
+            El sistema ha sido actualizado a la versión <strong>Single-Pane Reception</strong>. 
+            Captura equipos, cotiza y toma evidencia fotográfica en una sola pantalla de alta velocidad.
           </p>
         </div>
 
