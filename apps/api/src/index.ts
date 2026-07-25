@@ -87,13 +87,10 @@ function isAllowedCorsOrigin(origin: string | undefined) {
     }
   });
 
-  const isVercelHostname = vercelHostSuffixes.some((suffix) => hostname === suffix || hostname.endsWith(`.${suffix}`));
-
   return (
     allowedHostnames.includes(hostname) ||
     productionHostnames.includes(hostname) ||
-    localhostOrigins.has(hostname) ||
-    isVercelHostname
+    localhostOrigins.has(hostname)
   );
 }
 
@@ -107,7 +104,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-sucursal-id', 'x-fixi-sucursal-id', 'x-tenant-id'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-sucursal-id', 'x-fixi-sucursal-id'],
   optionsSuccessStatus: 204,
 }));
 app.use(express.json());
@@ -123,7 +120,7 @@ app.options('*', cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-sucursal-id', 'x-fixi-sucursal-id', 'x-tenant-id'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-sucursal-id', 'x-fixi-sucursal-id'],
   optionsSuccessStatus: 204,
 }));
 

@@ -17,10 +17,9 @@ async function findActiveShift(supabase: any, tenantId: string, userId: string) 
 
 // 1. GET /api/cash/registers
 export async function getRegisters(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
-  const sucursalId = req.headers['x-sucursal-id'] as string;
+  const tenantId = req.tenantId as string;
+  const sucursalId = req.user?.sucursalId || req.headers['x-fixi-sucursal-id'] as string;
 
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
   if (!sucursalId) return res.status(400).json({ error: 'Sucursal ID required' });
 
   const supabase = getTenantClient(tenantId);
@@ -38,11 +37,10 @@ export async function getRegisters(req: Request, res: Response) {
 
 // 2. POST /api/cash/shifts/open
 export async function openShift(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const userId = req.user?.userId || req.user?.sub;
   const { cashRegisterId, initialCash } = req.body;
 
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
   if (!userId) return res.status(401).json({ error: 'User unauthorized' });
   if (!cashRegisterId) return res.status(400).json({ error: 'cashRegisterId is required' });
 
@@ -73,10 +71,9 @@ export async function openShift(req: Request, res: Response) {
 
 // 3. GET /api/cash/shifts/active
 export async function getActiveShift(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const userId = req.user?.userId || req.user?.sub;
 
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
   if (!userId) return res.status(401).json({ error: 'User unauthorized' });
 
   const supabase = getTenantClient(tenantId);
@@ -87,11 +84,10 @@ export async function getActiveShift(req: Request, res: Response) {
 
 // 4. POST /api/cash/shifts/close
 export async function closeShift(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const userId = req.user?.userId || req.user?.sub;
   const { finalCash, notes } = req.body;
 
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
   if (!userId) return res.status(401).json({ error: 'User unauthorized' });
 
   const supabase = getTenantClient(tenantId);
@@ -120,33 +116,14 @@ export async function closeShift(req: Request, res: Response) {
     .select('amount')
     .eq('cash_shift_id', activeShift.id);
 
-  const [salesRes, paymentsRes, expensesRes] = await Promise.all([
-    salesPromise,
-    paymentsPromise,
-    expensesPromise
-  ]);
-
-  const salesCash = (salesRes.data || []).reduce((acc: number, curr: any) => acc + Number(curr.total), 0);
-  const paymentsCash = (paymentsRes.data || []).reduce((acc: number, curr: any) => acc + Number(curr.amount), 0);
-  const expensesCash = (expensesRes.data || []).reduce((acc: number, curr: any) => acc + Number(curr.amount), 0);
-
-  const expectedCash = Number(activeShift.initial_cash) + salesCash + paymentsCash - expensesCash;
-  const difference = Number(finalCash) - expectedCash;
-
-  const { data: closedShift, error } = await supabase
-    .from('cash_shifts')
-    .update({
-      status: 'closed',
-      closed_by: userId,
-      closed_at: new Date().toISOString(),
-      final_cash: Number(finalCash),
-      expected_cash: expectedCash,
-      difference: difference,
-      notes: notes || null
-    })
-    .eq('id', activeShift.id)
-    .select()
-    .single();
+  // Atomic closing via RPC
+  const { data: closedShift, error } = await supabase.rpc('close_cash_shift_atomic', {
+    p_tenant_id: tenantId,
+    p_shift_id: activeShift.id,
+    p_user_id: userId,
+    p_final_cash: Number(finalCash),
+    p_notes: notes || null
+  });
 
   if (error) return res.status(500).json({ error: error.message });
   return res.json(closedShift);
@@ -154,11 +131,10 @@ export async function closeShift(req: Request, res: Response) {
 
 // 5. POST /api/cash/sales
 export async function createSale(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const userId = req.user?.userId || req.user?.sub;
   const { customerName, customerPhone, items, paymentMethod, reference, notes } = req.body;
 
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
   if (!userId) return res.status(401).json({ error: 'User unauthorized' });
 
   const supabase = getTenantClient(tenantId);
@@ -256,11 +232,10 @@ export async function createSale(req: Request, res: Response) {
 
 // 6. POST /api/cash/expenses
 export async function createExpense(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const userId = req.user?.userId || req.user?.sub;
   const { amount, category, description, receiptUrl } = req.body;
 
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
   if (!userId) return res.status(401).json({ error: 'User unauthorized' });
 
   const supabase = getTenantClient(tenantId);
@@ -290,10 +265,9 @@ export async function createExpense(req: Request, res: Response) {
 
 // 7. GET /api/cash/shifts/:shiftId
 export async function getShiftDetails(req: Request, res: Response) {
-  const tenantId = req.headers['x-tenant-id'] as string;
+  const tenantId = req.tenantId as string;
   const { shiftId } = req.params;
 
-  if (!tenantId) return res.status(400).json({ error: 'Tenant ID required' });
 
   const supabase = getTenantClient(tenantId);
 

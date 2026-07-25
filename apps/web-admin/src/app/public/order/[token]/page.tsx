@@ -73,12 +73,14 @@ export default function PublicPremiumPortalPage() {
   const handleOnlinePayment = async () => {
     setPaymentLoading(true);
     try {
-      const res = await apiGateway.createPublicOrderPayment(token, orderData.order.final_cost || orderData.order.estimated_cost, 'online');
+      const res = await apiGateway.createPublicOrderPayment(token, 'online');
       toast.success('Abriendo pasarela de pago seguro...');
       // Redirección a la pasarela (Fixi Pay o MercadoPago)
-      window.location.href = res.initPoint;
-    } catch (e) {
-      toast.error('Error al generar link de pago');
+      if (res.initPoint) {
+        window.location.href = res.initPoint;
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Error al generar link de pago');
       setPaymentLoading(false);
     }
   };

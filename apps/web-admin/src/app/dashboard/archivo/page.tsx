@@ -38,8 +38,9 @@ export default function ArchivoPage() {
     try {
       setLoading(true);
       setError("");
-      const data = await ordersService.getOrders();
-      const archived = (data as Array<Record<string, unknown>>)
+      const result = await ordersService.getOrders();
+      const orders = (result?.data ?? result) as Array<Record<string, unknown>>;
+      const archived = orders
         .filter((order) => {
           const status = String(order.status ?? "").toLowerCase();
           return ["list", "entreg", "cerr", "complete", "ready", "delivered", "waiting"].some((value) => status.includes(value));

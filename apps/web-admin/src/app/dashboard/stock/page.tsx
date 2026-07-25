@@ -122,9 +122,9 @@ export default function StockPage() {
 
   const loadSuppliers = async () => {
     try {
-      const res = await apiGateway.getSuppliers();
+      const res = await apiGateway.getSuppliers() as Array<Record<string, unknown>>;
       setSuppliers(res || []);
-      if (res.length > 0) setSelectedSupplier(res[0].id);
+      if (res.length > 0) setSelectedSupplier(String(res[0].id));
     } catch (e) {
       console.error(e);
     }

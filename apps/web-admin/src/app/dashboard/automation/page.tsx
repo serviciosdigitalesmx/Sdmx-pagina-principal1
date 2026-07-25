@@ -99,8 +99,7 @@ export default function AutomationPage() {
 
   const toggleRuleActive = async (rule: Rule) => {
     try {
-      await apiGateway.createAutomationRule({
-        ...rule,
+      await apiGateway.updateAutomationRule(rule.id, {
         is_active: !rule.is_active
       });
       toast.success(`Regla ${!rule.is_active ? 'activada' : 'desactivada'}`);

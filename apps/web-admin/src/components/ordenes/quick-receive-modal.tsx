@@ -267,7 +267,7 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
         // Aquí lo simularemos adjuntándolo como foto.
         const sigFile = dataURLtoFile(signature, 'firma.png');
         uploadPromises.push(
-           apiGateway.uploadOrderAttachment(currentOrderId!, sigFile, 'intake_photo')
+           apiGateway.uploadOrderAttachment(currentOrderId!, sigFile, 'intake_photo').then(() => {})
         );
       }
 
