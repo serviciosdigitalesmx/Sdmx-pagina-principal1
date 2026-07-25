@@ -1018,15 +1018,9 @@ export const createOrder = async (req: Request, res: Response) => {
     }
 
     const validatedData = createOrderSchema.parse(req.body);
-    const supabase = getTenantClient(tenantId);
-
     const scope = getRequestScope(req);
     const scopeSucursalId = scope?.sucursalId ?? null;
-    const requestedSucursalId = isUuid(validatedData.sucursalId)
-      ? validatedData.sucursalId
-      : isUuid(scopeSucursalId)
-        ? scopeSucursalId
-        : null;
+    const requestedSucursalId = isUuid(validatedData.sucursalId) ? validatedData.sucursalId : (isUuid(scopeSucursalId) ? scopeSucursalId : null);
 
     if (scope?.role === 'manager' && isUuid(scopeSucursalId) && requestedSucursalId && requestedSucursalId !== scopeSucursalId) {
       return res.status(403).json({ error: 'Sucursal mismatch' });
@@ -1034,204 +1028,69 @@ export const createOrder = async (req: Request, res: Response) => {
 
     const folioPrefix = process.env.ORDER_FOLIO_PREFIX ?? 'ORD';
     const newFolio = `${folioPrefix}-${Date.now().toString(36).toUpperCase()}`;
+    const publicToken = randomUUID();
+    
+    // Validaciones de Configuración
     const runtimeConfig = await loadTenantRuntimeConfig(tenantId);
     const serialNumber = cleanTenantTextField(validatedData.serialNumber);
     const missingSerialField = getMissingRequiredTextField(runtimeConfig, 'service_orders', 'serial_number', serialNumber);
 
     if (missingSerialField) {
-      return res.status(400).json({
-        error: 'Required device field is missing',
-        details: { entity: 'service_orders', fields: [missingSerialField] },
-      });
+      return res.status(400).json({ error: 'Required device field is missing', details: { entity: 'service_orders', fields: [missingSerialField] }});
     }
 
     const estimatedCost = Number.isFinite(validatedData.estimatedCost) ? validatedData.estimatedCost : 0;
     const ivaAmount = validatedData.includeIva ? Number((estimatedCost * 0.16).toFixed(2)) : 0;
     const finalCost = Number((estimatedCost + ivaAmount).toFixed(2));
+    
+    // Validación de Checklist
     const checklistPatch = buildChecklistPatch(tenantId, '__pending_order__', validatedData.checklist);
     const missingChecklistFields = await validateRequiredChecklist(tenantId, checklistPatch);
 
     if (missingChecklistFields.length > 0) {
-      return res.status(400).json({
-        error: 'Required intake checklist fields are missing',
-        details: { entity: 'service_order_checklists', fields: missingChecklistFields },
-      });
+      return res.status(400).json({ error: 'Required intake checklist fields are missing', details: { entity: 'service_order_checklists', fields: missingChecklistFields }});
     }
 
-    // Resolve Customer ID
-    let customerId: string | null = null;
-    let customerQuery = supabase
-      .from('customers')
-      .select('id, name, phone')
-      .eq('tenant_id', tenantId);
-
-    if (validatedData.clientPhone) {
-      customerQuery = customerQuery.eq('phone', validatedData.clientPhone);
-    } else {
-      customerQuery = customerQuery.ilike('name', validatedData.clientName);
-    }
-
-    const { data: existingCustomers } = await customerQuery.limit(1);
-
-    if (existingCustomers && existingCustomers.length > 0) {
-      customerId = existingCustomers[0].id;
-    } else {
-      const { data: newCustomer, error: createCustError } = await supabase
-        .from('customers')
-        .insert({
-          tenant_id: tenantId,
-          name: validatedData.clientName || 'Cliente Sin Nombre',
-          phone: validatedData.clientPhone || null,
-          email: validatedData.clientEmail || null,
-        })
-        .select('id')
-        .single();
-      
-      if (!createCustError && newCustomer) {
-        customerId = newCustomer.id;
-      }
-    }
-
-    const createdEventId = randomUUID();
-    const initialEvidenceMetadata = appendEvidenceEntry(undefined, {
-      kind: 'event',
-      id: createdEventId,
-      event_type: 'created',
-      previous_status: null,
-      new_status: 'recibido',
-      note: validatedData.issue,
-      actor_name: req.user?.email ?? req.user?.role ?? 'system',
-      created_at: new Date().toISOString(),
+    // 🚀 INICIO DEL RPC TRANSACCIONAL (Atómico)
+    const supabase = getTenantClient(tenantId);
+    const { data: rpcData, error: rpcError } = await supabase.rpc('create_service_order_transaction', {
+      p_tenant_id: tenantId,
+      p_sucursal_id: requestedSucursalId,
+      p_customer_name: validatedData.clientName,
+      p_customer_phone: validatedData.clientPhone.replace(/\D/g, ''),
+      p_customer_email: validatedData.clientEmail || null,
+      p_folio: newFolio,
+      p_public_token: publicToken,
+      p_device_type: validatedData.deviceType,
+      p_device_model: validatedData.deviceModel,
+      p_serial_number: serialNumber || null,
+      p_issue: validatedData.issue,
+      p_estimated_cost: estimatedCost,
+      p_final_cost: finalCost,
+      p_promised_date: validatedData.promisedDate || null,
+      p_assigned_user_id: req.user?.role === 'technician' ? req.user.userId : null,
+      p_catalog_model_id: validatedData.catalogModelId || null,
+      p_catalog_fault_id: validatedData.catalogFaultId || null,
+      p_checklist_responses: validatedData.checklistResponses || null,
+      p_priority: (validatedData.metadata as any)?.priority || 'normal',
+      p_actor_name: req.user?.email ?? req.user?.role ?? 'system',
+      p_checklist_data: checklistPatch
     });
 
-    const { data, error } = await supabase
-      .from('service_orders')
-      .insert([
-        {
-          tenant_id: tenantId,
-          sucursal_id: requestedSucursalId,
-          customer_id: customerId,
-          folio: newFolio,
-          public_token: randomUUID(),
-          status: 'recibido',
-          device_info: {
-            brand: validatedData.deviceModel,
-            model: validatedData.deviceModel,
-            type: validatedData.deviceType,
-            serial_number: serialNumber,
-            customer_name: validatedData.clientName,
-            customer_phone: validatedData.clientPhone,
-            customer_email: validatedData.clientEmail || null,
-          },
-          serial_number: serialNumber,
-          problem_description: validatedData.issue,
-          metadata: validatedData.metadata ?? {},
-          estimated_cost: estimatedCost,
-          final_cost: finalCost,
-          promised_date: validatedData.promisedDate || null,
-          receipt_url: validatedData.receiptUrl || null,
-          assigned_user_id: req.user?.role === 'technician' ? req.user.userId ?? null : null,
-          evidence_metadata: initialEvidenceMetadata,
-          catalog_model_id: validatedData.catalogModelId || null,
-          catalog_fault_id: validatedData.catalogFaultId || null,
-          checklist_responses: validatedData.checklistResponses || null,
-        }
-      ])
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Supabase insert error:', error.message);
-      return res.status(502).json({
-        error: 'Failed to persist order',
-        details: error.message,
-      });
+    if (rpcError || !rpcData) {
+      console.error('RPC Insert Error:', rpcError);
+      return res.status(502).json({ error: 'Failed to persist order in transaction', details: rpcError?.message });
     }
 
-    const checklist = {
-      ...checklistPatch,
-      service_order_id: data.id,
-    };
+    const { id: orderId, customer_id: customerId } = rpcData;
 
-    let { data: checklistData, error: checklistError } = await supabase
-      .from('service_order_checklists')
-      .insert([checklist])
-      .select('*')
-      .single();
-
-    if (checklistError) {
-      console.warn('Full checklist insert failed; retrying base checklist payload:', checklistError.message);
-      const fallbackResult = await supabase
-        .from('service_order_checklists')
-        .insert([buildBaseChecklistPatch(checklist)])
-        .select('*')
-        .single();
-
-      checklistData = fallbackResult.data;
-      checklistError = fallbackResult.error;
-    }
-
-    if (checklistError) {
-      console.error('Supabase checklist insert error:', checklistError.message);
-      return res.status(502).json({
-        error: 'Failed to persist order checklist',
-        details: checklistError.message,
-      });
-    }
-
-    await auditChecklistChange(req, tenantId, 'orders.checklist_created', null, normalizeChecklistRow(checklistData) as Record<string, unknown>);
-
-    await insertOrderEvent(supabase, {
-      id: createdEventId,
-      tenant_id: tenantId,
-      service_order_id: data.id,
-      event_type: 'created',
-      previous_status: null,
-      new_status: 'recibido',
-      note: validatedData.issue,
-      actor_name: req.user?.email ?? req.user?.role ?? 'system',
-    });
-
-    let resolvedReceiptUrl = validatedData.receiptUrl || null;
-    let generatedReceiptDocument = null;
-    if (!resolvedReceiptUrl) {
-      try {
-        const bucketName = getStorageBucketName();
-        await ensureBucketExists(bucketName);
-        const tenantProfile = await resolveTenantOrderDocumentProfile(tenantId, requestedSucursalId);
-        generatedReceiptDocument = await persistReceiptPdf({
-          supabase,
-          tenantId,
-          orderId: data.id,
-          bucketName,
-          tenantProfile,
-          order: {
-            ...data,
-            final_cost: finalCost,
-            estimated_cost: estimatedCost,
-            sucursal_id: requestedSucursalId,
-          },
-          checklist: checklistData as OrderDocumentChecklist | null,
-        });
-        resolvedReceiptUrl = generatedReceiptDocument.public_url;
-      } catch (receiptError) {
-        console.error('Failed to generate order receipt PDF:', receiptError);
-      }
-    }
-
-    const pdfAttachment = buildPdfAttachment(resolvedReceiptUrl);
-
-    if (data.assigned_user_id) {
+    // Background Task: Generar Notificación
+    if (req.user?.role === 'technician') {
       void sendTenantPushNotification(tenantId, {
         type: 'order.assigned',
         title: 'Nueva orden asignada',
         body: `Se asignó la orden ${newFolio} para seguimiento.`,
-        data: {
-          orderId: data.id,
-          folio: newFolio,
-          tenantId,
-          assignedUserId: data.assigned_user_id,
-        },
+        data: { orderId, folio: newFolio, tenantId, assignedUserId: req.user.userId },
       });
     }
 
@@ -1239,24 +1098,18 @@ export const createOrder = async (req: Request, res: Response) => {
       success: true,
       message: 'Orden creada exitosamente',
       data: {
-        ...data,
+        id: orderId,
+        folio: newFolio,
         final_cost: finalCost,
         estimated_cost: estimatedCost,
-        receipt_url: resolvedReceiptUrl,
         sucursal_id: requestedSucursalId,
-        public_token: data.public_token,
-        pdf_attachment: pdfAttachment,
-        attachments: generatedReceiptDocument ? [generatedReceiptDocument] : pdfAttachment ? [pdfAttachment] : [],
-        include_iva: validatedData.includeIva,
-        checklist: normalizeChecklistRow(checklistData),
+        public_token: publicToken,
+        customer_id: customerId
       },
     });
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({
-        error: 'Datos de validación incorrectos',
-        details: error.errors,
-      });
+      return res.status(400).json({ error: 'Datos de validación incorrectos', details: error.errors });
     }
     console.error('Error creating order:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
