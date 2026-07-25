@@ -494,6 +494,9 @@ const createOrderSchema = z.object({
   receiptUrl: z.string().optional().or(z.literal('')),
   sucursalId: z.string().min(1).optional(),
   metadata: z.record(z.unknown()).optional(),
+  catalogModelId: z.string().uuid().optional().or(z.literal('')),
+  catalogFaultId: z.string().uuid().optional().or(z.literal('')),
+  checklistResponses: z.record(z.any()).optional(),
 });
 
 function normalizeOrderStatus(status?: string | null) {
@@ -1129,6 +1132,9 @@ export const createOrder = async (req: Request, res: Response) => {
           receipt_url: validatedData.receiptUrl || null,
           assigned_user_id: req.user?.role === 'technician' ? req.user.userId ?? null : null,
           evidence_metadata: initialEvidenceMetadata,
+          catalog_model_id: validatedData.catalogModelId || null,
+          catalog_fault_id: validatedData.catalogFaultId || null,
+          checklist_responses: validatedData.checklistResponses || null,
         }
       ])
       .select()
@@ -2591,6 +2597,38 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       actor_name: req.user?.email ?? req.user?.role ?? 'system',
     });
 
+    // Evaluate Automation Rules
+    try {
+      const { data: rules } = await supabase
+        .from('automation_rules')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .eq('event_type', 'order.status_changed')
+        .eq('is_active', true);
+
+      if (rules && rules.length > 0) {
+        for (const rule of rules) {
+          let matches = true;
+          const condition = rule.condition as any;
+          if (condition && condition.status && condition.status !== nextStatus) {
+            matches = false;
+          }
+
+          if (matches) {
+            await supabase.from('automation_logs').insert({
+              tenant_id: tenantId,
+              rule_id: rule.id,
+              order_id: orderId,
+              event_type: 'order.status_changed',
+              status: 'success'
+            });
+          }
+        }
+      }
+    } catch (autoErr) {
+      console.error('Error evaluating automation rules:', autoErr);
+    }
+
     void sendTenantPushNotification(tenantId, {
       type: 'order.status_changed',
       title: 'Cambio de estado',
@@ -3355,6 +3393,19 @@ export const createOrderPayment = async (req: Request, res: Response) => {
       return res.status(400).json({ error: `El monto (${body.amount}) excede el saldo pendiente (${saldoPendiente})` });
     }
 
+    // Fetch active cash shift for the user
+    const { data: activeShift, error: shiftError } = await supabase
+      .from('cash_shifts')
+      .select('id')
+      .eq('tenant_id', tenantId)
+      .eq('opened_by', req.user?.userId || req.user?.sub)
+      .eq('status', 'open')
+      .maybeSingle();
+
+    if (shiftError || !activeShift) {
+      return res.status(400).json({ error: 'Debes tener un turno de caja abierto para registrar un pago.' });
+    }
+
     // Insert payment
     const { data: newPayment, error: insertError } = await supabase
       .from('customer_payments')
@@ -3363,6 +3414,7 @@ export const createOrderPayment = async (req: Request, res: Response) => {
         branch_id: order.sucursal_id,
         customer_id: order.customer_id,
         service_order_id: orderId,
+        cash_shift_id: activeShift.id,
         payment_type: 'cobro',
         amount: body.amount,
         payment_method: body.paymentMethod,

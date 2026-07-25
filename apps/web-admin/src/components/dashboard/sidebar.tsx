@@ -25,6 +25,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
+  Database,
 } from 'lucide-react';
 import { DASHBOARD_MODULES } from '@/types';
 import { getActiveSucursalId, canUseConsolidatedView } from '@/lib/tenant';
@@ -50,6 +51,7 @@ const getIcon = (iconName: string) => {
     BarChart3,
     Building2,
     Shield,
+    Database,
   };
   return icons[iconName] || LayoutDashboard;
 };

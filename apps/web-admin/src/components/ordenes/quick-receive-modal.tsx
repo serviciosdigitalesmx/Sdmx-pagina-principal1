@@ -8,6 +8,7 @@ import { apiGateway } from "@/services/apiGateway";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getCurrentSession } from "@/lib/session";
+import { OmniSearch } from "./omni-search";
 
 type Props = {
   open: boolean;
@@ -30,7 +31,8 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
     // Cotización
     estimatedCost: "",
     deposit: "",
-    notes: ""
+    notes: "",
+    catalogModelId: ""
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -55,6 +57,7 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
         issue: formData.issue,
         estimatedCost: Number(formData.estimatedCost) || 0,
         sucursalId: session?.branchId || undefined,
+        catalog_model_id: formData.catalogModelId || undefined,
         checklist: {
           notes: formData.notes
         }
@@ -78,7 +81,7 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
       // Reset form
       setFormData({
         clientName: "", clientPhone: "", deviceType: "Celular", deviceModel: "", 
-        serialNumber: "", issue: "", estimatedCost: "", deposit: "", notes: ""
+        serialNumber: "", issue: "", estimatedCost: "", deposit: "", notes: "", catalogModelId: ""
       });
     } catch (err: any) {
       toast.error(err?.message || "Error al crear la orden");
@@ -106,6 +109,21 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
             <div className="flex items-center gap-2 text-sky-600 font-semibold mb-2">
               <User className="h-4 w-4" /> 1. Cliente
             </div>
+            
+            <div className="mb-4">
+              <OmniSearch 
+                placeholder="Buscar cliente existente..."
+                onCustomerSelect={(c) => {
+                  setFormData(prev => ({ ...prev, clientName: c.name, clientPhone: c.phone }));
+                  toast.success(`Cliente ${c.name} seleccionado`);
+                }}
+                onModelSelect={(m) => {
+                  setFormData(prev => ({ ...prev, deviceModel: m.name, catalogModelId: m.id }));
+                  toast.success(`Modelo ${m.name} seleccionado`);
+                }}
+              />
+            </div>
+
             <div className="space-y-2">
               <label className="text-xs font-medium text-slate-700">Teléfono (10 dígitos) <span className="text-rose-500">*</span></label>
               <Input

@@ -10,6 +10,54 @@ export interface User {
   sessionId?: string;
 }
 
+export interface CatalogFamily {
+  id: string;
+  tenant_id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+}
+
+export interface CatalogBrand {
+  id: string;
+  tenant_id: string;
+  family_id: string;
+  name: string;
+  logo_url: string | null;
+  created_at: string;
+}
+
+export interface CatalogModel {
+  id: string;
+  tenant_id: string;
+  brand_id: string;
+  name: string;
+  reference_image_url: string | null;
+  created_at: string;
+}
+
+export interface CatalogFault {
+  id: string;
+  tenant_id: string;
+  model_id: string;
+  name: string;
+  description: string | null;
+  estimated_labor_minutes: number | null;
+  default_cost: number | null;
+  created_at: string;
+}
+
+export interface CatalogPart {
+  id: string;
+  tenant_id: string;
+  fault_id: string;
+  product_id: string | null;
+  name: string;
+  sku: string | null;
+  default_cost: number | null;
+  created_at: string;
+}
+
 export interface Tenant {
   id: string;
   slug: string;
@@ -51,6 +99,7 @@ export const DASHBOARD_MODULES: DashboardModule[] = [
   { key: 'tecnico', label: 'Técnico', icon: 'Wrench', href: '/dashboard/tecnico', enabled: true },
   { key: 'solicitudes', label: 'Solicitudes', icon: 'FileText', href: '/dashboard/solicitudes', enabled: true },
   { key: 'archivo', label: 'Archivo', icon: 'Archive', href: '/dashboard/archivo', enabled: true },
+  { key: 'catalogos', label: 'Catálogos', icon: 'Database', href: '/dashboard/catalogos', enabled: true },
   { key: 'landing', label: 'Landing', icon: 'Globe', href: '/dashboard/landing', enabled: true },
   { key: 'clientes', label: 'Clientes', icon: 'Users', href: '/dashboard/clientes', enabled: true },
   { key: 'tareas', label: 'Tareas', icon: 'CheckSquare', href: '/dashboard/tareas', enabled: true },
@@ -591,3 +640,71 @@ export interface DeviceHistoryItem {
   created_at: string;
   updated_at: string;
 }
+
+export interface CashRegister {
+  id: string;
+  tenant_id: string;
+  sucursal_id: string;
+  name: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface CashShift {
+  id: string;
+  tenant_id: string;
+  cash_register_id: string;
+  opened_by: string;
+  opened_at: string;
+  initial_cash: number;
+  closed_by: string | null;
+  closed_at: string | null;
+  final_cash: number | null;
+  expected_cash: number | null;
+  difference: number | null;
+  status: 'open' | 'closed' | 'suspended';
+  notes: string | null;
+  created_at: string;
+}
+
+export interface Sale {
+  id: string;
+  tenant_id: string;
+  cash_shift_id: string;
+  customer_id: string | null;
+  customer_name: string | null;
+  customer_phone: string | null;
+  subtotal: number;
+  tax: number;
+  total: number;
+  payment_method: 'cash' | 'card' | 'transfer';
+  reference: string | null;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+export interface SaleItem {
+  id: string;
+  sale_id: string;
+  product_id: string | null;
+  sku_snapshot: string | null;
+  description: string;
+  quantity: number;
+  unit_price: number;
+  total: number;
+  created_at: string;
+}
+
+export interface CashShiftExpense {
+  id: string;
+  tenant_id: string;
+  cash_shift_id: string;
+  amount: number;
+  category: string;
+  description: string;
+  receipt_url: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+

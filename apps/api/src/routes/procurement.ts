@@ -4,7 +4,7 @@ import { validateTenant } from '../middleware/validateTenant';
 import { attachScope } from '../middleware/scope';
 import { requireTenantBillingActive } from '../middleware/tenantBilling';
 import { requireRole } from '../middleware/requireRole';
-import { getProcurementSummary } from '../controllers/procurement';
+import { getProcurementSummary, getProcurementSuggestions } from '../controllers/procurement';
 
 const router = Router({ mergeParams: true });
 
@@ -14,5 +14,6 @@ router.use(attachScope);
 router.use(requireTenantBillingActive);
 
 router.get('/summary', requireRole('owner', 'manager'), getProcurementSummary);
+router.get('/suggestions', requireRole('owner', 'manager'), getProcurementSuggestions);
 
 export default router;

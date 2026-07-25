@@ -1754,6 +1754,191 @@ class ApiGateway {
       reader.readAsDataURL(file);
     });
   }
+
+  // --- Catálogos (Fase 1) ---
+
+  public async getCatalogFamilies() {
+    return this.request<any>(`/api/catalog/families`, { method: 'GET' });
+  }
+  public async createCatalogFamily(data: { name: string, description?: string }) {
+    return this.request<any>(`/api/catalog/families`, { method: 'POST', body: JSON.stringify(data) });
+  }
+  public async updateCatalogFamily(id: string, data: { name: string, description?: string }) {
+    return this.request<any>(`/api/catalog/families/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+  }
+  public async deleteCatalogFamily(id: string) {
+    return this.request<any>(`/api/catalog/families/${id}`, { method: 'DELETE' });
+  }
+
+  public async getCatalogBrands(familyId: string) {
+    return this.request<any>(`/api/catalog/brands?familyId=${encodeURIComponent(familyId)}`, { method: 'GET' });
+  }
+  public async createCatalogBrand(data: { family_id: string, name: string, logo_url?: string }) {
+    return this.request<any>(`/api/catalog/brands`, { method: 'POST', body: JSON.stringify(data) });
+  }
+  public async updateCatalogBrand(id: string, data: { name: string, logo_url?: string }) {
+    return this.request<any>(`/api/catalog/brands/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+  }
+  public async deleteCatalogBrand(id: string) {
+    return this.request<any>(`/api/catalog/brands/${id}`, { method: 'DELETE' });
+  }
+
+  public async getCatalogModels(brandId: string) {
+    return this.request<any>(`/api/catalog/models?brandId=${encodeURIComponent(brandId)}`, { method: 'GET' });
+  }
+  public async createCatalogModel(data: { brand_id: string, name: string, reference_image_url?: string }) {
+    return this.request<any>(`/api/catalog/models`, { method: 'POST', body: JSON.stringify(data) });
+  }
+  public async updateCatalogModel(id: string, data: { name: string, reference_image_url?: string }) {
+    return this.request<any>(`/api/catalog/models/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+  }
+  public async deleteCatalogModel(id: string) {
+    return this.request<any>(`/api/catalog/models/${id}`, { method: 'DELETE' });
+  }
+
+  public async getCatalogFaults(modelId: string) {
+    return this.request<any>(`/api/catalog/faults?modelId=${encodeURIComponent(modelId)}`, { method: 'GET' });
+  }
+  public async createCatalogFault(data: { model_id: string, name: string, description?: string, estimated_labor_minutes?: number, default_cost?: number }) {
+    return this.request<any>(`/api/catalog/faults`, { method: 'POST', body: JSON.stringify(data) });
+  }
+  public async updateCatalogFault(id: string, data: { name: string, description?: string, estimated_labor_minutes?: number, default_cost?: number }) {
+    return this.request<any>(`/api/catalog/faults/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+  }
+  public async deleteCatalogFault(id: string) {
+    return this.request<any>(`/api/catalog/faults/${id}`, { method: 'DELETE' });
+  }
+
+  public async getCatalogParts(faultId: string) {
+    return this.request<any>(`/api/catalog/parts?faultId=${encodeURIComponent(faultId)}`, { method: 'GET' });
+  }
+  public async createCatalogPart(data: { fault_id: string, product_id?: string, name: string, sku?: string, default_cost?: number }) {
+    return this.request<any>(`/api/catalog/parts`, { method: 'POST', body: JSON.stringify(data) });
+  }
+  public async updateCatalogPart(id: string, data: { product_id?: string, name: string, sku?: string, default_cost?: number }) {
+    return this.request<any>(`/api/catalog/parts/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+  }
+  public async deleteCatalogPart(id: string) {
+    return this.request<any>(`/api/catalog/parts/${id}`, { method: 'DELETE' });
+  }
+
+  // --- OmniSearch (Fase 1) ---
+
+  public async omniSearch(query: string) {
+    return this.request<{ customers: any[]; orders: any[]; catalogs: any[] }>(`/api/search?q=${encodeURIComponent(query)}`, { method: 'GET' });
+  }
+
+  // --- POS y Caja (Fase 3) ---
+
+  public async getCashRegisters() {
+    return this.request<any>(`/api/cash/registers`, { method: 'GET' });
+  }
+
+  public async openCashShift(cashRegisterId: string, initialCash: number) {
+    return this.request<any>(`/api/cash/shifts/open`, {
+      method: 'POST',
+      body: JSON.stringify({ cashRegisterId, initialCash }),
+    });
+  }
+
+  public async getActiveCashShift() {
+    return this.request<any>(`/api/cash/shifts/active`, { method: 'GET' });
+  }
+
+  public async closeCashShift(finalCash: number, notes?: string) {
+    return this.request<any>(`/api/cash/shifts/close`, {
+      method: 'POST',
+      body: JSON.stringify({ finalCash, notes }),
+    });
+  }
+
+  public async createSale(data: {
+    customerName: string;
+    customerPhone?: string;
+    items: Array<{ productId: string; quantity: number }>;
+    paymentMethod: 'cash' | 'card' | 'transfer';
+    reference?: string;
+    notes?: string;
+  }) {
+    return this.request<any>(`/api/cash/sales`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async createCashExpense(data: {
+    amount: number;
+    category: string;
+    description: string;
+    receiptUrl?: string;
+  }) {
+    return this.request<any>(`/api/cash/expenses`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async getCashShiftDetails(shiftId: string) {
+    return this.request<any>(`/api/cash/shifts/${encodeURIComponent(shiftId)}`, { method: 'GET' });
+  }
+
+  // --- Checklists y Compras (Fase 2) ---
+
+  public async getCatalogChecklists(familyId: string) {
+    return this.request<any>(`/api/catalog/checklists?familyId=${encodeURIComponent(familyId)}`, { method: 'GET' });
+  }
+
+  public async getProcurementSuggestions() {
+    return this.request<any>(`/api/procurement/suggestions`, { method: 'GET' });
+  }
+
+  // --- Portal del Cliente e Inbound MP (Fase 4) ---
+
+  public async getPublicOrderDetails(publicToken: string) {
+    return this.request<any>(`/api/public-portal/order/${encodeURIComponent(publicToken)}`, { method: 'GET' });
+  }
+
+  public async authorizeOrder(publicToken: string, data: { decision: 'accepted' | 'rejected', acceptedByName?: string, acceptedByPhone?: string, acceptedByEmail?: string }) {
+    return this.request<any>(`/api/public-portal/order/${encodeURIComponent(publicToken)}/authorize`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async createPublicOrderPayment(publicToken: string, amount: number, paymentMethod: string) {
+    return this.request<any>(`/api/public-portal/order/${encodeURIComponent(publicToken)}/payment`, {
+      method: 'POST',
+      body: JSON.stringify({ amount, paymentMethod }),
+    });
+  }
+
+  // --- Automatizaciones y Plantillas (Fase 4) ---
+
+  public async getAutomationRules() {
+    return this.request<any>(`/api/automation/rules`, { method: 'GET' });
+  }
+
+  public async createAutomationRule(data: { name: string, event_type: string, condition?: any, action_type: string, action_config: any, is_active?: boolean }) {
+    return this.request<any>(`/api/automation/rules`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  public async getAutomationLogs() {
+    return this.request<any>(`/api/automation/logs`, { method: 'GET' });
+  }
+
+  public async getMessageTemplates() {
+    return this.request<any>(`/api/automation/templates`, { method: 'GET' });
+  }
+
+  public async createMessageTemplate(data: { name: string, channel: 'whatsapp' | 'email' | 'sms', subject?: string, body: string, variables?: string[] }) {
+    return this.request<any>(`/api/automation/templates`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
 }
 
 export const apiGateway = new ApiGateway();

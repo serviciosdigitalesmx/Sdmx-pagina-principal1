@@ -60,3 +60,38 @@ export const getProcurementSummary = async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
+
+export const getProcurementSuggestions = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    const sucursalId = req.headers['x-sucursal-id'] as string || req.scope?.sucursalId;
+
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context is required' });
+    }
+    if (!sucursalId) {
+      return res.status(400).json({ error: 'Sucursal context/header is required' });
+    }
+
+    const supabase = getTenantClient(tenantId);
+    
+    // Call get_purchase_suggestions RPC
+    const { data, error } = await supabase.rpc('get_purchase_suggestions', {
+      p_tenant_id: tenantId,
+      p_sucursal_id: sucursalId
+    });
+
+    if (error) {
+      return res.status(502).json({ error: 'Failed to compute procurement suggestions', details: error.message });
+    }
+
+    return res.json({
+      success: true,
+      data: data || []
+    });
+  } catch (error) {
+    console.error('Error getting procurement suggestions:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+

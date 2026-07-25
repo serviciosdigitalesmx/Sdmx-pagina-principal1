@@ -24,6 +24,11 @@ import billingRouter, { webhookRouter } from './routes/billing';
 import { portabilityExportRouter, portabilityImportRouter } from './routes/portability';
 import { getApiRoot, getDependencyHealth, getHealth } from './controllers/meta';
 import { listAuditLogs } from './controllers/security';
+import deviceCatalogsRouter from './routes/device-catalogs';
+import searchRouter from './routes/search';
+import cashRouter from './routes/cash';
+import publicPortalRouter from './routes/public-portal';
+import automationRouter from './routes/automation';
 import { requireAuth } from './middleware/auth';
 import { requireTenantBillingActive } from './middleware/tenantBilling';
 import { attachTenantCapabilities, requireTenantModule } from './middleware/tenantCapabilities';
@@ -137,6 +142,20 @@ app.use('/api/finance', financeRouter);
 
 app.use('/api/:tenantSlug/customers', customersRouter);
 app.use('/api/customers', customersRouter);
+
+app.use('/api/:tenantSlug/catalog', deviceCatalogsRouter);
+app.use('/api/catalog', deviceCatalogsRouter);
+
+app.use('/api/:tenantSlug/search', searchRouter);
+app.use('/api/search', searchRouter);
+
+app.use('/api/:tenantSlug/cash', cashRouter);
+app.use('/api/cash', cashRouter);
+
+app.use('/api/:tenantSlug/automation', automationRouter);
+app.use('/api/automation', automationRouter);
+
+app.use('/api/public-portal', publicPortalRouter);
 
 app.use('/api/:tenantSlug/inventory', inventoryRouter);
 app.use('/api/inventory', inventoryRouter);
