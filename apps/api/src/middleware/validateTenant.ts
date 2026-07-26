@@ -54,3 +54,61 @@ export const validateTenant = (req: Request, res: Response, next: NextFunction) 
   req.tenantId = finalTenantId;
   next();
 };
+
+export async function validateSelectedBranch(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  const tenantId = req.tenantId;
+  const requestedBranch =
+    req.headers['x-fixi-sucursal-id'] ??
+    req.headers['x-sucursal-id'] ??
+    req.user?.sucursalId ??
+    null;
+
+  if (!tenantId) {
+    return res.status(401).json({
+      success: false,
+      error: 'Tenant ausente',
+      code: 'TENANT_REQUIRED',
+    });
+  }
+
+  if (!requestedBranch || Array.isArray(requestedBranch)) {
+    req.scope = { ...req.scope, sucursalId: null };
+    return next();
+  }
+
+  // Import supabaseAdmin dynamically or at the top
+  const { supabaseAdmin } = require('@white-label/database');
+  const { data: branch } = await supabaseAdmin
+    .from('sucursales')
+    .select('id')
+    .eq('id', requestedBranch)
+    .eq('tenant_id', tenantId)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (!branch) {
+    return res.status(403).json({
+      success: false,
+      error: 'Sucursal no permitida',
+      code: 'BRANCH_SCOPE_DENIED',
+    });
+  }
+
+  const role = req.user?.role;
+  const fixedBranch = req.user?.sucursalId;
+
+  if (fixedBranch && role !== 'owner' && role !== 'admin' && fixedBranch !== branch.id) {
+    return res.status(403).json({
+      success: false,
+      error: 'No tienes acceso a esta sucursal',
+      code: 'BRANCH_SCOPE_DENIED',
+    });
+  }
+
+  req.scope = { ...req.scope, sucursalId: branch.id };
+  next();
+}

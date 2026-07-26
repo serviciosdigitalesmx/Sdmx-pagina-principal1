@@ -3,6 +3,14 @@ type JsonRecord = Record<string, unknown>;
 type ApiListResponse<T> = {
   success: true;
   data: T;
+  meta?: {
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
 };
 
 type ApiSingleResponse<T> = {
@@ -368,6 +376,10 @@ class ApiGateway {
     const body = typeof init.body === 'string' ? init.body : null;
 
     if (typeof navigator !== 'undefined' && !navigator.onLine && isMutation) {
+      if (path.includes('/api/cash/sales') || path.includes('/api/cash/shifts/close')) {
+        throw new Error('Sin conexión: Esta acción financiera crítica requiere internet.');
+      }
+      
       const session = getCurrentSession();
       await enqueueOfflineRequest({
         tenantId: session?.tenantId ?? this.tenantId,
@@ -382,9 +394,14 @@ class ApiGateway {
     }
 
     let response: Response;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
     try {
       const headers = new Headers(init.headers);
-      headers.set('Content-Type', 'application/json');
+      if (!(init.body instanceof FormData)) {
+        headers.set('Content-Type', 'application/json');
+      }
       headers.set('Authorization', `Bearer ${token}`);
 
       const scopeHeaders = this.getScopeHeaders();
@@ -396,8 +413,14 @@ class ApiGateway {
       response = await fetch(`${this.apiUrl}${path}`, {
         ...init,
         headers,
+        signal: controller.signal,
       });
-    } catch (err) {
+      clearTimeout(timeoutId);
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        throw new Error('La petición ha tardado demasiado (Timeout)');
+      }
       // network or fetch-level error
       throw new Error(`Network error: ${(err as Error).message}`);
     }
@@ -735,24 +758,53 @@ class ApiGateway {
   }
 
   public async uploadOrderAttachment(orderId: string, file: File, fileType: 'intake_photo' | 'attachment_pdf'): Promise<JsonRecord> {
-    const base64 = await this.fileToBase64(file);
-    const result = await this.request<ApiListResponse<JsonRecord>>(
-      this.apiPath(`/orders/${encodeURIComponent(orderId)}/attachments`),
+    const mimeType = file.type || (fileType === 'attachment_pdf' ? 'application/pdf' : 'image/*');
+    
+    // 1. Get Signed URL Intent
+    const intentResult = await this.request<ApiSingleResponse<{ uploadUrl: string; storagePath: string; bucketName: string }>>(
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/upload-intent`),
       {
         method: 'POST',
         body: JSON.stringify({
-          files: [
-            {
-              fileName: file.name,
-              mimeType: file.type || (fileType === 'attachment_pdf' ? 'application/pdf' : 'image/*'),
-              base64,
-              fileType,
-            } satisfies EncodedFilePayload,
-          ],
+          fileName: file.name,
+          mimeType,
+          fileSize: file.size,
         }),
       }
     );
-    return result.data;
+
+    const { uploadUrl, storagePath, bucketName } = intentResult.data;
+
+    // 2. Upload directly to Supabase Storage via PUT
+    const uploadRes = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': mimeType,
+      },
+      body: file,
+    });
+
+    if (!uploadRes.ok) {
+      throw new Error(`Failed to upload to storage: ${uploadRes.statusText}`);
+    }
+
+    // 3. Confirm Upload
+    const confirmResult = await this.request<ApiSingleResponse<JsonRecord>>(
+      this.apiPath(`/orders/${encodeURIComponent(orderId)}/confirm-upload`),
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          storagePath,
+          bucketName,
+          fileName: file.name,
+          fileType,
+          mimeType,
+          fileSize: file.size,
+        }),
+      }
+    );
+
+    return confirmResult.data;
   }
 
   public async addOrderNote(orderId: string, note: string): Promise<JsonRecord> {
