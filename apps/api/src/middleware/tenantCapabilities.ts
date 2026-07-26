@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { loadTenantBillingSummary } from '../services/tenant-billing';
-import { loadTenantRuntimeConfig } from '../services/tenant-config';
+import { getCachedTenantConfig } from '../services/tenant-config-cache';
 import { resolveTenantCapabilities } from '../services/tenant-capabilities';
 
 const PUBLIC_MODULE_KEYS = new Set(['portal', 'whatsapp']);
@@ -12,7 +12,7 @@ export async function loadTenantCapabilitiesForRequest(req: Request) {
   }
 
   const [runtimeConfig, billing] = await Promise.all([
-    loadTenantRuntimeConfig(tenantId),
+    getCachedTenantConfig(tenantId),
     loadTenantBillingSummary(tenantId, req.user?.tenantSlug ?? req.params.tenantSlug ?? null).catch(() => null),
   ]);
 

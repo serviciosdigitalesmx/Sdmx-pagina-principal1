@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
 import { getTenantClient } from '@white-label/database';
+import { z } from 'zod';
+import { requireScopedBranch } from '../lib/require-scoped-branch';
 
 // Helper to get active shift
 async function findActiveShift(supabase: any, tenantId: string, userId: string) {
@@ -17,12 +19,14 @@ async function findActiveShift(supabase: any, tenantId: string, userId: string) 
 
 // 1. GET /api/cash/registers
 export async function getRegisters(req: Request, res: Response) {
-  const tenantId = req.tenantId as string;
-  const sucursalId = req.user?.sucursalId || req.headers['x-fixi-sucursal-id'] as string;
+  const tenantId = req.tenantId;
+  if (!tenantId) {
+    return res.status(401).json({ success: false, error: 'Tenant requerido' });
+  }
 
-  if (!sucursalId) return res.status(400).json({ error: 'Sucursal ID required' });
-
+  const sucursalId = requireScopedBranch(req);
   const supabase = getTenantClient(tenantId);
+
   const { data, error } = await supabase
     .from('cash_registers')
     .select('*')
@@ -31,8 +35,15 @@ export async function getRegisters(req: Request, res: Response) {
     .eq('is_active', true)
     .order('name');
 
-  if (error) return res.status(500).json({ error: error.message });
-  return res.json(data);
+  if (error) {
+    return res.status(502).json({
+      success: false,
+      error: 'No se pudieron cargar las cajas',
+      details: error.message,
+    });
+  }
+
+  return res.json({ success: true, data: data ?? [] });
 }
 
 // 2. POST /api/cash/shifts/open
@@ -83,151 +94,144 @@ export async function getActiveShift(req: Request, res: Response) {
 }
 
 // 4. POST /api/cash/shifts/close
+const closeShiftSchema = z.object({
+  finalCash: z.coerce.number().min(0),
+  notes: z.string().trim().max(1000).optional(),
+});
+
 export async function closeShift(req: Request, res: Response) {
   const tenantId = req.tenantId as string;
   const userId = req.user?.userId || req.user?.sub;
-  const { finalCash, notes } = req.body;
+  const parsed = closeShiftSchema.safeParse(req.body);
 
-  if (!userId) return res.status(401).json({ error: 'User unauthorized' });
+  if (!tenantId || !userId) {
+    return res.status(401).json({
+      success: false,
+      error: 'Sesión inválida',
+    });
+  }
+
+  if (!parsed.success) {
+    return res.status(422).json({
+      success: false,
+      error: 'Arqueo inválido',
+      details: parsed.error.flatten(),
+    });
+  }
 
   const supabase = getTenantClient(tenantId);
   const activeShift = await findActiveShift(supabase, tenantId, userId);
 
   if (!activeShift) {
-    return res.status(400).json({ error: 'No tienes ningún turno abierto.' });
+    return res.status(409).json({
+      success: false,
+      error: 'No tienes ningún turno abierto.',
+      code: 'ACTIVE_SHIFT_NOT_FOUND',
+    });
   }
-
-  // Calculate Expected Cash:
-  // Initial cash + sales (cash) + customer_payments (cash) - expenses
-  const salesPromise = supabase
-    .from('sales')
-    .select('total')
-    .eq('cash_shift_id', activeShift.id)
-    .eq('payment_method', 'cash');
-
-  const paymentsPromise = supabase
-    .from('customer_payments')
-    .select('amount')
-    .eq('cash_shift_id', activeShift.id)
-    .eq('payment_method', 'cash');
-
-  const expensesPromise = supabase
-    .from('cash_shift_expenses')
-    .select('amount')
-    .eq('cash_shift_id', activeShift.id);
 
   // Atomic closing via RPC
   const { data: closedShift, error } = await supabase.rpc('close_cash_shift_atomic', {
     p_tenant_id: tenantId,
     p_shift_id: activeShift.id,
     p_user_id: userId,
-    p_final_cash: Number(finalCash),
-    p_notes: notes || null
+    p_final_cash: parsed.data.finalCash,
+    p_notes: parsed.data.notes || null
   });
 
-  if (error) return res.status(500).json({ error: error.message });
-  return res.json(closedShift);
+  if (error) {
+    return res.status(409).json({
+      success: false,
+      error: error.message,
+      code: 'SHIFT_CLOSE_FAILED',
+    });
+  }
+
+  return res.json({ success: true, data: closedShift });
 }
 
 // 5. POST /api/cash/sales
+const saleSchema = z.object({
+  customerName: z.string().trim().max(160).optional(),
+  customerPhone: z.string().trim().max(30).optional(),
+  paymentMethod: z.enum(['cash', 'card', 'transfer']),
+  reference: z.string().trim().max(160).optional(),
+  notes: z.string().trim().max(1000).optional(),
+  idempotencyKey: z.string().trim().min(12).max(160),
+  items: z.array(
+    z.object({
+      productId: z.string().uuid(),
+      quantity: z.coerce.number().positive(),
+    })
+  ).min(1).max(100),
+});
+
 export async function createSale(req: Request, res: Response) {
   const tenantId = req.tenantId as string;
   const userId = req.user?.userId || req.user?.sub;
-  const { customerName, customerPhone, items, paymentMethod, reference, notes } = req.body;
 
-  if (!userId) return res.status(401).json({ error: 'User unauthorized' });
+  if (!tenantId || !userId) {
+    return res.status(401).json({
+      success: false,
+      error: 'Sesión inválida',
+      code: 'UNAUTHORIZED',
+      requestId: req.requestId ?? null,
+    });
+  }
+
+  const parsed = saleSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(422).json({
+      success: false,
+      error: 'Datos de venta inválidos',
+      code: 'INVALID_SALE',
+      details: parsed.error.flatten(),
+      requestId: req.requestId ?? null,
+    });
+  }
 
   const supabase = getTenantClient(tenantId);
   const activeShift = await findActiveShift(supabase, tenantId, userId);
 
   if (!activeShift) {
-    return res.status(400).json({ error: 'Debes abrir caja antes de realizar una venta.' });
-  }
-
-  const sucursalId = activeShift.cash_registers.sucursal_id;
-
-  // Compute subtotal and total
-  let subtotal = 0;
-  const processedItems = [];
-
-  for (const item of items) {
-    const { data: product, error: prodErr } = await supabase
-      .from('products')
-      .select('id, name, sku, price')
-      .eq('id', item.productId)
-      .single();
-
-    if (prodErr || !product) {
-      return res.status(400).json({ error: `Producto no encontrado: ${item.productId}` });
-    }
-
-    // Verify stock in sucursal_inventory
-    const { data: invItem, error: invErr } = await supabase
-      .from('sucursal_inventory')
-      .select('id, stock_current')
-      .eq('tenant_id', tenantId)
-      .eq('sucursal_id', sucursalId)
-      .eq('product_id', product.id)
-      .maybeSingle();
-
-    if (invErr || !invItem || Number(invItem.stock_current ?? 0) < item.quantity) {
-      return res.status(400).json({ error: `Stock insuficiente para ${product.name}. Disponible: ${invItem?.stock_current ?? 0}` });
-    }
-
-    const itemTotal = Number(product.price) * Number(item.quantity);
-    subtotal += itemTotal;
-
-    processedItems.push({
-      product_id: product.id,
-      sku_snapshot: product.sku,
-      description: product.name,
-      quantity: Number(item.quantity),
-      unit_price: Number(product.price),
-      total: itemTotal,
-      inv_id: invItem.id,
-      new_stock: Number(invItem.stock_current) - Number(item.quantity)
+    return res.status(409).json({
+      success: false,
+      error: 'Debes abrir caja antes de realizar una venta',
+      code: 'ACTIVE_SHIFT_REQUIRED',
+      requestId: req.requestId ?? null,
     });
   }
 
-  // Create Sale record
-  const { data: sale, error: saleErr } = await supabase
-    .from('sales')
-    .insert({
-      tenant_id: tenantId,
-      cash_shift_id: activeShift.id,
-      customer_name: customerName || 'Venta Mostrador',
-      customer_phone: customerPhone || null,
-      subtotal: subtotal,
-      total: subtotal,
-      payment_method: paymentMethod,
-      reference: reference || null,
-      notes: notes || null,
-      created_by: userId
-    })
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc('execute_pos_sale_transaction', {
+    p_tenant_id: tenantId,
+    p_user_id: userId,
+    p_cash_shift_id: activeShift.id,
+    p_customer_name: parsed.data.customerName ?? '',
+    p_customer_phone: parsed.data.customerPhone ?? '',
+    p_payment_method: parsed.data.paymentMethod,
+    p_reference: parsed.data.reference ?? '',
+    p_notes: parsed.data.notes ?? '',
+    p_items: parsed.data.items,
+    p_idempotency_key: parsed.data.idempotencyKey,
+  });
 
-  if (saleErr) return res.status(500).json({ error: saleErr.message });
+  if (error) {
+    const conflict =
+      /INSUFFICIENT_STOCK|CONCURRENT_STOCK_CONFLICT|ACTIVE_SHIFT_NOT_FOUND/.test(error.message);
 
-  // Create sale items and deduct stock
-  for (const item of processedItems) {
-    await supabase.from('sale_items').insert({
-      sale_id: sale.id,
-      product_id: item.product_id,
-      sku_snapshot: item.sku_snapshot,
-      description: item.description,
-      quantity: item.quantity,
-      unit_price: item.unit_price,
-      total: item.total
+    return res.status(conflict ? 409 : 502).json({
+      success: false,
+      error: error.message,
+      code: conflict ? 'SALE_CONFLICT' : 'SALE_TRANSACTION_FAILED',
+      requestId: req.requestId ?? null,
     });
-
-    await supabase
-      .from('sucursal_inventory')
-      .update({ stock_current: item.new_stock })
-      .eq('id', item.inv_id);
   }
 
-  return res.status(201).json(sale);
+  return res.status(201).json({
+    success: true,
+    data,
+    requestId: req.requestId ?? null,
+  });
 }
 
 // 6. POST /api/cash/expenses

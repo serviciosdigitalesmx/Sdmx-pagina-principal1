@@ -3,7 +3,8 @@ import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { supabaseAdmin } from '@white-label/database';
 import { loadTenantBillingSummary } from '../services/tenant-billing';
-import { getIndustryTemplate, listAvailableIndustries, loadTenantRuntimeConfig, invalidateTenantRuntimeConfigCache } from '../services/tenant-config';
+import { getIndustryTemplate, listAvailableIndustries, invalidateTenantRuntimeConfigCache } from '../services/tenant-config';
+import { getCachedTenantConfig } from '../services/tenant-config-cache';
 import { resolveTenantCapabilities } from '../services/tenant-capabilities';
 import { resolveEffectiveUserRole } from '../lib/user-roles';
 import { runDependencyHealthCheck } from '../services/observability';
@@ -49,18 +50,7 @@ function decodeBase64File(base64: string) {
 }
 
 async function ensureBucketExists(bucketName: string) {
-  const { error } = await supabaseAdmin.storage.getBucket(bucketName);
-  if (!error) return;
-
-  const { error: createError } = await supabaseAdmin.storage.createBucket(bucketName, {
-    public: true,
-    allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],
-    fileSizeLimit: 5 * 1024 * 1024,
-  });
-
-  if (createError) {
-    throw new Error(`Unable to ensure storage bucket ${bucketName}: ${createError.message}`);
-  }
+  // Disabled automatic bucket creation in runtime as per audit finding P2
 }
 
 export const getHealth = (_req: Request, res: Response) => {
@@ -178,7 +168,7 @@ export const getTenantSettings = async (req: Request, res: Response) => {
     }
 
     const billing = await loadTenantBillingSummary(data.id, data.slug);
-    const config = await loadTenantRuntimeConfig(data.id);
+    const config = await getCachedTenantConfig(data.id);
     const capabilities = resolveTenantCapabilities({
       tenantId: data.id,
       tenantSlug: data.slug,
@@ -544,7 +534,7 @@ export const updateTenantSettings = async (req: Request, res: Response) => {
     }
 
     const billing = await loadTenantBillingSummary(data.id, data.slug);
-    const config = await loadTenantRuntimeConfig(data.id);
+    const config = await getCachedTenantConfig(data.id);
     const capabilities = resolveTenantCapabilities({
       tenantId: data.id,
       tenantSlug: data.slug,
@@ -613,7 +603,6 @@ export const uploadTenantBrandingAsset = async (req: Request, res: Response) => 
     }
 
     const bucketName = getBrandingBucketName();
-    await ensureBucketExists(bucketName);
 
     const fileBuffer = decodeBase64File(parsed.data.base64);
     const safeName = parsed.data.fileName.replace(/[^a-zA-Z0-9._-]/g, '_');

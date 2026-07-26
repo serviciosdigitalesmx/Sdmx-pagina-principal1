@@ -99,6 +99,21 @@ export async function resolveTenantJwtSecret(tenantId: string) {
   return data?.security_jwt_secret?.trim() || globalSecret;
 }
 
+const SENSITIVE_KEYS = ['password', 'token', 'secret', 'key', 'credit_card', 'cvv', 'card_number'];
+
+function sanitizeData(data: Record<string, unknown> | null | undefined): Record<string, unknown> | null {
+  if (!data) return null;
+  const sanitized = { ...data };
+  for (const [key, value] of Object.entries(sanitized)) {
+    if (SENSITIVE_KEYS.some(sensitive => key.toLowerCase().includes(sensitive))) {
+      sanitized[key] = '[REDACTED]';
+    } else if (typeof value === 'object' && value !== null) {
+      sanitized[key] = sanitizeData(value as Record<string, unknown>);
+    }
+  }
+  return sanitized;
+}
+
 export async function writeAuditLog(input: {
   tenantId: string;
   userId?: string | null;
@@ -114,8 +129,8 @@ export async function writeAuditLog(input: {
     action: input.action,
     ip_address: getRequestIp(undefined, input.ipAddress ?? null),
     user_agent: input.userAgent ?? null,
-    data_before: input.dataBefore ?? null,
-    data_after: input.dataAfter ?? null,
+    data_before: sanitizeData(input.dataBefore),
+    data_after: sanitizeData(input.dataAfter),
   }]);
 
   if (error) {

@@ -27,7 +27,7 @@ export async function updateFamily(req: Request, res: Response) {
   const { name, description } = req.body;
 
   const supabase = getTenantClient(tenantId);
-  const { data, error } = await supabase.from('catalog_families').update({ name, description }).eq('id', id).select().single();
+  const { data, error } = await supabase.from('catalog_families').update({ name, description }).eq('id', id).eq('tenant_id', tenantId).select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data);
 }
@@ -37,7 +37,7 @@ export async function deleteFamily(req: Request, res: Response) {
   const { id } = req.params;
 
   const supabase = getTenantClient(tenantId);
-  const { error } = await supabase.from('catalog_families').delete().eq('id', id);
+  const { error } = await supabase.from('catalog_families').delete().eq('id', id).eq('tenant_id', tenantId);
   if (error) return res.status(500).json({ error: error.message });
   return res.status(204).send();
 }
@@ -59,6 +59,9 @@ export async function createBrand(req: Request, res: Response) {
   const { family_id, name, logo_url } = req.body;
 
   const supabase = getTenantClient(tenantId);
+  const { data: parent } = await supabase.from('catalog_families').select('id').eq('id', family_id).eq('tenant_id', tenantId).maybeSingle();
+  if (!parent) return res.status(403).json({ error: 'Parent family not found or belongs to another tenant' });
+
   const { data, error } = await supabase.from('catalog_brands').insert({ tenant_id: tenantId, family_id, name, logo_url }).select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.status(201).json(data);
@@ -70,7 +73,7 @@ export async function updateBrand(req: Request, res: Response) {
   const { name, logo_url } = req.body;
 
   const supabase = getTenantClient(tenantId);
-  const { data, error } = await supabase.from('catalog_brands').update({ name, logo_url }).eq('id', id).select().single();
+  const { data, error } = await supabase.from('catalog_brands').update({ name, logo_url }).eq('id', id).eq('tenant_id', tenantId).select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data);
 }
@@ -80,7 +83,7 @@ export async function deleteBrand(req: Request, res: Response) {
   const { id } = req.params;
 
   const supabase = getTenantClient(tenantId);
-  const { error } = await supabase.from('catalog_brands').delete().eq('id', id);
+  const { error } = await supabase.from('catalog_brands').delete().eq('id', id).eq('tenant_id', tenantId);
   if (error) return res.status(500).json({ error: error.message });
   return res.status(204).send();
 }
@@ -102,6 +105,9 @@ export async function createModel(req: Request, res: Response) {
   const { brand_id, name, reference_image_url } = req.body;
 
   const supabase = getTenantClient(tenantId);
+  const { data: parent } = await supabase.from('catalog_brands').select('id').eq('id', brand_id).eq('tenant_id', tenantId).maybeSingle();
+  if (!parent) return res.status(403).json({ error: 'Parent brand not found or belongs to another tenant' });
+
   const { data, error } = await supabase.from('catalog_models').insert({ tenant_id: tenantId, brand_id, name, reference_image_url }).select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.status(201).json(data);
@@ -113,7 +119,7 @@ export async function updateModel(req: Request, res: Response) {
   const { name, reference_image_url } = req.body;
 
   const supabase = getTenantClient(tenantId);
-  const { data, error } = await supabase.from('catalog_models').update({ name, reference_image_url }).eq('id', id).select().single();
+  const { data, error } = await supabase.from('catalog_models').update({ name, reference_image_url }).eq('id', id).eq('tenant_id', tenantId).select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data);
 }
@@ -123,7 +129,7 @@ export async function deleteModel(req: Request, res: Response) {
   const { id } = req.params;
 
   const supabase = getTenantClient(tenantId);
-  const { error } = await supabase.from('catalog_models').delete().eq('id', id);
+  const { error } = await supabase.from('catalog_models').delete().eq('id', id).eq('tenant_id', tenantId);
   if (error) return res.status(500).json({ error: error.message });
   return res.status(204).send();
 }
@@ -145,6 +151,9 @@ export async function createFault(req: Request, res: Response) {
   const { model_id, name, description, estimated_labor_minutes, default_cost } = req.body;
 
   const supabase = getTenantClient(tenantId);
+  const { data: parent } = await supabase.from('catalog_models').select('id').eq('id', model_id).eq('tenant_id', tenantId).maybeSingle();
+  if (!parent) return res.status(403).json({ error: 'Parent model not found or belongs to another tenant' });
+
   const { data, error } = await supabase.from('catalog_faults').insert({ tenant_id: tenantId, model_id, name, description, estimated_labor_minutes, default_cost }).select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.status(201).json(data);
@@ -156,7 +165,7 @@ export async function updateFault(req: Request, res: Response) {
   const { name, description, estimated_labor_minutes, default_cost } = req.body;
 
   const supabase = getTenantClient(tenantId);
-  const { data, error } = await supabase.from('catalog_faults').update({ name, description, estimated_labor_minutes, default_cost }).eq('id', id).select().single();
+  const { data, error } = await supabase.from('catalog_faults').update({ name, description, estimated_labor_minutes, default_cost }).eq('id', id).eq('tenant_id', tenantId).select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data);
 }
@@ -166,7 +175,7 @@ export async function deleteFault(req: Request, res: Response) {
   const { id } = req.params;
 
   const supabase = getTenantClient(tenantId);
-  const { error } = await supabase.from('catalog_faults').delete().eq('id', id);
+  const { error } = await supabase.from('catalog_faults').delete().eq('id', id).eq('tenant_id', tenantId);
   if (error) return res.status(500).json({ error: error.message });
   return res.status(204).send();
 }
@@ -188,6 +197,9 @@ export async function createPart(req: Request, res: Response) {
   const { fault_id, name, sku, default_cost, product_id } = req.body;
 
   const supabase = getTenantClient(tenantId);
+  const { data: parent } = await supabase.from('catalog_faults').select('id').eq('id', fault_id).eq('tenant_id', tenantId).maybeSingle();
+  if (!parent) return res.status(403).json({ error: 'Parent fault not found or belongs to another tenant' });
+
   const { data, error } = await supabase.from('catalog_parts').insert({ tenant_id: tenantId, fault_id, name, sku, default_cost, product_id }).select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.status(201).json(data);
@@ -199,7 +211,7 @@ export async function updatePart(req: Request, res: Response) {
   const { name, sku, default_cost, product_id } = req.body;
 
   const supabase = getTenantClient(tenantId);
-  const { data, error } = await supabase.from('catalog_parts').update({ name, sku, default_cost, product_id }).eq('id', id).select().single();
+  const { data, error } = await supabase.from('catalog_parts').update({ name, sku, default_cost, product_id }).eq('id', id).eq('tenant_id', tenantId).select().single();
   if (error) return res.status(500).json({ error: error.message });
   return res.json(data);
 }
@@ -209,7 +221,7 @@ export async function deletePart(req: Request, res: Response) {
   const { id } = req.params;
 
   const supabase = getTenantClient(tenantId);
-  const { error } = await supabase.from('catalog_parts').delete().eq('id', id);
+  const { error } = await supabase.from('catalog_parts').delete().eq('id', id).eq('tenant_id', tenantId);
   if (error) return res.status(500).json({ error: error.message });
   return res.status(204).send();
 }

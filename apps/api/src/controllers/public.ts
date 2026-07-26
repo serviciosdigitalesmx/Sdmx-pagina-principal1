@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { z } from 'zod';
 import { getTenantClient, supabaseAdmin } from '@white-label/database';
 import { getRequestIp } from '../lib/request-ip';
-import { loadTenantRuntimeConfig } from '../services/tenant-config';
+import { getCachedTenantConfig } from '../services/tenant-config-cache';
 import { renderServiceOrderPdf, resolveTenantOrderDocumentProfile } from '../services/order-document-pdf';
 import { loadTenantBillingSummary } from '../services/tenant-billing';
 import { resolveTenantCapabilities } from '../services/tenant-capabilities';
@@ -526,7 +526,7 @@ export async function createPublicQuote(req: Request, res: Response) {
     const { tenantSlug, fullName, phone, email, deviceBrand, deviceModel, issue, deviceType, serialNumber, priorityLevel, passwordOrPin } = parsed.data;
     const metadata = parsed.data.metadata ?? {};
     const tenant = await resolveTenantIdBySlug(tenantSlug);
-    const runtimeConfig = await loadTenantRuntimeConfig(tenant.id);
+    const runtimeConfig = await getCachedTenantConfig(tenant.id);
     const supabase = getTenantClient(tenant.id);
     const normalizedSerialNumber = cleanTenantTextField(serialNumber);
     const missingSerialField = getMissingRequiredTextField(runtimeConfig, 'service_requests', 'serial_number', normalizedSerialNumber);
@@ -600,7 +600,7 @@ export async function trackPublicOrder(req: Request, res: Response) {
   try {
     const { tenantSlug, folio, email } = parsed.data;
     const tenant = await resolveTenantIdBySlug(tenantSlug);
-    const runtimeConfig = await loadTenantRuntimeConfig(tenant.id);
+    const runtimeConfig = await getCachedTenantConfig(tenant.id);
     const supabase = getTenantClient(tenant.id);
     const { data, error } = await supabase
       .from('service_orders')
@@ -652,7 +652,7 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
   try {
     const { tenantSlug, folio } = parsed.data;
     const tenant = await resolveTenantIdBySlug(tenantSlug);
-    const runtimeConfig = await loadTenantRuntimeConfig(tenant.id);
+    const runtimeConfig = await getCachedTenantConfig(tenant.id);
     const supabase = getTenantClient(tenant.id);
     const searchValue = folio.trim();
 
@@ -1207,7 +1207,7 @@ export async function getPublicStoreCatalog(req: Request, res: Response) {
   try {
     const { tenantSlug } = parsed.data;
     const tenant = await resolveTenantIdBySlug(tenantSlug);
-    const runtimeConfig = await loadTenantRuntimeConfig(tenant.id);
+    const runtimeConfig = await getCachedTenantConfig(tenant.id);
     const catalog = await loadPublicCatalog(tenant.id);
 
     return res.json({
@@ -1358,7 +1358,7 @@ export async function getPublicTenantLanding(req: Request, res: Response) {
 
   try {
     const tenant = await resolveTenantIdBySlug(tenantSlug);
-    const runtimeConfig = await loadTenantRuntimeConfig(tenant.id);
+    const runtimeConfig = await getCachedTenantConfig(tenant.id);
     const billing = await loadTenantBillingSummary(tenant.id, tenant.slug);
     const capabilities = resolveTenantCapabilities({
       tenantId: tenant.id,

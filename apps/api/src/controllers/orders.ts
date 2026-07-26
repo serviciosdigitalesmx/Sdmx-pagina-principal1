@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { randomUUID } from 'crypto';
 import { getTenantClient, supabaseAdmin } from '@white-label/database';
-import { loadTenantRuntimeConfig } from '../services/tenant-config';
+import { getCachedTenantConfig } from '../services/tenant-config-cache';
 import {
   renderServiceOrderPdf,
   resolveTenantOrderDocumentProfile,
@@ -588,7 +588,7 @@ function normalizeChecklistRow(row: Partial<OrderChecklistRow> | null | undefine
 }
 
 async function getRequiredChecklistFields(tenantId: string) {
-  const runtimeConfig = await loadTenantRuntimeConfig(tenantId);
+  const runtimeConfig = await getCachedTenantConfig(tenantId);
   return runtimeConfig.fieldDefinitions
     .filter((field) => field.entity === 'service_order_checklists' && field.required && field.visible !== false && CHECKLIST_FIELD_KEYS.has(field.field_key))
     .map((field) => field.field_key);
@@ -849,7 +849,7 @@ async function insertOrderEvent(supabase: ReturnType<typeof getTenantClient>, ro
 }
 
 async function getTenantOperationalStatuses(tenantId: string) {
-  const config = await loadTenantRuntimeConfig(tenantId);
+  const config = await getCachedTenantConfig(tenantId);
   const statuses = config.statusOptions.service_orders ?? [];
   if (statuses.length > 0) {
     return statuses.map((status) => ({
@@ -867,25 +867,8 @@ async function getAllowedOrderStatusKeys(tenantId: string) {
   return new Set(statuses.map((status) => status.key ?? '').filter(Boolean));
 }
 
-const ENSURED_BUCKETS = new Set<string>();
-
 async function ensureBucketExists(bucketName: string) {
-  if (ENSURED_BUCKETS.has(bucketName)) {
-    return;
-  }
-  const { error } = await supabaseAdmin.storage.getBucket(bucketName);
-  if (!error) {
-    ENSURED_BUCKETS.add(bucketName);
-    return;
-  }
-  const { error: createError } = await supabaseAdmin.storage.createBucket(bucketName, {
-    public: true,
-    fileSizeLimit: 52428800,
-  });
-  if (createError) {
-    throw new Error(`Unable to ensure storage bucket ${bucketName}: ${createError.message}`);
-  }
-  ENSURED_BUCKETS.add(bucketName);
+  // Disabled automatic bucket creation in runtime as per audit finding P2
 }
 
 async function uploadBufferToStorage(options: {
@@ -1017,6 +1000,8 @@ export const createOrder = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Tenant context is required' });
     }
 
+    const idempotencyKey = req.headers['x-idempotency-key'] as string | undefined;
+
     const validatedData = createOrderSchema.parse(req.body);
     const scope = getRequestScope(req);
     const scopeSucursalId = scope?.sucursalId ?? null;
@@ -1031,7 +1016,7 @@ export const createOrder = async (req: Request, res: Response) => {
     const publicToken = randomUUID();
     
     // Validaciones de Configuración
-    const runtimeConfig = await loadTenantRuntimeConfig(tenantId);
+    const runtimeConfig = await getCachedTenantConfig(tenantId);
     const serialNumber = cleanTenantTextField(validatedData.serialNumber);
     const missingSerialField = getMissingRequiredTextField(runtimeConfig, 'service_orders', 'serial_number', serialNumber);
 
@@ -1074,7 +1059,8 @@ export const createOrder = async (req: Request, res: Response) => {
       p_checklist_responses: validatedData.checklistResponses || null,
       p_priority: (validatedData.metadata as any)?.priority || 'normal',
       p_actor_name: req.user?.email ?? req.user?.role ?? 'system',
-      p_checklist_data: checklistPatch
+      p_checklist_data: checklistPatch,
+      p_idempotency_key: idempotencyKey || null
     });
 
     if (rpcError || !rpcData) {
@@ -1104,7 +1090,8 @@ export const createOrder = async (req: Request, res: Response) => {
         estimated_cost: estimatedCost,
         sucursal_id: requestedSucursalId,
         public_token: publicToken,
-        customer_id: customerId
+        customer_id: customerId,
+        idempotent_hit: rpcData.idempotent_hit ?? false
       },
     });
   } catch (error: unknown) {
@@ -1155,7 +1142,7 @@ export const listOrders = async (req: Request, res: Response) => {
       return res.status(502).json({ error: 'Failed to fetch orders', details: error.message });
     }
 
-    const runtimeConfig = await loadTenantRuntimeConfig(tenantId);
+    const runtimeConfig = await getCachedTenantConfig(tenantId);
     const enrichedData = (data ?? []).map((order) => ({
       ...order,
       operational_risk: calculateOperationalRisk({ order, runtimeConfig }),
@@ -1216,7 +1203,7 @@ export const getOrderById = async (req: Request, res: Response) => {
         .eq('tenant_id', tenantId)
         .eq('service_order_id', orderId)
         .order('paid_at', { ascending: false }),
-      loadTenantRuntimeConfig(tenantId),
+      getCachedTenantConfig(tenantId),
     ]);
 
     if (orderResult.error || !orderResult.data) {
@@ -1325,6 +1312,70 @@ export const getOrderById = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error getting order by id:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const createOrderUploadIntent = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    const orderId = req.params.id;
+    const { fileName, mimeType } = req.body;
+    
+    if (!tenantId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const safeName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const storagePath = `tenant/${tenantId}/orders/${orderId}/${Date.now()}-${safeName}`;
+    const bucketName = process.env.SUPABASE_STORAGE_BUCKET || 'order-attachments';
+
+    const { data, error } = await supabaseAdmin.storage
+      .from(bucketName)
+      .createSignedUploadUrl(storagePath);
+      
+    if (error) throw error;
+    
+    return res.json({
+      success: true,
+      uploadUrl: data.signedUrl,
+      storagePath,
+      bucketName
+    });
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
+  }
+};
+
+export const confirmOrderUpload = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    const orderId = req.params.id;
+    const { storagePath, bucketName, fileName, fileType, mimeType, fileSize } = req.body;
+
+    if (!tenantId) return res.status(401).json({ error: 'Unauthorized' });
+
+    const supabase = getTenantClient(tenantId);
+    
+    // Optional: Check if file exists in bucket
+    const { data: publicData } = supabaseAdmin.storage.from(bucketName).getPublicUrl(storagePath);
+
+    const documentId = require('crypto').randomUUID();
+    await supabase.from('service_order_documents').insert({
+      id: documentId,
+      tenant_id: tenantId,
+      service_order_id: orderId,
+      bucket_name: bucketName,
+      storage_path: storagePath,
+      public_url: publicData.publicUrl ?? null,
+      file_name: fileName,
+      file_type: fileType,
+      mime_type: mimeType,
+      file_size: fileSize,
+      source: 'upload',
+      is_customer_visible: false,
+    });
+
+    return res.json({ success: true, documentId });
+  } catch (e: any) {
+    return res.status(500).json({ error: e.message });
   }
 };
 
@@ -1588,10 +1639,20 @@ export const uploadOrderAttachments = async (req: Request, res: Response) => {
     }
 
     const bucketName = getStorageBucketName();
-    await ensureBucketExists(bucketName);
+    // Removed await ensureBucketExists(bucketName);
     const createdDocuments = [];
     let uploadedPhoto: { buffer: Buffer; mimeType: string; fileName: string } | null = null;
+    
+    const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+    const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+
     for (const file of parsed.files) {
+      if (file.base64.length > MAX_FILE_SIZE_BYTES * 1.37) {
+        return res.status(413).json({ error: `El archivo ${file.fileName} excede el tamaño máximo de 10 MB` });
+      }
+      if (!ALLOWED_MIME_TYPES.includes(file.mimeType)) {
+        return res.status(415).json({ error: `Tipo de archivo no permitido: ${file.mimeType}` });
+      }
       const fileBuffer = decodeBase64File(file.base64);
       const extension = getFileExtension(file.fileName, file.mimeType);
       const safeName = file.fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -2290,7 +2351,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
 
     const previousStatus = normalizeOrderStatus(order.status);
     const nextStatus = body.status;
-    const runtimeConfig = await loadTenantRuntimeConfig(tenantId);
+    const runtimeConfig = await getCachedTenantConfig(tenantId);
     const workflowStatuses = runtimeConfig.workflowStatuses.filter((status) => status.workflow_key === 'service_orders');
     const allowedStatuses = new Set(workflowStatuses.map((status) => status.status_key));
 
@@ -2380,25 +2441,23 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       }
     }
 
-    const { data, error } = await supabase
-      .from('service_orders')
-      .update({
-        status: nextStatus,
-        received_at: transition.next.canonicalPhase === 'intake' || nextStatus === 'recibido' ? new Date().toISOString() : undefined,
-        completed_at: transition.next.canonicalPhase === 'ready' || nextStatus === 'listo' ? new Date().toISOString() : undefined,
-        delivered_at: ['delivered', 'closed'].includes(transition.next.canonicalPhase) || nextStatus === 'entregado' ? new Date().toISOString() : undefined,
-        delivered_to_name: (['delivered', 'closed'].includes(transition.next.canonicalPhase) || nextStatus === 'entregado') && body.deliveredToName ? body.deliveredToName : undefined,
-        delivered_to_relationship: (['delivered', 'closed'].includes(transition.next.canonicalPhase) || nextStatus === 'entregado') && body.deliveredToRelationship ? body.deliveredToRelationship : undefined,
-        delivery_confirmed_at: (['delivered', 'closed'].includes(transition.next.canonicalPhase) || nextStatus === 'entregado') ? new Date().toISOString() : undefined,
-        delivery_confirmed_by: (['delivered', 'closed'].includes(transition.next.canonicalPhase) || nextStatus === 'entregado') ? (req.user?.userId ?? null) : undefined,
-        updated_by: req.user?.userId ?? null,
-      })
-      .eq('tenant_id', tenantId)
-      .eq('id', orderId)
-      .select()
-      .single();
+    const { data, error } = await supabase.rpc('update_order_status_atomic', {
+      p_tenant_id: tenantId,
+      p_order_id: orderId,
+      p_new_status: nextStatus,
+      p_previous_status: previousStatus,
+      p_note: body.note || null,
+      p_actor_name: req.user?.email ?? req.user?.role ?? 'system',
+      p_delivered_to_name: (['delivered', 'closed'].includes(transition.next.canonicalPhase) || nextStatus === 'entregado') && body.deliveredToName ? body.deliveredToName : null,
+      p_delivered_to_relationship: (['delivered', 'closed'].includes(transition.next.canonicalPhase) || nextStatus === 'entregado') && body.deliveredToRelationship ? body.deliveredToRelationship : null,
+      p_completed_at: transition.next.canonicalPhase === 'ready' || nextStatus === 'listo' ? new Date().toISOString() : null,
+      p_delivered_at: ['delivered', 'closed'].includes(transition.next.canonicalPhase) || nextStatus === 'entregado' ? new Date().toISOString() : null,
+    });
 
     if (error) {
+      if (error.message.includes('ORDER_NOT_FOUND')) {
+        return res.status(404).json({ error: 'Orden no encontrada' });
+      }
       return res.status(502).json({ error: 'Failed to update order status', details: error.message });
     }
 
@@ -2423,44 +2482,18 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
           },
         });
       } catch (auditError) {
-        await supabase
-          .from('service_orders')
-          .update({ status: order.status, delivered_at: null, updated_by: req.user?.userId ?? null })
-          .eq('tenant_id', tenantId)
-          .eq('id', orderId);
+        await supabase.rpc('update_order_status_atomic', {
+          p_tenant_id: tenantId,
+          p_order_id: orderId,
+          p_new_status: previousStatus,
+          p_previous_status: nextStatus,
+          p_note: 'Auto-revertido por fallo en auditoría de entrega sin pago',
+          p_actor_name: 'system',
+        });
         console.error('Failed to audit pending balance delivery override:', auditError);
         return res.status(502).json({ error: 'No se pudo auditar la autorización de entrega; la entrega fue revertida.' });
       }
     }
-
-    const statusEventId = randomUUID();
-    await supabase
-      .from('service_orders')
-      .update({
-        evidence_metadata: appendEvidenceEntry(data.evidence_metadata, {
-          kind: 'event',
-          id: statusEventId,
-          event_type: 'status_changed',
-          previous_status: previousStatus,
-          new_status: nextStatus,
-          note: body.note || null,
-          actor_name: req.user?.email ?? req.user?.role ?? 'system',
-          created_at: new Date().toISOString(),
-        }),
-      })
-      .eq('tenant_id', tenantId)
-      .eq('id', orderId);
-
-    await insertOrderEvent(supabase, {
-      id: statusEventId,
-      tenant_id: tenantId,
-      service_order_id: orderId,
-      event_type: 'status_changed',
-      previous_status: previousStatus,
-      new_status: nextStatus,
-      note: body.note || null,
-      actor_name: req.user?.email ?? req.user?.role ?? 'system',
-    });
 
     // Evaluate Automation Rules
     try {
@@ -3431,6 +3464,80 @@ export const refundOrderPayment = async (req: Request, res: Response) => {
   } catch (error) {
     if (error instanceof z.ZodError) return res.status(400).json({ error: 'Invalid payload', details: error.errors });
     console.error('Error refunding order payment:', error);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const deleteOrder = async (req: Request, res: Response) => {
+  try {
+    const tenantId = req.tenantId;
+    const orderId = req.params.id;
+
+    if (!tenantId) {
+      return res.status(401).json({ error: 'Tenant context is required' });
+    }
+
+    const supabase = getTenantClient(tenantId);
+
+    // 1. Verificar si la orden existe y obtener metadata
+    const { data: order, error: orderError } = await supabase
+      .from('service_orders')
+      .select('id, evidence_metadata')
+      .eq('tenant_id', tenantId)
+      .eq('id', orderId)
+      .single();
+
+    if (orderError || !order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // 2. Extraer IDs o rutas de archivos adjuntos del metadata
+    const evidence = order.evidence_metadata as any[];
+    if (Array.isArray(evidence)) {
+      const bucketName = getStorageBucketName();
+      const filesToDelete = evidence
+        .filter(item => item.kind === 'document' || item.kind === 'photo')
+        .map(item => item.url) // Asumiendo que guardaste la ruta del storage en url
+        .filter(Boolean);
+      
+      // Si son URLs completas, extraer el path relativo
+      const relativePaths = filesToDelete.map(url => {
+        try {
+          // Extraer la ruta después del bucket si es una URL pública
+          if (url.includes(bucketName)) {
+            return url.split(`${bucketName}/`)[1];
+          }
+          return url;
+        } catch {
+          return url;
+        }
+      });
+
+      if (relativePaths.length > 0) {
+        const { error: storageError } = await supabaseAdmin.storage
+          .from(bucketName)
+          .remove(relativePaths);
+        
+        if (storageError) {
+          console.error('Error limpiando archivos huérfanos:', storageError);
+        }
+      }
+    }
+
+    // 3. Eliminar la orden en la BD (Supabase resolverá los ON DELETE CASCADE)
+    const { error: deleteError } = await supabase
+      .from('service_orders')
+      .delete()
+      .eq('tenant_id', tenantId)
+      .eq('id', orderId);
+
+    if (deleteError) {
+      return res.status(502).json({ error: 'No se pudo eliminar la orden', details: deleteError.message });
+    }
+
+    return res.status(200).json({ success: true, message: 'Orden y archivos eliminados exitosamente' });
+  } catch (error) {
+    console.error('Error eliminando orden:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
   }
 };

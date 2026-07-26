@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { supabaseAdmin } from '@white-label/database';
+import { createMercadoPagoPreference } from '../services/public-payments';
 
 // Helper to get IP
 function getClientIp(req: Request): string {
@@ -154,6 +155,25 @@ export async function authorizeOrder(req: Request, res: Response) {
   const clientIp = getClientIp(req);
   const userAgent = req.headers['user-agent'] || 'unknown';
 
+  let signatureUrl = signatureDataUrl || null;
+  if (signatureDataUrl && signatureDataUrl.startsWith('data:image/')) {
+    try {
+      const base64Data = signatureDataUrl.replace(/^data:image\/\w+;base64,/, '');
+      const buffer = Buffer.from(base64Data, 'base64');
+      const filename = `${order.id}/${Date.now()}-signature.png`;
+      const { data: uploadData, error: uploadErr } = await supabaseAdmin.storage
+        .from('signatures')
+        .upload(filename, buffer, { contentType: 'image/png' });
+        
+      if (uploadData) {
+        const { data: publicUrlData } = supabaseAdmin.storage.from('signatures').getPublicUrl(filename);
+        signatureUrl = publicUrlData.publicUrl;
+      }
+    } catch (e) {
+      console.error('Failed to upload signature to storage:', e);
+    }
+  }
+
   const { data: authorization, error: authErr } = await supabaseAdmin
     .from('customer_authorizations')
     .insert({
@@ -166,7 +186,7 @@ export async function authorizeOrder(req: Request, res: Response) {
       accepted_by_name: acceptedByName || null,
       accepted_by_phone: acceptedByPhone || null,
       accepted_by_email: acceptedByEmail || null,
-      signature_url: signatureDataUrl || null,
+      signature_url: signatureUrl,
       terms_version: termsVersion || null,
       ip_address: clientIp,
       user_agent: userAgent,
@@ -235,14 +255,19 @@ export async function createPublicOrderPayment(req: Request, res: Response) {
     });
   }
 
-  // TODO: Create real MercadoPago preference using the official SDK
-  // This requires the mercadopago npm package and valid credentials.
-  // For now, return a clear error instead of a fake URL.
-  return res.status(503).json({
-    success: false,
-    error: 'Integración de pago en línea pendiente de configuración. Contacte al taller.',
-    code: 'PAYMENT_INTEGRATION_PENDING',
-    balance,
-    paymentMethod: paymentMethod ?? 'mercadopago'
-  });
+  try {
+    const preference = await createMercadoPagoPreference(order, balance);
+    
+    return res.status(200).json({
+      success: true,
+      preferenceId: preference.id,
+      initPoint: preference.init_point,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      success: false,
+      error: 'No se pudo crear la preferencia de pago',
+      details: error.message
+    });
+  }
 }

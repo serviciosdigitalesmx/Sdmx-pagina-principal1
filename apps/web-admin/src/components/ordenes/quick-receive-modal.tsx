@@ -244,12 +244,12 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
           // Actualizar estado a comprimiendo
           setPhotos(prev => prev.map(p => p.id === photo.id ? { ...p, status: 'compressing' } : p));
           
-          const base64 = photo.base64Compressed || await compressImage(photo.file);
+          const compressedFile = photo.compressedFile || await compressImage(photo.file);
           
           // Actualizar estado a subiendo
-          setPhotos(prev => prev.map(p => p.id === photo.id ? { ...p, status: 'uploading', base64Compressed: base64 } : p));
+          setPhotos(prev => prev.map(p => p.id === photo.id ? { ...p, status: 'uploading', compressedFile } : p));
           
-          await apiGateway.uploadOrderAttachment(currentOrderId!, photo.file, 'intake_photo'); // La api interna maneja el base64 si es necesario, adaptamos a tu wrapper
+          await apiGateway.uploadOrderAttachment(currentOrderId!, compressedFile as File, 'intake_photo');
           
           // Éxito
           setPhotos(prev => prev.map(p => p.id === photo.id ? { ...p, status: 'success' } : p));

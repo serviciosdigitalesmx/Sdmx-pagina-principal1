@@ -5,7 +5,7 @@ import { attachScope } from '../middleware/scope';
 import { requireTenantBillingActive } from '../middleware/tenantBilling';
 import { requireRole } from '../middleware/requireRole';
 import { attachTenantCapabilities, requireTenantModule, enforcePlanQuota } from '../middleware/tenantCapabilities';
-import { addOrderMessage, addOrderNote, createOrder, createOrderWarrantyClaim, createOrderWhatsAppDraft, createTechnicianCommissionRule, getDeviceHistoryBySerial, getOrderAuthorizations, getOrderById, getOrderChecklist, getOrderWarrantySummary, listOrderWhatsAppMessages, listOrderWorkLogs, listOrders, listTechnicianCommissionRules, pauseOrderWorkLog, resumeOrderWorkLog, startOrderWorkLog, stopOrderWorkLog, updateOrderChecklist, updateOrderDetails, updateOrderFinancials, updateOrderStatus, updateOrderWarranty, updateOrderWarrantyClaimStatus, updateTechnicianCommissionRule, uploadOrderAttachments, createOrderPayment, refundOrderPayment, updateOrderDocumentVisibility } from '../controllers/orders';
+import { addOrderMessage, addOrderNote, createOrder, createOrderWarrantyClaim, createOrderWhatsAppDraft, createTechnicianCommissionRule, getDeviceHistoryBySerial, getOrderAuthorizations, getOrderById, getOrderChecklist, getOrderWarrantySummary, listOrderWhatsAppMessages, listOrderWorkLogs, listOrders, listTechnicianCommissionRules, pauseOrderWorkLog, resumeOrderWorkLog, startOrderWorkLog, stopOrderWorkLog, updateOrderChecklist, updateOrderDetails, updateOrderFinancials, updateOrderStatus, updateOrderWarranty, updateOrderWarrantyClaimStatus, updateTechnicianCommissionRule, uploadOrderAttachments, createOrderPayment, refundOrderPayment, updateOrderDocumentVisibility, createOrderUploadIntent, confirmOrderUpload, deleteOrder } from '../controllers/orders';
 
 const router = Router({ mergeParams: true });
 
@@ -36,6 +36,9 @@ router.post('/:id/work-logs/:workLogId/pause', requireTenantModule('reports'), r
 router.post('/:id/work-logs/:workLogId/resume', requireTenantModule('reports'), requireRole('owner', 'manager', 'technician'), resumeOrderWorkLog);
 router.post('/:id/work-logs/:workLogId/stop', requireTenantModule('reports'), requireRole('owner', 'manager', 'technician'), stopOrderWorkLog);
 router.get('/:id', requireTenantModule('orders'), getOrderById);
+router.delete('/:id', requireTenantModule('orders'), requireRole('owner', 'manager'), deleteOrder);
+router.post('/:id/upload-intent', requireTenantModule('documents'), createOrderUploadIntent);
+router.post('/:id/confirm-upload', requireTenantModule('documents'), confirmOrderUpload);
 router.post('/:id/attachments', requireTenantModule('documents'), uploadOrderAttachments);
 router.patch('/:id/documents/:documentId/visibility', requireTenantModule('documents'), requireRole('owner', 'manager'), updateOrderDocumentVisibility);
 router.post('/:id/notes', requireTenantModule('orders'), addOrderNote);

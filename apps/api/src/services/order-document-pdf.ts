@@ -1,6 +1,6 @@
 import PDFDocument from 'pdfkit';
 import { supabaseAdmin } from '@white-label/database';
-import { loadTenantRuntimeConfig } from './tenant-config';
+import { getCachedTenantConfig } from './tenant-config-cache';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -116,7 +116,7 @@ export async function resolveTenantOrderDocumentProfile(
       .select('id, name, contact_email, contact_phone, branding, landing_content')
       .eq('id', tenantId)
       .maybeSingle(),
-    loadTenantRuntimeConfig(tenantId),
+    getCachedTenantConfig(tenantId),
   ]);
 
   if (tenantResult.error || !tenantResult.data) {

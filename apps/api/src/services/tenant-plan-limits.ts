@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@white-label/database';
 import type { TenantCapabilities, TenantPlanLimits } from '@white-label/types';
-import { loadTenantRuntimeConfig } from './tenant-config';
+import { getCachedTenantConfig } from './tenant-config-cache';
 import { loadTenantBillingSummary } from './tenant-billing';
 import { MODULE_REGISTRY, PLAN_REGISTRY, resolveTenantCapabilities } from './tenant-capabilities';
 
@@ -126,7 +126,7 @@ async function loadTenantCapabilitiesForDiagnostics(tenantId: string) {
   if (error) throw error;
   if (!tenant) throw new Error('Tenant not found');
 
-  const runtimeConfig = await loadTenantRuntimeConfig(tenantId);
+  const runtimeConfig = await getCachedTenantConfig(tenantId);
   const billing = await loadTenantBillingSummary(tenantId, tenant.slug);
   const capabilities = resolveTenantCapabilities({
     tenantId,
