@@ -776,3 +776,5 @@ export async function loadTenantRuntimeConfig(tenantId: string): Promise<{
   RUNTIME_CONFIG_CACHE.set(tenantId, { data: config, expiresAt: Date.now() + CACHE_TTL_MS });
   return config;
 }
+
+export type TenantRuntimeConfig = Awaited<ReturnType<typeof loadTenantRuntimeConfig>>;

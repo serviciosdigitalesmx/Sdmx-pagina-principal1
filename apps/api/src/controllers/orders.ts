@@ -1271,8 +1271,8 @@ export const getOrderById = async (req: Request, res: Response) => {
       console.error('Failed to fetch order payments:', paymentsResult.error);
     }
 
-    const validPayments = paymentsResult.data || [];
-    const totalCobrado = validPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+    const validPayments = (paymentsResult.data ?? []) as Array<{ amount: number | string | null }>;
+    const totalCobrado = validPayments.reduce((sum: number, payment) => sum + Number(payment.amount ?? 0), 0);
     const finalCost = Number(orderResult.data.final_cost) > 0 ? Number(orderResult.data.final_cost) : Number(orderResult.data.estimated_cost || 0);
     const saldoPendiente = Math.max(0, finalCost - totalCobrado);
     const resolvedWorkflow = resolveOrderWorkflow(runtimeConfig.workflowStatuses.filter((status) => status.workflow_key === 'service_orders'));

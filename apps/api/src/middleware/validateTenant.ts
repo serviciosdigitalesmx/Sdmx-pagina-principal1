@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { supabaseAdmin } from '@white-label/database';
 
 function isUuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -75,13 +76,19 @@ export async function validateSelectedBranch(
     });
   }
 
+  if (!req.scope) {
+    return res.status(400).json({
+      success: false,
+      error: 'Alcance operativo ausente',
+      code: 'SCOPE_REQUIRED',
+    });
+  }
+
   if (!requestedBranch || Array.isArray(requestedBranch)) {
     req.scope = { ...req.scope, sucursalId: null };
     return next();
   }
 
-  // Import supabaseAdmin dynamically or at the top
-  const { supabaseAdmin } = require('@white-label/database');
   const { data: branch } = await supabaseAdmin
     .from('sucursales')
     .select('id')
@@ -101,7 +108,7 @@ export async function validateSelectedBranch(
   const role = req.user?.role;
   const fixedBranch = req.user?.sucursalId;
 
-  if (fixedBranch && role !== 'owner' && role !== 'admin' && fixedBranch !== branch.id) {
+  if (fixedBranch && role !== 'owner' && fixedBranch !== branch.id) {
     return res.status(403).json({
       success: false,
       error: 'No tienes acceso a esta sucursal',

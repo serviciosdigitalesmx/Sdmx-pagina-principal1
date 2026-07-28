@@ -2,19 +2,19 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Search, User, Smartphone, FileText, Loader2 } from 'lucide-react';
-import { apiGateway } from '@/services/apiGateway';
+import {
+  apiGateway,
+  type CatalogModel,
+  type OmniSearchCustomer,
+  type OmniSearchOrder,
+  type OmniSearchResult,
+} from '@/services/apiGateway';
 import { useDebounce } from 'use-debounce';
 
-export interface OmniSearchResult {
-  customers: any[];
-  orders: any[];
-  catalogs: any[];
-}
-
 interface OmniSearchProps {
-  onCustomerSelect?: (customer: any) => void;
-  onModelSelect?: (model: any) => void;
-  onOrderSelect?: (order: any) => void;
+  onCustomerSelect?: (customer: OmniSearchCustomer) => void;
+  onModelSelect?: (model: CatalogModel) => void;
+  onOrderSelect?: (order: OmniSearchOrder) => void;
   placeholder?: string;
 }
 
@@ -24,6 +24,7 @@ export function OmniSearch({ onCustomerSelect, onModelSelect, onOrderSelect, pla
   const [results, setResults] = useState<OmniSearchResult>({ customers: [], orders: [], catalogs: [] });
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -38,22 +39,25 @@ export function OmniSearch({ onCustomerSelect, onModelSelect, onOrderSelect, pla
   }, []);
 
   useEffect(() => {
-    if (!debouncedQuery || debouncedQuery.length < 2) {
-      setResults({ customers: [], orders: [], catalogs: [] });
-      setLoading(false);
-      return;
-    }
+    if (!debouncedQuery || debouncedQuery.length < 2) return;
 
     let isMounted = true;
+    // La consulta remota comienza al cambiar el valor debounced.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
+    setError(null);
     
     apiGateway.omniSearch(debouncedQuery).then((res) => {
       if (isMounted) {
-        setResults(res as unknown as OmniSearchResult); // Temporary cast since we return raw object from server but apiGateway adds success: true wrapper sometimes, but our implementation just returns res.json()
+        setResults(res);
         setLoading(false);
       }
-    }).catch(() => {
-      if (isMounted) setLoading(false);
+    }).catch((searchError: unknown) => {
+      if (isMounted) {
+        setResults({ customers: [], orders: [], catalogs: [] });
+        setError(searchError instanceof Error ? searchError.message : 'No se pudo completar la búsqueda');
+        setLoading(false);
+      }
     });
 
     return () => {
@@ -71,8 +75,14 @@ export function OmniSearch({ onCustomerSelect, onModelSelect, onOrderSelect, pla
           type="text"
           value={query}
           onChange={(e) => {
-            setQuery(e.target.value);
-            setOpen(true);
+            const nextQuery = e.target.value;
+            setQuery(nextQuery);
+            setOpen(nextQuery.length >= 2);
+            if (nextQuery.length < 2) {
+              setResults({ customers: [], orders: [], catalogs: [] });
+              setError(null);
+              setLoading(false);
+            }
           }}
           onFocus={() => {
             if (query.length >= 2) setOpen(true);
@@ -88,7 +98,9 @@ export function OmniSearch({ onCustomerSelect, onModelSelect, onOrderSelect, pla
       {open && query.length >= 2 && (
         <div className="absolute top-full z-50 mt-2 max-h-96 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-2 shadow-lg">
           {!loading && !hasResults && (
-            <div className="p-4 text-center text-sm text-slate-500">No se encontraron resultados</div>
+            <div className={`p-4 text-center text-sm ${error ? 'text-rose-600' : 'text-slate-500'}`}>
+              {error ?? 'No se encontraron resultados'}
+            </div>
           )}
 
           {results.customers.length > 0 && (

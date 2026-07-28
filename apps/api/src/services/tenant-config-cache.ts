@@ -1,4 +1,4 @@
-import { loadTenantRuntimeConfig, TenantRuntimeConfig } from './tenant-config';
+import { loadTenantRuntimeConfig, type TenantRuntimeConfig } from './tenant-config';
 
 const cache = new Map<string, { data: TenantRuntimeConfig; timestamp: number }>();
 const CACHE_TTL_MS = 60 * 1000; // 1 minuto
