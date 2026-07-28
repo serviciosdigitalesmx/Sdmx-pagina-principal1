@@ -13,6 +13,7 @@ const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() ?? '';
 
 const tenantId = process.env.INVENTORY_RPC_TEST_TENANT_ID?.trim() ?? '';
 const sucursalId = process.env.INVENTORY_RPC_TEST_SUCURSAL_ID?.trim() ?? '';
+const destinationSucursalId = process.env.INVENTORY_RPC_TEST_DESTINATION_SUCURSAL_ID?.trim() ?? '';
 const productId = process.env.INVENTORY_RPC_TEST_PRODUCT_ID?.trim() ?? '';
 const purchaseOrderId = process.env.INVENTORY_RPC_TEST_PURCHASE_ORDER_ID?.trim() ?? '';
 
@@ -66,13 +67,27 @@ async function rpc(name, payload) {
 }
 
 async function getInventorySnapshotByProduct(productIdValue) {
+  return getInventorySnapshot(sucursalId, productIdValue);
+}
+
+async function getInventorySnapshot(sucursalIdValue, productIdValue) {
   const { response, body } = await restRequest(
-    `/rest/v1/sucursal_inventory?select=id,tenant_id,sucursal_id,product_id,stock_current&tenant_id=eq.${encodeURIComponent(tenantId)}&sucursal_id=eq.${encodeURIComponent(sucursalId)}&product_id=eq.${encodeURIComponent(productIdValue)}&limit=1`,
+    `/rest/v1/sucursal_inventory?select=id,tenant_id,sucursal_id,product_id,stock_current&tenant_id=eq.${encodeURIComponent(tenantId)}&sucursal_id=eq.${encodeURIComponent(sucursalIdValue)}&product_id=eq.${encodeURIComponent(productIdValue)}&limit=1`,
     { method: 'GET' },
   );
 
   assert.equal(response.status, 200);
   return Array.isArray(body) && body.length > 0 ? body[0] : null;
+}
+
+async function getProductSku(productIdValue) {
+  const { response, body } = await restRequest(
+    `/rest/v1/products?select=sku&tenant_id=eq.${encodeURIComponent(tenantId)}&id=eq.${encodeURIComponent(productIdValue)}&limit=1`,
+    { method: 'GET' },
+  );
+  assert.equal(response.status, 200);
+  assert.ok(Array.isArray(body) && body.length > 0);
+  return String(body[0].sku ?? '');
 }
 
 async function getMovementCount(referenceFilter, productIdValue = productId) {
@@ -171,6 +186,54 @@ test('adjust_inventory is atomic under concurrent updates', async (t) => {
 
   const movementCount = await getMovementCount(reference, productId);
   assert.equal(movementCount, 2);
+});
+
+test('transfer_inventory_transaction is atomic and idempotent under concurrent retries', async (t) => {
+  if (missingEnv.length > 0 || !destinationSucursalId) {
+    t.skip('inventory RPC env and INVENTORY_RPC_TEST_DESTINATION_SUCURSAL_ID are required');
+    return;
+  }
+
+  const originBefore = await getInventorySnapshot(sucursalId, productId);
+  const destinationBefore = await getInventorySnapshot(destinationSucursalId, productId);
+  const originBaseline = Number(originBefore?.stock_current ?? 0);
+  const destinationBaseline = Number(destinationBefore?.stock_current ?? 0);
+  assert.ok(originBaseline >= 1, 'origin inventory requires at least one unit');
+
+  const sku = await getProductSku(productId);
+  const reference = `rpc-transfer-${Date.now()}`;
+  const payload = {
+    p_tenant_id: tenantId,
+    p_sku: sku,
+    p_sucursal_origen: sucursalId,
+    p_sucursal_destino: destinationSucursalId,
+    p_cantidad: 1,
+    p_idempotency_key: reference,
+    p_changed_by: null,
+    p_motivo: 'concurrent idempotency test',
+    p_notas: null,
+  };
+
+  const [first, second] = await Promise.all([
+    rpc('transfer_inventory_transaction', payload),
+    rpc('transfer_inventory_transaction', payload),
+  ]);
+  assert.equal(first.response.status, 200);
+  assert.equal(second.response.status, 200);
+
+  const originAfter = await getInventorySnapshot(sucursalId, productId);
+  const destinationAfter = await getInventorySnapshot(destinationSucursalId, productId);
+  assert.equal(Number(originAfter?.stock_current ?? 0), originBaseline - 1);
+  assert.equal(Number(destinationAfter?.stock_current ?? 0), destinationBaseline + 1);
+
+  const { response, body } = await restRequest(
+    `/rest/v1/inventory_movements?select=id,movement_type&tenant_id=eq.${encodeURIComponent(tenantId)}&product_id=eq.${encodeURIComponent(productId)}&reference=eq.${encodeURIComponent(reference)}`,
+    { method: 'GET' },
+  );
+  assert.equal(response.status, 200);
+  assert.ok(Array.isArray(body));
+  assert.equal(body.length, 2);
+  assert.deepEqual(new Set(body.map((row) => row.movement_type)), new Set(['transfer_out', 'transfer_in']));
 });
 
 test('receive_purchase_inventory accumulates partial receipts atomically', async (t) => {

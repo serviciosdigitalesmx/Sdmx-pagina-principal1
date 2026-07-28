@@ -25,6 +25,7 @@ interface TransferModalProps {
 export function TransferModal({ open, onOpenChange, product, onTransferSuccess }: TransferModalProps) {
   const scope = getActiveScope();
   const [loading, setLoading] = useState(false);
+  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID());
   const [sucursales, setSucursales] = useState<Array<{ id: string; name: string }>>([]);
   const [formData, setFormData] = useState({
     sucursalDestino: '',
@@ -35,6 +36,7 @@ export function TransferModal({ open, onOpenChange, product, onTransferSuccess }
 
   useEffect(() => {
     if (open) {
+      setIdempotencyKey(crypto.randomUUID());
       setFormData({
         sucursalDestino: '',
         cantidad: 1,
@@ -88,6 +90,7 @@ export function TransferModal({ open, onOpenChange, product, onTransferSuccess }
         cantidad: Number(formData.cantidad),
         motivo: formData.motivo,
         notas: formData.notas,
+        idempotencyKey,
       });
       onTransferSuccess();
       onOpenChange(false);

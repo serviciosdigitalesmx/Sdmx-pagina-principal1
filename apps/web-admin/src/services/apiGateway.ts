@@ -698,7 +698,7 @@ class ApiGateway {
     return result.data ?? [];
   }
 
-  public async transferInventory(data: { sku: string; sucursalOrigen: string; sucursalDestino: string; cantidad: number; motivo?: string; notas?: string }): Promise<JsonRecord> {
+  public async transferInventory(data: { sku: string; sucursalOrigen: string; sucursalDestino: string; cantidad: number; motivo?: string; notas?: string; idempotencyKey: string }): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
       this.apiPath('/inventory/transfer'),
       {
@@ -1614,6 +1614,24 @@ class ApiGateway {
     return result.data;
   }
 
+  public async getTenantRolePermissions(role: 'manager' | 'technician'): Promise<Record<string, boolean>> {
+    const result = await this.request<ApiSingleResponse<{ role: string; permissions: Record<string, boolean> }>>(
+      this.apiPath(`/tenant-roles/permissions?role=${encodeURIComponent(role)}`),
+      { method: 'GET' },
+    );
+    return result.data.permissions ?? {};
+  }
+
+  public async updateTenantRolePermissions(
+    role: 'manager' | 'technician',
+    permissions: Record<string, boolean>,
+  ): Promise<void> {
+    await this.request(this.apiPath('/tenant-roles/permissions'), {
+      method: 'POST',
+      body: JSON.stringify({ role, permissions }),
+    });
+  }
+
   public async deactivateUser(id: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
       `/api/users/${encodeURIComponent(id)}`,
@@ -1928,14 +1946,16 @@ class ApiGateway {
   // --- POS y Caja (Fase 3) ---
 
   public async getCashRegisters() {
-    return this.request<any>(`/api/cash/registers`, { method: 'GET' });
+    const result = await this.request<ApiListResponse<JsonRecord[]>>(`/api/cash/registers`, { method: 'GET' });
+    return result.data ?? [];
   }
 
   public async createCashRegister(data: { name: string; sucursalId: string }) {
-    return this.request<any>(`/api/cash/registers`, {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(`/api/cash/registers`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    return result.data;
   }
 
   public async openCashShift(cashRegisterId: string, initialCash: number) {

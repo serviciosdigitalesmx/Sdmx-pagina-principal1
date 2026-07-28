@@ -190,6 +190,7 @@ export default function PosPage() {
     setCheckoutLoading(true);
     try {
       const payload = {
+        idempotencyKey: crypto.randomUUID(),
         customerName: customerName.trim() || 'Venta Mostrador',
         paymentMethod,
         items: cart.map(i => ({ productId: i.id, quantity: i.quantity })),

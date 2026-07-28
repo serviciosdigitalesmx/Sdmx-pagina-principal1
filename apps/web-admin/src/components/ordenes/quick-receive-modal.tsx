@@ -53,6 +53,7 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
     clientName: "",
     clientPhone: "",
     familyId: "",
+    deviceTypeName: "",
     brandId: "",
     modelId: "",
     faultId: "",
@@ -93,7 +94,7 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
       const res = await apiGateway.getCatalogFamilies();
       setFamilies(res);
       if (res.length > 0) {
-        setFormData(prev => ({ ...prev, familyId: res[0].id }));
+        setFormData(prev => ({ ...prev, familyId: res[0].id, deviceTypeName: res[0].name }));
         await loadBrands(res[0].id);
       }
     } catch {
@@ -173,7 +174,7 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
 
   const resetForm = () => {
     setFormData({
-      clientName: "", clientPhone: "", familyId: "", brandId: "", modelId: "", faultId: "",
+      clientName: "", clientPhone: "", familyId: "", deviceTypeName: "", brandId: "", modelId: "", faultId: "",
       deviceModelName: "", issueName: "", serialNumber: "", priority: "normal",
       promisedDate: "", estimatedCost: "", deposit: "", notes: ""
     });
@@ -186,10 +187,11 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
   // --- Flujo Transaccional ---
   const submitOrder = async () => {
     const selectedFamily = families.find(family => family.id === formData.familyId);
+    const finalDeviceType = selectedFamily?.name?.trim() || formData.deviceTypeName.trim();
     const finalModel = formData.deviceModelName.trim() || models.find(m => m.id === formData.modelId)?.name?.trim() || "";
     const finalIssue = formData.issueName.trim() || faults.find(f => f.id === formData.faultId)?.name?.trim() || "";
 
-    if (!formData.clientName.trim() || !formData.clientPhone.trim() || !selectedFamily || !finalModel || !finalIssue) {
+    if (!formData.clientName.trim() || !formData.clientPhone.trim() || !finalDeviceType || !finalModel || !finalIssue) {
       toast.error("Cliente, tipo de equipo, modelo y falla son obligatorios.");
       return;
     }
@@ -204,7 +206,7 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
         const payload = {
           clientName: formData.clientName,
           clientPhone: formData.clientPhone.replace(/\D/g, ''),
-          deviceType: selectedFamily.name,
+          deviceType: finalDeviceType,
           deviceModel: finalModel,
           serialNumber: formData.serialNumber,
           issue: finalIssue,
@@ -367,6 +369,43 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
               </div>
 
               <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Tipo de equipo *</label>
+                  {families.length > 0 ? (
+                    <select
+                      name="familyId"
+                      value={formData.familyId}
+                      onChange={(event) => {
+                        const family = families.find((item) => item.id === event.target.value);
+                        setFormData((current) => ({
+                          ...current,
+                          familyId: event.target.value,
+                          deviceTypeName: family?.name ?? '',
+                          brandId: '',
+                          modelId: '',
+                          faultId: '',
+                        }));
+                        void loadBrands(event.target.value);
+                      }}
+                      className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none"
+                      disabled={!!createdOrderId}
+                    >
+                      {families.map((family) => (
+                        <option key={family.id} value={family.id}>{family.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <Input
+                      name="deviceTypeName"
+                      value={formData.deviceTypeName}
+                      onChange={handleChange}
+                      placeholder="Ej. Smartphone, laptop o consola"
+                      className="bg-white h-10"
+                      disabled={!!createdOrderId}
+                    />
+                  )}
+                </div>
+
                 {/* Marcas Top Chips */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Marca</label>

@@ -29,6 +29,7 @@ import searchRouter from './routes/search';
 import cashRouter from './routes/cash';
 import publicPortalRouter from './routes/public-portal';
 import automationRouter from './routes/automation';
+import tenantRolesRouter from './routes/tenant-roles';
 import { requireAuth } from './middleware/auth';
 import { requireTenantBillingActive } from './middleware/tenantBilling';
 import { attachTenantCapabilities, requireTenantModule } from './middleware/tenantCapabilities';
@@ -151,6 +152,8 @@ app.use('/api/cash', cashRouter);
 
 app.use('/api/:tenantSlug/automation', automationRouter);
 app.use('/api/automation', automationRouter);
+app.use('/api/:tenantSlug/tenant-roles', tenantRolesRouter);
+app.use('/api/tenant-roles', tenantRolesRouter);
 
 app.use('/api/public-portal', publicPortalRouter);
 

@@ -3,6 +3,7 @@ import { requireAuth } from '../middleware/auth';
 import { requireTenantBillingActive } from '../middleware/tenantBilling';
 import {
   getRegisters,
+  createRegister,
   openShift,
   getActiveShift,
   closeShift,
@@ -17,6 +18,7 @@ router.use(requireAuth);
 router.use(requireTenantBillingActive);
 
 router.get('/registers', getRegisters);
+router.post('/registers', createRegister);
 router.post('/shifts/open', openShift);
 router.get('/shifts/active', getActiveShift);
 router.post('/shifts/close', closeShift);
