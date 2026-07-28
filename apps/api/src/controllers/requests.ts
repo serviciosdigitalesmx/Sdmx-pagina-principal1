@@ -10,6 +10,8 @@ const convertRequestSchema = z.object({
   createCustomer: z.coerce.boolean().default(true),
 });
 
+const requestIdSchema = z.string().uuid();
+
 function normalizeRequestStatus(status?: string | null) {
   const value = String(status ?? '').toLowerCase();
   if (value.includes('revis')) return 'en_revision';
@@ -95,138 +97,52 @@ export async function convertServiceRequestToOrder(req: Request, res: Response) 
       return res.status(401).json({ error: 'Tenant context is required' });
     }
 
-    if (!requestId) {
-      return res.status(400).json({ error: 'Request id is required' });
+    if (!requestIdSchema.safeParse(requestId).success) {
+      return res.status(400).json({ error: 'Invalid request id' });
     }
 
     const body = convertRequestSchema.parse(req.body);
     const supabase = getTenantClient(tenantId);
 
-    const { data: requestRow, error: requestError } = await supabase
-      .from('service_requests')
-      .select('*')
-      .eq('tenant_id', tenantId)
-      .eq('id', requestId)
-      .single();
+    const { data, error: rpcError } = await supabase.rpc('convert_service_request_transaction', {
+      p_tenant_id: tenantId,
+      p_request_id: requestId,
+      p_estimated_cost: body.estimatedCost,
+      p_device_type: body.deviceType ?? null,
+      p_device_model: body.deviceModel ?? null,
+      p_issue: body.issue ?? null,
+      p_create_customer: body.createCustomer,
+    });
 
-    if (requestError || !requestRow) {
-      return res.status(404).json({ error: 'Request not found', details: requestError?.message ?? 'Not found' });
-    }
-
-    let customerId: string | null = null;
-
-    if (body.createCustomer) {
-      const phone = String(requestRow.customer_phone ?? '').trim();
-      const email = String(requestRow.customer_email ?? '').trim();
-
-      let existingCustomer = null;
-
-      if (phone) {
-        const { data } = await supabase
-          .from('customers')
-          .select('id')
-          .eq('tenant_id', tenantId)
-          .eq('phone', phone)
-          .maybeSingle();
-
-        existingCustomer = data;
+    if (rpcError) {
+      if (rpcError.message.includes('REQUEST_NOT_FOUND')) {
+        return res.status(404).json({ error: 'Request not found', code: 'REQUEST_NOT_FOUND' });
       }
 
-      if (!existingCustomer && email) {
-        const { data } = await supabase
-          .from('customers')
-          .select('id')
-          .eq('tenant_id', tenantId)
-          .eq('email', email)
-          .maybeSingle();
-
-        existingCustomer = data;
+      if (rpcError.message.includes('REQUEST_ALREADY_CONVERTED')) {
+        return res.status(409).json({ error: 'Request already converted', code: 'REQUEST_ALREADY_CONVERTED' });
       }
 
-      if (existingCustomer?.id) {
-        customerId = existingCustomer.id;
-      } else {
-        const { data: customerData, error: customerError } = await supabase
-          .from('customers')
-          .insert([
-            {
-              tenant_id: tenantId,
-              name: requestRow.customer_name,
-              phone: phone || null,
-              email: email || null,
-            },
-          ])
-          .select('id')
-          .single();
-
-        if (customerError || !customerData) {
-          return res.status(502).json({
-            error: 'Failed to create customer from request',
-            details: customerError?.message ?? 'Unknown error',
-          });
-        }
-
-        customerId = customerData.id;
+      if (rpcError.message.includes('INVALID_REQUEST_CONVERSION_INPUT')) {
+        return res.status(400).json({ error: 'Invalid payload', code: 'INVALID_REQUEST_CONVERSION_INPUT' });
       }
+
+      return res.status(502).json({ error: 'Failed to convert request to order', details: rpcError.message });
     }
 
-    const folioPrefix = process.env.ORDER_FOLIO_PREFIX ?? 'ORD';
-    const nextFolio = `ORD-${Date.now().toString(36).toUpperCase()}`;
-    const estimatedCost = Number.isFinite(body.estimatedCost) ? body.estimatedCost : Number((requestRow.quoted_total ?? 0) || 0);
-    const finalCost = Number((estimatedCost || 0).toFixed(2));
-
-    const { data: orderData, error: orderError } = await supabase
-      .from('service_orders')
-      .insert([
-        {
-          tenant_id: tenantId,
-          customer_id: customerId,
-          folio: nextFolio.replace('ORD-', `${folioPrefix}-`),
-          status: 'recibido',
-          device_info: {
-            customer_name: requestRow.customer_name,
-            customer_phone: requestRow.customer_phone,
-            customer_email: requestRow.customer_email,
-            type: body.deviceType || requestRow.device_type || '',
-            brand: body.deviceModel || requestRow.device_model || '',
-            model: body.deviceModel || requestRow.device_model || '',
-          },
-          problem_description: body.issue || requestRow.issue_description || '',
-          metadata: typeof requestRow.metadata === 'object' && requestRow.metadata ? requestRow.metadata : {},
-          estimated_cost: estimatedCost,
-          final_cost: finalCost,
-          receipt_url: null,
-        },
-      ])
-      .select()
-      .single();
-
-    if (orderError || !orderData) {
-      return res.status(502).json({ error: 'Failed to convert request to order', details: orderError?.message ?? 'Unknown error' });
-    }
-
-    const { error: updateRequestError } = await supabase
-      .from('service_requests')
-      .update({
-        status: 'convertida',
-      })
-      .eq('tenant_id', tenantId)
-      .eq('id', requestId);
-
-    if (updateRequestError) {
-      return res.status(502).json({ error: 'Failed to update request status', details: updateRequestError.message });
+    const result = data as { request_id?: unknown; order_id?: unknown; customer_id?: unknown } | null;
+    if (
+      !result
+      || typeof result.request_id !== 'string'
+      || typeof result.order_id !== 'string'
+      || (result.customer_id !== null && typeof result.customer_id !== 'string')
+    ) {
+      return res.status(502).json({ error: 'Invalid conversion result from database' });
     }
 
     return res.status(201).json({
       success: true,
-      data: {
-        request: {
-          ...requestRow,
-          status: 'convertida',
-        },
-        order: orderData,
-        customer_id: customerId,
-      },
+      data: result,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
