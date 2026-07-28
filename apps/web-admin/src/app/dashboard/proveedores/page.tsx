@@ -144,14 +144,14 @@ export default function ProveedoresPage() {
       setSaving(true);
       setError('');
       const payload = {
-        business_name: form.business_name.trim(),
-        contact_name: form.contact_name.trim() || null,
-        phone: form.phone.trim() || null,
-        email: form.email.trim() || null,
-        address: form.address.trim() || null,
-        categories: form.categories.trim() || null,
-        payment_terms: form.payment_terms.trim() || null,
-        notes: form.notes.trim() || null,
+        businessName: form.business_name.trim(),
+        contactName: form.contact_name.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim(),
+        address: form.address.trim(),
+        categories: form.categories.trim(),
+        paymentTerms: form.payment_terms.trim(),
+        notes: form.notes.trim(),
       };
       if (editing?.id) {
         await procurementService.updateSupplier(editing.id, payload);

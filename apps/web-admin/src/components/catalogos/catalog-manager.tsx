@@ -1,10 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, ChevronRight, Edit2, Trash2, Smartphone, Cpu, Wrench } from 'lucide-react';
+import { Plus, ChevronRight, Trash2, Smartphone, Cpu, Wrench } from 'lucide-react';
 import { apiGateway } from '@/services/apiGateway';
 import { toast } from 'sonner';
-import { CatalogFamily, CatalogBrand, CatalogModel, CatalogFault, CatalogPart } from '@/types';
+import { CatalogFamily, CatalogBrand, CatalogModel, CatalogFault } from '@/types';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+type CatalogEntryType = 'family' | 'brand' | 'model' | 'fault';
 
 export function CatalogManager() {
   const [families, setFamilies] = useState<CatalogFamily[]>([]);
@@ -15,6 +21,10 @@ export function CatalogManager() {
   const [selectedFamily, setSelectedFamily] = useState<CatalogFamily | null>(null);
   const [selectedBrand, setSelectedBrand] = useState<CatalogBrand | null>(null);
   const [selectedModel, setSelectedModel] = useState<CatalogModel | null>(null);
+  const [entryType, setEntryType] = useState<CatalogEntryType | null>(null);
+  const [entryName, setEntryName] = useState('');
+  const [entryCost, setEntryCost] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     loadFamilies();
@@ -86,59 +96,53 @@ export function CatalogManager() {
     }
   };
 
-  const handleAddFamily = async () => {
-    const name = window.prompt('Nombre de la Familia (ej. Celulares):');
-    if (!name) return;
-    try {
-      await apiGateway.createCatalogFamily({ name });
-      toast.success('Familia creada');
-      loadFamilies();
-    } catch (e: any) {
-      toast.error('Error al crear');
-    }
+  const openEntryDialog = (type: CatalogEntryType) => {
+    setEntryType(type);
+    setEntryName('');
+    setEntryCost('');
   };
 
-  const handleAddBrand = async () => {
-    if (!selectedFamily) return;
-    const name = window.prompt('Nombre de la Marca (ej. Apple):');
-    if (!name) return;
-    try {
-      await apiGateway.createCatalogBrand({ family_id: selectedFamily.id, name });
-      toast.success('Marca creada');
-      loadBrands(selectedFamily.id);
-    } catch (e: any) {
-      toast.error('Error al crear');
-    }
+  const closeEntryDialog = () => {
+    if (isSaving) return;
+    setEntryType(null);
   };
 
-  const handleAddModel = async () => {
-    if (!selectedBrand) return;
-    const name = window.prompt('Nombre del Modelo (ej. iPhone 13):');
-    if (!name) return;
-    try {
-      await apiGateway.createCatalogModel({ brand_id: selectedBrand.id, name });
-      toast.success('Modelo creado');
-      loadModels(selectedBrand.id);
-    } catch (e: any) {
-      toast.error('Error al crear');
+  const handleCreateEntry = async () => {
+    const name = entryName.trim();
+    if (!entryType || !name) {
+      toast.error('Escribe un nombre');
+      return;
     }
-  };
 
-  const handleAddFault = async () => {
-    if (!selectedModel) return;
-    const name = window.prompt('Nombre de la Falla (ej. Pantalla Rota):');
-    if (!name) return;
-    const cost = window.prompt('Costo sugerido (opcional):');
+    setIsSaving(true);
     try {
-      await apiGateway.createCatalogFault({ 
-        model_id: selectedModel.id, 
-        name, 
-        default_cost: cost ? Number(cost) : undefined 
-      });
-      toast.success('Falla creada');
-      loadFaults(selectedModel.id);
-    } catch (e: any) {
-      toast.error('Error al crear');
+      if (entryType === 'family') {
+        await apiGateway.createCatalogFamily({ name });
+        await loadFamilies();
+      } else if (entryType === 'brand' && selectedFamily) {
+        await apiGateway.createCatalogBrand({ family_id: selectedFamily.id, name });
+        await loadBrands(selectedFamily.id);
+      } else if (entryType === 'model' && selectedBrand) {
+        await apiGateway.createCatalogModel({ brand_id: selectedBrand.id, name });
+        await loadModels(selectedBrand.id);
+      } else if (entryType === 'fault' && selectedModel) {
+        const parsedCost = entryCost.trim() === '' ? undefined : Number(entryCost);
+        if (parsedCost !== undefined && (!Number.isFinite(parsedCost) || parsedCost < 0)) {
+          toast.error('El costo sugerido debe ser un número válido');
+          return;
+        }
+        await apiGateway.createCatalogFault({ model_id: selectedModel.id, name, default_cost: parsedCost });
+        await loadFaults(selectedModel.id);
+      } else {
+        toast.error('Selecciona el elemento padre antes de continuar');
+        return;
+      }
+      toast.success('Elemento creado');
+      setEntryType(null);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Error al crear');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -161,7 +165,7 @@ export function CatalogManager() {
       <div className="flex w-1/4 flex-col border-r border-slate-200 bg-slate-50/50">
         <div className="flex items-center justify-between border-b border-slate-200 bg-white p-4">
           <h3 className="font-semibold text-slate-900">Familias</h3>
-          <button onClick={handleAddFamily} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Plus className="h-4 w-4" /></button>
+          <button type="button" aria-label="Agregar familia" onClick={() => openEntryDialog('family')} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900"><Plus className="h-4 w-4" /></button>
         </div>
         <div className="flex-1 overflow-y-auto p-2">
           {families.map(f => (
@@ -175,7 +179,7 @@ export function CatalogManager() {
                 <span className="font-medium">{f.name}</span>
               </div>
               <div className="flex items-center opacity-0 transition-opacity group-hover:opacity-100">
-                <button onClick={(e) => { e.stopPropagation(); handleDelete('family', f.id); }} className="p-1 text-slate-400 hover:text-rose-500"><Trash2 className="h-3 w-3" /></button>
+                <button type="button" aria-label={`Eliminar familia ${f.name}`} onClick={(e) => { e.stopPropagation(); handleDelete('family', f.id); }} className="p-1 text-slate-400 hover:text-rose-500"><Trash2 className="h-3 w-3" /></button>
                 <ChevronRight className="ml-1 h-4 w-4 opacity-50" />
               </div>
             </div>
@@ -187,7 +191,7 @@ export function CatalogManager() {
       <div className="flex w-1/4 flex-col border-r border-slate-200 bg-white">
         <div className="flex items-center justify-between border-b border-slate-200 p-4">
           <h3 className="font-semibold text-slate-900">Marcas</h3>
-          <button onClick={handleAddBrand} disabled={!selectedFamily} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"><Plus className="h-4 w-4" /></button>
+          <button type="button" aria-label="Agregar marca" onClick={() => openEntryDialog('brand')} disabled={!selectedFamily} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"><Plus className="h-4 w-4" /></button>
         </div>
         <div className="flex-1 overflow-y-auto p-2 bg-slate-50/30">
           {!selectedFamily && <div className="p-4 text-center text-sm text-slate-400">Selecciona una familia</div>}
@@ -199,7 +203,7 @@ export function CatalogManager() {
             >
               <span className="font-medium">{b.name}</span>
               <div className="flex items-center opacity-0 transition-opacity group-hover:opacity-100">
-                <button onClick={(e) => { e.stopPropagation(); handleDelete('brand', b.id); }} className="p-1 text-slate-400 hover:text-rose-500"><Trash2 className="h-3 w-3" /></button>
+                <button type="button" aria-label={`Eliminar marca ${b.name}`} onClick={(e) => { e.stopPropagation(); handleDelete('brand', b.id); }} className="p-1 text-slate-400 hover:text-rose-500"><Trash2 className="h-3 w-3" /></button>
                 <ChevronRight className="ml-1 h-4 w-4 opacity-50" />
               </div>
             </div>
@@ -211,7 +215,7 @@ export function CatalogManager() {
       <div className="flex w-1/4 flex-col border-r border-slate-200 bg-slate-50/50">
         <div className="flex items-center justify-between border-b border-slate-200 bg-white p-4">
           <h3 className="font-semibold text-slate-900">Modelos</h3>
-          <button onClick={handleAddModel} disabled={!selectedBrand} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"><Plus className="h-4 w-4" /></button>
+          <button type="button" aria-label="Agregar modelo" onClick={() => openEntryDialog('model')} disabled={!selectedBrand} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"><Plus className="h-4 w-4" /></button>
         </div>
         <div className="flex-1 overflow-y-auto p-2">
           {!selectedBrand && <div className="p-4 text-center text-sm text-slate-400">Selecciona una marca</div>}
@@ -226,7 +230,7 @@ export function CatalogManager() {
                 <span className="font-medium">{m.name}</span>
               </div>
               <div className="flex items-center opacity-0 transition-opacity group-hover:opacity-100">
-                <button onClick={(e) => { e.stopPropagation(); handleDelete('model', m.id); }} className="p-1 text-slate-400 hover:text-rose-500"><Trash2 className="h-3 w-3" /></button>
+                <button type="button" aria-label={`Eliminar modelo ${m.name}`} onClick={(e) => { e.stopPropagation(); handleDelete('model', m.id); }} className="p-1 text-slate-400 hover:text-rose-500"><Trash2 className="h-3 w-3" /></button>
                 <ChevronRight className="ml-1 h-4 w-4 opacity-50" />
               </div>
             </div>
@@ -238,7 +242,7 @@ export function CatalogManager() {
       <div className="flex w-1/4 flex-col bg-white">
         <div className="flex items-center justify-between border-b border-slate-200 p-4">
           <h3 className="font-semibold text-slate-900">Fallas Frecuentes</h3>
-          <button onClick={handleAddFault} disabled={!selectedModel} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"><Plus className="h-4 w-4" /></button>
+          <button type="button" aria-label="Agregar falla" onClick={() => openEntryDialog('fault')} disabled={!selectedModel} className="rounded-md p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900 disabled:opacity-50"><Plus className="h-4 w-4" /></button>
         </div>
         <div className="flex-1 overflow-y-auto p-2 bg-slate-50/30">
           {!selectedModel && <div className="p-4 text-center text-sm text-slate-400">Selecciona un modelo</div>}
@@ -252,7 +256,7 @@ export function CatalogManager() {
                   <Wrench className="h-4 w-4 text-slate-400" />
                   <span className="font-medium text-slate-900">{f.name}</span>
                 </div>
-                <button onClick={() => handleDelete('fault', f.id)} className="p-1 text-slate-400 opacity-0 transition-opacity hover:text-rose-500 group-hover:opacity-100"><Trash2 className="h-3 w-3" /></button>
+                <button type="button" aria-label={`Eliminar falla ${f.name}`} onClick={() => handleDelete('fault', f.id)} className="p-1 text-slate-400 opacity-0 transition-opacity hover:text-rose-500 group-hover:opacity-100"><Trash2 className="h-3 w-3" /></button>
               </div>
               {f.default_cost !== null && (
                 <div className="mt-2 text-xs font-medium text-emerald-600">
@@ -263,6 +267,30 @@ export function CatalogManager() {
           ))}
         </div>
       </div>
+
+      <Dialog open={entryType !== null} onOpenChange={(open) => { if (!open) closeEntryDialog(); }}>
+        <DialogContent className="max-w-md border border-slate-800 bg-slate-950 text-slate-100">
+          <DialogHeader>
+            <DialogTitle>Agregar {entryType === 'family' ? 'familia' : entryType === 'brand' ? 'marca' : entryType === 'model' ? 'modelo' : 'falla frecuente'}</DialogTitle>
+          </DialogHeader>
+          <form className="space-y-4" onSubmit={(event) => { event.preventDefault(); void handleCreateEntry(); }}>
+            <div className="space-y-2">
+              <Label htmlFor="catalog-entry-name">Nombre</Label>
+              <Input id="catalog-entry-name" value={entryName} onChange={(event) => setEntryName(event.target.value)} autoFocus required />
+            </div>
+            {entryType === 'fault' && (
+              <div className="space-y-2">
+                <Label htmlFor="catalog-entry-cost">Costo sugerido (opcional)</Label>
+                <Input id="catalog-entry-cost" type="number" min="0" step="0.01" value={entryCost} onChange={(event) => setEntryCost(event.target.value)} />
+              </div>
+            )}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={closeEntryDialog} disabled={isSaving}>Cancelar</Button>
+              <Button type="submit" disabled={isSaving || entryName.trim() === ''}>{isSaving ? 'Guardando...' : 'Guardar'}</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

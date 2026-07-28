@@ -56,11 +56,12 @@ class ApiClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ error: 'Request failed' }));
+      const error = await response.json().catch(() => ({ error: 'Request failed' })) as { error?: string; details?: unknown };
       if (response.status === 402) {
         setBillingExpiredState(true);
       }
-      throw new Error(error.error || `HTTP ${response.status}`);
+      const details = typeof error.details === 'string' && error.details.trim() ? `: ${error.details}` : '';
+      throw new Error(`${error.error || `HTTP ${response.status}`}${details}`);
     }
 
     const data = await response.json().catch(() => ({}));

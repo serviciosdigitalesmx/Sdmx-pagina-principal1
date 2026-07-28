@@ -35,6 +35,7 @@ export async function updateRule(req: Request, res: Response) {
   const { data, error } = await supabase
     .from('automation_rules')
     .update({ name, event_type, condition, action_type, action_config, is_active })
+    .eq('tenant_id', tenantId)
     .eq('id', id)
     .select()
     .single();

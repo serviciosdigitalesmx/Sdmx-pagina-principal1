@@ -39,7 +39,7 @@ export default function AutomationPage() {
   const [eventType, setEventType] = useState('order.status_changed');
   const [targetStatus, setTargetStatus] = useState('listo');
   const [actionType, setActionType] = useState('send_whatsapp');
-  const [templateName, setTemplateName] = useState('orden_lista');
+  const [templateName, setTemplateName] = useState('status_update');
   const [savingRule, setSavingRule] = useState(false);
 
   useEffect(() => {
@@ -181,7 +181,7 @@ export default function AutomationPage() {
 
                 <div className="text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-1">
                   <div>Condición: <strong>Si el estado es "{rule.condition?.status}"</strong></div>
-                  <div>Acción: <strong>{rule.action_type === 'send_whatsapp' ? 'Enviar WhatsApp' : 'Enviar Correo'}</strong></div>
+                  <div>Acción: <strong>{rule.action_type === 'send_whatsapp' ? 'Preparar WhatsApp' : rule.action_type === 'send_notification' ? 'Enviar notificación' : 'Acción no disponible'}</strong></div>
                   <div>Plantilla: <strong>{rule.action_config?.template}</strong></div>
                 </div>
               </div>
@@ -210,6 +210,10 @@ export default function AutomationPage() {
                     {log.status === 'success' ? (
                       <span className="inline-flex items-center gap-1 text-xs text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full">
                         <CheckCircle2 className="h-3.5 w-3.5" /> Enviado
+                      </span>
+                    ) : log.status === 'pending' ? (
+                      <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full">
+                        <AlertCircle className="h-3.5 w-3.5" /> Pendiente
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-xs text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-full">
@@ -282,8 +286,8 @@ export default function AutomationPage() {
                 onChange={e => setActionType(e.target.value)}
                 className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none"
               >
-                <option value="send_whatsapp">Enviar WhatsApp al Cliente</option>
-                <option value="send_email">Enviar Correo al Cliente</option>
+                <option value="send_whatsapp">Preparar WhatsApp para el cliente</option>
+                <option value="send_notification">Enviar notificación interna</option>
               </select>
             </div>
 
@@ -294,8 +298,11 @@ export default function AutomationPage() {
                 onChange={e => setTemplateName(e.target.value)}
                 className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none"
               >
-                <option value="orden_lista">orden_lista (WhatsApp)</option>
-                <option value="orden_recibida">orden_recibida (WhatsApp)</option>
+                <option value="status_update">Actualización de estado</option>
+                <option value="order_received">Orden recibida</option>
+                <option value="authorization_request">Solicitud de autorización</option>
+                <option value="portal_link">Acceso al portal</option>
+                <option value="warranty_info">Información de garantía</option>
               </select>
             </div>
 

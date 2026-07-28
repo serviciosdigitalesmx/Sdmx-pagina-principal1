@@ -10,8 +10,16 @@ export type ScopeContext = PlatformScope;
 export function getActiveBranchId(): string | null {
   if (typeof window === 'undefined') return null;
 
-  const stored = window.localStorage.getItem(ACTIVE_BRANCH_KEY);
+  const stored = window.sessionStorage.getItem(ACTIVE_BRANCH_KEY);
   if (stored && stored !== 'GLOBAL') return stored;
+
+  // Migrate the previous cross-tab value once without keeping branches coupled.
+  const legacyStored = window.localStorage.getItem(ACTIVE_BRANCH_KEY);
+  if (legacyStored && legacyStored !== 'GLOBAL') {
+    window.sessionStorage.setItem(ACTIVE_BRANCH_KEY, legacyStored);
+    window.localStorage.removeItem(ACTIVE_BRANCH_KEY);
+    return legacyStored;
+  }
 
   return getCurrentSession()?.branchId ?? null;
 }
@@ -20,9 +28,11 @@ export function setActiveBranchId(branchId: string | null, options?: { skipReloa
   if (typeof window === 'undefined') return;
 
   if (!branchId || branchId === 'GLOBAL') {
+    window.sessionStorage.removeItem(ACTIVE_BRANCH_KEY);
     window.localStorage.removeItem(ACTIVE_BRANCH_KEY);
   } else {
-    window.localStorage.setItem(ACTIVE_BRANCH_KEY, branchId);
+    window.sessionStorage.setItem(ACTIVE_BRANCH_KEY, branchId);
+    window.localStorage.removeItem(ACTIVE_BRANCH_KEY);
   }
 
   if (!options?.skipReload) {

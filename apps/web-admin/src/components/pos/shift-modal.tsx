@@ -23,13 +23,14 @@ export function ShiftModal({ open, onOpenChange, mode, activeShift, onSuccess }:
   const [selectedRegister, setSelectedRegister] = useState('');
   const [cashAmount, setCashAmount] = useState('');
   const [notes, setNotes] = useState('');
+  const [registerName, setRegisterName] = useState('Caja principal');
 
   useEffect(() => {
     if (open && mode === 'open') {
       apiGateway.getCashRegisters()
         .then((res) => {
           setRegisters(res);
-          if (res.length > 0) setSelectedRegister(res[0].id);
+          if (res.length > 0) setSelectedRegister(String(res[0].id ?? ''));
         })
         .catch(() => toast.error('Error al cargar cajas registradoras'));
     }
@@ -48,6 +49,26 @@ export function ShiftModal({ open, onOpenChange, mode, activeShift, onSuccess }:
       onSuccess();
     } catch (e: any) {
       toast.error(e.message || 'Error al abrir caja');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateRegister = async () => {
+    const scope = (await import('@/lib/scope')).getActiveScope();
+    if (!scope?.sucursalId) {
+      toast.error('Selecciona una sucursal antes de crear la caja.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const register = await apiGateway.createCashRegister({ name: registerName.trim(), sucursalId: scope.sucursalId });
+      const next = { id: String(register.id ?? ''), name: String(register.name ?? registerName) };
+      setRegisters([next]);
+      setSelectedRegister(next.id);
+      toast.success('Caja creada para esta sucursal.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'No se pudo crear la caja');
     } finally {
       setLoading(false);
     }
@@ -85,7 +106,7 @@ export function ShiftModal({ open, onOpenChange, mode, activeShift, onSuccess }:
             <div className="space-y-4 mt-6">
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-slate-700">Caja Registradora</label>
-                <select
+                {registers.length > 0 ? <select
                   value={selectedRegister}
                   onChange={(e) => setSelectedRegister(e.target.value)}
                   className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
@@ -93,7 +114,15 @@ export function ShiftModal({ open, onOpenChange, mode, activeShift, onSuccess }:
                   {registers.map(r => (
                     <option key={r.id} value={r.id}>{r.name}</option>
                   ))}
-                </select>
+                </select> : (
+                  <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                    <p className="text-xs text-amber-900">Esta sucursal todavía no tiene caja. Créala para abrir el primer turno.</p>
+                    <Input value={registerName} onChange={(event) => setRegisterName(event.target.value)} aria-label="Nombre de la nueva caja" />
+                    <Button type="button" variant="outline" className="w-full" disabled={loading || !registerName.trim()} onClick={handleCreateRegister}>
+                      Crear caja en esta sucursal
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">

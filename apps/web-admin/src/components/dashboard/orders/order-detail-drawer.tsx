@@ -128,14 +128,7 @@ function buildTrackingUrl(customerPortalUrl?: string | null, folio?: string | nu
     return customerPortalBase ? `${customerPortalBase}${tokenPath}` : tokenPath;
   }
 
-  if (customerPortalBase && tenantSlug && folio) {
-    return `${customerPortalBase}/t/${encodeURIComponent(tenantSlug)}/portal/${encodeURIComponent(folio)}`;
-  }
-
-  const resolvedBase = customerPortalUrl?.replace(/\/$/, "");
-  if (!resolvedBase) return "";
-  const separator = resolvedBase.includes("?") ? "&" : "?";
-  return `${resolvedBase}${folio ? `${separator}folio=${encodeURIComponent(folio)}` : ""}`;
+  return "";
 }
 
 function whatsappLink(phone?: string | null, folio?: string | null, customerPortalUrl?: string | null, publicToken?: string | null) {

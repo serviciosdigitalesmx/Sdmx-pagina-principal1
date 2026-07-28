@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
 import type { Product } from '@/types';
+import { toast } from 'sonner';
 
 interface ProductModalProps {
   open: boolean;
@@ -76,7 +77,7 @@ export function ProductModal({ open, onOpenChange, product, onProductSaved }: Pr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.sku.trim() || !formData.name.trim()) {
-      alert('SKU y nombre son requeridos');
+      toast.error('SKU y nombre son requeridos');
       return;
     }
 
@@ -105,8 +106,9 @@ export function ProductModal({ open, onOpenChange, product, onProductSaved }: Pr
       onProductSaved();
       onOpenChange(false);
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error al guardar el producto';
       console.error('Failed to save product:', error);
-      alert('Error al guardar el producto');
+      toast.error(message);
     } finally {
       setLoading(false);
     }
