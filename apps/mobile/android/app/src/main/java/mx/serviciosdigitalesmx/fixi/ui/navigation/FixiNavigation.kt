@@ -67,6 +67,7 @@ fun FixiNavigationApp(onLogout: () -> Unit = {}) {
                     viewModel = orderViewModel,
                     onDismissRequest = { showNewOrderBottomSheet = false },
                     onOrderCreated = {
+                        showNewOrderBottomSheet = false
                         currentRoute = BottomTab.Orders.route
                     }
                 )
@@ -116,7 +117,7 @@ fun FixiBottomNavigation(
                     onClick = { onTabSelected(BottomTab.Orders.route) }
                 )
 
-                // Empty space for center FAB offset
+                // Space for FAB
                 Spacer(modifier = Modifier.width(56.dp))
 
                 // Tab 3: Catálogos
@@ -135,11 +136,12 @@ fun FixiBottomNavigation(
             }
         }
 
-        // Floating Action Button (FAB) +20dp offset higher than bottom bar, 8dp shadow elevation
+        // Floating Action Button (FAB)
         FloatingActionButton(
             onClick = onFabClick,
             modifier = Modifier
-                .offset(y = (-20).dp)
+                .align(Alignment.TopCenter)
+                .offset(y = (-14).dp)
                 .size(56.dp),
             shape = CircleShape,
             containerColor = FixiPurple,

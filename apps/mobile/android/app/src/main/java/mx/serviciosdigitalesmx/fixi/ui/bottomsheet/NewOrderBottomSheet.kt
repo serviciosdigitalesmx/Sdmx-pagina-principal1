@@ -37,14 +37,14 @@ fun NewOrderBottomSheet(
     var issue by remember { mutableStateOf("") }
     var isSubmitting by remember { mutableStateOf(false) }
 
-    // Auto-lookup customer name when phone reaches 10 digits
+    // Auto-lookup real customer name from DB when phone reaches 10 digits
     LaunchedEffect(phone) {
         val cleanPhone = phone.replace("\\D".toRegex(), "")
         if (cleanPhone.length >= 10) {
             val foundName = viewModel.searchCustomerByPhone(cleanPhone)
             if (foundName != null && name.isBlank()) {
                 name = foundName
-                Toast.makeText(context, "Cliente encontrado: $foundName", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Cliente registrado: $foundName", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -85,7 +85,7 @@ fun NewOrderBottomSheet(
                 }
             }
 
-            Divider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f))
 
             // Campo 1: Teléfono
             OutlinedTextField(
@@ -144,7 +144,7 @@ fun NewOrderBottomSheet(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Botón Principal Crear Orden
+            // Botón Principal Crear Orden Real
             Button(
                 onClick = {
                     if (phone.isBlank() || name.isBlank() || deviceModel.isBlank() || issue.isBlank()) {
@@ -159,13 +159,13 @@ fun NewOrderBottomSheet(
                         issue = issue,
                         onSuccess = { newFolio ->
                             isSubmitting = false
-                            Toast.makeText(context, "¡Orden $newFolio creada con éxito!", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "¡Orden $newFolio guardada en servidor!", Toast.LENGTH_LONG).show()
                             onDismissRequest()
                             onOrderCreated(newFolio)
                         },
                         onError = { err ->
                             isSubmitting = false
-                            Toast.makeText(context, "Error: $err", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Error servidor: $err", Toast.LENGTH_LONG).show()
                         }
                     )
                 },

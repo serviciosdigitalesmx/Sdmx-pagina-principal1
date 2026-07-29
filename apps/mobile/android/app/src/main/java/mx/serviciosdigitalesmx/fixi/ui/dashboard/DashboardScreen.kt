@@ -22,6 +22,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import mx.serviciosdigitalesmx.fixi.data.FixiRepository
+import mx.serviciosdigitalesmx.fixi.data.RealBalance
 import mx.serviciosdigitalesmx.fixi.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -32,6 +34,14 @@ fun DashboardScreen(
     onOpenNewOrder: () -> Unit
 ) {
     var selectedBalanceTab by remember { mutableStateOf("ingresos") }
+    var realBalance by remember { mutableStateOf(RealBalance()) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        isLoading = true
+        realBalance = FixiRepository.fetchBalanceSummary()
+        isLoading = false
+    }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background
@@ -44,7 +54,7 @@ fun DashboardScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(top = 16.dp, bottom = 100.dp)
         ) {
-            // 1. Header
+            // 1. Header Real
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -75,11 +85,14 @@ fun DashboardScreen(
                             )
                         }
                         Text(
-                            text = "Sucursal Principal · Miércoles 29 Jul",
+                            text = "Sucursal Principal · Panel en Vivo",
                             style = MaterialTheme.typography.bodySmall.copy(
                                 color = FixiTextSecondary
                             )
                         )
+                    }
+                    if (isLoading) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), color = FixiPurple)
                     }
                 }
             }
@@ -127,7 +140,7 @@ fun DashboardScreen(
                 }
             }
 
-            // 3. Balance Card
+            // 3. Balance Card Real
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -141,8 +154,15 @@ fun DashboardScreen(
                             style = MaterialTheme.typography.labelMedium.copy(color = FixiTextSecondary)
                         )
                         Spacer(modifier = Modifier.height(4.dp))
+
+                        val displayAmount = when (selectedBalanceTab) {
+                            "ingresos" -> realBalance.totalIncome
+                            "egresos" -> realBalance.totalExpense
+                            else -> realBalance.totalPending
+                        }
+
                         Text(
-                            text = if (selectedBalanceTab == "ingresos") "$4,250.00" else if (selectedBalanceTab == "egresos") "$850.00" else "$1,450.00",
+                            text = "$${"%.2f".format(displayAmount)}",
                             style = MaterialTheme.typography.headlineLarge.copy(
                                 fontWeight = FontWeight.Black,
                                 color = FixiTextPrimary
@@ -199,7 +219,7 @@ fun DashboardScreen(
                 }
             }
 
-            // 4. Stats Grid 2x2
+            // 4. Stats Grid 2x2 Real
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(
@@ -208,7 +228,7 @@ fun DashboardScreen(
                     ) {
                         StatCard(
                             title = "Órdenes hoy",
-                            value = "8",
+                            value = "${realBalance.todayOrdersCount}",
                             icon = Icons.Default.Build,
                             accentColor = FixiPurple,
                             onClick = onNavigateToOrders,
@@ -216,7 +236,7 @@ fun DashboardScreen(
                         )
                         StatCard(
                             title = "Clientes nuevos",
-                            value = "+3",
+                            value = "+${realBalance.newCustomersCount}",
                             icon = Icons.Default.People,
                             accentColor = StatusGreenText,
                             onClick = onNavigateToCatalogs,
@@ -229,7 +249,7 @@ fun DashboardScreen(
                     ) {
                         StatCard(
                             title = "Bajo stock",
-                            value = "2 ítems",
+                            value = "${realBalance.lowStockCount} ítems",
                             icon = Icons.Default.Warning,
                             accentColor = StatusAmberText,
                             onClick = onNavigateToCatalogs,
@@ -237,7 +257,7 @@ fun DashboardScreen(
                         )
                         StatCard(
                             title = "Vencidas",
-                            value = "1 orden",
+                            value = "${realBalance.overdueCount} orden",
                             icon = Icons.Default.Error,
                             accentColor = StatusRedText,
                             onClick = onNavigateToOrders,
@@ -247,7 +267,7 @@ fun DashboardScreen(
                 }
             }
 
-            // 5. Sparkline Card Canvas (7 Días)
+            // 5. Sparkline Card Canvas (7 Días Real)
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -267,7 +287,7 @@ fun DashboardScreen(
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                                 )
                                 Text(
-                                    text = "Promedio diario $607.00",
+                                    text = "Tendencia de ingresos en vivo",
                                     style = MaterialTheme.typography.bodySmall.copy(color = FixiTextSecondary)
                                 )
                             }
@@ -324,7 +344,7 @@ fun DashboardScreen(
                 }
             }
 
-            // 6. Actionable Alerts Card
+            // 6. Actionable Alerts Card Real
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -349,7 +369,7 @@ fun DashboardScreen(
                                     shape = CircleShape
                                 ) {
                                     Text(
-                                        text = "2",
+                                        text = "${realBalance.overdueCount + realBalance.lowStockCount}",
                                         color = StatusRedText,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 12.sp,
@@ -361,19 +381,33 @@ fun DashboardScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
-                        AlertRow(
-                            dotColor = StatusRedText,
-                            title = "Orden #1021 · Motorola G60",
-                            subtitle = "Promesa venció ayer · Requiere entregarse",
-                            onClick = onNavigateToOrders
-                        )
-                        Divider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
-                        AlertRow(
-                            dotColor = StatusAmberText,
-                            title = "Pantalla iPhone 13 Pro",
-                            subtitle = "Queda 1 unidad en stock · Solicitar repuesto",
-                            onClick = onNavigateToCatalogs
-                        )
+                        if (realBalance.overdueCount > 0) {
+                            AlertRow(
+                                dotColor = StatusRedText,
+                                title = "Órdenes vencidas (${realBalance.overdueCount})",
+                                subtitle = "Requieren entrega o diagnóstico inmediato",
+                                onClick = onNavigateToOrders
+                            )
+                        }
+                        if (realBalance.lowStockCount > 0) {
+                            if (realBalance.overdueCount > 0) {
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
+                            }
+                            AlertRow(
+                                dotColor = StatusAmberText,
+                                title = "Artículos con bajo stock (${realBalance.lowStockCount})",
+                                subtitle = "Revisar catálogo para reposición",
+                                onClick = onNavigateToCatalogs
+                            )
+                        }
+                        if (realBalance.overdueCount == 0 && realBalance.lowStockCount == 0) {
+                            Text(
+                                text = "¡Todo al día! Sin alertas pendientes.",
+                                fontSize = 13.sp,
+                                color = FixiTextSecondary,
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
+                        }
                     }
                 }
             }

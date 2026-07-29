@@ -1,10 +1,12 @@
 package mx.serviciosdigitalesmx.fixi.ui.catalogs
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,37 +17,33 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import mx.serviciosdigitalesmx.fixi.data.FixiRepository
+import mx.serviciosdigitalesmx.fixi.data.RealCatalog
 import mx.serviciosdigitalesmx.fixi.ui.theme.*
-
-data class CatalogModule(
-    val id: String,
-    val name: String,
-    val description: String,
-    val icon: ImageVector,
-    val badge: String? = null
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatalogsScreen() {
+    val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
+    var catalogsList by remember { mutableStateOf<List<RealCatalog>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var selectedCatalog by remember { mutableStateOf<RealCatalog?>(null) }
 
-    val allModules = listOf(
-        CatalogModule("1", "Inventario", "Piezas, pantallas y stock en taller", Icons.Default.Inventory2, "48 ítems"),
-        CatalogModule("2", "Proveedores", "Contactos y catálogo de mayoristas", Icons.Default.LocalShipping),
-        CatalogModule("3", "Servicios y Equipos", "Marcas, modelos y fallas comunes", Icons.Default.Smartphone, "6 catálogos"),
-        CatalogModule("4", "Usuarios y Permisos", "Técnicos, recepcionistas y accesos", Icons.Default.Group),
-        CatalogModule("5", "Gastos y Finanzas", "Conceptos de caja y egresos recurrentes", Icons.Default.AccountBalance),
-        CatalogModule("6", "Clientes", "Directorio e historial de clientes", Icons.Default.People, "128 clientes")
-    )
+    LaunchedEffect(Unit) {
+        isLoading = true
+        catalogsList = FixiRepository.fetchRealCatalogs()
+        isLoading = false
+    }
 
     val filteredModules = if (searchQuery.isBlank()) {
-        allModules
+        catalogsList
     } else {
-        allModules.filter {
+        catalogsList.filter {
             it.name.contains(searchQuery, ignoreCase = true) ||
             it.description.contains(searchQuery, ignoreCase = true)
         }
@@ -63,17 +61,28 @@ fun CatalogsScreen() {
             Spacer(modifier = Modifier.height(16.dp))
 
             // Header
-            Text(
-                text = "Catálogos y Módulos",
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-            )
-            Text(
-                text = "Configuración operativa del taller",
-                style = MaterialTheme.typography.bodyMedium.copy(color = FixiTextSecondary)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Catálogos y Módulos",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
+                        )
+                    )
+                    Text(
+                        text = "Gestión nativa de inventario y catálogos",
+                        style = MaterialTheme.typography.bodyMedium.copy(color = FixiTextSecondary)
+                    )
+                }
+                if (isLoading) {
+                    CircularProgressIndicator(modifier = Modifier.size(20.dp), color = FixiPurple)
+                }
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -99,91 +108,193 @@ fun CatalogsScreen() {
                 singleLine = true
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Catalog Items
+            // Catalog Cards
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(bottom = 100.dp)
             ) {
-                items(filteredModules, key = { it.id }) { item ->
-                    CatalogCard(item = item)
+                items(filteredModules) { catalog ->
+                    CatalogCardItem(
+                        catalog = catalog,
+                        onClick = { selectedCatalog = catalog }
+                    )
                 }
             }
+        }
+
+        // Modal Detalle de Módulo Seleccionado
+        selectedCatalog?.let { catalog ->
+            CatalogDetailModal(
+                catalog = catalog,
+                onDismiss = { selectedCatalog = null },
+                onAction = { actionName ->
+                    Toast.makeText(context, "$actionName en ${catalog.name}", Toast.LENGTH_SHORT).show()
+                }
+            )
         }
     }
 }
 
 @Composable
-fun CatalogCard(item: CatalogModule) {
+fun CatalogCardItem(
+    catalog: RealCatalog,
+    onClick: () -> Unit
+) {
+    val icon = when (catalog.type.lowercase()) {
+        "device_brands", "brands" -> Icons.Default.PhoneAndroid
+        "device_models", "models" -> Icons.Default.Devices
+        "faults", "problems" -> Icons.Default.Build
+        "checklist" -> Icons.Default.Checklist
+        else -> Icons.Default.Category
+    }
+    val color = FixiPurple
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { /* Navigate to specific catalog module */ },
+            .clickable { onClick() },
         shape = FixiShapes.medium,
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(FixiPurple.copy(alpha = 0.1f)),
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(color.copy(alpha = 0.15f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = item.icon,
-                    contentDescription = null,
-                    tint = FixiPurple,
+                    imageVector = icon,
+                    contentDescription = catalog.name,
+                    tint = color,
                     modifier = Modifier.size(24.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.width(16.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = item.name,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
-                        color = FixiTextPrimary
-                    )
-                    if (item.badge != null) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(MaterialTheme.colorScheme.primaryContainer)
-                                .padding(horizontal = 6.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = item.badge,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                        }
-                    }
-                }
+                Text(
+                    text = catalog.name,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = FixiTextPrimary
+                )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = item.description,
+                    text = catalog.description,
                     fontSize = 12.sp,
-                    color = FixiTextSecondary
+                    color = FixiTextSecondary,
+                    maxLines = 2
                 )
             }
 
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = FixiTextSecondary,
-                modifier = Modifier.size(20.dp)
-            )
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = color.copy(alpha = 0.1f)
+            ) {
+                Text(
+                    text = "${catalog.itemCount} ítems",
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    color = color,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Spacer(modifier = Modifier.width(4.dp))
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = FixiTextSecondary)
         }
     }
+}
+
+@Composable
+fun CatalogDetailModal(
+    catalog: RealCatalog,
+    onDismiss: () -> Unit,
+    onAction: (String) -> Unit
+) {
+    val icon = when (catalog.type.lowercase()) {
+        "device_brands", "brands" -> Icons.Default.PhoneAndroid
+        "device_models", "models" -> Icons.Default.Devices
+        "faults", "problems" -> Icons.Default.Build
+        "checklist" -> Icons.Default.Checklist
+        else -> Icons.Default.Category
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(icon, contentDescription = null, tint = FixiPurple, modifier = Modifier.size(36.dp))
+        },
+        title = {
+            Text(
+                text = catalog.name,
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                color = FixiTextPrimary
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(
+                    text = catalog.description,
+                    fontSize = 14.sp,
+                    color = FixiTextSecondary
+                )
+
+                Divider()
+
+                Text(
+                    text = "Acciones del Módulo:",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    color = FixiTextPrimary
+                )
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Button(
+                        onClick = {
+                            onAction("Ver registros")
+                            onDismiss()
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = FixiPurple)
+                    ) {
+                        Text("Explorar (${catalog.itemCount})")
+                    }
+
+                    OutlinedButton(
+                        onClick = {
+                            onAction("Agregar nuevo ítem")
+                            onDismiss()
+                        },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Nuevo +")
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cerrar")
+            }
+        }
+    )
 }
