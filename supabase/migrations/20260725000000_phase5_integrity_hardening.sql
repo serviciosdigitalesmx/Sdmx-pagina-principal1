@@ -57,14 +57,14 @@ DO $$
 BEGIN
     ALTER TABLE public.products ADD CONSTRAINT chk_products_cost CHECK (cost >= 0);
 EXCEPTION
-    WHEN duplicate_object OR undefined_table THEN NULL;
+    WHEN duplicate_object OR undefined_table OR undefined_column THEN NULL;
 END $$;
 
 DO $$
 BEGIN
-    ALTER TABLE public.products ADD CONSTRAINT chk_products_price CHECK (price >= 0);
+    ALTER TABLE public.products ADD CONSTRAINT chk_products_price CHECK (sale_price >= 0);
 EXCEPTION
-    WHEN duplicate_object OR undefined_table THEN NULL;
+    WHEN duplicate_object OR undefined_table OR undefined_column THEN NULL;
 END $$;
 
 -- inventory_movements

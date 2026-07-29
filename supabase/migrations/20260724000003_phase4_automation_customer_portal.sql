@@ -93,12 +93,12 @@ ALTER TABLE public.message_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.customer_reviews ENABLE ROW LEVEL SECURITY;
 
 -- Políticas de RLS (tenant isolation)
-CREATE POLICY "Tenant Isolation: customer_authorizations" ON public.customer_authorizations FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
-CREATE POLICY "Tenant Isolation: online_payments" ON public.online_payments FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
-CREATE POLICY "Tenant Isolation: automation_rules" ON public.automation_rules FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
-CREATE POLICY "Tenant Isolation: automation_logs" ON public.automation_logs FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
-CREATE POLICY "Tenant Isolation: message_templates" ON public.message_templates FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
-CREATE POLICY "Tenant Isolation: customer_reviews" ON public.customer_reviews FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
+CREATE POLICY "Tenant Isolation: customer_authorizations" ON public.customer_authorizations FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+CREATE POLICY "Tenant Isolation: online_payments" ON public.online_payments FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+CREATE POLICY "Tenant Isolation: automation_rules" ON public.automation_rules FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+CREATE POLICY "Tenant Isolation: automation_logs" ON public.automation_logs FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+CREATE POLICY "Tenant Isolation: message_templates" ON public.message_templates FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+CREATE POLICY "Tenant Isolation: customer_reviews" ON public.customer_reviews FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
 
 -- Índices para búsqueda rápida
 CREATE INDEX IF NOT EXISTS idx_customer_authorizations_public_token ON public.customer_authorizations(public_token);
