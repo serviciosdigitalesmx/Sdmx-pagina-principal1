@@ -5,9 +5,10 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Wallet, LogOut, ArrowRight, Loader2, DollarSign } from 'lucide-react';
+import { Wallet, LogOut, ArrowRight, Loader2, DollarSign, X } from 'lucide-react';
 import { apiGateway } from '@/services/apiGateway';
 import { toast } from 'sonner';
+import { useEscClose } from '@/hooks/useEscClose';
 
 interface ShiftModalProps {
   open: boolean;
@@ -18,6 +19,9 @@ interface ShiftModalProps {
 }
 
 export function ShiftModal({ open, onOpenChange, mode, activeShift, onSuccess }: ShiftModalProps) {
+  useEscClose(() => {
+    if (open) onOpenChange(false);
+  });
   const [loading, setLoading] = useState(false);
   const [registers, setRegisters] = useState<any[]>([]);
   const [selectedRegister, setSelectedRegister] = useState('');
@@ -102,7 +106,15 @@ export function ShiftModal({ open, onOpenChange, mode, activeShift, onSuccess }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white max-w-md p-6 rounded-2xl border border-slate-200 shadow-2xl text-slate-900">
+      <DialogContent className="bg-white max-w-md p-6 rounded-2xl border border-slate-200 shadow-2xl text-slate-900 relative">
+        <button
+          type="button"
+          onClick={() => onOpenChange(false)}
+          className="absolute top-4 right-4 rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+          aria-label="Cerrar"
+        >
+          <X className="h-5 w-5" />
+        </button>
         {mode === 'open' ? (
           <>
             <div className="flex flex-col items-center text-center">

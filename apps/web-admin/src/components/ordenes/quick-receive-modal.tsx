@@ -12,6 +12,7 @@ import {
   type CatalogFault,
   type CatalogModel,
 } from "@/services/apiGateway";
+import { useEscClose } from "@/hooks/useEscClose";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getCurrentSession } from "@/lib/session";
@@ -37,6 +38,9 @@ type Props = {
 
 export function QuickReceiveModal({ open, onOpenChange }: Props) {
   const router = useRouter();
+  useEscClose(() => {
+    if (open) onOpenChange(false);
+  });
   
   // Catálogos
   const [families, setFamilies] = useState<CatalogFamily[]>([]);
@@ -327,9 +331,19 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
               Flujo unificado. Captura equipo, cotiza y toma evidencia sin cambiar de pantalla.
             </DialogDescription>
           </div>
-          {submissionPhase === 'done' && (
-            <Badge variant="success" className="text-sm px-3 py-1">¡Completado!</Badge>
-          )}
+          <div className="flex items-center gap-3">
+            {submissionPhase === 'done' && (
+              <Badge variant="success" className="text-sm px-3 py-1">¡Completado!</Badge>
+            )}
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+              aria-label="Cerrar ventana"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* BODY - 3 COLUMNS */}
