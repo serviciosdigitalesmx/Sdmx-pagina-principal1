@@ -196,10 +196,12 @@ export default function Home() {
         <nav aria-label="Navegación principal">
           <Link href="#como-funciona">Cómo funciona</Link>
           <Link href="#producto">Producto</Link>
+          <Link href="#descargar-app">Descargar App</Link>
           <Link href="#planes">Planes</Link>
           <Link href="#preguntas">Preguntas</Link>
         </nav>
         <div className="fx-header-actions">
+          <a href="https://drive.google.com/file/d/1iXyxCtSxQbj_4GJkGGBwONcc9wuoQxlg/edit" target="_blank" rel="noopener noreferrer" className="fx-outline-button fx-button-small" style={{ borderColor: 'rgba(38,210,216,0.4)', color: '#26d2d8' }}>Descargar APK 📱</a>
           <Link href={adminLoginUrl} className="fx-login">Iniciar sesión</Link>
           <Link href={adminOnboardingUrl} className="fx-button fx-button-small">Probar gratis <Arrow /></Link>
         </div>
@@ -285,6 +287,51 @@ export default function Home() {
         </div>
       </section>
 
+      <section id="descargar-app" className="fx-apk-download-section" style={{ padding: '80px 0', background: 'linear-gradient(135deg, #091629 0%, #0d223f 100%)', borderTop: '1px solid rgba(255,255,255,0.08)', borderBottom: '1px solid rgba(255,255,255,0.08)', color: 'white' }}>
+        <div style={{ width: 'min(1240px, calc(100% - 48px))', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px', alignItems: 'center' }}>
+          <div>
+            <SectionKicker>APLICACIÓN NATIVA ANDROID</SectionKicker>
+            <h2 style={{ color: 'white', margin: '12px 0 16px', fontSize: 'clamp(32px, 4vw, 48px)', fontWeight: '600', letterSpacing: '-0.05em' }}>
+              Lleva FIXI en tu smartphone Motorola o Android 📲
+            </h2>
+            <p style={{ color: '#a0b3c6', fontSize: '16px', lineHeight: '1.6', marginBottom: '28px' }}>
+              Gestiona recepciones de equipo, estados de trabajo, catálogos y perfil de taller directamente desde la App nativa rápida e interactiva.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
+              <a 
+                href="https://drive.google.com/file/d/1iXyxCtSxQbj_4GJkGGBwONcc9wuoQxlg/edit" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="fx-button fx-button-large" 
+                style={{ background: 'linear-gradient(135deg, #257df3, #26d2d8)' }}
+              >
+                Descargar APK Directo <Arrow />
+              </a>
+              <span style={{ fontSize: '13px', color: '#6be4ea', fontWeight: '600' }}>
+                ✓ Versión Android Nativa (.apk)
+              </span>
+            </div>
+          </div>
+          <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '16px', padding: '30px', boxShadow: '0 20px 50px rgba(0,0,0,0.3)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px' }}>
+              <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'linear-gradient(135deg, #257df3, #26d2d8)', display: 'grid', placeItems: 'center', fontSize: '24px', fontWeight: 'bold', color: 'white' }}>
+                📱
+              </div>
+              <div>
+                <h3 style={{ margin: 0, color: 'white', fontSize: '18px' }}>FIXI Mobile for Android</h3>
+                <small style={{ color: '#7e96b0' }}>Versión 1.0 Native Jetpack Compose</small>
+              </div>
+            </div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '12px', color: '#c2d4e5', fontSize: '14px' }}>
+              <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><i style={{ color: '#26d2d8', fontStyle: 'normal' }}>✓</i> Recepción Express de órdenes con + FAB</li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><i style={{ color: '#26d2d8', fontStyle: 'normal' }}>✓</i> Conexión directa a Supabase y Backend</li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><i style={{ color: '#26d2d8', fontStyle: 'normal' }}>✓</i> Catálogo de familias, marcas y fallas</li>
+              <li style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><i style={{ color: '#26d2d8', fontStyle: 'normal' }}>✓</i> Actualización de estados en tiempo real</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
       <section id="planes" className="fx-pricing-section">
         <div className="fx-pricing-intro">
           <div><SectionKicker>Precios transparentes</SectionKicker><h2>Elige por capacidad,<br />no por letras chiquitas.</h2></div>
@@ -331,7 +378,7 @@ export default function Home() {
 
       <footer id="contacto" className="fx-footer">
         <div className="fx-footer-brand"><Link href="#inicio" className="fx-logo fx-logo-light"><BrandMark /><span>FIXI</span></Link><p>Software operativo para talleres de reparación.</p></div>
-        <div><p className="fx-footer-label">PRODUCTO</p><Link href="#como-funciona">Cómo funciona</Link><Link href="#producto">Plataforma</Link><Link href="#planes">Planes</Link></div>
+        <div><p className="fx-footer-label">PRODUCTO</p><Link href="#como-funciona">Cómo funciona</Link><Link href="#producto">Plataforma</Link><Link href="#descargar-app">Descargar App (APK)</Link><Link href="#planes">Planes</Link></div>
         <div><p className="fx-footer-label">ACCESO</p><Link href={adminLoginUrl}>Iniciar sesión</Link><Link href={adminOnboardingUrl}>Crear taller</Link><a href={publicUrl}>Sitio público</a></div>
         <div className="fx-footer-note"><p>Información y configuración separadas por tenant para que cada taller opere con su propia identidad.</p></div>
         <div className="fx-footer-bottom"><span>© 2026 FIXI</span><span>Hecho para talleres que quieren operar con claridad.</span></div>
