@@ -127,7 +127,11 @@ export function Sidebar({
   const sidebarContent = (
     <div className="flex h-full flex-col bg-slate-50 border-r border-slate-200">
       <div className="flex items-center justify-between border-b border-slate-200 bg-white p-4">
-        <div className="flex items-center gap-3">
+        <Link
+          href={identity?.role === 'technician' ? '/dashboard/tecnico' : '/dashboard'}
+          className="flex items-center gap-3 transition hover:opacity-80"
+          title="Ir al tablero de inicio"
+        >
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-900 shadow-sm">
             <span className="text-xs font-black text-white">{platformBrand.substring(0, 2).toUpperCase()}</span>
           </div>
@@ -136,7 +140,7 @@ export function Sidebar({
               {platformBrand.substring(0, 2)}<span className="text-sky-600">{platformBrand.substring(2)}</span>
             </span>
           )}
-        </div>
+        </Link>
         {!collapsed && (
           <button
             onClick={() => setCollapsed(true)}

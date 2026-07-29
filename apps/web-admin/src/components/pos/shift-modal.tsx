@@ -37,13 +37,25 @@ export function ShiftModal({ open, onOpenChange, mode, activeShift, onSuccess }:
   }, [open, mode]);
 
   const handleOpenShift = async () => {
-    if (!selectedRegister) {
-      toast.error('Por favor selecciona una caja.');
-      return;
-    }
+    let targetRegisterId = selectedRegister;
     setLoading(true);
     try {
-      await apiGateway.openCashShift(selectedRegister, Number(cashAmount) || 0);
+      if (!targetRegisterId) {
+        const scope = (await import('@/lib/scope')).getActiveScope();
+        if (!scope?.sucursalId) {
+          toast.error('Selecciona una sucursal activa antes de abrir caja.');
+          setLoading(false);
+          return;
+        }
+        const created = await apiGateway.createCashRegister({
+          name: registerName.trim() || 'Caja principal',
+          sucursalId: scope.sucursalId,
+        });
+        targetRegisterId = String(created.id ?? '');
+        setSelectedRegister(targetRegisterId);
+      }
+
+      await apiGateway.openCashShift(targetRegisterId, Number(cashAmount) || 0);
       toast.success('¡Caja abierta con éxito!');
       onOpenChange(false);
       onSuccess();
@@ -62,7 +74,7 @@ export function ShiftModal({ open, onOpenChange, mode, activeShift, onSuccess }:
     }
     setLoading(true);
     try {
-      const register = await apiGateway.createCashRegister({ name: registerName.trim(), sucursalId: scope.sucursalId });
+      const register = await apiGateway.createCashRegister({ name: registerName.trim() || 'Caja principal', sucursalId: scope.sucursalId });
       const next = { id: String(register.id ?? ''), name: String(register.name ?? registerName) };
       setRegisters([next]);
       setSelectedRegister(next.id);
@@ -90,51 +102,58 @@ export function ShiftModal({ open, onOpenChange, mode, activeShift, onSuccess }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white max-w-md p-6 rounded-xl border border-slate-200 shadow-lg">
+      <DialogContent className="bg-white max-w-md p-6 rounded-2xl border border-slate-200 shadow-2xl text-slate-900">
         {mode === 'open' ? (
           <>
             <div className="flex flex-col items-center text-center">
-              <div className="rounded-full bg-emerald-50 p-3 mb-4">
-                <Wallet className="h-6 w-6 text-emerald-600" />
+              <div className="rounded-full bg-emerald-100 p-3.5 mb-3 shadow-sm">
+                <Wallet className="h-7 w-7 text-emerald-700" />
               </div>
-              <DialogTitle className="text-xl font-bold text-slate-900">Apertura de Caja</DialogTitle>
-              <DialogDescription className="text-slate-500 mt-1">
-                Selecciona la caja e introduce el fondo de caja inicial.
+              <DialogTitle className="text-2xl font-bold text-slate-900">Apertura de Turno</DialogTitle>
+              <DialogDescription className="text-slate-600 mt-1 font-medium">
+                Selecciona la caja e introduce el fondo de caja inicial para operar.
               </DialogDescription>
             </div>
 
-            <div className="space-y-4 mt-6">
+            <div className="space-y-5 mt-6">
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-700">Caja Registradora</label>
-                {registers.length > 0 ? <select
-                  value={selectedRegister}
-                  onChange={(e) => setSelectedRegister(e.target.value)}
-                  className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                >
-                  {registers.map(r => (
-                    <option key={r.id} value={r.id}>{r.name}</option>
-                  ))}
-                </select> : (
-                  <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                    <p className="text-xs text-amber-900">Esta sucursal todavía no tiene caja. Créala para abrir el primer turno.</p>
-                    <Input value={registerName} onChange={(event) => setRegisterName(event.target.value)} aria-label="Nombre de la nueva caja" />
-                    <Button type="button" variant="outline" className="w-full" disabled={loading || !registerName.trim()} onClick={handleCreateRegister}>
-                      Crear caja en esta sucursal
-                    </Button>
+                <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">Caja Registradora</label>
+                {registers.length > 0 ? (
+                  <select
+                    value={selectedRegister}
+                    onChange={(e) => setSelectedRegister(e.target.value)}
+                    className="flex h-11 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                  >
+                    {registers.map(r => (
+                      <option key={r.id} value={r.id}>{r.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <div className="space-y-3 rounded-xl border border-sky-200 bg-sky-50/80 p-4">
+                    <p className="text-xs text-sky-950 font-semibold leading-relaxed">
+                      Esta sucursal aún no tiene una caja registrada. Se creará automáticamente con el nombre de abajo al presionar <strong>"Abrir Turno de Caja"</strong>.
+                    </p>
+                    <Input
+                      value={registerName}
+                      onChange={(event) => setRegisterName(event.target.value)}
+                      placeholder="Ej. Caja Principal"
+                      className="border-slate-300 bg-white text-slate-900 font-semibold h-10"
+                      aria-label="Nombre de la nueva caja"
+                    />
                   </div>
                 )}
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-700">Fondo Inicial (Efectivo)</label>
+                <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">Fondo Inicial (Efectivo)</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-bold text-base">$</span>
                   <Input
                     type="number"
                     value={cashAmount}
                     onChange={(e) => setCashAmount(e.target.value)}
                     placeholder="0.00"
-                    className="pl-7 h-10 border-slate-200 bg-white rounded-lg text-slate-900"
+                    className="pl-8 h-11 border-slate-300 bg-white rounded-xl text-slate-900 font-bold text-lg focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
                   />
                 </div>
               </div>
@@ -142,9 +161,9 @@ export function ShiftModal({ open, onOpenChange, mode, activeShift, onSuccess }:
               <Button
                 onClick={handleOpenShift}
                 disabled={loading}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg py-2.5 mt-4"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl py-3 text-base shadow-md transition-all active:scale-[0.98] mt-4"
               >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ArrowRight className="h-4 w-4 mr-2" />}
+                {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <ArrowRight className="h-5 w-5 mr-2" />}
                 Abrir Turno de Caja
               </Button>
             </div>

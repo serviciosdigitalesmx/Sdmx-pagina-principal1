@@ -11,22 +11,17 @@ create table if not exists public.pwa_push_subscriptions (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create unique index if not exists pwa_push_subscriptions_tenant_endpoint_uidx
   on public.pwa_push_subscriptions (tenant_id, endpoint);
-
 alter table public.pwa_push_subscriptions enable row level security;
-
 drop policy if exists pwa_push_subscriptions_select on public.pwa_push_subscriptions;
 create policy pwa_push_subscriptions_select
 on public.pwa_push_subscriptions
 for select
 using ((auth.jwt() ->> 'tenant_id')::uuid = tenant_id);
-
 drop policy if exists pwa_push_subscriptions_write on public.pwa_push_subscriptions;
 create policy pwa_push_subscriptions_write
 on public.pwa_push_subscriptions
 for all
 using ((auth.jwt() ->> 'tenant_id')::uuid = tenant_id)
 with check ((auth.jwt() ->> 'tenant_id')::uuid = tenant_id);
-
