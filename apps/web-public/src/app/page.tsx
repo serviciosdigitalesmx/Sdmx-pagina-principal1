@@ -201,7 +201,7 @@ export default function Home() {
           <Link href="#preguntas">Preguntas</Link>
         </nav>
         <div className="fx-header-actions">
-          <a href="https://drive.google.com/file/d/1m3J1UfeAzc7fmZIGP71pTDI44kfCwmjt/edit" target="_blank" rel="noopener noreferrer" className="fx-outline-button fx-button-small" style={{ borderColor: 'rgba(38,210,216,0.4)', color: '#26d2d8' }}>Descargar APK 📱</a>
+          <a href="/fixi-app.apk" download="fixi-app.apk" className="fx-outline-button fx-button-small" style={{ borderColor: 'rgba(38,210,216,0.4)', color: '#26d2d8' }}>Descargar APK 📱</a>
           <Link href={adminLoginUrl} className="fx-login">Iniciar sesión</Link>
           <Link href={adminOnboardingUrl} className="fx-button fx-button-small">Probar gratis <Arrow /></Link>
         </div>
@@ -299,9 +299,8 @@ export default function Home() {
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center' }}>
               <a 
-                href="https://drive.google.com/file/d/1m3J1UfeAzc7fmZIGP71pTDI44kfCwmjt/edit" 
-                target="_blank" 
-                rel="noopener noreferrer" 
+                href="/fixi-app.apk" 
+                download="fixi-app.apk" 
                 className="fx-button fx-button-large" 
                 style={{ background: 'linear-gradient(135deg, #257df3, #26d2d8)' }}
               >
