@@ -22,6 +22,7 @@ interface PhotoTask {
   file: File;
   preview: string;
   base64Compressed: string | null;
+  compressedFile?: File;
   status: UploadStatus;
 }
 

@@ -590,8 +590,8 @@ function normalizeChecklistRow(row: Partial<OrderChecklistRow> | null | undefine
 async function getRequiredChecklistFields(tenantId: string) {
   const runtimeConfig = await getCachedTenantConfig(tenantId);
   return runtimeConfig.fieldDefinitions
-    .filter((field) => field.entity === 'service_order_checklists' && field.required && field.visible !== false && CHECKLIST_FIELD_KEYS.has(field.field_key))
-    .map((field) => field.field_key);
+    .filter((field: { entity: string; required: boolean; visible?: boolean; field_key: string }) => field.entity === 'service_order_checklists' && field.required && field.visible !== false && CHECKLIST_FIELD_KEYS.has(field.field_key))
+    .map((field: { field_key: string }) => field.field_key);
 }
 
 function getMissingRequiredChecklistFields(requiredFields: string[], checklist: Partial<OrderChecklistRow>) {
@@ -852,7 +852,7 @@ async function getTenantOperationalStatuses(tenantId: string) {
   const config = await getCachedTenantConfig(tenantId);
   const statuses = config.statusOptions.service_orders ?? [];
   if (statuses.length > 0) {
-    return statuses.map((status) => ({
+    return statuses.map((status: { key: string; label?: string | null; tone?: string | null }) => ({
       key: String(status.key),
       label: String(status.label ?? status.key),
       tone: String(status.tone ?? 'zinc'),
@@ -1272,12 +1272,12 @@ export const getOrderById = async (req: Request, res: Response) => {
     }
 
     const validPayments = paymentsResult.data || [];
-    const totalCobrado = validPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+    const totalCobrado = validPayments.reduce((sum: number, p: { amount: number | string | null }) => sum + Number(p.amount), 0);
     const finalCost = Number(orderResult.data.final_cost) > 0 ? Number(orderResult.data.final_cost) : Number(orderResult.data.estimated_cost || 0);
     const saldoPendiente = Math.max(0, finalCost - totalCobrado);
     const resolvedWorkflow = resolveOrderWorkflow(runtimeConfig.workflowStatuses.filter((status) => status.workflow_key === 'service_orders'));
-    const currentWorkflowStatus = resolvedWorkflow.find((status) => status.status_key === normalizeOrderStatus(orderResult.data.status));
-    const availableTransitions = (currentWorkflowStatus?.nextStatusKeys ?? []).map((statusKey) => {
+    const currentWorkflowStatus = resolvedWorkflow.find((status: { status_key: string; nextStatusKeys?: string[] }) => status.status_key === normalizeOrderStatus(orderResult.data.status));
+    const availableTransitions = (currentWorkflowStatus?.nextStatusKeys ?? []).map((statusKey: string) => {
       const status = resolvedWorkflow.find((candidate) => candidate.status_key === statusKey);
       return {
         key: statusKey,

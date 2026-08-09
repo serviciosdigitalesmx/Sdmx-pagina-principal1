@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { resolveScope } from '../lib/resolve-scope';
 
 function isUuidLike(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -76,7 +77,8 @@ export async function validateSelectedBranch(
   }
 
   if (!requestedBranch || Array.isArray(requestedBranch)) {
-    req.scope = { ...req.scope, sucursalId: null };
+    const scope = req.scope ?? resolveScope(req);
+    req.scope = { ...scope, sucursalId: null };
     return next();
   }
 
@@ -101,7 +103,7 @@ export async function validateSelectedBranch(
   const role = req.user?.role;
   const fixedBranch = req.user?.sucursalId;
 
-  if (fixedBranch && role !== 'owner' && role !== 'admin' && fixedBranch !== branch.id) {
+  if (fixedBranch && role !== 'owner' && role !== 'manager' && fixedBranch !== branch.id) {
     return res.status(403).json({
       success: false,
       error: 'No tienes acceso a esta sucursal',
@@ -109,6 +111,7 @@ export async function validateSelectedBranch(
     });
   }
 
-  req.scope = { ...req.scope, sucursalId: branch.id };
+  const scope = req.scope ?? resolveScope(req);
+  req.scope = { ...scope, mode: 'branch', sucursalId: branch.id, requestedSucursalId: branch.id };
   next();
 }
