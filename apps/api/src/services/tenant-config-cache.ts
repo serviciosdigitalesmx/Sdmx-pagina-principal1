@@ -1,5 +1,4 @@
-import { loadTenantRuntimeConfig } from './tenant-config';
-import type { TenantRuntimeConfig } from '@white-label/types';
+import { loadTenantRuntimeConfig, type TenantRuntimeConfig } from './tenant-config';
 
 const cache = new Map<string, { data: TenantRuntimeConfig; timestamp: number }>();
 const CACHE_TTL_MS = 60 * 1000; // 1 minuto

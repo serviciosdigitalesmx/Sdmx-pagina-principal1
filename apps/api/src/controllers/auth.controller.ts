@@ -17,6 +17,17 @@ const registerSchema = z.object({
   origin: z.string().url().optional(),
 });
 
+async function enableGlobalFreeAccess(tenantId: string) {
+  const { error } = await supabaseAdmin
+    .from('tenants')
+    .update({ billing_exempt: true, plan: 'enterprise' })
+    .eq('id', tenantId);
+
+  if (error) {
+    throw error;
+  }
+}
+
 function base64Url(input: Buffer | string) {
   return Buffer.from(input).toString('base64url');
 }
@@ -261,6 +272,8 @@ export const register = async (req: Request, res: Response) => {
       throw new Error('Tenant transaction returned no data');
     }
 
+    await enableGlobalFreeAccess(tenant.tenant_id);
+
     console.log('STEP_TENANT_OBTAINED', { tenantId: tenant.tenant_id, tenantSlug });
 
     const token = await signJwt({
@@ -295,8 +308,8 @@ export const register = async (req: Request, res: Response) => {
         trialExpiresAt: tenant.trial_expires_at,
       },
       billing: {
-        subscriptionStatus: 'trial',
-        billingExempt: false,
+        subscriptionStatus: 'active',
+        billingExempt: true,
       },
       redirectUrl,
     });
@@ -402,6 +415,7 @@ export const completeGoogleRegistration = async (req: Request, res: Response) =>
   if (!tenant?.tenant_id || !tenantSlug) {
     throw new Error('Tenant transaction returned no data');
   }
+  await enableGlobalFreeAccess(tenant.tenant_id);
   console.log('STEP_GOOGLE_TENANT_OBTAINED', { tenantId: tenant.tenant_id, tenantSlug });
   const authPayload = await buildAuthPayload(
     { id: userResult.user.id, email },
@@ -418,8 +432,8 @@ export const completeGoogleRegistration = async (req: Request, res: Response) =>
         trialExpiresAt: tenant.trial_expires_at,
       },
       billing: {
-        subscriptionStatus: 'trial',
-        billingExempt: false,
+        subscriptionStatus: 'active',
+        billingExempt: true,
       },
       redirectUrl: `${appUrl}/onboarding/success?tenant=${encodeURIComponent(tenantSlug)}&token=${encodeURIComponent(authPayload.token)}`,
     });
@@ -471,7 +485,7 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
       return res.status(401).json({ error: error?.message ?? 'Unable to validate session' });
     }
 
-    const { data: userRow, error: userRowError } = await supabaseAdmin
+    let { data: userRow, error: userRowError } = await supabaseAdmin
       .from('users')
       .select('id, tenant_id, role, sucursal_id, activo, is_active')
       .eq('auth_user_id', data.user.id)
@@ -488,8 +502,83 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
       return res.status(502).json({ error: userRowError.message });
     }
 
-    if (!userRow?.tenant_id) {
-      return res.status(404).json({ error: 'Tenant not found for authenticated user' });
+    // CANON RULE: If an authenticated user has no tenant linked, auto-create a tenant & sucursal immediately
+    if (!userRow || !userRow.tenant_id) {
+      console.log("AUTO_PROVISION_TENANT_API_START", {
+        userId: data.user.id,
+        email: data.user.email,
+      });
+
+      const userMeta = data.user.user_metadata || {};
+      const userEmail = data.user.email || `user_${data.user.id.slice(0, 8)}@fixi.local`;
+      const workshopName = userMeta.workshop_name || userMeta.full_name || (userEmail.includes('@') ? `Taller de ${userEmail.split('@')[0]}` : 'Mi Taller FIXI');
+      const phone = userMeta.phone || data.user.phone || '5555555555';
+      const address = userMeta.address || 'Matriz Principal';
+
+      const { data: autoTenantRows, error: autoTenantErr } = await supabaseAdmin.rpc('create_tenant_transaction', {
+        p_user_id: data.user.id,
+        p_workshop_name: workshopName,
+        p_slug_base: workshopName,
+        p_email: userEmail,
+        p_phone: phone,
+        p_address: address,
+        p_google_maps_url: null,
+      });
+
+      if (autoTenantErr) {
+        console.error("AUTO_PROVISION_TENANT_FAILED", autoTenantErr);
+        return res.status(500).json({ error: `Error creando tenant automático: ${autoTenantErr.message}` });
+      }
+
+      const autoTenant = Array.isArray(autoTenantRows) ? autoTenantRows[0] : autoTenantRows;
+      if (!autoTenant?.tenant_id) {
+        return res.status(500).json({ error: 'No se pudo obtener el tenant automático' });
+      }
+
+      await enableGlobalFreeAccess(autoTenant.tenant_id);
+
+      const { data: refreshedUserRow, error: refreshErr } = await supabaseAdmin
+        .from('users')
+        .select('id, tenant_id, role, sucursal_id, activo, is_active')
+        .eq('auth_user_id', data.user.id)
+        .maybeSingle();
+
+      if (refreshErr || !refreshedUserRow?.tenant_id) {
+        return res.status(500).json({ error: 'No se pudo vincular el usuario al tenant automático' });
+      }
+
+      userRow = refreshedUserRow;
+    }
+
+    // Ensure user has a default sucursal assigned
+    if (userRow.tenant_id && !userRow.sucursal_id) {
+      const { data: existingBranch } = await supabaseAdmin
+        .from('sucursales')
+        .select('id')
+        .eq('tenant_id', userRow.tenant_id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (existingBranch) {
+        userRow.sucursal_id = existingBranch.id;
+        await supabaseAdmin.from('users').update({ sucursal_id: existingBranch.id }).eq('id', userRow.id);
+      } else {
+        const { data: createdBranch } = await supabaseAdmin
+          .from('sucursales')
+          .insert({
+            tenant_id: userRow.tenant_id,
+            name: 'Matriz Principal',
+            address: 'Sucursal Principal',
+            is_active: true,
+          })
+          .select('id')
+          .single();
+
+        if (createdBranch) {
+          userRow.sucursal_id = createdBranch.id;
+          await supabaseAdmin.from('users').update({ sucursal_id: createdBranch.id }).eq('id', userRow.id);
+        }
+      }
     }
 
     if (!(userRow.activo ?? userRow.is_active ?? true)) {

@@ -6,6 +6,7 @@ import { Badge, SurfaceCard } from '@white-label/ui';
 import { financeService } from '@/services/finance/financeService';
 import { ordersService } from '@/services/orders/ordersService';
 import { getActiveScope } from '@/lib/scope';
+import { getCurrentSession } from '@/lib/session';
 import { AdjustmentModal } from '@/components/dashboard/finanzas/adjustment-modal';
 import type { FinanceBalance, Order } from '@/types';
 
@@ -43,8 +44,9 @@ export default function FinanzasPage() {
   const refresh = async () => {
     setLoading(true);
     try {
-      const [balance, orderRows] = await Promise.all([
-        financeService.getBalance(),
+      const isOwner = getCurrentSession()?.role === 'owner';
+      const [balance, orderResult] = await Promise.all([
+        isOwner ? financeService.getBalance() : Promise.resolve([]),
         ordersService.getOrders(),
       ]);
 
@@ -57,7 +59,7 @@ export default function FinanzasPage() {
         created_at: String(row.created_at ?? new Date().toISOString()),
         type: row.type,
       })));
-      setOrders((orderRows as unknown as Order[]).map((row) => ({
+      setOrders((orderResult.data as unknown as Order[]).map((row) => ({
         ...row,
         estimated_cost: Number(row.estimated_cost ?? 0),
         final_cost: Number(row.final_cost ?? 0),

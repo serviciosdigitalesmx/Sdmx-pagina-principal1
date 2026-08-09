@@ -90,6 +90,7 @@ export function logout() {
     window.localStorage.removeItem('srf_user');
     window.localStorage.removeItem('srf_tenant');
     window.localStorage.removeItem('srf_sucursal_activa');
+    window.sessionStorage.removeItem('srf_sucursal_activa');
     window.location.href = '/login';
   }
 }

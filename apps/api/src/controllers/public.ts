@@ -660,11 +660,11 @@ export async function getPublicPortalOrder(req: Request, res: Response) {
       .from('service_orders')
       .select('id, tenant_id, folio, status, created_at, updated_at, promised_date, device_info, problem_description, serial_number, receipt_url, estimated_cost, final_cost, metadata')
       .eq('tenant_id', tenant.id)
-      .or(`folio.eq.${searchValue},public_token.eq.${searchValue}`)
+      .eq('public_token', searchValue)
       .maybeSingle();
 
     if (error || !data) {
-      return res.status(404).json({ error: 'No encontramos una orden con ese folio', details: error?.message });
+      return res.status(404).json({ error: 'No encontramos una orden con ese acceso', details: error?.message });
     }
 
     const { data: documents, error: documentsError } = await fetchPublicVisibleOrderDocuments(

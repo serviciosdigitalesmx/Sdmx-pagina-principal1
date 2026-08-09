@@ -1,9 +1,7 @@
 alter table if exists public.customers
   add column if not exists sucursal_id uuid;
-
 create index if not exists customers_tenant_sucursal_idx
   on public.customers (tenant_id, sucursal_id);
-
 do $$
 begin
   if to_regclass('public.sucursales') is not null then

@@ -91,14 +91,24 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           >
             <Menu className="h-5 w-5" />
           </button>
+          <Link
+            href={user.role === 'technician' ? '/dashboard/tecnico' : '/dashboard'}
+            className="flex items-center gap-2 rounded-xl px-2 py-1 transition hover:bg-slate-100"
+            title="Ir al tablero de inicio"
+          >
+            <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-slate-900 text-xs font-black text-white shadow-sm">
+              FX
+            </div>
+            <span className="text-base font-extrabold tracking-tight text-slate-900">FIXI</span>
+          </Link>
           <BranchSelector />
           <Link
-            href="/dashboard"
+            href={user.role === 'technician' ? '/dashboard/tecnico' : '/dashboard'}
             className="hidden items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 md:inline-flex"
-            title="Volver al hub"
+            title="Volver al tablero"
           >
             <Building2 className="h-4 w-4 text-slate-900" />
-            Hub
+            Tablero
           </Link>
         </div>
 

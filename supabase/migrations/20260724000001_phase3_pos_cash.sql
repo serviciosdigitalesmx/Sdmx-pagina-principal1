@@ -81,16 +81,16 @@ ALTER TABLE public.sale_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cash_shift_expenses ENABLE ROW LEVEL SECURITY;
 
 -- Políticas de RLS (tenant isolation)
-CREATE POLICY "Tenant Isolation: cash_registers" ON public.cash_registers FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
-CREATE POLICY "Tenant Isolation: cash_shifts" ON public.cash_shifts FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
-CREATE POLICY "Tenant Isolation: sales" ON public.sales FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
+CREATE POLICY "Tenant Isolation: cash_registers" ON public.cash_registers FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+CREATE POLICY "Tenant Isolation: cash_shifts" ON public.cash_shifts FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+CREATE POLICY "Tenant Isolation: sales" ON public.sales FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
 CREATE POLICY "Tenant Isolation: sale_items" ON public.sale_items FOR ALL USING (
   EXISTS (
     SELECT 1 FROM public.sales s 
-    WHERE s.id = sale_items.sale_id AND s.tenant_id = auth.jwt()->>'tenant_id'::uuid
+    WHERE s.id = sale_items.sale_id AND s.tenant_id = (auth.jwt()->>'tenant_id')::uuid
   )
 );
-CREATE POLICY "Tenant Isolation: cash_shift_expenses" ON public.cash_shift_expenses FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
+CREATE POLICY "Tenant Isolation: cash_shift_expenses" ON public.cash_shift_expenses FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
 
 -- Índices de Rendimiento
 CREATE INDEX IF NOT EXISTS idx_cash_registers_tenant_sucursal ON public.cash_registers(tenant_id, sucursal_id);

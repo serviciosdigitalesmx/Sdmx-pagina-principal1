@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { X } from "lucide-react";
 import { DynamicFields, type DynamicFieldDefinition } from "@white-label/ui";
 import { getAssetLabel, getConfirmActionLabel, getCreatedSuccessLabel, getCustomerLabel, getNewEntityLabel } from "@/lib/labels";
 
@@ -150,20 +151,37 @@ export function OrderIntakeModal({
     stepThreeComplete && !estimatedCostValid ? "Costo estimado inválido" : null,
   ].filter(Boolean) as string[];
 
+  useEffect(() => {
+    if (!onClose) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-sm animate-in fade-in duration-200"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && onClose) {
+          onClose();
+        }
+      }}
+    >
       <div className="mx-auto flex h-full w-full max-w-[1180px] flex-col overflow-hidden border border-sky-500/10 bg-[linear-gradient(180deg,rgba(13,18,32,0.98),rgba(10,14,24,0.96))] shadow-[0_24px_90px_rgba(15,23,42,0.28)]">
         <div className="flex items-center justify-between border-b border-sky-500/10 px-6 py-5">
           <div>
             <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Recepción</p>
             <h2 className="text-[2rem] font-semibold leading-none text-zinc-50">Nueva recepción</h2>
           </div>
-          <div className="flex gap-3">
-            <button type="button" onClick={() => document.documentElement.requestFullscreen().catch(() => undefined)} className="rounded-2xl border border-zinc-700/80 bg-slate-950 px-4 py-3 text-sm font-semibold text-zinc-100">
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => document.documentElement.requestFullscreen().catch(() => undefined)} className="rounded-2xl border border-zinc-700/80 bg-slate-950 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-slate-900">
               Pantalla completa
             </button>
-            <button type="button" onClick={onClose} className="rounded-2xl border border-zinc-700/80 bg-slate-950 px-4 py-3 text-sm font-semibold text-zinc-100">
-              Cerrar
+            <button type="button" onClick={onClose} className="flex items-center gap-1.5 rounded-2xl border border-zinc-700/80 bg-slate-950 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-slate-900" title="Cerrar (Esc)">
+              <X className="h-4 w-4" />
+              <span>Cerrar</span>
             </button>
           </div>
         </div>

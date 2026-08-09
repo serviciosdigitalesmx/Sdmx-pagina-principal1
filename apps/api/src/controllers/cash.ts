@@ -4,17 +4,59 @@ import { z } from 'zod';
 import { requireScopedBranch } from '../lib/require-scoped-branch';
 
 // Helper to get active shift
-async function findActiveShift(supabase: any, tenantId: string, userId: string) {
+async function findActiveShift(supabase: any, tenantId: string, userId: string, sucursalId?: string) {
+  const select = sucursalId
+    ? '*, cash_registers!inner(id, name, sucursal_id)'
+    : '*, cash_registers(id, name, sucursal_id)';
   const { data: shift, error } = await supabase
     .from('cash_shifts')
-    .select('*, cash_registers(id, name, sucursal_id)')
+    .select(select)
     .eq('tenant_id', tenantId)
     .eq('opened_by', userId)
     .eq('status', 'open')
+    .match(sucursalId ? { 'cash_registers.sucursal_id': sucursalId } : {})
     .maybeSingle();
 
   if (error) return null;
   return shift;
+}
+
+const createRegisterSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  sucursalId: z.string().uuid(),
+});
+
+export async function createRegister(req: Request, res: Response) {
+  const tenantId = req.tenantId;
+  if (!tenantId) return res.status(401).json({ success: false, error: 'Tenant requerido' });
+  if (req.user?.role !== 'owner' && req.user?.role !== 'manager') {
+    return res.status(403).json({ success: false, error: 'Permisos insuficientes' });
+  }
+
+  const parsed = createRegisterSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ success: false, error: 'Datos de caja inválidos', details: parsed.error.flatten() });
+  }
+
+  const sucursalId = requireScopedBranch(req);
+  if (parsed.data.sucursalId !== sucursalId) {
+    return res.status(403).json({ success: false, error: 'La caja debe pertenecer a la sucursal activa' });
+  }
+
+  const supabase = getTenantClient(tenantId);
+  const { data, error } = await supabase
+    .from('cash_registers')
+    .insert({ tenant_id: tenantId, sucursal_id: sucursalId, name: parsed.data.name, is_active: true })
+    .select('*')
+    .single();
+
+  if (error) {
+    if (error.code === '23505') {
+      return res.status(409).json({ success: false, error: 'Ya existe una caja activa con ese nombre' });
+    }
+    return res.status(502).json({ success: false, error: 'No se pudo crear la caja', details: error.message });
+  }
+  return res.status(201).json({ success: true, data });
 }
 
 // 1. GET /api/cash/registers
@@ -56,9 +98,21 @@ export async function openShift(req: Request, res: Response) {
   if (!cashRegisterId) return res.status(400).json({ error: 'cashRegisterId is required' });
 
   const supabase = getTenantClient(tenantId);
+  const sucursalId = requireScopedBranch(req);
+
+  const { data: register, error: registerError } = await supabase
+    .from('cash_registers')
+    .select('id')
+    .eq('tenant_id', tenantId)
+    .eq('sucursal_id', sucursalId)
+    .eq('id', cashRegisterId)
+    .eq('is_active', true)
+    .maybeSingle();
+  if (registerError) return res.status(502).json({ error: 'No se pudo validar la caja', details: registerError.message });
+  if (!register) return res.status(404).json({ error: 'Caja no encontrada en la sucursal activa' });
 
   // Check if user already has an active shift
-  const existingActive = await findActiveShift(supabase, tenantId, userId);
+  const existingActive = await findActiveShift(supabase, tenantId, userId, sucursalId);
   if (existingActive) {
     return res.status(400).json({ error: 'Ya tienes un turno de caja abierto.' });
   }
@@ -88,7 +142,8 @@ export async function getActiveShift(req: Request, res: Response) {
   if (!userId) return res.status(401).json({ error: 'User unauthorized' });
 
   const supabase = getTenantClient(tenantId);
-  const activeShift = await findActiveShift(supabase, tenantId, userId);
+  const sucursalId = requireScopedBranch(req);
+  const activeShift = await findActiveShift(supabase, tenantId, userId, sucursalId);
 
   return res.json(activeShift || null);
 }

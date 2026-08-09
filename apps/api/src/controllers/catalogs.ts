@@ -143,6 +143,15 @@ const createInventorySchema = z.object({
   sku: z.string().min(1),
   description: z.string().min(1).optional(),
   name: z.string().min(1).optional(),
+  category: z.string().nullable().optional(),
+  brand: z.string().nullable().optional(),
+  cost: z.coerce.number().nonnegative().optional(),
+  sale_price: z.coerce.number().nonnegative().optional(),
+  minimum_stock: z.coerce.number().nonnegative().optional(),
+  unit: z.string().nullable().optional(),
+  location: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  is_active: z.boolean().optional(),
   stock: z.coerce.number().nonnegative().optional(),
   stock_current: z.coerce.number().nonnegative().optional(),
   sucursalId: z.string().min(1).optional(),
@@ -158,6 +167,15 @@ const createInventorySchema = z.object({
 const updateInventorySchema = z.object({
   description: z.string().min(1).optional(),
   name: z.string().min(1).optional(),
+  category: z.string().nullable().optional(),
+  brand: z.string().nullable().optional(),
+  cost: z.coerce.number().nonnegative().optional(),
+  sale_price: z.coerce.number().nonnegative().optional(),
+  minimum_stock: z.coerce.number().nonnegative().optional(),
+  unit: z.string().nullable().optional(),
+  location: z.string().nullable().optional(),
+  notes: z.string().nullable().optional(),
+  is_active: z.boolean().optional(),
   stock: z.coerce.number().nonnegative().optional(),
   stock_current: z.coerce.number().nonnegative().optional(),
   sucursalId: z.string().min(1).optional().nullable(),
@@ -171,6 +189,7 @@ const transferInventorySchema = z.object({
   cantidad: z.coerce.number().int().positive(),
   motivo: z.string().optional().or(z.literal('')),
   notas: z.string().optional().or(z.literal('')),
+  idempotencyKey: z.string().min(12).max(200),
 });
 
 function isUuid(value: unknown) {
@@ -191,6 +210,17 @@ async function ensureProductCatalogRecord(
   sku: string,
   name: string,
   description?: string | null,
+  metadata?: {
+    category?: string | null;
+    brand?: string | null;
+    cost?: number;
+    sale_price?: number;
+    minimum_stock?: number;
+    unit?: string | null;
+    location?: string | null;
+    notes?: string | null;
+    is_active?: boolean;
+  },
 ) {
   const { data: existingProduct, error: existingProductError } = await supabase
     .from('products')
@@ -213,17 +243,17 @@ async function ensureProductCatalogRecord(
       tenant_id: tenantId,
       sku,
       name,
-      category: null,
-      brand: null,
+      category: metadata?.category ?? null,
+      brand: metadata?.brand ?? null,
       compatible_model: null,
       primary_supplier_id: null,
-      cost: 0,
-      sale_price: 0,
-      minimum_stock: 0,
-      unit: null,
-      location: null,
-      notes: description ?? null,
-      is_active: true,
+      cost: metadata?.cost ?? 0,
+      sale_price: metadata?.sale_price ?? 0,
+      minimum_stock: metadata?.minimum_stock ?? 0,
+      unit: metadata?.unit ?? null,
+      location: metadata?.location ?? null,
+      notes: metadata?.notes ?? description ?? null,
+      is_active: metadata?.is_active ?? true,
     }])
     .select('id, tenant_id, sku, name')
     .single();
@@ -291,7 +321,7 @@ async function persistInventoryStock(
 
   const movementPayload = {
     tenant_id: tenantId,
-    branch_id: sucursalId,
+    sucursal_id: sucursalId,
     product_id: productId,
     movement_type: 'adjustment',
     quantity: stock,
@@ -628,7 +658,7 @@ export const listInventory = async (req: Request, res: Response) => {
 
     let query = supabase
       .from('sucursal_inventory')
-      .select('id, tenant_id, sucursal_id, product_id, stock_current, created_at, updated_at, products:product_id (id, sku, name, minimum_stock)')
+      .select('id, tenant_id, sucursal_id, product_id, stock_current, created_at, updated_at, products:product_id (id, sku, name, category, brand, cost, sale_price, minimum_stock)')
       .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
       .limit(100);
@@ -643,7 +673,7 @@ export const listInventory = async (req: Request, res: Response) => {
     const rows = Array.isArray(data) ? data : [];
     const productIds = rows.map((row) => String((row as { product_id?: string }).product_id ?? '')).filter(Boolean);
     const { data: products, error: productsError } = productIds.length > 0
-      ? await supabase.from('products').select('id, sku, name, tenant_id').eq('tenant_id', tenantId).in('id', productIds)
+      ? await supabase.from('products').select('id, sku, name, category, brand, cost, sale_price, minimum_stock, tenant_id').eq('tenant_id', tenantId).in('id', productIds)
       : { data: [], error: null };
 
     if (productsError) {
@@ -658,6 +688,11 @@ export const listInventory = async (req: Request, res: Response) => {
         sku: product?.sku ?? null,
         name: product?.name ?? null,
         description: product?.name ?? null,
+        category: product?.category ?? null,
+        brand: product?.brand ?? null,
+        cost: Number(product?.cost ?? 0),
+        sale_price: Number(product?.sale_price ?? 0),
+        minimum_stock: Number(product?.minimum_stock ?? 0),
         stock_current: Number((row as { stock_current?: number }).stock_current ?? 0),
         stock: Number((row as { stock_current?: number }).stock_current ?? 0),
       };
@@ -691,7 +726,17 @@ export const createInventoryItem = async (req: Request, res: Response) => {
 
     const resolvedDescription = resolveInventoryDescription(body);
     const resolvedStock = resolveInventoryStock(body);
-    const productRow = await ensureProductCatalogRecord(supabase, tenantId, body.sku, resolvedDescription, resolvedDescription);
+    const productRow = await ensureProductCatalogRecord(supabase, tenantId, body.sku, resolvedDescription, resolvedDescription, {
+      category: body.category,
+      brand: body.brand,
+      cost: body.cost,
+      sale_price: body.sale_price,
+      minimum_stock: body.minimum_stock,
+      unit: body.unit,
+      location: body.location,
+      notes: body.notes,
+      is_active: body.is_active,
+    });
     const resolvedSucursalId = body.sucursalId ?? scope?.sucursalId ?? null;
     const changedBy = req.user?.userId ?? req.user?.sub ?? null;
     if (scope?.mode === 'branch' && !resolvedSucursalId) {
@@ -781,6 +826,29 @@ export const updateInventoryItem = async (req: Request, res: Response) => {
 
     if (productError || !productRow) {
       return res.status(404).json({ error: 'Product not found for inventory row', details: productError?.message ?? 'Not found' });
+    }
+
+    const productChanges = {
+      ...(body.name !== undefined ? { name: body.name } : {}),
+      ...(body.category !== undefined ? { category: body.category } : {}),
+      ...(body.brand !== undefined ? { brand: body.brand } : {}),
+      ...(body.cost !== undefined ? { cost: body.cost } : {}),
+      ...(body.sale_price !== undefined ? { sale_price: body.sale_price } : {}),
+      ...(body.minimum_stock !== undefined ? { minimum_stock: body.minimum_stock } : {}),
+      ...(body.unit !== undefined ? { unit: body.unit } : {}),
+      ...(body.location !== undefined ? { location: body.location } : {}),
+      ...(body.notes !== undefined ? { notes: body.notes } : {}),
+      ...(body.is_active !== undefined ? { is_active: body.is_active } : {}),
+    };
+    if (Object.keys(productChanges).length > 0) {
+      const { error: productUpdateError } = await supabase
+        .from('products')
+        .update(productChanges)
+        .eq('tenant_id', tenantId)
+        .eq('id', productRow.id);
+      if (productUpdateError) {
+        return res.status(502).json({ error: 'Failed to update product', details: productUpdateError.message });
+      }
     }
 
     const effectiveSucursalId = scope?.mode === 'branch' ? (scope.sucursalId ?? currentRow.sucursal_id ?? nextSucursalId) : nextSucursalId;
@@ -901,127 +969,42 @@ export const transferInventoryItem = async (req: Request, res: Response) => {
 
     const body = transferInventorySchema.parse(req.body);
     const supabase = getTenantClient(tenantId);
-    const scope = req.scope;
-
-    const { data: productRow, error: productError } = await supabase
-      .from('products')
-      .select('id, tenant_id, sku, name')
-      .eq('tenant_id', tenantId)
-      .eq('sku', body.sku)
-      .maybeSingle();
-
-    if (productError || !productRow) {
-      return res.status(404).json({ error: 'Product not found', details: productError?.message ?? 'Not found' });
-    }
-
-    const [{ data: originProduct, error: originProductError }, { data: destinationProduct, error: destinationProductError }] = await Promise.all([
-      supabase
-        .from('sucursal_inventory')
-        .select('id, tenant_id, sucursal_id, product_id, stock_current')
-        .eq('tenant_id', tenantId)
-        .eq('sucursal_id', body.sucursalOrigen)
-        .eq('product_id', productRow.id)
-        .maybeSingle(),
-      supabase
-        .from('sucursal_inventory')
-        .select('id, tenant_id, sucursal_id, product_id, stock_current')
-        .eq('tenant_id', tenantId)
-        .eq('sucursal_id', body.sucursalDestino)
-        .eq('product_id', productRow.id)
-        .maybeSingle(),
-    ]);
-
-    if (originProductError) {
-      return res.status(502).json({ error: 'Failed to load origin inventory', details: originProductError.message });
-    }
-    if (destinationProductError) {
-      return res.status(502).json({ error: 'Failed to load destination inventory', details: destinationProductError.message });
-    }
-
-    if (!originProduct) {
-      return res.status(404).json({ error: 'Origin inventory item not found' });
-    }
-
-    if (Number(originProduct.stock_current ?? 0) < body.cantidad) {
-      return res.status(409).json({ error: 'Insufficient stock at origin' });
-    }
-
-    const originNextStock = Number(originProduct.stock_current ?? 0) - body.cantidad;
-    const destinationBaseStock = Number(destinationProduct?.stock_current ?? 0);
-    const destinationNextStock = destinationBaseStock + body.cantidad;
-    const reference = body.motivo?.trim() || `transfer_${body.sku}`;
-    const notes = body.notas?.trim() || null;
     const changedBy = req.user?.userId ?? req.user?.sub ?? null;
+    const { data, error: transferError } = await supabase.rpc('transfer_inventory_transaction', {
+      p_tenant_id: tenantId,
+      p_sku: body.sku,
+      p_sucursal_origen: body.sucursalOrigen,
+      p_sucursal_destino: body.sucursalDestino,
+      p_cantidad: body.cantidad,
+      p_idempotency_key: body.idempotencyKey,
+      p_changed_by: changedBy,
+      p_motivo: body.motivo?.trim() || null,
+      p_notas: body.notas?.trim() || null,
+    });
 
-    const { error: originUpdateError } = await supabase
-      .from('sucursal_inventory')
-      .update({ stock_current: originNextStock })
-      .eq('tenant_id', tenantId)
-      .eq('id', originProduct.id);
-
-    if (originUpdateError) {
-      return res.status(502).json({ error: 'Failed to update origin stock', details: originUpdateError.message });
+    if (transferError) {
+      const message = transferError.message ?? '';
+      if (message.includes('TRANSFER_PRODUCT_NOT_FOUND') || message.includes('TRANSFER_ORIGIN_NOT_FOUND') || message.includes('TRANSFER_BRANCH_NOT_FOUND')) {
+        return res.status(404).json({ error: 'Transfer resource not found', details: message });
+      }
+      if (message.includes('TRANSFER_INSUFFICIENT_STOCK')) {
+        return res.status(409).json({ error: 'Insufficient stock at origin', details: message });
+      }
+      if (message.includes('TRANSFER_')) {
+        return res.status(400).json({ error: 'Invalid transfer', details: message });
+      }
+      return res.status(502).json({ error: 'Failed to transfer inventory', details: message });
     }
 
-    const { data: destinationRow, error: destinationUpsertError } = await supabase
-      .from('sucursal_inventory')
-      .upsert([{
-        tenant_id: tenantId,
-        sucursal_id: body.sucursalDestino,
-        product_id: productRow.id,
-        stock_current: destinationNextStock,
-      }], { onConflict: 'tenant_id,sucursal_id,product_id' })
-      .select('id, tenant_id, sucursal_id, product_id, stock_current, created_at, updated_at')
-      .single();
-
-    if (destinationUpsertError || !destinationRow) {
-      return res.status(502).json({ error: 'Failed to update destination stock', details: destinationUpsertError?.message ?? 'Unable to persist transfer' });
+    const result = data as { product_id?: string; origin_stock?: number; destination_stock?: number } | null;
+    if (result?.product_id) {
+      await refreshInventoryAlert(tenantId, result.product_id, body.sucursalOrigen, Number(result.origin_stock ?? 0));
+      await refreshInventoryAlert(tenantId, result.product_id, body.sucursalDestino, Number(result.destination_stock ?? 0));
     }
-
-    const movementRows = [
-      {
-        tenant_id: tenantId,
-        sucursal_id: body.sucursalOrigen,
-        product_id: productRow.id,
-        movement_type: 'transfer_out',
-        quantity: -body.cantidad,
-        unit_cost: 0,
-        reference,
-        notes,
-        created_by: changedBy,
-      },
-      {
-        tenant_id: tenantId,
-        sucursal_id: body.sucursalDestino,
-        product_id: productRow.id,
-        movement_type: 'transfer_in',
-        quantity: body.cantidad,
-        unit_cost: 0,
-        reference,
-        notes,
-        created_by: changedBy,
-      },
-    ];
-
-    const { error: movementError } = await supabase.from('inventory_movements').insert(movementRows);
-    if (movementError) {
-      return res.status(502).json({ error: 'Failed to persist transfer movements', details: movementError.message });
-    }
-
-    await refreshInventoryAlert(tenantId, productRow.id, body.sucursalOrigen, originNextStock);
-    await refreshInventoryAlert(tenantId, productRow.id, body.sucursalDestino, destinationNextStock);
 
     return res.status(201).json({
       success: true,
-      data: {
-        product: productRow,
-        origin: originProduct,
-        destination: destinationRow,
-        moved: body.cantidad,
-        reference,
-        notes,
-        scope: scope?.mode ?? null,
-      },
+      data,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

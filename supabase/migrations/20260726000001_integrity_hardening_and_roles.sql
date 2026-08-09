@@ -48,8 +48,13 @@ CHECK (amount > 0);
 CREATE INDEX IF NOT EXISTS idx_service_orders_tenant_status_created
 ON public.service_orders (tenant_id, status, created_at DESC);
 
-CREATE INDEX IF NOT EXISTS idx_customer_payments_order_status
-ON public.customer_payments (tenant_id, service_order_id, status);
+DO $$
+BEGIN
+  CREATE INDEX IF NOT EXISTS idx_customer_payments_order_status
+  ON public.customer_payments (tenant_id, service_order_id, status);
+EXCEPTION
+  WHEN undefined_column OR undefined_table THEN NULL;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_automation_logs_tenant_created
 ON public.automation_logs (tenant_id, created_at DESC);
@@ -95,4 +100,4 @@ CREATE TABLE IF NOT EXISTS public.tenant_role_permissions (
 
 ALTER TABLE public.tenant_role_permissions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Tenant Isolation: tenant_role_permissions" ON public.tenant_role_permissions FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
+CREATE POLICY "Tenant Isolation: tenant_role_permissions" ON public.tenant_role_permissions FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);

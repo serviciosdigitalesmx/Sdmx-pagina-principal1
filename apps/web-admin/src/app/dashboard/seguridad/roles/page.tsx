@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Shield, Save, Loader2, Info } from 'lucide-react';
 import { SurfaceCard } from '@white-label/ui';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { apiGateway } from '@/services/apiGateway';
 
 const MODULES = [
   { id: 'finances', name: 'Finanzas y Costos', desc: 'Ver costos de refacciones y ganancias netas' },
@@ -20,12 +21,34 @@ const ROLES = [
 
 export default function RolesPage() {
   const [loading, setLoading] = useState(false);
-  
-  // Default mock state for the permissions matrix
   const [permissions, setPermissions] = useState<Record<string, Record<string, boolean>>>({
-    manager: { finances: true, inventory: true, orders_delete: true, reports: true },
-    technician: { finances: false, inventory: false, orders_delete: false, reports: false },
+    manager: {},
+    technician: {},
   });
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    Promise.all([
+      apiGateway.getTenantRolePermissions('manager'),
+      apiGateway.getTenantRolePermissions('technician'),
+    ])
+      .then(([manager, technician]) => {
+        if (!active) return;
+        setPermissions((current) => ({
+          manager: { ...current.manager, ...manager },
+          technician: { ...current.technician, ...technician },
+        }));
+      })
+      .catch((error) => toast.error(error instanceof Error ? error.message : 'No se pudieron cargar los permisos'))
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const togglePermission = (role: string, modId: string) => {
     setPermissions(prev => ({
@@ -39,11 +62,17 @@ export default function RolesPage() {
 
   const handleSave = async () => {
     setLoading(true);
-    // Simulate API call to save settings/overrides
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await Promise.all([
+        apiGateway.updateTenantRolePermissions('manager', permissions.manager),
+        apiGateway.updateTenantRolePermissions('technician', permissions.technician),
+      ]);
       toast.success('Permisos personalizados guardados para este taller.');
-    }, 1000);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'No se pudieron guardar los permisos');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

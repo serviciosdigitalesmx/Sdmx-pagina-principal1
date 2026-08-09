@@ -6,12 +6,9 @@
 
 alter table public.service_orders
   drop constraint if exists service_orders_total_cost_check;
-
 drop view if exists public.view_service_orders_detail;
-
 alter table public.service_orders
   drop column if exists total_cost;
-
 create or replace view "public"."view_service_orders_detail" as  SELECT so.id,
     so.created_at,
     so.status,

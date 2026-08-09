@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS public.catalog_checklists (
 ALTER TABLE public.catalog_checklists ENABLE ROW LEVEL SECURITY;
 
 -- Política de RLS (tenant isolation)
-CREATE POLICY "Tenant Isolation: catalog_checklists" ON public.catalog_checklists FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
+CREATE POLICY "Tenant Isolation: catalog_checklists" ON public.catalog_checklists FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
 
 -- Índices de Rendimiento
 CREATE INDEX IF NOT EXISTS idx_catalog_checklists_family ON public.catalog_checklists(tenant_id, family_id);

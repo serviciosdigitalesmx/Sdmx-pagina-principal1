@@ -4,8 +4,8 @@ import { useMemo, useState, useEffect, useCallback, type FormEvent } from "react
 import Link from "next/link";
 import Image from "next/image";
 import { getTenantLanding } from "@/lib/api/tenant";
-import { getOrderByFolio, getPortalOrderByToken } from "@/lib/api/orders";
-import { normalizeOrderDetail, normalizePortalOrderDetail } from "@/lib/utils/normalizers";
+import { getPortalOrderByToken } from "@/lib/api/orders";
+import { normalizePortalOrderDetail } from "@/lib/utils/normalizers";
 import type { NormalizedAttachment, NormalizedDocument, NormalizedOrderDetail, Tenant } from "@/lib/types";
 import { TenantBrandingProvider } from "@/lib/theme/tenant-branding-provider";
 import { OrderTimeline } from "@/components/portal/order-timeline";
@@ -49,11 +49,7 @@ type PortalViewProps = {
   initialLookupMode?: "auto" | "folio" | "token";
 };
 
-function looksLikePublicToken(value: string) {
-  return value.trim().length >= 24;
-}
-
-function resolveLookupError(error: unknown, lookupMode: "folio" | "token") {
+function resolveLookupError(error: unknown) {
   if (isApiError(error)) {
     const normalizedMessage = error.message.toLowerCase();
 
@@ -62,9 +58,7 @@ function resolveLookupError(error: unknown, lookupMode: "folio" | "token") {
     }
 
     if (error.status === 404) {
-      return lookupMode === "token"
-        ? "El enlace de acceso no es válido o ya no corresponde a una orden pública."
-        : "No encontramos una orden con ese folio en este taller.";
+      return "El enlace de acceso no es válido o ya no corresponde a una orden pública.";
     }
 
     if (error.status === 403) {
@@ -128,39 +122,17 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
       setLoading(true);
       setError(null);
       setHasSearched(true);
-      const effectiveLookupMode = lookupMode === "token" || (lookupMode === "auto" && looksLikePublicToken(searchValue)) ? "token" : "folio";
-
       try {
         if (!tenantSlug) throw new Error("Tenant slug ausente en la ruta");
-        if (!searchValue.trim()) throw new Error("Ingresa tu folio o token");
+        if (!searchValue.trim()) throw new Error("Ingresa tu código de acceso seguro");
 
         const cleanValue = searchValue.trim();
-        const shouldTryToken = lookupMode === "token" || (lookupMode === "auto" && looksLikePublicToken(cleanValue));
-
-        if (shouldTryToken) {
-          try {
-            const portalPayload = await getPortalOrderByToken(tenantSlug, cleanValue);
-            if (!portalPayload.success) throw new Error("No encontramos una orden con ese token");
-            setActivePublicToken(cleanValue);
-            setResult(normalizePortalOrderDetail(portalPayload.data));
-            setActivePublicToken(cleanValue);
-            return;
-          } catch (tokenError) {
-            if (lookupMode === "token") throw tokenError;
-            if (!isApiError(tokenError) || tokenError.status !== 404) throw tokenError;
-          }
-        }
-
-        const payload = await getOrderByFolio(tenantSlug, cleanValue);
-        if (!payload.success) throw new Error("No encontramos una orden con ese folio");
-
-        setTenantLabel(payload.tenant.name || tenantSlug);
-        setTenant(payload.tenant);
-        setActivePublicToken(null);
-        setResult(normalizeOrderDetail(payload.data));
-        setActivePublicToken(null);
+        const portalPayload = await getPortalOrderByToken(tenantSlug, cleanValue);
+        if (!portalPayload.success) throw new Error("No encontramos una orden con ese acceso");
+        setActivePublicToken(cleanValue);
+        setResult(normalizePortalOrderDetail(portalPayload.data));
       } catch (submitError) {
-        setError(resolveLookupError(submitError, effectiveLookupMode));
+        setError(resolveLookupError(submitError));
         setResult(null);
         setActivePublicToken(null);
       } finally {
@@ -288,16 +260,16 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
             >
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-sky-500">Nueva consulta</p>
               <div className="mt-5 rounded-[1.4rem] border border-sky-400/15 bg-black/20 p-4">
-                <label htmlFor="portal-order-lookup" className="block text-sm font-medium text-slate-200">Folio</label>
+                <label htmlFor="portal-order-lookup" className="block text-sm font-medium text-slate-200">Código de acceso seguro</label>
                 <input
                   id="portal-order-lookup"
                   value={folio}
                   onChange={(event) => setFolio(event.target.value)}
                   className="mt-2 w-full rounded-2xl border border-sky-400/20 bg-white/5 px-4 py-3 text-lg font-semibold tracking-[0.14em] text-slate-50 outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-2 focus:ring-sky-300/30"
                   required
-                  placeholder="SRF-00133"
+                  placeholder="Pega el código incluido en el enlace del taller"
                 />
-                <p className="mt-2 text-xs text-slate-400">Ingresa el folio de tu orden o el token de acceso.</p>
+                <p className="mt-2 text-xs text-slate-400">Por seguridad, el folio por sí solo no permite consultar datos del equipo.</p>
                 {error ? <p className="mt-3 rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-700">{error}</p> : null}
                 <button
                   disabled={loading}

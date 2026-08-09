@@ -1,12 +1,18 @@
 'use client';
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useEffectEvent, useRef } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { User, Smartphone, DollarSign, Loader2, Save, Camera, X, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
-import { apiGateway } from "@/services/apiGateway";
+import { User, Smartphone, Loader2, Save, Camera, X, CheckCircle2, AlertCircle, RefreshCw } from "lucide-react";
+import {
+  apiGateway,
+  type CatalogBrand,
+  type CatalogFamily,
+  type CatalogFault,
+  type CatalogModel,
+} from "@/services/apiGateway";
+import { useEscClose } from "@/hooks/useEscClose";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getCurrentSession } from "@/lib/session";
@@ -21,7 +27,6 @@ interface PhotoTask {
   id: string;
   file: File;
   preview: string;
-  base64Compressed: string | null;
   compressedFile?: File;
   status: UploadStatus;
 }
@@ -33,12 +38,15 @@ type Props = {
 
 export function QuickReceiveModal({ open, onOpenChange }: Props) {
   const router = useRouter();
+  useEscClose(() => {
+    if (open) onOpenChange(false);
+  });
   
   // Catálogos
-  const [families, setFamilies] = useState<any[]>([]);
-  const [brands, setBrands] = useState<any[]>([]);
-  const [models, setModels] = useState<any[]>([]);
-  const [faults, setFaults] = useState<any[]>([]);
+  const [families, setFamilies] = useState<CatalogFamily[]>([]);
+  const [brands, setBrands] = useState<CatalogBrand[]>([]);
+  const [models, setModels] = useState<CatalogModel[]>([]);
+  const [faults, setFaults] = useState<CatalogFault[]>([]);
 
   // Estados de carga general
   const [loadingCatalogs, setLoadingCatalogs] = useState(false);
@@ -49,6 +57,7 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
     clientName: "",
     clientPhone: "",
     familyId: "",
+    deviceTypeName: "",
     brandId: "",
     modelId: "",
     faultId: "",
@@ -71,58 +80,57 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
   const [submissionPhase, setSubmissionPhase] = useState<'draft' | 'uploading' | 'done'>('draft');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (open) {
-      loadInitialCatalogs();
-    } else {
-      resetForm();
-    }
-  }, [open]);
-
   // --- Carga de Catálogos (Cascada) ---
-  const loadInitialCatalogs = async () => {
-    setLoadingCatalogs(true);
-    try {
-      const res = await apiGateway.getCatalogFamilies();
-      setFamilies(res);
-      if (res.length > 0) {
-        setFormData(prev => ({ ...prev, familyId: res[0].id }));
-        loadBrands(res[0].id);
-      }
-    } catch (e) {
-      toast.error('Error al cargar familias');
-    } finally {
-      setLoadingCatalogs(false);
-    }
-  };
-
   const loadBrands = async (familyId: string) => {
     try {
       const res = await apiGateway.getCatalogBrands(familyId);
       setBrands(res);
       setModels([]);
       setFaults([]);
-    } catch (e) { }
+    } catch {
+      toast.error('No se pudieron cargar las marcas');
+    }
   };
+
+  const loadInitialCatalogs = useEffectEvent(async () => {
+    setLoadingCatalogs(true);
+    try {
+      const res = await apiGateway.getCatalogFamilies();
+      setFamilies(res);
+      if (res.length > 0) {
+        setFormData(prev => ({ ...prev, familyId: res[0].id, deviceTypeName: res[0].name }));
+        await loadBrands(res[0].id);
+      }
+    } catch {
+      toast.error('Error al cargar familias');
+    } finally {
+      setLoadingCatalogs(false);
+    }
+  });
+
+  useEffect(() => {
+    // La apertura del diálogo es la señal externa para refrescar catálogos reales.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (open) void loadInitialCatalogs();
+  }, [open]);
 
   const loadModels = async (brandId: string) => {
     try {
       const res = await apiGateway.getCatalogModels(brandId);
       setModels(res);
       setFaults([]);
-    } catch (e) { }
+    } catch {
+      toast.error('No se pudieron cargar los modelos');
+    }
   };
 
   const loadFaults = async (modelId: string) => {
     try {
       const res = await apiGateway.getCatalogFaults(modelId);
       setFaults(res);
-    } catch (e) { }
-  };
-
-  const handleFamilySelect = (id: string) => {
-    setFormData(prev => ({ ...prev, familyId: id, brandId: "", modelId: "", faultId: "", deviceModelName: "" }));
-    loadBrands(id);
+    } catch {
+      toast.error('No se pudieron cargar las fallas');
+    }
   };
 
   const handleBrandSelect = (id: string) => {
@@ -135,7 +143,7 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
     loadFaults(id);
   };
 
-  const handleFaultSelect = (fault: any) => {
+  const handleFaultSelect = (fault: CatalogFault) => {
     setFormData(prev => ({ 
       ...prev, 
       faultId: fault.id, 
@@ -153,7 +161,6 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
       id: crypto.randomUUID(),
       file,
       preview: URL.createObjectURL(file),
-      base64Compressed: null,
       status: 'idle'
     }));
 
@@ -171,7 +178,7 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
 
   const resetForm = () => {
     setFormData({
-      clientName: "", clientPhone: "", familyId: "", brandId: "", modelId: "", faultId: "",
+      clientName: "", clientPhone: "", familyId: "", deviceTypeName: "", brandId: "", modelId: "", faultId: "",
       deviceModelName: "", issueName: "", serialNumber: "", priority: "normal",
       promisedDate: "", estimatedCost: "", deposit: "", notes: ""
     });
@@ -183,11 +190,13 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
 
   // --- Flujo Transaccional ---
   const submitOrder = async () => {
-    const finalModel = formData.deviceModelName || (models.find(m => m.id === formData.modelId)?.name) || "Equipo Generico";
-    const finalIssue = formData.issueName || (faults.find(f => f.id === formData.faultId)?.name) || "Revisión General";
+    const selectedFamily = families.find(family => family.id === formData.familyId);
+    const finalDeviceType = selectedFamily?.name?.trim() || formData.deviceTypeName.trim();
+    const finalModel = formData.deviceModelName.trim() || models.find(m => m.id === formData.modelId)?.name?.trim() || "";
+    const finalIssue = formData.issueName.trim() || faults.find(f => f.id === formData.faultId)?.name?.trim() || "";
 
-    if (!formData.clientName || !formData.clientPhone || !finalModel || !finalIssue) {
-      toast.error("Cliente, Modelo y Falla son obligatorios.");
+    if (!formData.clientName.trim() || !formData.clientPhone.trim() || !finalDeviceType || !finalModel || !finalIssue) {
+      toast.error("Cliente, tipo de equipo, modelo y falla son obligatorios.");
       return;
     }
 
@@ -201,7 +210,7 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
         const payload = {
           clientName: formData.clientName,
           clientPhone: formData.clientPhone.replace(/\D/g, ''),
-          deviceType: families.find(f => f.id === formData.familyId)?.name || 'Generico',
+          deviceType: finalDeviceType,
           deviceModel: finalModel,
           serialNumber: formData.serialNumber,
           issue: finalIssue,
@@ -214,7 +223,10 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
           checklist: { notes: formData.notes }
         };
 
-        const result = (await apiGateway.createOrder(payload)) as any;
+        const result = await apiGateway.createOrder(payload);
+        if (typeof result.id !== 'string' || !result.id) {
+          throw new Error('La API no devolvió el identificador de la orden');
+        }
         currentOrderId = result.id;
         setCreatedOrderId(currentOrderId);
 
@@ -226,8 +238,8 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
             notes: "Abono en recepción"
           });
         }
-      } catch (err: any) {
-        toast.error(err?.message || "Error al crear la orden base.");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : "Error al crear la orden base.");
         setIsSubmitting(false);
         return;
       }
@@ -245,12 +257,12 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
           // Actualizar estado a comprimiendo
           setPhotos(prev => prev.map(p => p.id === photo.id ? { ...p, status: 'compressing' } : p));
           
-          const compressedFile = photo.compressedFile || await compressImage(photo.file);
+          const compressedFile = photo.compressedFile ?? await compressImage(photo.file);
           
           // Actualizar estado a subiendo
           setPhotos(prev => prev.map(p => p.id === photo.id ? { ...p, status: 'uploading', compressedFile } : p));
           
-          await apiGateway.uploadOrderAttachment(currentOrderId!, compressedFile as File, 'intake_photo');
+          await apiGateway.uploadOrderAttachment(currentOrderId!, compressedFile, 'intake_photo');
           
           // Éxito
           setPhotos(prev => prev.map(p => p.id === photo.id ? { ...p, status: 'success' } : p));
@@ -263,9 +275,6 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
 
       // Añadir firma a las promesas si existe
       if (signature) {
-        // Asumiendo que podemos enviar la firma como base64 al mismo endpoint o similar
-        // Esto depende de tu implementación en el backend para la firma.
-        // Aquí lo simularemos adjuntándolo como foto.
         const sigFile = dataURLtoFile(signature, 'firma.png');
         uploadPromises.push(
            apiGateway.uploadOrderAttachment(currentOrderId!, sigFile, 'intake_photo').then(() => {})
@@ -294,8 +303,9 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
 
   // Helper
   function dataURLtoFile(dataurl: string, filename: string) {
-    var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)![1],
-        bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
+    const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)![1],
+        bstr = atob(arr[1]), u8arr = new Uint8Array(bstr.length);
+    let n = bstr.length;
     while(n--){ u8arr[n] = bstr.charCodeAt(n); }
     return new File([u8arr], filename, {type:mime});
   }
@@ -306,6 +316,7 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
       if (!val && createdOrderId && submissionPhase === 'uploading') {
         if(!confirm("La orden se creó pero faltan fotos por subir. ¿Seguro que quieres salir?")) return;
       }
+      if (!val) resetForm();
       onOpenChange(val);
     }}>
       <DialogContent className="bg-slate-50 sm:max-w-6xl p-0 overflow-hidden shadow-2xl border-slate-200 h-[90vh] flex flex-col">
@@ -320,9 +331,19 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
               Flujo unificado. Captura equipo, cotiza y toma evidencia sin cambiar de pantalla.
             </DialogDescription>
           </div>
-          {submissionPhase === 'done' && (
-            <Badge variant="success" className="text-sm px-3 py-1">¡Completado!</Badge>
-          )}
+          <div className="flex items-center gap-3">
+            {submissionPhase === 'done' && (
+              <Badge variant="success" className="text-sm px-3 py-1">¡Completado!</Badge>
+            )}
+            <button
+              type="button"
+              onClick={() => onOpenChange(false)}
+              className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+              aria-label="Cerrar ventana"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         {/* BODY - 3 COLUMNS */}
@@ -338,7 +359,7 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
               <OmniSearch 
                 placeholder="Escribe número, nombre o folio..."
                 onCustomerSelect={(c) => {
-                  setFormData(prev => ({ ...prev, clientName: c.name, clientPhone: c.phone }));
+                  setFormData(prev => ({ ...prev, clientName: c.name, clientPhone: c.phone ?? "" }));
                 }}
                 onModelSelect={(m) => handleModelSelect(m.id, m.name)}
               />
@@ -362,6 +383,43 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
               </div>
 
               <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Tipo de equipo *</label>
+                  {families.length > 0 ? (
+                    <select
+                      name="familyId"
+                      value={formData.familyId}
+                      onChange={(event) => {
+                        const family = families.find((item) => item.id === event.target.value);
+                        setFormData((current) => ({
+                          ...current,
+                          familyId: event.target.value,
+                          deviceTypeName: family?.name ?? '',
+                          brandId: '',
+                          modelId: '',
+                          faultId: '',
+                        }));
+                        void loadBrands(event.target.value);
+                      }}
+                      className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none"
+                      disabled={!!createdOrderId}
+                    >
+                      {families.map((family) => (
+                        <option key={family.id} value={family.id}>{family.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <Input
+                      name="deviceTypeName"
+                      value={formData.deviceTypeName}
+                      onChange={handleChange}
+                      placeholder="Ej. Smartphone, laptop o consola"
+                      className="bg-white h-10"
+                      disabled={!!createdOrderId}
+                    />
+                  )}
+                </div>
+
                 {/* Marcas Top Chips */}
                 <div className="space-y-2">
                   <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Marca</label>
@@ -386,10 +444,14 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
                           {m.name}
                         </button>
                       ))}
-                      <Input name="deviceModelName" value={formData.deviceModelName} onChange={handleChange} placeholder="Otro modelo..." className="w-32 h-8 text-xs bg-white" disabled={!!createdOrderId} />
                     </div>
                   </div>
                 )}
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Modelo del equipo *</label>
+                  <Input name="deviceModelName" value={formData.deviceModelName} onChange={handleChange} placeholder="Ej. iPhone 13" className="bg-white h-10" disabled={!!createdOrderId} />
+                </div>
 
                 {/* Fallas Chips */}
                 {faults.length > 0 && formData.modelId && (
@@ -406,12 +468,10 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
                   </div>
                 )}
 
-                {(!faults.length || !formData.modelId) && (
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-slate-700">Falla Manual *</label>
-                    <Input name="issueName" value={formData.issueName} onChange={handleChange} placeholder="Ej. No retiene carga" className="bg-white h-10" disabled={!!createdOrderId} />
-                  </div>
-                )}
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-slate-700">Falla reportada *</label>
+                  <Input name="issueName" value={formData.issueName} onChange={handleChange} placeholder="Ej. No retiene carga" className="bg-white h-10" disabled={!!createdOrderId} />
+                </div>
 
                 <div className="grid grid-cols-2 gap-3 pt-2">
                   <div className="space-y-1">
@@ -450,6 +510,8 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
                   <div className="grid grid-cols-3 gap-2 mt-3">
                     {photos.map(p => (
                       <div key={p.id} className="relative aspect-square rounded-lg border border-slate-200 overflow-hidden bg-slate-100">
+                        {/* Las previsualizaciones blob locales no son compatibles con next/image. */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={p.preview} alt="evidencia" className="object-cover w-full h-full" />
                         
                         {/* Overlay de estado */}
@@ -508,7 +570,7 @@ export function QuickReceiveModal({ open, onOpenChange }: Props) {
           
           <Button 
             onClick={submitOrder} 
-            disabled={isSubmitting || submissionPhase === 'done'}
+            disabled={loadingCatalogs || isSubmitting || submissionPhase === 'done'}
             className={`h-14 px-8 text-lg font-black shadow-xl transition-all
               ${submissionPhase === 'uploading' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-sky-500 hover:bg-sky-600'}`}
           >

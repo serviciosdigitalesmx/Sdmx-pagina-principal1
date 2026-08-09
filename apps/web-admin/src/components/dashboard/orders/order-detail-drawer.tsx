@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { X } from "lucide-react";
 import { OrderTimeline } from "./order-timeline";
 import { getTenantSlug } from "@/lib/tenant";
 import { resolveBaseDomain } from "@white-label/config";
@@ -128,14 +129,7 @@ function buildTrackingUrl(customerPortalUrl?: string | null, folio?: string | nu
     return customerPortalBase ? `${customerPortalBase}${tokenPath}` : tokenPath;
   }
 
-  if (customerPortalBase && tenantSlug && folio) {
-    return `${customerPortalBase}/t/${encodeURIComponent(tenantSlug)}/portal/${encodeURIComponent(folio)}`;
-  }
-
-  const resolvedBase = customerPortalUrl?.replace(/\/$/, "");
-  if (!resolvedBase) return "";
-  const separator = resolvedBase.includes("?") ? "&" : "?";
-  return `${resolvedBase}${folio ? `${separator}folio=${encodeURIComponent(folio)}` : ""}`;
+  return "";
 }
 
 function whatsappLink(phone?: string | null, folio?: string | null, customerPortalUrl?: string | null, publicToken?: string | null) {
@@ -373,13 +367,20 @@ export function OrderDetailDrawer({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/55 backdrop-blur-sm">
-      <div className="ml-auto flex h-full w-full max-w-3xl flex-col bg-[linear-gradient(180deg,rgba(16,14,12,0.98),rgba(14,13,12,0.96))] text-zinc-100 shadow-[0_24px_90px_rgba(15,23,42,0.2)]">
-        <div className="flex items-center justify-between border-b border-amber-700/15 px-6 py-4">
+    <div
+      className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-sm animate-in fade-in duration-200"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && onClose) {
+          onClose();
+        }
+      }}
+    >
+      <div className="ml-auto flex h-full w-full max-w-3xl flex-col bg-slate-950 text-zinc-100 shadow-[0_24px_90px_rgba(15,23,42,0.4)]">
+        <div className="flex items-center justify-between border-b border-zinc-800 px-6 py-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-amber-100/70">Recepción profesional</p>
-            <h3 className="text-xl font-semibold text-zinc-50">{order?.folio ?? "Orden"}</h3>
-            <p className="mt-1 text-sm text-zinc-400">Detalles operativos · timeline · archivos · acciones.</p>
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-sky-400">Recepción profesional</p>
+            <h3 className="text-xl font-bold text-zinc-50">{order?.folio ?? "Orden"}</h3>
+            <p className="mt-0.5 text-xs text-zinc-400">Detalles operativos · timeline · archivos · acciones.</p>
           </div>
           {operationalRisk ? (
             <div
@@ -398,8 +399,13 @@ export function OrderDetailDrawer({
               <div className="mt-1 opacity-80">{operationalRisk.suggested_action ?? 'Sin acción sugerida'}</div>
             </div>
           ) : null}
-          <button onClick={onClose} className="rounded-full border border-zinc-700 px-3 py-2 text-sm text-zinc-300">
-            Salir
+          <button
+            onClick={onClose}
+            className="flex items-center gap-1.5 rounded-full border border-zinc-700 bg-zinc-800/80 px-3.5 py-1.5 text-xs font-semibold text-zinc-200 transition hover:bg-zinc-700 hover:text-white"
+            title="Cerrar (Esc)"
+          >
+            <X className="h-4 w-4" />
+            <span>Cerrar</span>
           </button>
         </div>
 

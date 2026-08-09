@@ -1,11 +1,8 @@
 begin;
-
 alter table if exists public.purchase_order_items
   add column if not exists status text not null default 'pendiente';
-
 create index if not exists purchase_order_items_tenant_po_status_idx
   on public.purchase_order_items (tenant_id, purchase_order_id, status);
-
 create or replace function public.receive_purchase_inventory(
   p_tenant_id uuid,
   p_purchase_order_id uuid,
@@ -292,7 +289,6 @@ begin
   return next;
 end;
 $$;
-
 create or replace function public.adjust_inventory(
   p_tenant_id uuid,
   p_sucursal_id uuid,
@@ -415,10 +411,8 @@ begin
   return next;
 end;
 $$;
-
 revoke all on function public.receive_purchase_inventory(uuid, uuid, uuid, jsonb, text, uuid) from public;
 revoke all on function public.adjust_inventory(uuid, uuid, uuid, numeric, numeric, text, text, uuid) from public;
 grant execute on function public.receive_purchase_inventory(uuid, uuid, uuid, jsonb, text, uuid) to service_role;
 grant execute on function public.adjust_inventory(uuid, uuid, uuid, numeric, numeric, text, text, uuid) to service_role;
-
 commit;

@@ -14,7 +14,6 @@ create table if not exists public.suppliers (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.organizations(id) on delete cascade,
   business_name text not null,
-  rfc text,
   legal_name text,
   contact_name text,
   phone text,
@@ -38,12 +37,6 @@ create table if not exists public.suppliers (
 
 create index if not exists suppliers_tenant_idx
   on public.suppliers (tenant_id);
-
-create index if not exists suppliers_tenant_business_name_idx
-  on public.suppliers (tenant_id, business_name);
-
-create index if not exists suppliers_tenant_rfc_idx
-  on public.suppliers (tenant_id, rfc);
 
 create table if not exists public.inventory (
   id uuid primary key default gen_random_uuid(),

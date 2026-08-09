@@ -59,11 +59,11 @@ ALTER TABLE public.catalog_faults ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.catalog_parts ENABLE ROW LEVEL SECURITY;
 
 -- Políticas de RLS (tenant isolation)
-CREATE POLICY "Tenant Isolation: catalog_families" ON public.catalog_families FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
-CREATE POLICY "Tenant Isolation: catalog_brands" ON public.catalog_brands FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
-CREATE POLICY "Tenant Isolation: catalog_models" ON public.catalog_models FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
-CREATE POLICY "Tenant Isolation: catalog_faults" ON public.catalog_faults FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
-CREATE POLICY "Tenant Isolation: catalog_parts" ON public.catalog_parts FOR ALL USING (tenant_id = auth.jwt()->>'tenant_id'::uuid);
+CREATE POLICY "Tenant Isolation: catalog_families" ON public.catalog_families FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+CREATE POLICY "Tenant Isolation: catalog_brands" ON public.catalog_brands FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+CREATE POLICY "Tenant Isolation: catalog_models" ON public.catalog_models FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+CREATE POLICY "Tenant Isolation: catalog_faults" ON public.catalog_faults FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
+CREATE POLICY "Tenant Isolation: catalog_parts" ON public.catalog_parts FOR ALL USING (tenant_id = (auth.jwt()->>'tenant_id')::uuid);
 
 -- Indexación para optimizar búsquedas por tenant y relaciones
 CREATE INDEX IF NOT EXISTS idx_catalog_families_tenant ON public.catalog_families(tenant_id);

@@ -57,7 +57,9 @@ export async function loadTenantBillingSummary(tenantId: string, tenantSlug?: st
   const resolvedTenantSlug = tenantSlug ?? tenantRow?.slug ?? null;
   const trialExpiresAt = tenantRow?.trial_expires_at ?? null;
   const billingExempt = Boolean(tenantRow?.billing_exempt);
-  const subscriptionStatus = String((await getBillingStatus(tenantId, BILLING_ADAPTER_MODE)) ?? 'trial').trim() || 'trial';
+  const subscriptionStatus = billingExempt
+    ? 'active'
+    : String((await getBillingStatus(tenantId, BILLING_ADAPTER_MODE)) ?? 'trial').trim() || 'trial';
   const planKey = normalizePlanKey(tenantRow?.plan);
   const daysLeft = computeDaysLeft(trialExpiresAt ? new Date(trialExpiresAt).toISOString() : null);
   const isTrialActive = subscriptionStatus === 'trial' && daysLeft !== null && daysLeft > 0;

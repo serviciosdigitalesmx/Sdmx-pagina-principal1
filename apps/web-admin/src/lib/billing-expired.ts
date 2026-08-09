@@ -3,9 +3,13 @@
 const BILLING_EXPIRED_KEY = "srf_billing_expired";
 const BILLING_EXPIRED_EVENT = "srf:billing-expired";
 
+// 🔓 BILLING DISABLED — Fixi is free-to-use until further notice (2026-07-29)
 export function isBillingExpired(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.localStorage.getItem(BILLING_EXPIRED_KEY) === "true";
+  // Always clear any stale billing-expired flag and return false
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem(BILLING_EXPIRED_KEY);
+  }
+  return false;
 }
 
 export function setBillingExpiredState(value: boolean) {

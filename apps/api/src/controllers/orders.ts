@@ -16,7 +16,7 @@ import { writeAuditLog } from '../services/security-backoffice';
 import { userHasPermission } from '../services/permissions';
 import { cleanTenantTextField, getMissingRequiredTextField } from '../services/tenant-fields';
 import { getEvidenceMetadata, type EvidenceEntry } from '../services/evidence-adapter';
-import { createWhatsAppDraft, listWhatsAppMessages, WhatsAppMessageError } from '../services/whatsapp-messages';
+import { createWhatsAppDraft, listWhatsAppMessages, WhatsAppMessageError, type TemplateKey } from '../services/whatsapp-messages';
 import {
   createCommissionRule,
   listCommissionRules,
@@ -590,8 +590,8 @@ function normalizeChecklistRow(row: Partial<OrderChecklistRow> | null | undefine
 async function getRequiredChecklistFields(tenantId: string) {
   const runtimeConfig = await getCachedTenantConfig(tenantId);
   return runtimeConfig.fieldDefinitions
-    .filter((field: { entity: string; required: boolean; visible?: boolean; field_key: string }) => field.entity === 'service_order_checklists' && field.required && field.visible !== false && CHECKLIST_FIELD_KEYS.has(field.field_key))
-    .map((field: { field_key: string }) => field.field_key);
+    .filter((field) => field.entity === 'service_order_checklists' && field.required && field.visible !== false && CHECKLIST_FIELD_KEYS.has(field.field_key))
+    .map((field) => field.field_key);
 }
 
 function getMissingRequiredChecklistFields(requiredFields: string[], checklist: Partial<OrderChecklistRow>) {
@@ -852,7 +852,7 @@ async function getTenantOperationalStatuses(tenantId: string) {
   const config = await getCachedTenantConfig(tenantId);
   const statuses = config.statusOptions.service_orders ?? [];
   if (statuses.length > 0) {
-    return statuses.map((status: { key: string; label?: string | null; tone?: string | null }) => ({
+    return statuses.map((status) => ({
       key: String(status.key),
       label: String(status.label ?? status.key),
       tone: String(status.tone ?? 'zinc'),
@@ -1271,13 +1271,13 @@ export const getOrderById = async (req: Request, res: Response) => {
       console.error('Failed to fetch order payments:', paymentsResult.error);
     }
 
-    const validPayments = paymentsResult.data || [];
-    const totalCobrado = validPayments.reduce((sum: number, p: { amount: number | string | null }) => sum + Number(p.amount), 0);
+    const validPayments = (paymentsResult.data ?? []) as Array<{ amount: number | string | null }>;
+    const totalCobrado = validPayments.reduce((sum: number, payment) => sum + Number(payment.amount ?? 0), 0);
     const finalCost = Number(orderResult.data.final_cost) > 0 ? Number(orderResult.data.final_cost) : Number(orderResult.data.estimated_cost || 0);
     const saldoPendiente = Math.max(0, finalCost - totalCobrado);
     const resolvedWorkflow = resolveOrderWorkflow(runtimeConfig.workflowStatuses.filter((status) => status.workflow_key === 'service_orders'));
-    const currentWorkflowStatus = resolvedWorkflow.find((status: { status_key: string; nextStatusKeys?: string[] }) => status.status_key === normalizeOrderStatus(orderResult.data.status));
-    const availableTransitions = (currentWorkflowStatus?.nextStatusKeys ?? []).map((statusKey: string) => {
+    const currentWorkflowStatus = resolvedWorkflow.find((status) => status.status_key === normalizeOrderStatus(orderResult.data.status));
+    const availableTransitions = (currentWorkflowStatus?.nextStatusKeys ?? []).map((statusKey) => {
       const status = resolvedWorkflow.find((candidate) => candidate.status_key === statusKey);
       return {
         key: statusKey,
@@ -2513,13 +2513,63 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
           }
 
           if (matches) {
-            await supabase.from('automation_logs').insert({
+            let status: 'success' | 'failed' | 'pending' = 'failed';
+            let errorMessage: string | null = null;
+
+            try {
+              if (rule.action_type === 'send_whatsapp') {
+                const configuredTemplate = typeof rule.action_config?.template === 'string'
+                  ? rule.action_config.template
+                  : '';
+                const supportedTemplates: TemplateKey[] = [
+                  'order_received',
+                  'status_update',
+                  'authorization_request',
+                  'portal_link',
+                  'warranty_info',
+                ];
+                const templateKey: TemplateKey = supportedTemplates.includes(configuredTemplate as TemplateKey)
+                  ? configuredTemplate as TemplateKey
+                  : 'status_update';
+
+                await createWhatsAppDraft({
+                  tenantId,
+                  tenantSlug: req.params.tenantSlug,
+                  orderId,
+                  templateKey,
+                  idempotencyKey: `automation:${rule.id}:${orderId}:${nextStatus}`,
+                  user: req.user,
+                  scope: req.scope,
+                });
+                status = 'success';
+              } else if (rule.action_type === 'send_notification') {
+                const pushResult = await sendTenantPushNotification(tenantId, {
+                  type: 'automation.order.status_changed',
+                  title: rule.name || 'Actualización de orden',
+                  body: `La orden ${orderId} cambió a ${nextStatus}.`,
+                  data: { orderId, previousStatus, nextStatus, ruleId: rule.id },
+                });
+                status = pushResult.skipped ? 'pending' : 'success';
+                errorMessage = pushResult.skipped ? 'Notificación pendiente: PWA no configurada' : null;
+              } else {
+                errorMessage = `Acción no implementada: ${String(rule.action_type)}`;
+              }
+            } catch (automationError) {
+              errorMessage = automationError instanceof Error ? automationError.message : 'Automation execution failed';
+            }
+
+            const { error: logError } = await supabase.from('automation_logs').insert({
               tenant_id: tenantId,
               rule_id: rule.id,
               order_id: orderId,
               event_type: 'order.status_changed',
-              status: 'success'
+              status,
+              error_message: errorMessage,
             });
+
+            if (logError) {
+              console.error('Failed to persist automation log:', logError);
+            }
           }
         }
       }
@@ -3482,7 +3532,7 @@ export const deleteOrder = async (req: Request, res: Response) => {
     // 1. Verificar si la orden existe y obtener metadata
     const { data: order, error: orderError } = await supabase
       .from('service_orders')
-      .select('id, evidence_metadata')
+      .select('id, status, evidence_metadata')
       .eq('tenant_id', tenantId)
       .eq('id', orderId)
       .single();
@@ -3491,8 +3541,16 @@ export const deleteOrder = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Order not found' });
     }
 
+    if (order.status !== 'recibido') {
+      return res.status(409).json({
+        error: 'Solo se pueden eliminar órdenes en estado recibido',
+        code: 'ORDER_DELETE_NOT_ALLOWED',
+      });
+    }
+
     // 2. Extraer IDs o rutas de archivos adjuntos del metadata
     const evidence = order.evidence_metadata as any[];
+    let relativePaths: string[] = [];
     if (Array.isArray(evidence)) {
       const bucketName = getStorageBucketName();
       const filesToDelete = evidence
@@ -3501,7 +3559,7 @@ export const deleteOrder = async (req: Request, res: Response) => {
         .filter(Boolean);
       
       // Si son URLs completas, extraer el path relativo
-      const relativePaths = filesToDelete.map(url => {
+      relativePaths = filesToDelete.map(url => {
         try {
           // Extraer la ruta después del bucket si es una URL pública
           if (url.includes(bucketName)) {
@@ -3513,15 +3571,6 @@ export const deleteOrder = async (req: Request, res: Response) => {
         }
       });
 
-      if (relativePaths.length > 0) {
-        const { error: storageError } = await supabaseAdmin.storage
-          .from(bucketName)
-          .remove(relativePaths);
-        
-        if (storageError) {
-          console.error('Error limpiando archivos huérfanos:', storageError);
-        }
-      }
     }
 
     // 3. Eliminar la orden en la BD (Supabase resolverá los ON DELETE CASCADE)
@@ -3533,6 +3582,16 @@ export const deleteOrder = async (req: Request, res: Response) => {
 
     if (deleteError) {
       return res.status(502).json({ error: 'No se pudo eliminar la orden', details: deleteError.message });
+    }
+
+    if (relativePaths.length > 0) {
+      const { error: storageError } = await supabaseAdmin.storage
+        .from(getStorageBucketName())
+        .remove(relativePaths);
+
+      if (storageError) {
+        console.error('Error limpiando archivos huérfanos:', storageError);
+      }
     }
 
     return res.status(200).json({ success: true, message: 'Orden y archivos eliminados exitosamente' });

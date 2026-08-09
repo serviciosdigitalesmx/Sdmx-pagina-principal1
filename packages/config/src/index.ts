@@ -9,6 +9,16 @@ const apiBaseUrlCandidates = [
   "NEXT_PUBLIC_RENDER_API_URL",
 ] as const;
 
+// Next.js only exposes public environment values to browser bundles when they
+// are referenced statically. Keep this map explicit so the same resolver works
+// on both the server and the client.
+const apiBaseUrlEnvironment = {
+  API_URL: process.env.API_URL,
+  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
+  NEXT_PUBLIC_RENDER_API_URL: process.env.NEXT_PUBLIC_RENDER_API_URL,
+} as const;
+
 function normalizeBaseUrl(value: string): string {
   const trimmed = value.trim();
 
@@ -26,7 +36,7 @@ function normalizeBaseUrl(value: string): string {
 
 function resolveFirstConfiguredEnv(names: readonly string[]): string | null {
   for (const name of names) {
-    const value = process.env[name]?.trim();
+    const value = apiBaseUrlEnvironment[name as keyof typeof apiBaseUrlEnvironment]?.trim();
     if (value) {
       return value;
     }

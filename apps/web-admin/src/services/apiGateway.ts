@@ -1,5 +1,17 @@
 type JsonRecord = Record<string, unknown>;
 
+export type CatalogFamily = { id: string; name: string; description?: string | null };
+export type CatalogBrand = { id: string; family_id: string; name: string; logo_url?: string | null };
+export type CatalogModel = { id: string; brand_id: string; name: string; reference_image_url?: string | null; catalog_brands?: { name?: string | null } | null };
+export type CatalogFault = { id: string; model_id: string; name: string; description?: string | null; default_cost?: number | null };
+export type OmniSearchCustomer = { id: string; name: string; phone?: string | null; email?: string | null };
+export type OmniSearchOrder = { id: string; folio: string; status: string; serial_number?: string | null; created_at?: string | null };
+export type OmniSearchResult = {
+  customers: OmniSearchCustomer[];
+  orders: OmniSearchOrder[];
+  catalogs: CatalogModel[];
+};
+
 type ApiListResponse<T> = {
   success: true;
   data: T;
@@ -686,7 +698,7 @@ class ApiGateway {
     return result.data ?? [];
   }
 
-  public async transferInventory(data: { sku: string; sucursalOrigen: string; sucursalDestino: string; cantidad: number; motivo?: string; notas?: string }): Promise<JsonRecord> {
+  public async transferInventory(data: { sku: string; sucursalOrigen: string; sucursalDestino: string; cantidad: number; motivo?: string; notas?: string; idempotencyKey: string }): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
       this.apiPath('/inventory/transfer'),
       {
@@ -1602,6 +1614,24 @@ class ApiGateway {
     return result.data;
   }
 
+  public async getTenantRolePermissions(role: 'manager' | 'technician'): Promise<Record<string, boolean>> {
+    const result = await this.request<ApiSingleResponse<{ role: string; permissions: Record<string, boolean> }>>(
+      this.apiPath(`/tenant-roles/permissions?role=${encodeURIComponent(role)}`),
+      { method: 'GET' },
+    );
+    return result.data.permissions ?? {};
+  }
+
+  public async updateTenantRolePermissions(
+    role: 'manager' | 'technician',
+    permissions: Record<string, boolean>,
+  ): Promise<void> {
+    await this.request(this.apiPath('/tenant-roles/permissions'), {
+      method: 'POST',
+      body: JSON.stringify({ role, permissions }),
+    });
+  }
+
   public async deactivateUser(id: string): Promise<JsonRecord> {
     const result = await this.request<ApiSingleResponse<JsonRecord>>(
       `/api/users/${encodeURIComponent(id)}`,
@@ -1842,8 +1872,8 @@ class ApiGateway {
 
   // --- Catálogos (Fase 1) ---
 
-  public async getCatalogFamilies() {
-    return this.request<any>(`/api/catalog/families`, { method: 'GET' });
+  public async getCatalogFamilies(): Promise<CatalogFamily[]> {
+    return this.request<CatalogFamily[]>(`/api/catalog/families`, { method: 'GET' });
   }
   public async createCatalogFamily(data: { name: string, description?: string }) {
     return this.request<any>(`/api/catalog/families`, { method: 'POST', body: JSON.stringify(data) });
@@ -1855,8 +1885,8 @@ class ApiGateway {
     return this.request<any>(`/api/catalog/families/${id}`, { method: 'DELETE' });
   }
 
-  public async getCatalogBrands(familyId: string) {
-    return this.request<any>(`/api/catalog/brands?familyId=${encodeURIComponent(familyId)}`, { method: 'GET' });
+  public async getCatalogBrands(familyId: string): Promise<CatalogBrand[]> {
+    return this.request<CatalogBrand[]>(`/api/catalog/brands?familyId=${encodeURIComponent(familyId)}`, { method: 'GET' });
   }
   public async createCatalogBrand(data: { family_id: string, name: string, logo_url?: string }) {
     return this.request<any>(`/api/catalog/brands`, { method: 'POST', body: JSON.stringify(data) });
@@ -1868,8 +1898,8 @@ class ApiGateway {
     return this.request<any>(`/api/catalog/brands/${id}`, { method: 'DELETE' });
   }
 
-  public async getCatalogModels(brandId: string) {
-    return this.request<any>(`/api/catalog/models?brandId=${encodeURIComponent(brandId)}`, { method: 'GET' });
+  public async getCatalogModels(brandId: string): Promise<CatalogModel[]> {
+    return this.request<CatalogModel[]>(`/api/catalog/models?brandId=${encodeURIComponent(brandId)}`, { method: 'GET' });
   }
   public async createCatalogModel(data: { brand_id: string, name: string, reference_image_url?: string }) {
     return this.request<any>(`/api/catalog/models`, { method: 'POST', body: JSON.stringify(data) });
@@ -1881,8 +1911,8 @@ class ApiGateway {
     return this.request<any>(`/api/catalog/models/${id}`, { method: 'DELETE' });
   }
 
-  public async getCatalogFaults(modelId: string) {
-    return this.request<any>(`/api/catalog/faults?modelId=${encodeURIComponent(modelId)}`, { method: 'GET' });
+  public async getCatalogFaults(modelId: string): Promise<CatalogFault[]> {
+    return this.request<CatalogFault[]>(`/api/catalog/faults?modelId=${encodeURIComponent(modelId)}`, { method: 'GET' });
   }
   public async createCatalogFault(data: { model_id: string, name: string, description?: string, estimated_labor_minutes?: number, default_cost?: number }) {
     return this.request<any>(`/api/catalog/faults`, { method: 'POST', body: JSON.stringify(data) });
@@ -1909,21 +1939,23 @@ class ApiGateway {
 
   // --- OmniSearch (Fase 1) ---
 
-  public async omniSearch(query: string) {
-    return this.request<{ customers: any[]; orders: any[]; catalogs: any[] }>(`/api/search?q=${encodeURIComponent(query)}`, { method: 'GET' });
+  public async omniSearch(query: string): Promise<OmniSearchResult> {
+    return this.request<OmniSearchResult>(`/api/search?q=${encodeURIComponent(query)}`, { method: 'GET' });
   }
 
   // --- POS y Caja (Fase 3) ---
 
   public async getCashRegisters() {
-    return this.request<any>(`/api/cash/registers`, { method: 'GET' });
+    const result = await this.request<ApiListResponse<JsonRecord[]>>(`/api/cash/registers`, { method: 'GET' });
+    return result.data ?? [];
   }
 
   public async createCashRegister(data: { name: string; sucursalId: string }) {
-    return this.request<any>(`/api/cash/registers`, {
+    const result = await this.request<ApiSingleResponse<JsonRecord>>(`/api/cash/registers`, {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    return result.data;
   }
 
   public async openCashShift(cashRegisterId: string, initialCash: number) {

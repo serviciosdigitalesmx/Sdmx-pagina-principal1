@@ -1,5 +1,4 @@
 begin;
-
 -- Shadow cutover migration.
 -- Keeps the live schema intact while introducing the canonical tables
 -- used by the current backend: public.sucursales and public.sucursal_inventory.
@@ -11,7 +10,6 @@ stable
 as $$
   select nullif(auth.jwt() ->> 'tenant_id', '')::uuid
 $$;
-
 create or replace function public._sucursal_jwt_role()
 returns text
 language sql
@@ -19,7 +17,6 @@ stable
 as $$
   select coalesce(auth.jwt() ->> 'role', '')
 $$;
-
 create table if not exists public.sucursales (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -33,29 +30,23 @@ create table if not exists public.sucursales (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create unique index if not exists sucursales_tenant_code_uidx
   on public.sucursales (tenant_id, code)
   where code is not null;
-
 create index if not exists sucursales_tenant_idx
   on public.sucursales (tenant_id);
-
 drop trigger if exists trg_sucursales_updated_at on public.sucursales;
 create trigger trg_sucursales_updated_at
 before update on public.sucursales
 for each row execute function public.set_updated_at();
-
 alter table public.sucursales enable row level security;
 alter table public.sucursales force row level security;
-
 drop policy if exists sucursales_select on public.sucursales;
 create policy sucursales_select
 on public.sucursales
 for select
 to authenticated
 using (public._sucursal_tenant_jwt_id() = tenant_id);
-
 drop policy if exists sucursales_write_owner_manager on public.sucursales;
 create policy sucursales_write_owner_manager
 on public.sucursales
@@ -63,7 +54,6 @@ for all
 to authenticated
 using (public._sucursal_tenant_jwt_id() = tenant_id and public._sucursal_jwt_role() in ('owner', 'manager'))
 with check (public._sucursal_tenant_jwt_id() = tenant_id and public._sucursal_jwt_role() in ('owner', 'manager'));
-
 do $$
 begin
   if to_regclass('public.branches') is not null then
@@ -107,7 +97,6 @@ set tenant_id = excluded.tenant_id,
 
   end if;
 end $$;
-
 create table if not exists public.sucursal_inventory (
   id uuid primary key default gen_random_uuid(),
   tenant_id uuid not null references public.tenants(id) on delete cascade,
@@ -117,34 +106,26 @@ create table if not exists public.sucursal_inventory (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
-
 create index if not exists sucursal_inventory_tenant_idx
   on public.sucursal_inventory (tenant_id);
-
 create index if not exists sucursal_inventory_tenant_sucursal_idx
   on public.sucursal_inventory (tenant_id, sucursal_id);
-
 create index if not exists sucursal_inventory_tenant_product_idx
   on public.sucursal_inventory (tenant_id, product_id);
-
 create unique index if not exists sucursal_inventory_uidx
   on public.sucursal_inventory (tenant_id, sucursal_id, product_id);
-
 drop trigger if exists trg_sucursal_inventory_updated_at on public.sucursal_inventory;
 create trigger trg_sucursal_inventory_updated_at
 before update on public.sucursal_inventory
 for each row execute function public.set_updated_at();
-
 alter table public.sucursal_inventory enable row level security;
 alter table public.sucursal_inventory force row level security;
-
 drop policy if exists sucursal_inventory_select on public.sucursal_inventory;
 create policy sucursal_inventory_select
 on public.sucursal_inventory
 for select
 to authenticated
 using (public._sucursal_tenant_jwt_id() = tenant_id);
-
 drop policy if exists sucursal_inventory_write_owner_manager on public.sucursal_inventory;
 create policy sucursal_inventory_write_owner_manager
 on public.sucursal_inventory
@@ -152,7 +133,6 @@ for all
 to authenticated
 using (public._sucursal_tenant_jwt_id() = tenant_id and public._sucursal_jwt_role() in ('owner', 'manager'))
 with check (public._sucursal_tenant_jwt_id() = tenant_id and public._sucursal_jwt_role() in ('owner', 'manager'));
-
 do $$
 begin
   if to_regclass('public.inventory') is not null then
@@ -184,8 +164,6 @@ set stock_current = excluded.stock_current,
 
   end if;
 end $$;
-
 grant select, insert, update, delete on public.sucursales to authenticated;
 grant select, insert, update, delete on public.sucursal_inventory to authenticated;
-
 commit;

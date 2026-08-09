@@ -1,7 +1,7 @@
 import { createHash } from 'crypto';
 import { supabaseAdmin } from '@white-label/database';
 
-type TemplateKey = 'order_received' | 'status_update' | 'authorization_request' | 'portal_link' | 'warranty_info';
+export type TemplateKey = 'order_received' | 'status_update' | 'authorization_request' | 'portal_link' | 'warranty_info';
 
 type RequestUser = {
   role?: string;

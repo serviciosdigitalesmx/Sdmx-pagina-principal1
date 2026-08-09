@@ -1,5 +1,4 @@
 begin;
-
 -- Hardening migration for the current canonical schema.
 -- This closes the gap left by older branch_* migrations and applies RLS
 -- to the tables that the product actually uses now.
@@ -11,7 +10,6 @@ stable
 as $$
   select nullif(auth.jwt() ->> 'tenant_id', '')::uuid
 $$;
-
 create or replace function public._jwt_role()
 returns text
 language sql
@@ -19,7 +17,6 @@ stable
 as $$
   select coalesce(auth.jwt() ->> 'role', '')
 $$;
-
 create or replace function public._is_tenant_member(target_tenant uuid)
 returns boolean
 language sql
@@ -27,7 +24,6 @@ stable
 as $$
   select public._tenant_jwt_id() = target_tenant
 $$;
-
 create or replace function public._is_owner_or_manager()
 returns boolean
 language sql
@@ -35,7 +31,6 @@ stable
 as $$
   select public._jwt_role() in ('owner', 'manager')
 $$;
-
 create or replace function public._is_owner_manager_or_technician()
 returns boolean
 language sql
@@ -43,7 +38,6 @@ stable
 as $$
   select public._jwt_role() in ('owner', 'manager', 'technician')
 $$;
-
 alter table if exists public.tenants enable row level security;
 alter table if exists public.users enable row level security;
 alter table if exists public.customers enable row level security;
@@ -64,7 +58,6 @@ alter table if exists public.stock_alerts enable row level security;
 alter table if exists public.customer_payments enable row level security;
 alter table if exists public.file_assets enable row level security;
 alter table if exists public.finances enable row level security;
-
 alter table if exists public.tenants force row level security;
 alter table if exists public.users force row level security;
 alter table if exists public.customers force row level security;
@@ -85,7 +78,6 @@ alter table if exists public.stock_alerts force row level security;
 alter table if exists public.customer_payments force row level security;
 alter table if exists public.file_assets force row level security;
 alter table if exists public.finances force row level security;
-
 do $$
 begin
   if to_regclass('public.tenants') is not null then
@@ -606,7 +598,6 @@ begin
     $policy$;
   end if;
 end $$;
-
 do $$
 begin
   if to_regclass('public.tenants') is not null then
@@ -727,5 +718,4 @@ begin
     grant select, insert, update, delete on public.finances to authenticated;
   end if;
 end $$;
-
 commit;

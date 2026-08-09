@@ -1,0 +1,32 @@
+/* Design System – Color Palette */
+:root {
+  /* Primary – deep‑sky */
+  --color-primary-500: 236 72 153;   /* rgb(236,72,153) */
+  --color-primary-600: 219 39 119;   /* rgb(219,39,119) */
+  --color-primary-50: 253 242 248;  /* light background */
+
+  /* Surface – glass‑morphism */
+  --color-surface-900: 15 23 42;    /* bg‑slate‑950 */
+  --color-surface-800: 30 41 59;    /* bg‑slate‑900 */
+  --color-surface-100: 248 250 252;/* bg‑slate‑50 */
+
+  /* Accent – emerald */
+  --color-success-500: 16 185 129; /* emerald-500 */
+  --color-success-600: 5 150 105;  /* emerald-600 */
+
+  /* Warning – amber */
+  --color-warning-500: 245 158 11; /* amber-5 */
+
+  /* Danger – rose */
+  --color-danger-500: 244 63 94;   /* rose-500 */
+
+  /* Text */
+  --color-text-primary: 255 255 255;   /* white */
+  --color-text-secondary: 156 163 175; /* slate‑400 */
+}
+
+/* Utility classes */
+.bg-primary{background-color:rgb(var(--color-primary-500));}
+.bg-primary-hover:hover{background-color:rgb(var(--color-primary-600));}
+.text-primary{color:rgb(var(--color-primary-500));}
+.border-primary{border-color:rgb(var(--color-primary-500));}
