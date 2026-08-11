@@ -1,17 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { optionalEnv, resolveApiBaseUrl } from "@white-label/config";
 
-const HOP_BY_HOP_HEADERS = new Set([
-  "connection",
-  "keep-alive",
-  "proxy-authenticate",
-  "proxy-authorization",
-  "te",
-  "trailers",
-  "transfer-encoding",
-  "upgrade",
-]);
-
 function getBackendBaseUrl() {
   const configuredUrl = optionalEnv("API_URL");
 
@@ -60,10 +49,12 @@ async function proxyRequest(request: NextRequest, params: RouteParams) {
   };
 
   const response = await fetch(targetUrl, init);
-  const responseHeaders = new Headers(response.headers);
-
-  for (const header of HOP_BY_HOP_HEADERS) {
-    responseHeaders.delete(header);
+  const responseHeaders = new Headers();
+  for (const header of ["content-type", "cache-control", "content-disposition", "set-cookie"]) {
+    const value = response.headers.get(header);
+    if (value) {
+      responseHeaders.set(header, value);
+    }
   }
 
   const acceptHeader = request.headers.get("accept") ?? "";
@@ -98,7 +89,24 @@ async function proxyRequest(request: NextRequest, params: RouteParams) {
     return redirectResponse;
   }
 
-  return new NextResponse(response.body, {
+  responseHeaders.delete("content-length");
+
+  // Vercel can drop a generic proxied JSON body. Recreate JSON responses with
+  // NextResponse while retaining binary forwarding for PDFs and other assets.
+  const isJsonResponse = responseHeaders.get("content-type")?.includes("application/json");
+  if (isJsonResponse && request.method !== "HEAD") {
+    const payload = await response.json();
+    responseHeaders.delete("content-type");
+
+    return NextResponse.json(payload, {
+      status: response.status,
+      headers: responseHeaders,
+    });
+  }
+
+  const responseBody = request.method === "HEAD" ? null : Buffer.from(await response.arrayBuffer());
+
+  return new NextResponse(responseBody, {
     status: response.status,
     headers: responseHeaders,
   });
