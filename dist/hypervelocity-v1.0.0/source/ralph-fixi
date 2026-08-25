@@ -1,0 +1,2 @@
+#!/bin/zsh
+exec python3 "/Users/usuario/.codex/worktrees/129d/New project 47/.ralph-add/SUPERVISOR/ralph_fixi_supervisor.py" "$@"
