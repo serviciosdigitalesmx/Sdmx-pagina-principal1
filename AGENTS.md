@@ -9,7 +9,9 @@
 - No inventar helpers, rutas, tablas, columnas ni variables.
 - Correr `git status --short --branch` antes de tocar archivos.
 - Correr validación después de cambios.
-- Si el repo está sucio, detenerse y pedir dirección.
+- Un baseline sucio declarado por el supervisor NO bloquea el trabajo: preservar sin tocar `.gitignore`, `node_modules/`, `.pnpm-store/`, `.turbo/`, `.next/`, `coverage/` ni cachés.
+- Detenerse y pedir dirección únicamente si el archivo que la A.SPEC exige modificar ya contiene cambios ajenos no autorizados.
+- Nunca limpiar, resetear, stashear, borrar ni normalizar cambios preexistentes.
 
 ## Mapeo Canónico ↔ Físico
 

@@ -3,6 +3,7 @@ services:
     name: sdmx-backend-api
     runtime: node
     plan: free
+    healthCheckPath: /health
     buildCommand: pnpm install --frozen-lockfile && pnpm --filter @white-label/api build
     startCommand: pnpm --filter @white-label/api start
     envVars:
@@ -25,6 +26,12 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: JWT_SECRET
+        sync: false
+      - key: PWA_VAPID_PUBLIC_KEY
+        sync: false
+      - key: PWA_VAPID_PRIVATE_KEY
+        sync: false
+      - key: PWA_VAPID_SUBJECT
         sync: false
       - key: API_NAME
         value: Sdmx Backend API

@@ -1,166 +1,230 @@
 import type { BackendOrderResponse, NormalizedAttachment, NormalizedDocument, NormalizedEvent, NormalizedMessage, NormalizedOrder, NormalizedOrderDetail, NormalizedTimelineEvent, PortalOrderResponse } from "../types";
 
 export function normalizeOrderDetail(raw: BackendOrderResponse["data"]): NormalizedOrderDetail {
+  const r = raw ?? {};
   return {
-    order: normalizeOrder(raw.order),
-    orderStatusLabel: raw.order.status,
-    timeline: normalizeTimeline(raw.timeline ?? []),
-    pdfAttachment: raw.pdf_attachment ? normalizeDocument(raw.pdf_attachment) : undefined,
-    attachments: normalizeAttachments(raw.attachments ?? []),
-    documents: normalizeDocuments(raw.documents ?? []),
-    events: normalizeEvents(raw.events ?? []),
-    messages: normalizeMessages(raw.messages ?? []),
+    order: normalizeOrder(r.order),
+    orderStatusLabel: r.order?.status ?? "No disponible",
+    timeline: normalizeTimeline(r.timeline ?? []),
+    pdfAttachment: r.pdf_attachment ? normalizeDocument(r.pdf_attachment) : undefined,
+    attachments: normalizeAttachments(r.attachments ?? []),
+    documents: normalizeDocuments(r.documents ?? []),
+    events: normalizeEvents(r.events ?? []),
+    messages: normalizeMessages(r.messages ?? []),
     source: "legacy",
   };
 }
 
 export function normalizePortalOrderDetail(raw: PortalOrderResponse["data"]): NormalizedOrderDetail {
+  const r = raw ?? {};
+  const order = r.order ?? {};
+  const device = order.device ?? {};
+  const dates = order.dates ?? {};
+  const costs = order.costs ?? {};
+  const timeline = r.timeline ?? {};
+  const timelineItems = Array.isArray(timeline.items) ? timeline.items : [];
+  const documents = r.documents ?? {};
+  const documentItems = Array.isArray(documents.items) ? documents.items : [];
+
   return {
     order: {
-      folio: raw.order.folio,
-      status: raw.order.status,
-      statusLabel: raw.order.status,
-      deviceType: raw.order.device.type || "No disponible",
-      deviceBrand: raw.order.device.brand || "No disponible",
-      deviceModel: raw.order.device.model || "No disponible",
-      serialNumber: raw.order.device.serialNumber ?? undefined,
-      problemDescription: raw.order.reportedIssue || "No disponible",
-      createdAt: safeDate(raw.order.dates.receivedAt),
-      updatedAt: safeDate(raw.order.dates.updatedAt ?? raw.order.dates.receivedAt),
-      promisedDate: raw.order.dates.promisedDate ? safeDate(raw.order.dates.promisedDate) : undefined,
-      estimatedCost: raw.order.costs.estimated,
-      finalCost: raw.order.costs.final,
-      completedAt: raw.order.dates.completedAt ? safeDate(raw.order.dates.completedAt) : undefined,
-      deliveredAt: raw.order.dates.deliveredAt ? safeDate(raw.order.dates.deliveredAt) : undefined,
+      folio: order.folio ?? "No disponible",
+      status: order.status ?? "pending",
+      statusLabel: order.status ?? "No disponible",
+      deviceType: device.type || "No disponible",
+      deviceBrand: device.brand || "No disponible",
+      deviceModel: device.model || "No disponible",
+      serialNumber: device.serialNumber ?? undefined,
+      problemDescription: order.reportedIssue || "No disponible",
+      createdAt: safeDate(dates.receivedAt),
+      updatedAt: safeDate(dates.updatedAt ?? dates.receivedAt),
+      promisedDate: dates.promisedDate ? safeDate(dates.promisedDate) : undefined,
+      estimatedCost: typeof costs.estimated === "number" ? costs.estimated : 0,
+      finalCost: costs.final ?? null,
+      completedAt: dates.completedAt ? safeDate(dates.completedAt) : undefined,
+      deliveredAt: dates.deliveredAt ? safeDate(dates.deliveredAt) : undefined,
     },
-    orderStatusLabel: raw.order.status,
-    timeline: normalizePortalTimeline(raw.timeline.items),
+    orderStatusLabel: order.status ?? "No disponible",
+    timeline: normalizePortalTimeline(timelineItems),
     attachments: [],
-    documents: normalizePortalDocuments(raw.documents.items),
-    events: raw.timeline.items.map((event) => ({
-      id: event.id,
-      type: event.type,
-      description: event.note ?? event.label,
-      date: safeDate(event.createdAt),
-    })),
+    documents: normalizePortalDocuments(documentItems),
+    events: timelineItems.map((event) => {
+      const ev = event ?? {};
+      return {
+        id: ev.id ?? Math.random().toString(36).substring(7),
+        type: ev.type ?? "event",
+        description: ev.note ?? ev.label ?? "Evento sin descripción",
+        date: safeDate(ev.createdAt),
+      };
+    }),
     messages: [],
-    authorization: raw.authorization,
-    warranty: raw.warranty,
-    pdf: raw.pdf,
+    authorization: r.authorization ?? null,
+    warranty: r.warranty ?? null,
+    pdf: r.pdf ?? { available: false, url: null },
     source: "canonical",
   };
 }
 
-function safeDate(value?: string | Date | null): Date {
-  if (value instanceof Date) return value;
-  const date = value ? new Date(value) : new Date();
-  return Number.isNaN(date.getTime()) ? new Date() : date;
+function safeDate(value?: unknown): Date {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? new Date() : value;
+  }
+  if (typeof value === "number") {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? new Date() : d;
+  }
+  if (typeof value === "string" && value.trim()) {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? new Date() : d;
+  }
+  return new Date();
 }
 
 function normalizeOrder(order: BackendOrderResponse["data"]["order"]): NormalizedOrder {
-  const deviceInfo = order.device_info ?? {};
+  const o = order ?? {};
+  const deviceInfo = o.device_info ?? {};
   return {
-    folio: order.folio,
-    status: order.status,
-    statusLabel: order.status,
+    folio: o.folio ?? "No disponible",
+    status: o.status ?? "pending",
+    statusLabel: o.status ?? "No disponible",
     deviceType: String(deviceInfo.type ?? "No disponible"),
     deviceBrand: String(deviceInfo.brand ?? "No disponible"),
     deviceModel: String(deviceInfo.model ?? "No disponible"),
-    serialNumber: deviceInfo.serial_number ?? order.serial_number ?? undefined,
-    problemDescription: String(order.problem_description ?? "No disponible"),
-    createdAt: new Date(order.created_at ?? Date.now()),
-    updatedAt: new Date(order.updated_at ?? order.created_at ?? Date.now()),
-    promisedDate: order.promised_date ? new Date(order.promised_date) : undefined,
+    serialNumber: deviceInfo.serial_number ?? o.serial_number ?? undefined,
+    problemDescription: String(o.problem_description ?? "No disponible"),
+    createdAt: safeDate(o.created_at),
+    updatedAt: safeDate(o.updated_at ?? o.created_at),
+    promisedDate: o.promised_date ? safeDate(o.promised_date) : undefined,
     customerName: deviceInfo.customer_name ?? undefined,
     customerPhone: deviceInfo.customer_phone ?? undefined,
     customerEmail: deviceInfo.customer_email ?? undefined,
+    estimatedCost: typeof o.estimated_cost === "number" ? o.estimated_cost : undefined,
+    finalCost: o.final_cost ?? null,
   };
 }
 
 function normalizeTimeline(events: BackendOrderResponse["data"]["timeline"]): NormalizedTimelineEvent[] {
-  return events.map((event, index) => ({
-    id: `${event.label}-${index}`,
-    label: event.label,
-    status: event.status,
-    note: event.note,
-    date: new Date(),
-  }));
+  const arr = Array.isArray(events) ? events : [];
+  return arr.map((event, index) => {
+    const ev = event ?? {};
+    return {
+      id: ev.label ? `${ev.label}-${index}` : `event-${index}-${Math.random().toString(36).substring(7)}`,
+      label: ev.label ?? "Evento",
+      status: ev.status === "completed" || ev.status === "in_progress" || ev.status === "pending" ? ev.status : "pending",
+      note: ev.note ?? undefined,
+      date: new Date(),
+    };
+  });
 }
 
 function normalizePortalTimeline(events: PortalOrderResponse["data"]["timeline"]["items"]): NormalizedTimelineEvent[] {
-  return events.map((event) => ({
-    id: event.id,
-    label: event.label,
-    status: event.status === "received" || event.status === "delivered" || event.status === "completed" ? "completed" : event.type === "status" ? "in_progress" : "pending",
-    note: event.note ?? event.type,
-    date: safeDate(event.createdAt),
-  }));
+  const arr = Array.isArray(events) ? events : [];
+  return arr.map((event, index) => {
+    const ev = event ?? {};
+    return {
+      id: ev.id ?? `portal-event-${index}-${Math.random().toString(36).substring(7)}`,
+      label: ev.label ?? "Evento",
+      status: ev.status === "received" || ev.status === "delivered" || ev.status === "completed" ? "completed" : ev.type === "status" ? "in_progress" : "pending",
+      note: ev.note ?? ev.type ?? undefined,
+      date: safeDate(ev.createdAt),
+    };
+  });
 }
 
 function normalizeAttachments(attachments: BackendOrderResponse["data"]["attachments"]): NormalizedAttachment[] {
-  return attachments.map((attachment) => ({
-    id: attachment.id,
-    name: attachment.file_name,
-    url: attachment.public_url ?? "",
-    type: attachment.file_type.startsWith("image") ? "image" : attachment.file_type.startsWith("video") ? "video" : "document",
-    mimeType: attachment.mime_type,
-    source: attachment.source,
-    date: new Date(attachment.created_at),
-  }));
+  const arr = Array.isArray(attachments) ? attachments : [];
+  return arr.map((attachment) => {
+    const att = attachment ?? {};
+    const fileType = String(att.file_type ?? "");
+    let type: "image" | "video" | "document" = "document";
+    if (fileType.startsWith("image")) {
+      type = "image";
+    } else if (fileType.startsWith("video")) {
+      type = "video";
+    }
+    return {
+      id: att.id ?? Math.random().toString(36).substring(7),
+      name: att.file_name ?? "Adjunto",
+      url: att.public_url ?? "",
+      type,
+      mimeType: att.mime_type ?? "",
+      source: att.source ?? "unknown",
+      date: safeDate(att.created_at),
+    };
+  });
 }
 
 function normalizeDocuments(documents: BackendOrderResponse["data"]["documents"]): NormalizedDocument[] {
-  return documents.map((document) => ({
-    id: document.id,
-    name: document.file_name,
-    url: document.public_url ?? null,
-    type: resolveDocumentType(document.file_type, document.mime_type),
-    date: new Date(document.created_at),
-  }));
+  const arr = Array.isArray(documents) ? documents : [];
+  return arr.map((document) => {
+    const doc = document ?? {};
+    return {
+      id: doc.id ?? Math.random().toString(36).substring(7),
+      name: doc.file_name ?? "Documento",
+      url: doc.public_url ?? null,
+      type: resolveDocumentType(doc.file_type ?? "", doc.mime_type),
+      date: safeDate(doc.created_at),
+    };
+  });
 }
 
 function normalizePortalDocuments(documents: PortalOrderResponse["data"]["documents"]["items"]): NormalizedDocument[] {
-  return documents.map((document) => ({
-    id: document.id,
-    name: document.fileName,
-    url: document.url,
-    type: resolveDocumentType(document.fileType, document.mimeType),
-    date: safeDate(document.createdAt),
-  }));
+  const arr = Array.isArray(documents) ? documents : [];
+  return arr.map((document) => {
+    const doc = document ?? {};
+    return {
+      id: doc.id ?? Math.random().toString(36).substring(7),
+      name: doc.fileName ?? "Documento",
+      url: doc.url ?? null,
+      type: resolveDocumentType(doc.fileType ?? "", doc.mimeType),
+      date: safeDate(doc.createdAt),
+    };
+  });
 }
 
 function resolveDocumentType(fileType: string, mimeType?: string | null): NormalizedDocument["type"] {
-  if (fileType === "invoice" || fileType === "warranty" || fileType === "diagnostic") return fileType;
-  if (mimeType?.startsWith("image/") || fileType.includes("photo") || fileType.includes("image")) return "image";
-  if (mimeType?.startsWith("video/") || fileType.includes("video")) return "video";
+  const ft = String(fileType || "").toLowerCase();
+  const mt = String(mimeType || "").toLowerCase();
+  if (ft === "invoice" || ft === "warranty" || ft === "diagnostic") return ft;
+  if (mt.startsWith("image/") || ft.includes("photo") || ft.includes("image")) return "image";
+  if (mt.startsWith("video/") || ft.includes("video")) return "video";
   return "other";
 }
 
 function normalizeDocument(document: NonNullable<BackendOrderResponse["data"]["pdf_attachment"]>): NormalizedDocument {
+  const doc = document ?? {};
   return {
-    id: document.fileName ?? document.label,
-    name: document.label,
-    url: document.url,
+    id: doc.fileName ?? doc.label ?? "documento-pdf",
+    name: doc.label ?? "Documento PDF",
+    url: doc.url ?? null,
     type: "invoice",
     date: new Date(),
   };
 }
 
 function normalizeEvents(events: BackendOrderResponse["data"]["events"]): NormalizedEvent[] {
-  return events.map((event) => ({
-    id: event.id,
-    type: event.event_type,
-    description: event.note ?? event.event_type,
-    date: new Date(event.created_at),
-  }));
+  const arr = Array.isArray(events) ? events : [];
+  return arr.map((event) => {
+    const ev = event ?? {};
+    return {
+      id: ev.id ?? Math.random().toString(36).substring(7),
+      type: ev.event_type ?? "event",
+      description: ev.note ?? ev.event_type ?? "Evento sin descripción",
+      date: safeDate(ev.created_at),
+    };
+  });
 }
 
 function normalizeMessages(messages: BackendOrderResponse["data"]["messages"]): NormalizedMessage[] {
-  return messages.map((message) => ({
-    id: message.id,
-    from: "technician",
-    content: message.note ?? "",
-    read: true,
-    date: new Date(message.created_at),
-  }));
+  const arr = Array.isArray(messages) ? messages : [];
+  return arr.map((message) => {
+    const msg = message ?? {};
+    return {
+      id: msg.id ?? Math.random().toString(36).substring(7),
+      from: "technician",
+      content: msg.note ?? "",
+      read: true,
+      date: safeDate(msg.created_at),
+    };
+  });
 }

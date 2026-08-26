@@ -49,6 +49,7 @@ DAEMON_LOG = HOME / ".ralph-fixi" / "daemon.log"
 CODEX = shutil.which("codex") or "/opt/homebrew/bin/codex"
 AGY = shutil.which("agy") or "/Users/usuario/.local/bin/agy"
 DEFAULT_AGY_WORKER_MODEL = "gemini-3.5-flash-low"
+DEFAULT_CODEX_MODEL = "gpt-5.6-luna"
 GEMINI_API_WORKER = SUP / "gemini_api_worker.py"
 NODE22_BIN = Path("/opt/homebrew/opt/node@22/bin")
 BREW_BASH = "/opt/homebrew/bin/bash" if Path("/opt/homebrew/bin/bash").exists() else (shutil.which("bash") or "/bin/bash")
@@ -323,9 +324,25 @@ def extract_agy_answer(raw: str) -> str:
 def codex_readonly(prompt: str, timeout=None) -> Tuple[int, str, str]:
     policy = load_policy()
     timeout = timeout or int(policy["codex_timeout_seconds"])
-    cmd = [CODEX, "exec", "--sandbox", "read-only", "--ephemeral", prompt]
+    cmd = [
+        CODEX, "exec", "--model", _codex_model(),
+        "-c", f"model_reasoning_effort=\"{_codex_reasoning_effort()}\"",
+        "--sandbox", "read-only", "--ephemeral", prompt,
+    ]
     p = run(cmd, timeout=timeout)
     return p.returncode, extract_codex_answer(p.stdout), p.stdout
+
+def _hv_execution_engine() -> str:
+    policy = load_policy()
+    return str(os.environ.get("RALPH_EXECUTION_ENGINE", policy.get("execution_engine", "antigravity"))).lower()
+
+def _codex_model() -> str:
+    policy = load_policy()
+    return os.environ.get("RALPH_CODEX_MODEL", policy.get("codex_model", DEFAULT_CODEX_MODEL))
+
+def _codex_reasoning_effort() -> str:
+    policy = load_policy()
+    return os.environ.get("RALPH_CODEX_REASONING_EFFORT", policy.get("codex_reasoning_effort", "low"))
 
 def antigravity_readonly(prompt: str, timeout=None) -> Tuple[int, str, str]:
     policy = load_policy()
@@ -398,6 +415,8 @@ def _run_gemini_api(
         return 124, "", f"GEMINI_API_TIMEOUT after {timeout}s; candidate rejected before integration."
 
 def planner_readonly(prompt: str, timeout=None) -> Tuple[int, str, str]:
+    if _hv_execution_engine() == "codex":
+        return codex_readonly(prompt, timeout)
     return antigravity_readonly(prompt, timeout)
 
 def get_active_spec() -> Path | None:
@@ -1131,7 +1150,10 @@ def _hv_record_attempt(meta: dict, *, verified: bool, reason: str) -> dict:
     path = _hv_retry_path(meta["id"])
     state = _hv_retry_state(meta["id"])
     attempts = 0 if verified else int(state.get("attempts", 0) or 0) + 1
-    blocked = bool(not verified and attempts >= int(_hv_policy().get("hypervelocity_max_attempts", 3)))
+    max_attempts = int(_hv_policy().get("hypervelocity_max_attempts", 3))
+    # A zero budget means keep retrying; provider quota and integration gates
+    # still stop unsafe or unavailable work before it reaches the repository.
+    blocked = bool(not verified and max_attempts > 0 and attempts >= max_attempts)
     payload = {
         "id": meta["id"], "attempts": attempts, "blocked": blocked,
         "last_status": "PASS" if verified else ("BLOCKED" if blocked else "RETRY"),
@@ -1192,8 +1214,8 @@ def _hv_refresh_dashboard(*, stage: str = "IDLE", current: str | None = None, re
         "stage": stage, "current_aspec": current, "updated_at": dt.datetime.now().isoformat(),
         "workers": {
             "pool_target": pool_target,
-            "pool_scope": "per-gemini-api-invocation",
-            "pool_note": "The API worker owns one child process per configured Keychain slot; this is not a global cross-invocation pool.",
+            "pool_scope": "per-worker-invocation",
+            "pool_note": "The configured engine owns one child process per worker slot; this is not a global cross-invocation pool.",
             "aspec_parallel_cap": aspec_cap,
             "running": running,
             "verify": verifying,
@@ -1249,7 +1271,13 @@ def _hv_health_score(results: List[tuple[Path, dict, Path]] | None = None) -> di
 
 def _hv_adaptive_width() -> int:
     policy = _hv_policy()
-    cap = max(1, min(int(policy.get("hypervelocity_max_parallel_specs", 4)), 4))
+    cap = max(
+        1,
+        min(
+            int(policy.get("hypervelocity_max_parallel_specs", 4)),
+            int(policy.get("hypervelocity_max_parallel_workers", 7)),
+        ),
+    )
     state = load_state()
     history = state.get("history", []) if isinstance(state, dict) else []
     recent = history[-3:]
@@ -1429,6 +1457,29 @@ def _hv_run_cmd(cwd: Path, command: str, timeout: int) -> tuple[bool, str]:
     except subprocess.TimeoutExpired:
         return False, f"$ {command}\nTIMEOUT\n"
 
+def _hv_only_preserved_baseline_errors(detail: str) -> bool:
+    """Allow a gate to pass only when every compiler diagnostic is pre-existing."""
+    baseline_paths = _hv_dirty_baseline_paths()
+    if not baseline_paths:
+        return False
+    normalized = []
+    for path in baseline_paths:
+        clean = path.replace("\\", "/").lstrip("./")
+        normalized.append(clean)
+        if "/apps/" in f"/{clean}":
+            normalized.append(clean.split("apps/", 1)[1])
+    diagnostics = [
+        line.strip()
+        for line in detail.splitlines()
+        if re.search(r"(?:error TS\\d+|\\berror:)", line, re.IGNORECASE)
+    ]
+    if not diagnostics:
+        return False
+    for line in diagnostics:
+        if not any(line.endswith(path) or f"/{path}" in line or path in line for path in normalized):
+            return False
+    return True
+
 def _hv_run_agy(cmd: List[str], sandbox: Path) -> tuple[int, str, str]:
     """Bound Gemini workers so one stalled request cannot halt the repair queue."""
     timeout = int(_hv_policy().get("hypervelocity_agent_timeout_seconds", 300))
@@ -1437,6 +1488,15 @@ def _hv_run_agy(cmd: List[str], sandbox: Path) -> tuple[int, str, str]:
         return completed.returncode, extract_agy_answer(completed.stdout), completed.stdout[-24000:]
     except subprocess.TimeoutExpired:
         return 124, "", f"AGY_TIMEOUT after {timeout}s; candidate rejected before integration.\n"
+
+def _hv_run_codex(cmd: List[str], sandbox: Path) -> tuple[int, str, str]:
+    """Bound Codex CLI workers so one stalled request cannot halt the repair queue."""
+    timeout = int(_hv_policy().get("hypervelocity_agent_timeout_seconds", 300))
+    try:
+        completed = run(cmd, cwd=sandbox, timeout=timeout)
+        return completed.returncode, extract_codex_answer(completed.stdout), completed.stdout[-24000:]
+    except subprocess.TimeoutExpired:
+        return 124, "", f"CODEX_TIMEOUT after {timeout}s; candidate rejected before integration.\n"
 
 def _hv_worker(spec: Path, sandbox: Path, wave_baseline: Dict[str, str]) -> dict:
     meta = parse_spec_meta(spec)
@@ -1469,7 +1529,14 @@ A.SPEC:
 {meta['text']}
 {workspace_rule}
 """
-        if _hv_policy().get("gemini_api_enabled", False):
+        if _hv_execution_engine() == "codex":
+            cmd = [
+                CODEX, "exec", "--model", _codex_model(),
+                "-c", f"model_reasoning_effort=\"{_codex_reasoning_effort()}\"",
+                "--sandbox", "read-only", "--ephemeral", prompt,
+            ]
+            rc, answer, log = _hv_run_codex(cmd, sandbox)
+        elif _hv_policy().get("gemini_api_enabled", False):
             rc, answer, log = _run_gemini_api(prompt, sandbox, "plan", [], [], int(_hv_policy().get("gemini_api_worker_timeout_seconds", 120)))
         else:
             cmd = [
@@ -1498,7 +1565,7 @@ A.SPEC:
                 rc = 1
 
     else:
-        prompt = f"""You are one isolated Gemini Hypervelocity worker for a real Fixi repository.
+        prompt = f"""You are one isolated Codex Hypervelocity worker for a real Fixi repository.
 
 Implement ONLY the following bounded ADD A.SPEC in this isolated worktree.
 Do not widen scope.
@@ -1512,7 +1579,14 @@ A.SPEC:
 {meta['text']}
 {workspace_rule}
 """
-        if _hv_policy().get("gemini_api_enabled", False):
+        if _hv_execution_engine() == "codex":
+            cmd = [
+                CODEX, "exec", "--model", _codex_model(),
+                "-c", f"model_reasoning_effort=\"{_codex_reasoning_effort()}\"",
+                "--sandbox", "workspace-write", "--ephemeral", prompt,
+            ]
+            rc, answer, log = _hv_run_codex(cmd, sandbox)
+        elif _hv_policy().get("gemini_api_enabled", False):
             rc, answer, log = _run_gemini_api(
                 prompt,
                 sandbox,
@@ -1560,7 +1634,13 @@ A.SPEC:
             )
             logs.append(detail)
             if not ok:
-                pretest_ok = False
+                if _hv_only_preserved_baseline_errors(detail):
+                    logs.append(
+                        "SANDBOX_VERIFY_BASELINE_ONLY: command failed only on preserved "
+                        "pre-existing dirty-baseline diagnostics; delta remains eligible."
+                    )
+                else:
+                    pretest_ok = False
 
     print(
         f"[HV][{meta['id']}] worker finished rc={rc} "
@@ -1605,7 +1685,13 @@ def _hv_real_worktree_gate(cand: dict, backup_dir: Path) -> tuple[bool, str]:
         )
         logs.append(detail)
         if not passed:
-            ok = False
+            if _hv_only_preserved_baseline_errors(detail):
+                logs.append(
+                    "INTEGRATION_GATE_BASELINE_ONLY: command failed only on preserved "
+                    "pre-existing dirty-baseline diagnostics; keeping the bounded delta."
+                )
+            else:
+                ok = False
     if not ok:
         _hv_restore_backup(backup_dir)
         return False, "integration gate failed; delta rolled back\n" + "\n".join(logs)[-12000:]
@@ -1734,7 +1820,14 @@ def execute_wave(spec_paths: List[Path]) -> List[tuple[Path, dict, Path]]:
         for spec, meta in accepted:
             prepared.append((spec, meta, _hv_prepare_sandbox(meta["id"])))
 
-        max_workers = max(1, min(int(policy.get("hypervelocity_max_parallel_specs", 4)), len(prepared), 4))
+        max_workers = max(
+            1,
+            min(
+                int(policy.get("hypervelocity_max_parallel_specs", 4)),
+                int(policy.get("hypervelocity_max_parallel_workers", 7)),
+                len(prepared),
+            ),
+        )
         _hv_refresh_dashboard(stage="RUNNING", current=ids[0] if ids else None, results=prepared)
         candidates = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
@@ -2102,12 +2195,19 @@ def _hv_approved_pending() -> List[Path]:
     return approved
 
 def plan_wave(goal: str, results: List[tuple[Path, dict, Path]], current_meta: dict, checkpoint: Path | None = None) -> dict:
-    width = max(1, min(int(_hv_policy().get("hypervelocity_wave_width", 4)), 4))
+    width = max(
+        1,
+        min(
+            int(_hv_policy().get("hypervelocity_wave_width", 4)),
+            int(_hv_policy().get("hypervelocity_max_parallel_specs", 4)),
+            int(_hv_policy().get("hypervelocity_max_parallel_workers", 7)),
+        ),
+    )
     result_text = _hv_results_text(results, checkpoint)
     pending = _hv_pending_queue()
     fresh_repair_cycle = not results and current_meta.get("id") == "HV-CYCLE"
     dirty_baseline = _hv_dirty_baseline_paths()
-    prompt = f"""You are the ADD Gemini Hypervelocity scheduler for a real Fixi.
+    prompt = f"""You are the ADD Hypervelocity scheduler for a real Fixi.
 
 GOAL:
 {goal}
@@ -2167,7 +2267,7 @@ Rules:
 - Prioritize the known closure frontier: web-clientes public-contract hardening, Fixi Mobile
   HTTPS/API packaging, PWA notification runtime configuration, and Docker/VPS operational
   artifacts including environment validation, healthchecks, and rollback scripts.
-- Prefer 3-4 independent READY jobs when evidence supports it; never manufacture parallelism.
+- Prefer up to the configured parallel capacity of independent READY jobs when evidence supports it; never manufacture parallelism.
 - Jobs in one wave must have no dependency on one another.
 - WRITE jobs in one wave MUST have disjoint allowed_paths.
 - Each job is one atomic A.SPEC.
@@ -2185,7 +2285,7 @@ Rules:
 - Preserve all current uncommitted work.
 - Never reset, clean, stash, discard, overwrite, or edit applied migrations.
 - wave may contain 1 to {width} jobs.
-{"- This is a fresh repair cycle with no verified repair result yet. `complete: true` is forbidden: inspect the real source tree and return 1-4 evidence-backed WRITE repairs from the known closure frontier." if fresh_repair_cycle else "- `complete: true` is allowed only after the current repair cycle has produced verified, integrated repairs and the final checkpoint passes."}
+{"- This is a fresh repair cycle with no verified repair result yet. `complete: true` is forbidden: inspect the real source tree and return 1-{width} evidence-backed WRITE repairs from the known closure frontier." if fresh_repair_cycle else "- `complete: true` is allowed only after the current repair cycle has produced verified, integrated repairs and the final checkpoint passes."}
 """
     rc, answer, raw = planner_readonly(prompt)
     raw_path = LOGS / f"{current_meta['id']}-hv-planner-{now()}.log"
@@ -2378,7 +2478,7 @@ def cmd_run(args):
     state.update({
         "goal": goal, "started_at": dt.datetime.now().isoformat(),
         "head_at_start": git_head(), "status": "running",
-        "hypervelocity": True, "engine": "gemini-antigravity",
+        "hypervelocity": True, "engine": _hv_execution_engine(),
     })
     state.setdefault("hv_completed_since_checkpoint", 0)
     save_state(state)
@@ -2551,7 +2651,7 @@ def cmd_status(_args):
     ensure_control_plane()
     state = load_state()
     active = get_active_spec()
-    print("Ralph Fixi Supervisor v10.1 — Gemini Hypervelocity")
+    print("Ralph Fixi Supervisor v10.1 — Codex Hypervelocity")
     print(f"Repo: {REPO}")
     print(f"HEAD: {git_head()}")
     print(f"Active A.SPEC: {active.relative_to(REPO) if active else '(none)'}")
@@ -2568,7 +2668,8 @@ def cmd_status(_args):
     print(
         "Hypervelocity: "
         f"wave_width={p.get('hypervelocity_max_parallel_specs',4)} "
-        f"gemini_api_pool={p.get('hypervelocity_max_parallel_workers',7)} "
+        f"worker_pool={p.get('hypervelocity_max_parallel_workers',7)} "
+        f"engine={_hv_execution_engine()} "
         "isolated_sandboxes=ON merge_applier=1 integration_gate=ON "
         f"adaptive_width={_hv_adaptive_width()} "
         f"checkpoint_every={p.get('hypervelocity_checkpoint_every_jobs',6)}"
@@ -2607,7 +2708,7 @@ def cmd_start(args):
     p = subprocess.Popen(cmd, cwd=str(REPO), stdout=logf, stderr=subprocess.STDOUT, start_new_session=True)
     atomic_write(DAEMON_PID, str(p.pid) + "\n")
     atomic_write(GOAL_FILE, goal + "\n")
-    print(f"Ralph Fixi Gemini Hypervelocity v10.1 started: pid={p.pid}")
+    print(f"Ralph Fixi Codex Hypervelocity v10.1 started: pid={p.pid}")
     print(f"Log: {DAEMON_LOG}")
 
 def main():

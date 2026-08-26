@@ -4,7 +4,7 @@ export class InventoryService {
   static async getInventoryMetrics(supabase: SupabaseClient, tenantId: string, sucursalId?: string) {
     let inventoryQuery = supabase
       .from('sucursal_inventory')
-      .select('stock_current, products!inner(cost)')
+      .select('stock_current, products:product_id (cost)')
       .eq('tenant_id', tenantId);
 
     if (sucursalId) {
@@ -17,13 +17,14 @@ export class InventoryService {
     let inventoryCount = 0;
     let lowStockCount = 0;
     let inventoryValuation = 0;
-    
+
     const LOW_STOCK_THRESHOLD = Number(process.env.LOW_STOCK_THRESHOLD ?? 5);
 
     for (const item of inventory ?? []) {
       const stock = Number(item.stock_current ?? 0);
-      const cost = Number((item.products as any)?.cost ?? 0);
-      
+
+      const cost = Number(((item as { products?: { cost?: number | null } }).products?.cost ?? 0));
+
       inventoryCount++;
       if (stock <= LOW_STOCK_THRESHOLD) {
         lowStockCount++;
