@@ -20,7 +20,8 @@
     ],
     "paths": {
       "@/*": ["./src/*"],
-      "@white-label/config": ["../../packages/config/src/index.ts"]
+      "@white-label/config": ["../../packages/config/src/index.ts"],
+      "@white-label/types": ["../../packages/types/index.ts"]
     }
   },
   "include": [

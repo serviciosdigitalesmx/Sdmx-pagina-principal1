@@ -14,5 +14,8 @@ declare namespace NodeJS {
     MASTER_TENANT_SLUG?: string;
     MASTER_ACCOUNT_EMAIL?: string;
     TRIAL_DAYS?: string;
+    PWA_VAPID_PUBLIC_KEY?: string;
+    PWA_VAPID_PRIVATE_KEY?: string;
+    PWA_VAPID_SUBJECT?: string;
   }
 }

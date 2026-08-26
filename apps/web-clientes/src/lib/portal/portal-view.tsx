@@ -123,8 +123,12 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
       setError(null);
       setHasSearched(true);
       try {
-        if (!tenantSlug) throw new Error("Tenant slug ausente en la ruta");
-        if (!searchValue.trim()) throw new Error("Ingresa tu código de acceso seguro");
+        if (!tenantSlug || typeof tenantSlug !== "string" || !tenantSlug.trim()) {
+          throw new Error("Tenant slug ausente en la ruta");
+        }
+        if (!searchValue || typeof searchValue !== "string" || !searchValue.trim()) {
+          throw new Error("Ingresa tu código de acceso seguro");
+        }
 
         const cleanValue = searchValue.trim();
         const portalPayload = await getPortalOrderByToken(tenantSlug, cleanValue);
@@ -143,7 +147,7 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
   );
 
   useEffect(() => {
-    if (!initialFolio) return;
+    if (!initialFolio || typeof initialFolio !== "string" || !initialFolio.trim()) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void executeSearch(initialFolio, initialLookupMode);
   }, [executeSearch, initialFolio, initialLookupMode]);

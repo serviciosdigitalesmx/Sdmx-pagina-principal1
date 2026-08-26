@@ -384,6 +384,7 @@ export interface NormalizedOrder {
   folio: string;
   status: string;
   statusLabel: string;
+  orderStatusLabel?: string;
   deviceType: string;
   deviceBrand: string;
   deviceModel: string;

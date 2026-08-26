@@ -21,6 +21,15 @@ const webUrl = (
 
 const entryUrl = webUrl ? new URL("/login", webUrl).toString() : "";
 
+const isDev = process.env.NODE_ENV !== "production";
+
+if (!isDev && entryUrl) {
+  const parsedUrl = new URL(entryUrl);
+  if (parsedUrl.protocol !== "https:") {
+    throw new Error(`Production mobile server URL must use HTTPS. Got: ${entryUrl}`);
+  }
+}
+
 const config: CapacitorConfig = {
   appId: "mx.serviciosdigitalesmx.fixi",
   appName: "FIXI",

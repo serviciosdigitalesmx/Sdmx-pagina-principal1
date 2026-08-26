@@ -68,3 +68,6 @@ audit-*.sh
 .vercel
 .env*.local
 .env*
+
+# Local Ralph/ADD control plane
+.ralph-add/

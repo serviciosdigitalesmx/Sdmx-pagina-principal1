@@ -6,6 +6,12 @@ export function getOrderByFolio(tenantSlug: string, folio: string) {
 }
 
 export function getPortalOrderByToken(tenantSlug: string, publicToken: string) {
+  if (!tenantSlug || typeof tenantSlug !== "string" || !tenantSlug.trim()) {
+    throw new Error("Tenant slug is required and must be a non-empty string");
+  }
+  if (!publicToken || typeof publicToken !== "string" || !publicToken.trim()) {
+    throw new Error("Public token is required and must be a non-empty string");
+  }
   return apiClient<PortalOrderResponse>(`/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(publicToken)}/portal`);
 }
 

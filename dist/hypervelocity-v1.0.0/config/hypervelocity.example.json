@@ -1,0 +1,20 @@
+{
+  "project_name": "target-project",
+  "control_dir": ".hypervelocity",
+  "runtime_dir": "~/.hypervelocity",
+  "gemini_api_model": "gemma-4-26b-a4b-it",
+  "gemini_api_url": "https://generativelanguage.googleapis.com/v1beta",
+  "gemini_keychain_services": [
+    "hypervelocity-gemini-01",
+    "hypervelocity-gemini-02",
+    "hypervelocity-gemini-03",
+    "hypervelocity-gemini-04",
+    "hypervelocity-gemini-05",
+    "hypervelocity-gemini-06",
+    "hypervelocity-gemini-07"
+  ],
+  "max_api_processes": 7,
+  "max_parallel_specs": 4,
+  "integration_gate": true,
+  "automatic_deploy": false
+}

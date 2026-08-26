@@ -5,7 +5,7 @@ let configured = false;
 
 function ensureConfigured() {
   if (configured) {
-    return;
+    return true;
   }
 
   const publicKey = process.env.PWA_VAPID_PUBLIC_KEY?.trim();
@@ -13,21 +13,20 @@ function ensureConfigured() {
   const subject = process.env.PWA_VAPID_SUBJECT?.trim();
 
   if (!publicKey || !privateKey || !subject) {
-    return;
+    return false;
   }
 
-  webpush.setVapidDetails(subject, publicKey, privateKey);
-  configured = true;
+  try {
+    webpush.setVapidDetails(subject, publicKey, privateKey);
+    configured = true;
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function sendTenantPushNotification(tenantId: string, payload: Record<string, unknown>) {
-  ensureConfigured();
-
-  const publicKey = process.env.PWA_VAPID_PUBLIC_KEY?.trim();
-  const privateKey = process.env.PWA_VAPID_PRIVATE_KEY?.trim();
-  const subject = process.env.PWA_VAPID_SUBJECT?.trim();
-
-  if (!publicKey || !privateKey || !subject) {
+  if (!ensureConfigured()) {
     return { sent: 0, skipped: true };
   }
 
@@ -77,4 +76,3 @@ export async function sendTenantPushNotification(tenantId: string, payload: Reco
 
   return { sent, skipped: false };
 }
-

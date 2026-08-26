@@ -1,0 +1,105 @@
+{
+  "schema": 1,
+  "version": "1.0.0",
+  "created_from_commit": "8ea6df228827247d063b5d2586837ba63669b893",
+  "files": [
+    {
+      "path": "PORTING.md",
+      "sha256": "0b8132edda40bc8b27b162f1a8e4c0f84f039463b1fd5c136b7630cffe193815",
+      "bytes": 3404,
+      "mode": "644"
+    },
+    {
+      "path": "README.md",
+      "sha256": "00288e7b1053189ab176d9fad19961a15d6c0ca02d54bcee508e909ffbf28802",
+      "bytes": 1935,
+      "mode": "644"
+    },
+    {
+      "path": "VERSION",
+      "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03",
+      "bytes": 6,
+      "mode": "644"
+    },
+    {
+      "path": "config/hypervelocity.example.json",
+      "sha256": "4c73ecef700f9654f5f2a1516bf2711c129574559a36c25b004cc4e91ce7e576",
+      "bytes": 590,
+      "mode": "644"
+    },
+    {
+      "path": "doctor.sh",
+      "sha256": "3869c8d5d274ff7a9c099b0afa76b5da04f669d10c850e1810bbf203a361c476",
+      "bytes": 850,
+      "mode": "755"
+    },
+    {
+      "path": "hypervelocity/gemini_api_worker.py",
+      "sha256": "21d68d63d459c7cc87aaef6ac7ff5cc0fd3d458444ae7f8e049bf0ae0d537900",
+      "bytes": 18671,
+      "mode": "644"
+    },
+    {
+      "path": "hypervelocity/hypervelocity_supervisor.py",
+      "sha256": "78621df6e6bef1ff64c5dfa878b8e412170c0fe11a36b2d4eccd759694d5c6c1",
+      "bytes": 106539,
+      "mode": "755"
+    },
+    {
+      "path": "hypervelocity/policy.json",
+      "sha256": "ff65897344581007099b3e347ef39648904f182c0773f545d468fc3d3ebef678",
+      "bytes": 1220,
+      "mode": "644"
+    },
+    {
+      "path": "install.sh",
+      "sha256": "2a3a17cd5b026a6e581ddd82b31b5e0552303dd2c22086d6984cedf1ed3261d5",
+      "bytes": 1072,
+      "mode": "755"
+    },
+    {
+      "path": "source/gemini_api_worker.py",
+      "sha256": "0d2653a5e5af27759793e00c6a9c4573a5cd2e5d0d50c8c4a9f1f7f7191732a1",
+      "bytes": 18592,
+      "mode": "644"
+    },
+    {
+      "path": "source/policy.json",
+      "sha256": "eb952cf9a0a736ae876f762c45c708ca3c94741dca46d068bc77bd181864fb02",
+      "bytes": 1206,
+      "mode": "644"
+    },
+    {
+      "path": "source/ralph-fixi",
+      "sha256": "e98c58ea37d868e6cc67a92fee31654b9f462161fe2f5a4c84491a55123fae4e",
+      "bytes": 130,
+      "mode": "755"
+    },
+    {
+      "path": "source/ralph_fixi_supervisor.py",
+      "sha256": "5f31fb91d06ae3ecf467ed93d086868aac9865e9a9d5838f7152d95570a8ea23",
+      "bytes": 106542,
+      "mode": "755"
+    },
+    {
+      "path": "start.sh",
+      "sha256": "f6b14e8e3377bfdbac09d7713266f792fe71627dc041ab66ce233edb4e96dca3",
+      "bytes": 582,
+      "mode": "755"
+    },
+    {
+      "path": "stop.sh",
+      "sha256": "6cb944d68a24535c32757882bb22381743229ef0c49f4e8f17263f6c875d483f",
+      "bytes": 479,
+      "mode": "755"
+    }
+  ],
+  "excluded": [
+    ".env*",
+    "*.log",
+    "worktrees",
+    "caches",
+    "credentials",
+    "API keys"
+  ]
+}
