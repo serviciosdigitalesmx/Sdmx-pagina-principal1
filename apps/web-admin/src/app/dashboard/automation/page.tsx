@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Settings, Play, ToggleLeft, ToggleRight, Plus, HelpCircle, Loader2, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Settings, ToggleLeft, ToggleRight, Plus, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -14,8 +14,8 @@ interface Rule {
   event_type: string;
   action_type: string;
   is_active: boolean;
-  condition: any;
-  action_config: any;
+  condition: unknown;
+  action_config: unknown;
 }
 
 interface Log {
@@ -25,6 +25,18 @@ interface Log {
   error_message: string | null;
   created_at: string;
   rule?: Rule;
+}
+
+function readStatus(value: unknown) {
+  if (!value || typeof value !== 'object' || !('status' in value)) return undefined;
+  const status = value.status;
+  return typeof status === 'string' ? status : undefined;
+}
+
+function readTemplate(value: unknown) {
+  if (!value || typeof value !== 'object' || !('template' in value)) return undefined;
+  const template = value.template;
+  return typeof template === 'string' ? template : undefined;
 }
 
 export default function AutomationPage() {
@@ -42,17 +54,12 @@ export default function AutomationPage() {
   const [templateName, setTemplateName] = useState('status_update');
   const [savingRule, setSavingRule] = useState(false);
 
-  useEffect(() => {
-    loadRules();
-    loadLogs();
-  }, []);
-
   const loadRules = async () => {
     setLoading(true);
     try {
       const res = await apiGateway.getAutomationRules();
       setRules(res || []);
-    } catch (e) {
+    } catch {
       toast.error('Error al cargar reglas');
     } finally {
       setLoading(false);
@@ -63,10 +70,19 @@ export default function AutomationPage() {
     try {
       const res = await apiGateway.getAutomationLogs();
       setLogs(res || []);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error(error);
     }
   };
+
+  useEffect(() => {
+    const initialize = async () => {
+      await loadRules();
+      await loadLogs();
+    };
+
+    void initialize();
+  }, []);
 
   const handleCreateRule = async () => {
     if (!ruleName.trim()) {
@@ -90,7 +106,7 @@ export default function AutomationPage() {
       setNewRuleOpen(false);
       setRuleName('');
       loadRules();
-    } catch (e) {
+    } catch {
       toast.error('Error al crear regla');
     } finally {
       setSavingRule(false);
@@ -104,7 +120,7 @@ export default function AutomationPage() {
       });
       toast.success(`Regla ${!rule.is_active ? 'activada' : 'desactivada'}`);
       loadRules();
-    } catch (e) {
+    } catch {
       toast.error('Error al actualizar regla');
     }
   };
@@ -180,9 +196,9 @@ export default function AutomationPage() {
                 </div>
 
                 <div className="text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-1">
-                  <div>Condición: <strong>Si el estado es "{rule.condition?.status}"</strong></div>
+                  <div>Condición: <strong>Si el estado es &quot;{readStatus(rule.condition) ?? 'no definido'}&quot;</strong></div>
                   <div>Acción: <strong>{rule.action_type === 'send_whatsapp' ? 'Preparar WhatsApp' : rule.action_type === 'send_notification' ? 'Enviar notificación' : 'Acción no disponible'}</strong></div>
-                  <div>Plantilla: <strong>{rule.action_config?.template}</strong></div>
+                  <div>Plantilla: <strong>{readTemplate(rule.action_config) ?? 'no definida'}</strong></div>
                 </div>
               </div>
             ))

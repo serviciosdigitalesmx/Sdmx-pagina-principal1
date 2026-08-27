@@ -31,7 +31,6 @@ import {
 import { FEATURE_EVIDENCE_MODE } from '../config/feature-flags';
 import { resolveOrderWorkflow, validateOrderTransition } from '../services/order-workflow';
 
-const defaultOrderStatuses = ['recibido', 'diagnostico', 'reparacion', 'listo', 'entregado'] as const;
 const orderStatusSchema = z.string().min(1);
 
 const encodedFileSchema = z.object({
@@ -130,12 +129,6 @@ const checklistPayloadSchema = z.object({
   acceptedAt: z.string().datetime().optional().or(z.literal('')).default(''),
   acceptedByName: z.string().optional().default(''),
 });
-
-type OperationalStatus = {
-  key?: string;
-  label?: string;
-  tone?: string;
-};
 
 type OrderDocumentRow = {
   id: string;
@@ -435,7 +428,7 @@ function getScopedBranchId(req: Request) {
   return null;
 }
 
-function applyOrderAccessScope(query: any, req: Request) {
+function applyOrderAccessScope<T extends { eq(column: string, value: string): T }>(query: T, req: Request) {
   let scopedQuery = query;
   const branchId = getScopedBranchId(req);
   if (branchId) {
@@ -496,7 +489,7 @@ const createOrderSchema = z.object({
   metadata: z.record(z.unknown()).optional(),
   catalogModelId: z.string().uuid().optional().or(z.literal('')),
   catalogFaultId: z.string().uuid().optional().or(z.literal('')),
-  checklistResponses: z.record(z.any()).optional(),
+  checklistResponses: z.record(z.unknown()).optional(),
 });
 
 function normalizeOrderStatus(status?: string | null) {
@@ -750,29 +743,6 @@ function normalizeWarrantyClaim(row: WarrantyClaimRow) {
   };
 }
 
-function normalizeDeviceHistoryTimeline(rows: DeviceHistoryStatusRow[] | null | undefined) {
-  return (rows ?? []).map((row) => ({
-    id: row.id,
-    previousStatus: row.previous_status,
-    newStatus: row.new_status,
-    comment: row.comment,
-    changedBy: row.changed_by,
-    createdAt: row.created_at,
-  }));
-}
-
-function normalizeDeviceHistoryEvents(rows: OrderEventRow[] | null | undefined) {
-  return (rows ?? []).map((row) => ({
-    id: row.id,
-    eventType: row.event_type,
-    previousStatus: row.previous_status,
-    newStatus: row.new_status,
-    note: row.note,
-    actorName: row.actor_name,
-    createdAt: row.created_at,
-  }));
-}
-
 function normalizeDeviceHistoryDocuments(rows: DeviceHistoryDocumentRow[] | null | undefined) {
   return (rows ?? []).map((row) => ({
     id: row.id,
@@ -821,6 +791,9 @@ async function insertOrderDocument(supabase: ReturnType<typeof getTenantClient>,
 
   if (isMissingDocumentVisibilitySchema(error)) {
     const { is_customer_visible, retention_policy_version, retention_expires_at, ...legacyRow } = row;
+    void is_customer_visible;
+    void retention_policy_version;
+    void retention_expires_at;
     const { error: legacyError } = await supabase.from('service_order_documents').insert([legacyRow]);
     if (!legacyError) {
       return;
@@ -848,26 +821,7 @@ async function insertOrderEvent(supabase: ReturnType<typeof getTenantClient>, ro
   }
 }
 
-async function getTenantOperationalStatuses(tenantId: string) {
-  const config = await getCachedTenantConfig(tenantId);
-  const statuses = config.statusOptions.service_orders ?? [];
-  if (statuses.length > 0) {
-    return statuses.map((status) => ({
-      key: String(status.key),
-      label: String(status.label ?? status.key),
-      tone: String(status.tone ?? 'zinc'),
-    }));
-  }
-
-  return defaultOrderStatuses.map((status) => ({ key: status, label: status, tone: 'zinc' }));
-}
-
-async function getAllowedOrderStatusKeys(tenantId: string) {
-  const statuses = await getTenantOperationalStatuses(tenantId);
-  return new Set(statuses.map((status) => status.key ?? '').filter(Boolean));
-}
-
-async function ensureBucketExists(bucketName: string) {
+async function ensureBucketExists() {
   // Disabled automatic bucket creation in runtime as per audit finding P2
 }
 
@@ -955,7 +909,7 @@ async function persistReceiptPdf(options: {
     .from('service_orders')
     .update({
       receipt_url: receiptUpload.publicUrl,
-      evidence_metadata: appendEvidenceEntry((options.order as any)?.evidence_metadata, {
+      evidence_metadata: appendEvidenceEntry(options.order.evidence_metadata, {
         kind: 'document',
         id: receiptDocumentId,
         file_name: 'recepcion.pdf',
@@ -1057,7 +1011,7 @@ export const createOrder = async (req: Request, res: Response) => {
       p_catalog_model_id: validatedData.catalogModelId || null,
       p_catalog_fault_id: validatedData.catalogFaultId || null,
       p_checklist_responses: validatedData.checklistResponses || null,
-      p_priority: (validatedData.metadata as any)?.priority || 'normal',
+      p_priority: typeof validatedData.metadata?.priority === 'string' ? validatedData.metadata.priority : 'normal',
       p_actor_name: req.user?.email ?? req.user?.role ?? 'system',
       p_checklist_data: checklistPatch,
       p_idempotency_key: idempotencyKey || null
@@ -1163,8 +1117,6 @@ export const getOrderById = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
     const orderId = req.params.id;
-    const scope = getRequestScope(req);
-
     if (!tenantId) {
       return res.status(401).json({ error: 'Tenant context is required' });
     }
@@ -1244,7 +1196,7 @@ export const getOrderById = async (req: Request, res: Response) => {
     if (!resolvedReceiptUrl) {
       try {
         const bucketName = getStorageBucketName();
-        await ensureBucketExists(bucketName);
+        await ensureBucketExists();
         const tenantProfile = await resolveTenantOrderDocumentProfile(
           tenantId,
           typeof orderResult.data.sucursal_id === 'string' ? orderResult.data.sucursal_id : null,
@@ -1319,7 +1271,7 @@ export const createOrderUploadIntent = async (req: Request, res: Response) => {
   try {
     const tenantId = req.tenantId;
     const orderId = req.params.id;
-    const { fileName, mimeType } = req.body;
+    const { fileName } = req.body;
     
     if (!tenantId) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -1339,8 +1291,8 @@ export const createOrderUploadIntent = async (req: Request, res: Response) => {
       storagePath,
       bucketName
     });
-  } catch (e: any) {
-    return res.status(500).json({ error: e.message });
+  } catch (e: unknown) {
+    return res.status(500).json({ error: e instanceof Error ? e.message : 'Unknown error' });
   }
 };
 
@@ -1357,7 +1309,7 @@ export const confirmOrderUpload = async (req: Request, res: Response) => {
     // Optional: Check if file exists in bucket
     const { data: publicData } = supabaseAdmin.storage.from(bucketName).getPublicUrl(storagePath);
 
-    const documentId = require('crypto').randomUUID();
+    const documentId = randomUUID();
     await supabase.from('service_order_documents').insert({
       id: documentId,
       tenant_id: tenantId,
@@ -1374,8 +1326,8 @@ export const confirmOrderUpload = async (req: Request, res: Response) => {
     });
 
     return res.json({ success: true, documentId });
-  } catch (e: any) {
-    return res.status(500).json({ error: e.message });
+  } catch (e: unknown) {
+    return res.status(500).json({ error: e instanceof Error ? e.message : 'Unknown error' });
   }
 };
 
@@ -1480,7 +1432,7 @@ export const getDeviceHistoryBySerial = async (req: Request, res: Response) => {
       });
     }
 
-    const statusByOrder = new Map<string, ReturnType<typeof normalizeDeviceHistoryTimeline>>();
+    const statusByOrder = new Map();
     for (const row of (statusHistoryResult.data ?? []) as DeviceHistoryStatusRow[]) {
       const list = statusByOrder.get(row.service_order_id) ?? [];
       list.push({
@@ -1494,7 +1446,7 @@ export const getDeviceHistoryBySerial = async (req: Request, res: Response) => {
       statusByOrder.set(row.service_order_id, list);
     }
 
-    const eventsByOrder = new Map<string, ReturnType<typeof normalizeDeviceHistoryEvents>>();
+    const eventsByOrder = new Map();
     for (const row of (eventsResult.data ?? []) as OrderEventRow[]) {
       const list = eventsByOrder.get(row.service_order_id) ?? [];
       list.push({
@@ -2507,8 +2459,8 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
       if (rules && rules.length > 0) {
         for (const rule of rules) {
           let matches = true;
-          const condition = rule.condition as any;
-          if (condition && condition.status && condition.status !== nextStatus) {
+          const condition = rule.condition;
+          if (condition && typeof condition === 'object' && 'status' in condition && condition.status !== nextStatus) {
             matches = false;
           }
 
@@ -3549,14 +3501,14 @@ export const deleteOrder = async (req: Request, res: Response) => {
     }
 
     // 2. Extraer IDs o rutas de archivos adjuntos del metadata
-    const evidence = order.evidence_metadata as any[];
+    const evidence = readEvidenceMetadata(order.evidence_metadata);
     let relativePaths: string[] = [];
     if (Array.isArray(evidence)) {
       const bucketName = getStorageBucketName();
       const filesToDelete = evidence
-        .filter(item => item.kind === 'document' || item.kind === 'photo')
-        .map(item => item.url) // Asumiendo que guardaste la ruta del storage en url
-        .filter(Boolean);
+        .filter((item): item is Extract<EvidenceEntry, { kind: 'document' }> => item.kind === 'document')
+        .map(item => item.public_url)
+        .filter((url): url is string => Boolean(url));
       
       // Si son URLs completas, extraer el path relativo
       relativePaths = filesToDelete.map(url => {

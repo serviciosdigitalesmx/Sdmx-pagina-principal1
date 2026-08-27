@@ -49,10 +49,6 @@ function decodeBase64File(base64: string) {
   return Buffer.from(cleaned, 'base64');
 }
 
-async function ensureBucketExists(bucketName: string) {
-  // Disabled automatic bucket creation in runtime as per audit finding P2
-}
-
 export const getHealth = (_req: Request, res: Response) => {
   return res.status(200).json({
     status: 'ok',

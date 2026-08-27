@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowDownRight, ArrowUpRight, Banknote, CircleCheckBig, Clock3, RefreshCw } from 'lucide-react';
 import { Badge, SurfaceCard } from '@white-label/ui';
 import { financeService } from '@/services/finance/financeService';
@@ -41,7 +41,7 @@ export default function FinanzasPage() {
   const [error, setError] = useState('');
   const [adjustmentModalOpen, setAdjustmentModalOpen] = useState(false);
 
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     setLoading(true);
     try {
       const isOwner = getCurrentSession()?.role === 'owner';
@@ -66,8 +66,8 @@ export default function FinanzasPage() {
         receipt_url: row.receipt_url ?? null,
       })));
 
-      if (scope?.sucursalId) {
-        const flow = await financeService.getCashflow(scope.sucursalId);
+      if (currentSucursal) {
+        const flow = await financeService.getCashflow(currentSucursal);
         setCashflow((flow as unknown as FinanceBalance[]).map((row) => ({
           id: String(row.id ?? ''),
           tenant_id: String(row.tenant_id ?? ''),
@@ -90,11 +90,15 @@ export default function FinanzasPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentSucursal]);
 
   useEffect(() => {
-    void refresh();
-  }, [scope?.sucursalId]);
+    const timeoutId = window.setTimeout(() => {
+      void refresh();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [refresh]);
 
   const summary = useMemo(() => {
     const summaryRow = rows.find((r) => r.type === 'summary');

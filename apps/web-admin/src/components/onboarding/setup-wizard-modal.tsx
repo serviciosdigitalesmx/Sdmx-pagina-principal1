@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,7 +9,6 @@ import { apiGateway } from '@/services/apiGateway';
 import { toast } from 'sonner';
 
 export function SetupWizardModal() {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -23,23 +21,30 @@ export function SetupWizardModal() {
   const [registerName, setRegisterName] = useState('Caja Principal');
   const [initialCash, setInitialCash] = useState('500');
 
-  useEffect(() => {
-    checkIfOnboardingNeeded();
-  }, []);
-
-  const checkIfOnboardingNeeded = async () => {
+  const checkIfOnboardingNeeded = useCallback(async () => {
     try {
       // Verificamos si el taller ya tiene al menos una caja configurada
       const registers = await apiGateway.getCashRegisters();
       if (registers.length === 0) {
         setOpen(true);
       }
-    } catch (e) {
-      console.error('Error verificando estado del onboarding:', e);
+    } catch (error: unknown) {
+      console.error(
+        'Error verificando estado del onboarding:',
+        error instanceof Error ? error.message : error
+      );
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void checkIfOnboardingNeeded();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [checkIfOnboardingNeeded]);
 
   const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -94,7 +99,11 @@ export function SetupWizardModal() {
       
       // Redirigir al POS o Recepción para que empiece a operar
       window.location.assign('/dashboard/pos');
-    } catch (err: any) {
+    } catch (error: unknown) {
+      console.error(
+        'Error al configurar el taller:',
+        error instanceof Error ? error.message : error
+      );
       toast.error('Ocurrió un error al configurar tu taller. Intenta de nuevo.');
     } finally {
       setSubmitting(false);

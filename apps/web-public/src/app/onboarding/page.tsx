@@ -45,36 +45,36 @@ function readDraftFromLocation(): Partial<RegisterState> {
   return draft;
 }
 
+function readInitialForm(): RegisterState {
+  if (typeof window === "undefined") {
+    return initialState;
+  }
+
+  try {
+    const stored = window.localStorage.getItem(draftStorageKey);
+    const storedDraft = stored ? (JSON.parse(stored) as Partial<RegisterState>) : {};
+    const locationDraft = readDraftFromLocation();
+
+    return {
+      ...initialState,
+      ...storedDraft,
+      ...locationDraft,
+    };
+  } catch {
+    return {
+      ...initialState,
+      ...readDraftFromLocation(),
+    };
+  }
+}
+
 export default function OnboardingPage() {
-  const [form, setForm] = useState<RegisterState>(initialState);
+  const [form, setForm] = useState<RegisterState>(readInitialForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [draftReady, setDraftReady] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") {
-      return;
-    }
-
-    try {
-      const stored = window.localStorage.getItem(draftStorageKey);
-      const storedDraft = stored ? (JSON.parse(stored) as Partial<RegisterState>) : {};
-      const locationDraft = readDraftFromLocation();
-
-      setForm((current) => ({
-        ...current,
-        ...storedDraft,
-        ...locationDraft,
-      }));
-    } catch {
-      setForm((current) => ({ ...current, ...readDraftFromLocation() }));
-    } finally {
-      setDraftReady(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!draftReady || typeof window === "undefined") {
       return;
     }
 
@@ -83,7 +83,7 @@ export default function OnboardingPage() {
     } catch {
       // Draft persistence is best effort.
     }
-  }, [draftReady, form]);
+  }, [form]);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;

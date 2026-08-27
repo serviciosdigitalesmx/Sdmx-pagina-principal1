@@ -1,11 +1,9 @@
 import { randomUUID } from 'crypto';
 import { NextFunction, Request, Response } from 'express';
 
-declare global {
-  namespace Express {
-    interface Request {
-      requestId?: string;
-    }
+declare module 'express' {
+  interface Request {
+    requestId?: string;
   }
 }
 

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
 import { z } from 'zod';
-import { getTenantClient, supabaseAdmin } from '@white-label/database';
+import { getTenantClient } from '@white-label/database';
 
 type TaskStatusOption = { key?: string; label?: string; tone?: string };
 
@@ -65,7 +65,7 @@ const taskUpdateSchema = z.object({
   }
 });
 
-async function getTaskStatuses(tenantId: string) {
+async function getTaskStatuses(): Promise<TaskStatusOption[]> {
   return [
     { key: 'pendiente', label: 'Pendiente', tone: 'gray' },
     { key: 'en_proceso', label: 'En proceso', tone: 'amber' },
@@ -139,7 +139,7 @@ export const getTaskById = async (req: Request, res: Response) => {
     if (taskResult.error) return res.status(502).json({ error: 'Failed to fetch task', details: taskResult.error.message });
     if (!taskResult.data) return res.status(404).json({ error: 'Task not found' });
     if (historyResult.error) return res.status(502).json({ error: 'Failed to fetch task history', details: historyResult.error.message });
-    return res.json({ success: true, data: { task: taskResult.data, history: historyResult.data ?? [], statuses: await getTaskStatuses(tenantId) } });
+    return res.json({ success: true, data: { task: taskResult.data, history: historyResult.data ?? [], statuses: await getTaskStatuses() } });
   } catch (error) {
     console.error('Error getting task:', error);
     return res.status(500).json({ error: 'Error interno del servidor' });
@@ -153,7 +153,7 @@ export const createTask = async (req: Request, res: Response) => {
     const body = taskBaseSchema.parse(req.body);
     const scope = req.scope;
     const supabase = getTenantClient(tenantId);
-    const allowedStatuses = new Set((await getTaskStatuses(tenantId)).map((item) => String(item.key ?? '')));
+    const allowedStatuses = new Set((await getTaskStatuses()).map((item) => String(item.key ?? '')));
     const nextStatus = body.status?.trim() || 'pendiente';
     if (!allowedStatuses.has(nextStatus)) {
       return res.status(400).json({ error: 'Invalid status', details: { allowedStatuses: [...allowedStatuses] } });
@@ -260,7 +260,7 @@ export const updateTaskStatus = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Task not found' });
     }
 
-    const allowedStatuses = new Set((await getTaskStatuses(tenantId)).map((item) => String(item.key ?? '')));
+    const allowedStatuses = new Set((await getTaskStatuses()).map((item) => String(item.key ?? '')));
     if (!allowedStatuses.has(body.status)) {
       return res.status(400).json({ error: 'Invalid status', details: { allowedStatuses: [...allowedStatuses] } });
     }

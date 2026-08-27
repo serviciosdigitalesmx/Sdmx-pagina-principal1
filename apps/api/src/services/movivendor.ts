@@ -159,7 +159,7 @@ async function vendorFetch<T>(path: string, body: Record<string, unknown>): Prom
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error((payload as MovivendorTokenResponse | MovivendorTxResponse | MovivendorBalanceResponse)?.error || (payload as any)?.message || `Movivendor HTTP ${response.status}`);
+    throw new Error((payload as MovivendorTokenResponse | MovivendorTxResponse | MovivendorBalanceResponse)?.error || (payload as MovivendorTokenResponse | MovivendorTxResponse | MovivendorBalanceResponse)?.message || `Movivendor HTTP ${response.status}`);
   }
 
   return payload as T;
@@ -343,7 +343,7 @@ export async function validateTenantAccount(account: MovivendorTenantAccountRow)
     return data as MovivendorTenantAccountRow;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Error validando credenciales';
-    const { data, error: updateError } = await supabaseAdmin
+    const { error: updateError } = await supabaseAdmin
       .from('movivendor_tenant_accounts')
       .update({
         status: 'credentials_error',

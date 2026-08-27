@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -32,28 +32,31 @@ export function DeviceHistoryModal({ open, onOpenChange, serialNumber, currentOr
   const [history, setHistory] = useState<DeviceHistoryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (open && serialNumber) {
-      loadHistory();
-    } else {
-      setHistory([]);
-      setError(null);
-    }
-  }, [open, serialNumber]);
+  const loadHistory = useCallback(async () => {
+    if (!serialNumber) return;
 
-  const loadHistory = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiGateway.getDeviceHistoryBySerial(serialNumber!);
-      setHistory(data as unknown as DeviceHistoryItem[]);
+      const data = await apiGateway.getDeviceHistoryBySerial(serialNumber);
+      setHistory(data);
     } catch (err) {
       console.error('Error loading device history:', err);
       setError(err instanceof Error ? err.message : 'Error al cargar el historial del dispositivo');
     } finally {
       setLoading(false);
     }
-  };
+  }, [serialNumber]);
+
+  useEffect(() => {
+    if (!open || !serialNumber) return;
+
+    const task = window.setTimeout(() => {
+      void loadHistory();
+    }, 0);
+
+    return () => window.clearTimeout(task);
+  }, [open, serialNumber, loadHistory]);
 
   const getStatusBadge = (status: string) => {
     const s = status.toLowerCase();
@@ -110,7 +113,7 @@ export function DeviceHistoryModal({ open, onOpenChange, serialNumber, currentOr
             </div>
           ) : (
             <div className="relative border-l border-slate-800 ml-4 pl-6 space-y-8 pb-4">
-              {history.map((order, index) => (
+              {history.map((order) => (
                 <div key={order.id} className="relative">
                   <div className={`absolute -left-[33px] flex h-6 w-6 items-center justify-center rounded-full border-4 border-slate-950 ${order.id === currentOrderId ? 'bg-sky-500 text-sky-50' : 'bg-slate-800 text-slate-400'}`}>
                     {order.status.toLowerCase() === 'entregado' || order.status.toLowerCase() === 'delivered' ? (

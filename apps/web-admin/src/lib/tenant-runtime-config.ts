@@ -6,6 +6,30 @@ export type TenantRuntimeConfig = {
 
 const STORAGE_KEY = 'srf_tenant_runtime_config';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function getRecord(value: unknown, key: string): Record<string, unknown> | null {
+  if (!isRecord(value)) return null;
+
+  const nested = value[key];
+  return isRecord(nested) ? nested : null;
+}
+
+function getString(value: unknown, key: string): string | null {
+  if (!isRecord(value)) return null;
+
+  const nested = value[key];
+  return typeof nested === 'string' ? nested : null;
+}
+
+function getStringArray(value: unknown, key: string): string[] | null {
+  if (!isRecord(value) || !Array.isArray(value[key])) return null;
+
+  return value[key].filter((item): item is string => typeof item === 'string');
+}
+
 export function saveTenantRuntimeConfig(input: TenantRuntimeConfig): void {
   if (typeof window === 'undefined') return;
 
@@ -25,14 +49,12 @@ export function getTenantRuntimeConfig(): TenantRuntimeConfig | null {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
 
-    const parsed = JSON.parse(raw) as Partial<TenantRuntimeConfig>;
+    const parsed: unknown = JSON.parse(raw);
 
     return {
-      industryKey: typeof parsed.industryKey === 'string' ? parsed.industryKey : null,
-      industryLabel: typeof parsed.industryLabel === 'string' ? parsed.industryLabel : null,
-      activeModules: Array.isArray((parsed as { activeModules?: unknown }).activeModules)
-        ? ((parsed as { activeModules?: unknown }).activeModules as unknown[]).filter((item): item is string => typeof item === 'string')
-        : [],
+      industryKey: getString(parsed, 'industryKey'),
+      industryLabel: getString(parsed, 'industryLabel'),
+      activeModules: getStringArray(parsed, 'activeModules') ?? [],
     };
   } catch {
     return {
@@ -52,47 +74,31 @@ export function getStoredActiveModules(): string[] {
 }
 
 export function extractTenantRuntimeConfig(payload: unknown): TenantRuntimeConfig {
-  const root = payload as any;
-  const tenant = root?.data?.tenant ?? root?.tenant ?? root?.data ?? root;
-
+  const root = isRecord(payload) ? payload : null;
+  const data = getRecord(root, 'data');
+  const config = getRecord(data, 'config') ?? getRecord(root, 'config');
+  const tenant = getRecord(data, 'tenant') ?? getRecord(root, 'tenant') ?? data ?? root;
   const profile =
-    tenant?.industry_profile ??
-    tenant?.industryProfile ??
-    root?.data?.industry_profile ??
-    root?.data?.config?.industry_profile ??
-    root?.data?.config?.industryProfile ??
-    root?.industry_profile ??
-    root?.config?.industry_profile ??
-    root?.config?.industryProfile ??
+    getRecord(tenant, 'industry_profile') ??
+    getRecord(tenant, 'industryProfile') ??
+    getRecord(data, 'industry_profile') ??
+    getRecord(config, 'industry_profile') ??
+    getRecord(config, 'industryProfile') ??
+    getRecord(root, 'industry_profile') ??
     null;
+  const capabilities = getRecord(data, 'capabilities') ?? getRecord(config, 'capabilities') ?? getRecord(root, 'capabilities');
 
   return {
     industryKey:
-      typeof profile?.industry_key === 'string'
-        ? profile.industry_key
-        : typeof profile?.industryKey === 'string'
-          ? profile.industryKey
-          : null,
+      getString(profile, 'industry_key') ?? getString(profile, 'industryKey'),
 
     industryLabel:
-      typeof profile?.industry_label === 'string'
-        ? profile.industry_label
-        : typeof profile?.industryLabel === 'string'
-          ? profile.industryLabel
-          : null,
+      getString(profile, 'industry_label') ?? getString(profile, 'industryLabel'),
 
-    activeModules: Array.isArray(root?.data?.capabilities?.active_modules)
-      ? (root.data.capabilities.active_modules as unknown[]).filter((item): item is string => typeof item === 'string')
-      : Array.isArray(root?.data?.config?.capabilities?.active_modules)
-        ? (root.data.config.capabilities.active_modules as unknown[]).filter((item): item is string => typeof item === 'string')
-      : Array.isArray(root?.capabilities?.active_modules)
-        ? (root.capabilities.active_modules as unknown[]).filter((item): item is string => typeof item === 'string')
-        : Array.isArray(root?.config?.capabilities?.active_modules)
-          ? (root.config.capabilities.active_modules as unknown[]).filter((item): item is string => typeof item === 'string')
-        : Array.isArray(root?.data?.active_modules)
-          ? (root.data.active_modules as unknown[]).filter((item): item is string => typeof item === 'string')
-          : Array.isArray(root?.active_modules)
-            ? (root.active_modules as unknown[]).filter((item): item is string => typeof item === 'string')
-            : [],
+    activeModules:
+      getStringArray(capabilities, 'active_modules') ??
+      getStringArray(data, 'active_modules') ??
+      getStringArray(root, 'active_modules') ??
+      [],
   };
 }

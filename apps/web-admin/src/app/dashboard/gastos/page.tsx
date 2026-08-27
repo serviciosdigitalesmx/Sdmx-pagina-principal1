@@ -1,8 +1,8 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import { Plus, Search, RefreshCw, Trash2, Calendar, DollarSign, X } from 'lucide-react';
-import { Badge, SurfaceCard } from '@white-label/ui';
+import { Plus, Search, RefreshCw, Trash2, X } from 'lucide-react';
+import { SurfaceCard } from '@white-label/ui';
 import { financeService } from '@/services/finance/financeService';
 import { getActiveSucursalId } from '@/lib/tenant';
 
@@ -34,11 +34,9 @@ const INITIAL_FORM: ExpenseForm = {
 export default function GastosPage() {
   const [loading, setLoading] = useState(true);
   const [expenses, setExpenses] = useState<ExpenseRow[]>([]);
-  const [filteredExpenses, setFilteredExpenses] = useState<ExpenseRow[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
-  const [totalAmount, setTotalAmount] = useState(0);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -48,8 +46,7 @@ export default function GastosPage() {
     setLoading(true);
     try {
       const data = await financeService.getExpenses();
-      const expensesList = data as ExpenseRow[];
-      setExpenses(expensesList);
+      setExpenses(data);
       setError('');
     } catch (err) {
       setExpenses([]);
@@ -60,10 +57,11 @@ export default function GastosPage() {
   };
 
   useEffect(() => {
-    void loadExpenses();
+    const load = window.setTimeout(() => void loadExpenses(), 0);
+    return () => window.clearTimeout(load);
   }, []);
 
-  useEffect(() => {
+  const filteredExpenses = useMemo(() => {
     let filtered = [...expenses];
 
     if (searchTerm) {
@@ -82,9 +80,13 @@ export default function GastosPage() {
     }
 
     filtered.sort((a, b) => new Date(String(b.expense_date ?? b.created_at ?? '')).getTime() - new Date(String(a.expense_date ?? a.created_at ?? '')).getTime());
-    setFilteredExpenses(filtered);
-    setTotalAmount(filtered.reduce((sum, e) => sum + Number(e.expense ?? e.amount ?? 0), 0));
+    return filtered;
   }, [searchTerm, dateFrom, dateTo, expenses]);
+
+  const totalAmount = useMemo(
+    () => filteredExpenses.reduce((sum, e) => sum + Number(e.expense ?? e.amount ?? 0), 0),
+    [filteredExpenses]
+  );
 
   async function submitExpense(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

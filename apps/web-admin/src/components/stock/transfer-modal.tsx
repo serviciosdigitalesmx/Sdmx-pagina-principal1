@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -33,9 +33,24 @@ export function TransferModal({ open, onOpenChange, product, onTransferSuccess }
     motivo: '',
     notas: '',
   });
+  const origen = (product as Product & { sucursal_id?: string | null }).sucursal_id || scope?.sucursalId;
 
-  useEffect(() => {
-    if (open) {
+  async function loadSucursales() {
+    try {
+      const data = await apiGateway.getSucursales();
+      setSucursales(data.reduce<Array<{ id: string; name: string }>>((branches, branch) => {
+        if (typeof branch.id === 'string' && typeof branch.name === 'string') {
+          branches.push({ id: branch.id, name: branch.name });
+        }
+        return branches;
+      }, []));
+    } catch (error) {
+      console.error('Error al cargar sucursales:', error);
+    }
+  }
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
       setIdempotencyKey(crypto.randomUUID());
       setFormData({
         sucursalDestino: '',
@@ -45,15 +60,7 @@ export function TransferModal({ open, onOpenChange, product, onTransferSuccess }
       });
       void loadSucursales();
     }
-  }, [open]);
-
-  const loadSucursales = async () => {
-    try {
-      const data = await apiGateway.getSucursales();
-      setSucursales(data as Array<{ id: string; name: string }>);
-    } catch (error) {
-      console.error('Error al cargar sucursales:', error);
-    }
+    onOpenChange(nextOpen);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -70,7 +77,6 @@ export function TransferModal({ open, onOpenChange, product, onTransferSuccess }
       return;
     }
 
-    const origen = (product as Product & { sucursal_id?: string | null }).sucursal_id || scope?.sucursalId;
     if (!origen) {
       alert('No se pudo determinar la sucursal de origen');
       return;
@@ -103,10 +109,9 @@ export function TransferModal({ open, onOpenChange, product, onTransferSuccess }
   };
 
   if (!product) return null;
-  const origen = (product as Product & { sucursal_id?: string | null }).sucursal_id || scope?.sucursalId;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md border border-slate-800 bg-slate-950/95 text-slate-100">
         <DialogHeader>
           <DialogTitle className="text-slate-50">Transferir Inventario</DialogTitle>

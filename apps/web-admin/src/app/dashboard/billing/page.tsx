@@ -31,32 +31,37 @@ const PLANS = [
 const SELECTED_PLAN_KEY = "fixi:selected-billing-plan";
 
 export default function BillingPage() {
-  const [selectedPlan, setSelectedPlan] = useState<BillingPlanCode>("pro");
+  const [selectedPlan, setSelectedPlan] = useState<BillingPlanCode>(() => {
+    if (typeof window === "undefined") return "pro";
+
+    const storedPlan = window.sessionStorage.getItem(SELECTED_PLAN_KEY);
+    return PLANS.find((plan) => plan.code === storedPlan)?.code ?? "pro";
+  });
   const [loadingPlan, setLoadingPlan] = useState<BillingPlanCode | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [paymentNotice, setPaymentNotice] = useState<string | null>(null);
+  const [paymentNotice, setPaymentNotice] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
 
-  useEffect(() => {
-    const storedPlan = window.sessionStorage.getItem(SELECTED_PLAN_KEY);
-    if (PLANS.some((plan) => plan.code === storedPlan)) {
-      setSelectedPlan(storedPlan as BillingPlanCode);
+    const paymentResult = new URLSearchParams(window.location.search).get("payment");
+    if (paymentResult === "failure") {
+      return "El pago no se completó. Puedes intentarlo otra vez con el plan seleccionado.";
     }
-  }, []);
+    if (paymentResult === "pending") {
+      return "Mercado Pago está procesando el cobro. El acceso se activará en cuanto lo confirme.";
+    }
+    if (paymentResult) {
+      return "Pago recibido. Estamos confirmando la activación de tu cuenta...";
+    }
+    return null;
+  });
 
   useEffect(() => {
     const paymentResult = new URLSearchParams(window.location.search).get("payment");
-    if (!paymentResult) return;
-
     if (paymentResult === "failure") {
-      setPaymentNotice("El pago no se completó. Puedes intentarlo otra vez con el plan seleccionado.");
       return;
     }
 
-    if (paymentResult === "pending") {
-      setPaymentNotice("Mercado Pago está procesando el cobro. El acceso se activará en cuanto lo confirme.");
-    } else {
-      setPaymentNotice("Pago recibido. Estamos confirmando la activación de tu cuenta...");
-    }
+    if (!paymentResult) return;
 
     let cancelled = false;
     let attempts = 0;

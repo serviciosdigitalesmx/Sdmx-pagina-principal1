@@ -224,7 +224,11 @@ export default function LandingSettingsPage() {
   }
 
   useEffect(() => {
-    void load();
+    const timeoutId = window.setTimeout(() => {
+      void load();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
   const tenantSlug = settings?.tenant.slug ?? "";

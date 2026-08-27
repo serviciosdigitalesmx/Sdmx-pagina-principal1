@@ -599,7 +599,9 @@ function readFieldDefinitionsFromOperationalSettings(operationalSettings: Record
     .filter(Boolean) as TenantFieldDefinition[];
 }
 
-const RUNTIME_CONFIG_CACHE = new Map<string, { data: any; expiresAt: number }>();
+export type TenantRuntimeConfig = Awaited<ReturnType<typeof loadTenantRuntimeConfig>>;
+
+const RUNTIME_CONFIG_CACHE = new Map<string, { data: TenantRuntimeConfig; expiresAt: number }>();
 const CACHE_TTL_MS = 30000; // 30 seconds
 
 export function invalidateTenantRuntimeConfigCache(tenantId: string) {
@@ -776,5 +778,3 @@ export async function loadTenantRuntimeConfig(tenantId: string): Promise<{
   RUNTIME_CONFIG_CACHE.set(tenantId, { data: config, expiresAt: Date.now() + CACHE_TTL_MS });
   return config;
 }
-
-export type TenantRuntimeConfig = Awaited<ReturnType<typeof loadTenantRuntimeConfig>>;

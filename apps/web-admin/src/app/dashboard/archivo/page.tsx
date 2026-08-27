@@ -29,7 +29,6 @@ function resolveCloseDate(order: Record<string, unknown>) {
 
 export default function ArchivoPage() {
   const [rows, setRows] = useState<ArchiveRow[]>([]);
-  const [filtered, setFiltered] = useState<ArchiveRow[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -53,29 +52,25 @@ export default function ArchivoPage() {
           estado: normalizeStatus(String(order.status ?? "")),
         }));
       setRows(archived);
-      setFiltered(archived);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al cargar archivo");
       setRows([]);
-      setFiltered([]);
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    void refresh();
+    const timeoutId = window.setTimeout(() => {
+      void refresh();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
   }, []);
 
-  useEffect(() => {
+  const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) {
-      setFiltered(rows);
-      return;
-    }
-    setFiltered(
-      rows.filter((row) => [row.folio, row.client, row.estado].join(" ").toLowerCase().includes(term)),
-    );
+    if (!term) return rows;
+    return rows.filter((row) => [row.folio, row.client, row.estado].join(" ").toLowerCase().includes(term));
   }, [rows, search]);
 
   const deliveredCount = useMemo(

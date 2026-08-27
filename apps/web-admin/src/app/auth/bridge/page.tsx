@@ -9,13 +9,14 @@ function resolveDashboardUrl() {
 }
 
 export default function AuthBridgePage() {
-  const [token, setToken] = useState<string | null>(null);
-  const dashboardUrl = resolveDashboardUrl();
+  const [token] = useState<string | null>(() => {
+    if (typeof window === "undefined") {
+      return null;
+    }
 
-  useEffect(() => {
-    const currentToken = new URL(window.location.href).searchParams.get("token");
-    setToken(currentToken);
-  }, []);
+    return new URL(window.location.href).searchParams.get("token");
+  });
+  const dashboardUrl = resolveDashboardUrl();
 
   const message = token ? "Sesión sincronizada. Redirigiendo al panel..." : "No llegó la sesión.";
 

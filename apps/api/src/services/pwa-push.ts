@@ -8,16 +8,22 @@ function ensureConfigured() {
     return true;
   }
 
-  const publicKey = process.env.PWA_VAPID_PUBLIC_KEY?.trim();
-  const privateKey = process.env.PWA_VAPID_PRIVATE_KEY?.trim();
-  const subject = process.env.PWA_VAPID_SUBJECT?.trim();
-
-  if (!publicKey || !privateKey || !subject) {
-    return false;
-  }
-
   try {
-    webpush.setVapidDetails(subject, publicKey, privateKey);
+    const vapidConfiguration = {
+      publicKey: process.env.PWA_VAPID_PUBLIC_KEY?.trim(),
+      privateKey: process.env.PWA_VAPID_PRIVATE_KEY?.trim(),
+      subject: process.env.PWA_VAPID_SUBJECT?.trim(),
+    };
+
+    if (!vapidConfiguration.publicKey || !vapidConfiguration.privateKey || !vapidConfiguration.subject) {
+      return false;
+    }
+
+    webpush.setVapidDetails(
+      vapidConfiguration.subject,
+      vapidConfiguration.publicKey,
+      vapidConfiguration.privateKey,
+    );
     configured = true;
     return true;
   } catch {

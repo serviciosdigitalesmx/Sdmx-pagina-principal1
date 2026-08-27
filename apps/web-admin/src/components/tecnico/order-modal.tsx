@@ -91,10 +91,15 @@ export interface OrderPayment {
   paid_at?: string;
 }
 
+type OrderModalTab = "details" | "checklist" | "photos" | "history" | "inventory" | "payments";
+
+function isOrderModalTab(value: string): value is OrderModalTab {
+  return ["details", "checklist", "photos", "history", "inventory", "payments"].includes(value);
+}
+
 export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props) {
   const [activeTab, setActiveTab] = useState<"details" | "checklist" | "photos" | "history" | "inventory" | "payments">("details");
   const [detail, setDetail] = useState<{ order: Order; checklist: OrderChecklist | null; documents: OrderDocument[]; events: OrderEvent[]; payments: OrderPayment[]; inventoryReservations: InventoryReservation[] } | null>(null);
-  const [loadingDetail, setLoadingDetail] = useState(false);
   const [savingDetails, setSavingDetails] = useState(false);
   const [savingChecklist, setSavingChecklist] = useState(false);
   const [isMutating, setIsMutating] = useState(false);
@@ -142,10 +147,8 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
     if (!open || !order?.id) return;
 
     let cancelled = false;
-    setLoadingDetail(true);
-
     void Promise.all([
-      apiClient.get<{ data: { order: Order; checklist?: OrderChecklist | null; documents?: OrderDocument[]; events?: OrderEvent[]; payments?: any[] } }>(
+      apiClient.get<{ data: { order: Order; checklist?: OrderChecklist | null; documents?: OrderDocument[]; events?: OrderEvent[]; payments?: OrderPayment[] } }>(
         `/orders/${encodeURIComponent(order.id)}`,
         getApiOptions(),
       ),
@@ -192,9 +195,6 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
       .catch((error) => {
         console.error("Failed to load order detail:", error);
         if (!cancelled) setDetail(null);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingDetail(false);
       });
 
     return () => {
@@ -205,7 +205,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
   if (!open || !order) return null;
 
   const currentOrder = detail?.order ?? order;
-  const checklist = detail?.checklist ?? null;
+  const loadingDetail = detail?.order.id !== order.id;
   const documents = detail?.documents ?? [];
   const events = detail?.events ?? [];
   const payments = detail?.payments ?? [];
@@ -289,7 +289,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
     try {
       await inventoryService.consumeInventoryReservation(reservationId, { 
         quantity, 
-        idempotencyKey: `consume-${Date.now()}` 
+        idempotencyKey: `consume-${crypto.randomUUID()}`
       });
       await onOrderUpdated();
       setDetail(prev => prev ? { ...prev, inventoryReservations: prev.inventoryReservations.map(r => r.id === reservationId ? { ...r, consumed_quantity: Number(r.consumed_quantity || 0) + quantity, status: Number(r.consumed_quantity || 0) + quantity >= Number(r.reserved_quantity || 0) ? 'consumed' : r.status } : r) } : null);
@@ -475,7 +475,9 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
                   </SurfaceCard>
                 </div>
 
-                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as typeof activeTab)}>
+                <Tabs value={activeTab} onValueChange={(value) => {
+                  if (isOrderModalTab(value)) setActiveTab(value);
+                }}>
                   <TabsList className="sticky top-0 z-10 grid w-full grid-cols-6 border border-slate-800 bg-slate-950/95 p-1 backdrop-blur-xl">
                     <TabsTrigger value="details" className="rounded-xl text-xs text-slate-400 data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-50">Detalles</TabsTrigger>
                     <TabsTrigger value="checklist" className="rounded-xl text-xs text-slate-400 data-[state=active]:bg-sky-500/20 data-[state=active]:text-sky-50">Checklist</TabsTrigger>
@@ -674,7 +676,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
                                     <Button 
                                       size="sm"
                                       disabled={isMutating}
-                                      onClick={() => handleConsume(res.id as string, Number(res.reserved_quantity) - Number(res.consumed_quantity))}
+                                      onClick={() => res.id && void handleConsume(res.id, Number(res.reserved_quantity) - Number(res.consumed_quantity))}
                                       className="h-7 border border-emerald-500/30 bg-emerald-500/10 px-2 text-[10px] text-emerald-300 hover:bg-emerald-500/20"
                                     >
                                       Consumir
@@ -682,7 +684,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
                                     <Button 
                                       size="sm"
                                       disabled={isMutating}
-                                      onClick={() => handleRelease(res.id as string, Number(res.reserved_quantity) - Number(res.consumed_quantity))}
+                                      onClick={() => res.id && void handleRelease(res.id, Number(res.reserved_quantity) - Number(res.consumed_quantity))}
                                       className="h-7 border border-amber-500/30 bg-amber-500/10 px-2 text-[10px] text-amber-300 hover:bg-amber-500/20"
                                     >
                                       Liberar
@@ -748,11 +750,11 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
                                     if (confirm("¿Reembolsar este pago?")) {
                                       try {
                                         setIsMutating(true);
-                                        await ordersService.refundOrderPayment(order!.id, payment.id as string, { amount: Math.abs(Number(payment.amount)), reason: "Solicitud del operador" });
+                                        if (order?.id && payment.id) await ordersService.refundOrderPayment(order.id, payment.id, { amount: Math.abs(Number(payment.amount)), reason: "Solicitud del operador" });
                                         await onOrderUpdated();
                                         const response = await apiClient.get<{ data: { payments?: OrderPayment[] } }>(`/orders/${encodeURIComponent(order!.id)}`, getApiOptions());
                                         setDetail(prev => prev ? { ...prev, payments: response.data.payments ?? [] } : null);
-                                      } catch (e) {
+                                      } catch {
                                         alert("Error al reembolsar");
                                       } finally {
                                         setIsMutating(false);

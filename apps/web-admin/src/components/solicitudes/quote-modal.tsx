@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -29,22 +29,14 @@ interface QuoteModalProps {
   onQuoteConverted: () => void;
 }
 
-export function QuoteModal({ open, onOpenChange, request, onQuoteConverted }: QuoteModalProps) {
-  const [items, setItems] = useState<QuoteItem[]>([{ concepto: '', cantidad: 1, precio: 0 }]);
+function QuoteModalForm({ open, onOpenChange, request, onQuoteConverted }: QuoteModalProps) {
+  const [items, setItems] = useState<QuoteItem[]>([
+    { concepto: request?.issue_description || 'Diagnóstico y reparación', cantidad: 1, precio: 0 },
+  ]);
   const [notas, setNotas] = useState('');
   const [aplicaIva, setAplicaIva] = useState(false);
   const [anticipo, setAnticipo] = useState(0);
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (request && open) {
-      // Reset form
-      setItems([{ concepto: request.issue_description || 'Diagnóstico y reparación', cantidad: 1, precio: 0 }]);
-      setNotas('');
-      setAplicaIva(false);
-      setAnticipo(0);
-    }
-  }, [request, open]);
 
   if (!request) return null;
 
@@ -285,4 +277,8 @@ export function QuoteModal({ open, onOpenChange, request, onQuoteConverted }: Qu
       </DialogContent>
     </Dialog>
   );
+}
+
+export function QuoteModal(props: QuoteModalProps) {
+  return <QuoteModalForm key={`${props.open}-${props.request?.id ?? 'none'}`} {...props} />;
 }

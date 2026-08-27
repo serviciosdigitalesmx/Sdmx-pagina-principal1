@@ -1,5 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { supabaseAdmin } from '@white-label/database';
+import type { BillingAdapterMode } from './billing-adapter';
 
 export type BillingPlanCode = 'basic' | 'pro' | 'enterprise';
 
@@ -184,7 +185,9 @@ async function updateOrganizationSubscription(input: {
 }) {
   // Use adapter to write subscription status (feature-flag controlled in caller)
   const { upsertSubscriptionStatus } = await import('./billing-adapter');
-  await upsertSubscriptionStatus(input.tenantId, input.status, (process.env.BILLING_ADAPTER_MODE as any) ?? 'legacy', input.plan);
+  const configuredMode = process.env.BILLING_ADAPTER_MODE;
+  const adapterMode: BillingAdapterMode = configuredMode === 'mixed' || configuredMode === 'tenants' ? configuredMode : 'legacy';
+  await upsertSubscriptionStatus(input.tenantId, input.status, adapterMode, input.plan);
 }
 
 export async function createBillingCheckout(authUserId: string | null, request: CheckoutRequest): Promise<CheckoutResponse> {

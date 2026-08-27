@@ -52,7 +52,6 @@ const localhostOrigins = new Set([
   '127.0.0.1',
   '::1',
 ]);
-const vercelHostSuffixes = ['vercel.app', 'vercel-sh.com'];
 const defaultProductionOrigins = [
   process.env.APP_URL?.trim(),
   process.env.NEXT_PUBLIC_WEB_PUBLIC_URL?.trim(),
@@ -189,7 +188,7 @@ app.use('/api/:tenantSlug/import', portabilityImportRouter);
 app.use('/api/webhooks', webhookRouter);
 app.use('/api/public', publicRouter);
 
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   const apiName = process.env.API_NAME ?? 'White-label API';
   res.send(`${apiName} is running`);
 });

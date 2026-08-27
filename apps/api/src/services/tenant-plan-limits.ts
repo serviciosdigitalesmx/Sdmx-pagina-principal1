@@ -94,14 +94,24 @@ function serializeLimit(resource: PlanLimitResource, limit: number | null, used:
   };
 }
 
-async function countRows(table: string, tenantId: string, apply?: (query: any) => any) {
+type TenantCountFilter = {
+  column: string;
+  operator: 'eq' | 'gte' | 'lt';
+  value: unknown;
+};
+
+async function countRows(table: string, tenantId: string, filters: TenantCountFilter[] = []) {
   let query = supabaseAdmin
     .from(table)
     .select('id', { count: 'exact', head: true })
     .eq('tenant_id', tenantId);
 
-  if (apply) {
-    query = apply(query);
+  for (const filter of filters) {
+    query = filter.operator === 'eq'
+      ? query.eq(filter.column, filter.value)
+      : filter.operator === 'gte'
+        ? query.gte(filter.column, filter.value)
+        : query.lt(filter.column, filter.value);
   }
 
   const { count, error } = await query;
@@ -172,9 +182,12 @@ export async function getTenantLimitDiagnostics(params: { tenantId: string }): P
   const { start, end } = currentMonthRange();
 
   const [users, sucursales, monthlyOrders] = await Promise.all([
-    countRows('users', params.tenantId, (query) => query.eq('is_active', true)),
+    countRows('users', params.tenantId, [{ column: 'is_active', operator: 'eq', value: true }]),
     countRows('sucursales', params.tenantId),
-    countRows('service_orders', params.tenantId, (query) => query.gte('created_at', start.toISOString()).lt('created_at', end.toISOString())),
+    countRows('service_orders', params.tenantId, [
+      { column: 'created_at', operator: 'gte', value: start.toISOString() },
+      { column: 'created_at', operator: 'lt', value: end.toISOString() },
+    ]),
   ]);
 
   return {

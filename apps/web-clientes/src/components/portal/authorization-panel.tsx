@@ -25,18 +25,23 @@ export function AuthorizationPanel({ tenantSlug, publicToken, onDecision }: Auth
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    setError(null);
-    getOrderAuthorization(tenantSlug, publicToken)
-      .then((response) => {
+
+    void (async () => {
+      await Promise.resolve();
+      if (!active) return;
+
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await getOrderAuthorization(tenantSlug, publicToken);
         if (active) setSummary(response.data);
-      })
-      .catch(() => {
+      } catch {
         if (active) setError("No pudimos cargar la autorización. Intenta de nuevo.");
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    })();
+
     return () => {
       active = false;
     };

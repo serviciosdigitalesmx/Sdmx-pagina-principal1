@@ -10,6 +10,10 @@ export function getPublicApiPath(pathname: string): string {
     return normalizedPath;
   }
 
+  if (process.env.NODE_ENV === "production" && /^http:\/\//i.test(apiBaseUrl)) {
+    return normalizedPath;
+  }
+
   const withScheme = /^https?:\/\//i.test(apiBaseUrl) ? apiBaseUrl : `https://${apiBaseUrl}`;
   return `${withScheme.replace(/\/$/, "")}${normalizedPath}`;
 }
