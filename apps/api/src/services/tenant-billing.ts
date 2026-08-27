@@ -37,18 +37,11 @@ function computeDaysLeft(trialExpiresAt: string | null) {
 }
 
 export async function loadTenantBillingSummary(tenantId: string, tenantSlug?: string | null): Promise<TenantBillingSummary> {
-  const [{ data: tenantRow, error: tenantError }, { data: organizationRow, error: orgError }] = await Promise.all([
-    supabaseAdmin
-      .from('tenants')
-      .select('id, slug, plan, trial_expires_at, billing_exempt')
-      .eq('id', tenantId)
-      .maybeSingle(),
-    supabaseAdmin
-      .from('organizations')
-      .select('id, slug, subscription_status')
-      .eq('id', tenantId)
-      .maybeSingle(),
-  ]);
+  const { data: tenantRow, error: tenantError } = await supabaseAdmin
+    .from('tenants')
+    .select('id, slug, plan, trial_expires_at, billing_exempt')
+    .eq('id', tenantId)
+    .maybeSingle();
 
   if (tenantError) {
     throw tenantError;

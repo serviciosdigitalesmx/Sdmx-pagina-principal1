@@ -127,56 +127,6 @@ function buildReceivedItemsPayload(
   });
 }
 
-async function ensureProductCatalogRecord(
-  supabase: ReturnType<typeof getTenantClient>,
-  tenantId: string,
-  sku: string,
-  name: string,
-  description?: string | null,
-) {
-  const { data: existingProduct, error: existingProductError } = await supabase
-    .from('products')
-    .select('id, tenant_id, sku, name')
-    .eq('tenant_id', tenantId)
-    .eq('sku', sku)
-    .maybeSingle();
-
-  if (existingProductError) {
-    throw existingProductError;
-  }
-
-  if (existingProduct) {
-    return existingProduct;
-  }
-
-  const { data: createdProduct, error: createProductError } = await supabase
-    .from('products')
-    .insert([{
-      tenant_id: tenantId,
-      sku,
-      name,
-      category: null,
-      brand: null,
-      compatible_model: null,
-      primary_supplier_id: null,
-      cost: 0,
-      sale_price: 0,
-      minimum_stock: 0,
-      unit: null,
-      location: null,
-      notes: description ?? null,
-      is_active: true,
-    }])
-    .select('id, tenant_id, sku, name')
-    .single();
-
-  if (createProductError || !createdProduct) {
-    throw createProductError ?? new Error('Unable to create product catalog record');
-  }
-
-  return createdProduct;
-}
-
 async function getPurchaseOrderDetail(supabase: ReturnType<typeof getTenantClient>, tenantId: string, orderId: string) {
   const [order, items, documents] = await Promise.all([
     supabase.from('purchase_orders').select('*').eq('tenant_id', tenantId).eq('id', orderId).maybeSingle(),

@@ -8,7 +8,6 @@ import { getPortalOrderByToken } from "@/lib/api/orders";
 import { normalizePortalOrderDetail } from "@/lib/utils/normalizers";
 import type { NormalizedAttachment, NormalizedDocument, NormalizedOrderDetail, Tenant } from "@/lib/types";
 import { TenantBrandingProvider } from "@/lib/theme/tenant-branding-provider";
-import { OrderTimeline } from "@/components/portal/order-timeline";
 import { EvidenceGallery } from "@/components/portal/evidence-gallery";
 import { DocumentList } from "@/components/portal/document-list";
 import { AuthorizationPanel } from "@/components/portal/authorization-panel";
@@ -118,7 +117,7 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
   }, [tenantSlug]);
 
   const executeSearch = useCallback(
-    async (searchValue: string, lookupMode: "auto" | "folio" | "token" = "auto") => {
+    async (searchValue: string) => {
       setLoading(true);
       setError(null);
       setHasSearched(true);
@@ -149,7 +148,7 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
   useEffect(() => {
     if (!initialFolio || typeof initialFolio !== "string" || !initialFolio.trim()) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void executeSearch(initialFolio, initialLookupMode);
+    void executeSearch(initialFolio);
   }, [executeSearch, initialFolio, initialLookupMode]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {

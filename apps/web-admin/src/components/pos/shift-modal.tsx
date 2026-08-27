@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/compone
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Wallet, LogOut, ArrowRight, Loader2, DollarSign, X } from 'lucide-react';
+import { Wallet, LogOut, ArrowRight, Loader2, X } from 'lucide-react';
 import { apiGateway } from '@/services/apiGateway';
 import { toast } from 'sonner';
 import { useEscClose } from '@/hooks/useEscClose';
@@ -14,16 +14,15 @@ interface ShiftModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   mode: 'open' | 'close';
-  activeShift?: any;
   onSuccess: () => void;
 }
 
-export function ShiftModal({ open, onOpenChange, mode, activeShift, onSuccess }: ShiftModalProps) {
+export function ShiftModal({ open, onOpenChange, mode, onSuccess }: ShiftModalProps) {
   useEscClose(() => {
     if (open) onOpenChange(false);
   });
   const [loading, setLoading] = useState(false);
-  const [registers, setRegisters] = useState<any[]>([]);
+  const [registers, setRegisters] = useState<Awaited<ReturnType<typeof apiGateway.getCashRegisters>>>([]);
   const [selectedRegister, setSelectedRegister] = useState('');
   const [cashAmount, setCashAmount] = useState('');
   const [notes, setNotes] = useState('');
@@ -63,28 +62,8 @@ export function ShiftModal({ open, onOpenChange, mode, activeShift, onSuccess }:
       toast.success('¡Caja abierta con éxito!');
       onOpenChange(false);
       onSuccess();
-    } catch (e: any) {
-      toast.error(e.message || 'Error al abrir caja');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreateRegister = async () => {
-    const scope = (await import('@/lib/scope')).getActiveScope();
-    if (!scope?.sucursalId) {
-      toast.error('Selecciona una sucursal antes de crear la caja.');
-      return;
-    }
-    setLoading(true);
-    try {
-      const register = await apiGateway.createCashRegister({ name: registerName.trim() || 'Caja principal', sucursalId: scope.sucursalId });
-      const next = { id: String(register.id ?? ''), name: String(register.name ?? registerName) };
-      setRegisters([next]);
-      setSelectedRegister(next.id);
-      toast.success('Caja creada para esta sucursal.');
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'No se pudo crear la caja');
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Error al abrir caja');
     } finally {
       setLoading(false);
     }
@@ -93,12 +72,12 @@ export function ShiftModal({ open, onOpenChange, mode, activeShift, onSuccess }:
   const handleCloseShift = async () => {
     setLoading(true);
     try {
-      const closed = await apiGateway.closeCashShift(Number(cashAmount) || 0, notes);
+      await apiGateway.closeCashShift(Number(cashAmount) || 0, notes);
       toast.success('¡Turno de caja cerrado exitosamente!');
       onOpenChange(false);
       onSuccess();
-    } catch (e: any) {
-      toast.error(e.message || 'Error al cerrar caja');
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Error al cerrar caja');
     } finally {
       setLoading(false);
     }
@@ -137,13 +116,13 @@ export function ShiftModal({ open, onOpenChange, mode, activeShift, onSuccess }:
                     className="flex h-11 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                   >
                     {registers.map(r => (
-                      <option key={r.id} value={r.id}>{r.name}</option>
+                      <option key={String(r.id)} value={String(r.id)}>{String(r.name)}</option>
                     ))}
                   </select>
                 ) : (
                   <div className="space-y-3 rounded-xl border border-sky-200 bg-sky-50/80 p-4">
                     <p className="text-xs text-sky-950 font-semibold leading-relaxed">
-                      Esta sucursal aún no tiene una caja registrada. Se creará automáticamente con el nombre de abajo al presionar <strong>"Abrir Turno de Caja"</strong>.
+                      Esta sucursal aún no tiene una caja registrada. Se creará automáticamente con el nombre de abajo al presionar <strong>&quot;Abrir Turno de Caja&quot;</strong>.
                     </p>
                     <Input
                       value={registerName}

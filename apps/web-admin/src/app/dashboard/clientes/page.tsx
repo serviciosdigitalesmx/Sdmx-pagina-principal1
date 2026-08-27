@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Search, RefreshCw, Edit2, Eye, Trash2, Phone, MessageSquare, Wrench } from 'lucide-react';
 import { Badge, SurfaceCard } from '@white-label/ui';
@@ -13,13 +13,14 @@ import { CustomerHistory } from '@/components/clientes/customer-history';
 import { useTenantIdentity } from '@/providers/TenantIdentityProvider';
 import type { Customer } from '@/types';
 
+const getCustomerDisplayName = (customer: Customer) => customer.full_name || customer.name;
+
 export default function ClientesPage() {
   const router = useRouter();
   const { identity, isLoading: identityLoading } = useTenantIdentity();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -28,9 +29,7 @@ export default function ClientesPage() {
   const [duplicatePhones, setDuplicatePhones] = useState<string[]>([]);
   const [duplicateNames, setDuplicateNames] = useState<string[]>([]);
 
-  const getCustomerDisplayName = (customer: Customer) => customer.full_name || customer.name;
-
-  const loadCustomers = async () => {
+  const loadCustomers = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
     try {
@@ -58,7 +57,6 @@ export default function ClientesPage() {
         .map(([name]) => name);
 
       setCustomers(customersList);
-      setFilteredCustomers(customersList);
       setDuplicatePhones(dupPhones);
       setDuplicateNames(dupNames);
     } catch (error) {
@@ -67,7 +65,7 @@ export default function ClientesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (identityLoading) return;
@@ -75,22 +73,22 @@ export default function ClientesPage() {
       router.replace('/dashboard/tecnico');
       return;
     }
-    loadCustomers();
-  }, [identity, identityLoading, router]);
+    const timeoutId = window.setTimeout(() => {
+      void loadCustomers();
+    }, 0);
+    return () => window.clearTimeout(timeoutId);
+  }, [identity, identityLoading, loadCustomers, router]);
 
-  useEffect(() => {
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      const filtered = customers.filter(
-        (c) =>
-          getCustomerDisplayName(c).toLowerCase().includes(term) ||
-          c.phone.includes(term) ||
-          (c.email && c.email.toLowerCase().includes(term))
-      );
-      setFilteredCustomers(filtered);
-    } else {
-      setFilteredCustomers(customers);
-    }
+  const filteredCustomers = useMemo(() => {
+    if (!searchTerm) return customers;
+
+    const term = searchTerm.toLowerCase();
+    return customers.filter(
+      (c) =>
+        getCustomerDisplayName(c).toLowerCase().includes(term) ||
+        c.phone.includes(term) ||
+        (c.email && c.email.toLowerCase().includes(term))
+    );
   }, [searchTerm, customers]);
 
   const handleEdit = (customer: Customer) => {

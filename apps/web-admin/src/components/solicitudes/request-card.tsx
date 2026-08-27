@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar, User, Phone, Package, AlertCircle, MessageSquare, FileText, ArrowRightCircle } from 'lucide-react';
+import { User, Phone, Package, FileText, ArrowRightCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { ServiceRequest } from '@/types';
 import { Badge, SurfaceCard } from '@white-label/ui';

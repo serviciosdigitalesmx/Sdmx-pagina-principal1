@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -23,37 +23,51 @@ interface TaskModalProps {
 }
 
 export function TaskModal({ open, onOpenChange, task, onTaskSaved }: TaskModalProps) {
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    status: 'pendiente',
-    priority: 'media',
-    dueDate: '',
-    assignedUserId: '',
-  });
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md border border-slate-800 bg-slate-950/95 text-slate-100">
+        <DialogHeader>
+          <DialogTitle className="text-slate-50">
+            {task ? 'Editar tarea' : 'Nueva tarea'}
+          </DialogTitle>
+        </DialogHeader>
 
-  useEffect(() => {
-    if (task) {
-      setFormData({
-        title: task.title,
-        description: task.description || '',
-        status: task.status,
-        priority: task.priority,
-        dueDate: task.due_date?.split('T')[0] || '',
-        assignedUserId: task.assigned_user_id || '',
-      });
-    } else {
-      setFormData({
-        title: '',
-        description: '',
-        status: 'pendiente',
-        priority: 'media',
-        dueDate: '',
-        assignedUserId: '',
-      });
-    }
-  }, [task, open]);
+        <TaskForm
+          key={`${task?.id ?? 'new'}-${open ? 'open' : 'closed'}`}
+          task={task}
+          onOpenChange={onOpenChange}
+          onTaskSaved={onTaskSaved}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface TaskFormProps {
+  task: Task | null;
+  onOpenChange: (open: boolean) => void;
+  onTaskSaved: () => void;
+}
+
+interface TaskFormData {
+  title: string;
+  description: string;
+  status: Task['status'];
+  priority: Task['priority'];
+  dueDate: string;
+  assignedUserId: string;
+}
+
+function TaskForm({ task, onOpenChange, onTaskSaved }: TaskFormProps) {
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState<TaskFormData>({
+    title: task?.title ?? '',
+    description: task?.description ?? '',
+    status: task?.status ?? 'pendiente',
+    priority: task?.priority ?? 'media',
+    dueDate: task?.due_date?.split('T')[0] ?? '',
+    assignedUserId: task?.assigned_user_id ?? '',
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,15 +103,7 @@ export function TaskModal({ open, onOpenChange, task, onTaskSaved }: TaskModalPr
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md border border-slate-800 bg-slate-950/95 text-slate-100">
-        <DialogHeader>
-          <DialogTitle className="text-slate-50">
-            {task ? 'Editar tarea' : 'Nueva tarea'}
-          </DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label>Título *</Label>
             <Input
@@ -123,7 +129,12 @@ export function TaskModal({ open, onOpenChange, task, onTaskSaved }: TaskModalPr
               <Label>Estado</Label>
               <select
                 value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === 'pendiente' || value === 'en_proceso' || value === 'bloqueada' || value === 'hecha') {
+                    setFormData({ ...formData, status: value });
+                  }
+                }}
                 className="input w-full"
               >
                 <option value="pendiente">Pendiente</option>
@@ -136,7 +147,12 @@ export function TaskModal({ open, onOpenChange, task, onTaskSaved }: TaskModalPr
               <Label>Prioridad</Label>
               <select
                 value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === 'baja' || value === 'media' || value === 'alta') {
+                    setFormData({ ...formData, priority: value });
+                  }
+                }}
                 className="input w-full"
               >
                 <option value="baja">Baja</option>
@@ -173,8 +189,6 @@ export function TaskModal({ open, onOpenChange, task, onTaskSaved }: TaskModalPr
               {loading ? 'Guardando...' : 'Guardar'}
             </Button>
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+    </form>
   );
 }

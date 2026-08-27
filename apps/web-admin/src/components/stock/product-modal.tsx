@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -24,55 +24,40 @@ interface ProductModalProps {
 }
 
 export function ProductModal({ open, onOpenChange, product, onProductSaved }: ProductModalProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <ProductForm
+        key={`${product?.id ?? 'new'}-${open}`}
+        product={product}
+        onOpenChange={onOpenChange}
+        onProductSaved={onProductSaved}
+      />
+    </Dialog>
+  );
+}
+
+interface ProductFormProps {
+  product: Product | null;
+  onOpenChange: (open: boolean) => void;
+  onProductSaved: () => void;
+}
+
+function ProductForm({ product, onOpenChange, onProductSaved }: ProductFormProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    sku: '',
-    name: '',
-    category: '',
-    brand: '',
-    cost: 0,
-    sale_price: 0,
-    stock_current: 0,
-    minimum_stock: 5,
-    unit: '',
-    location: '',
-    notes: '',
-    is_active: true,
+    sku: product?.sku ?? '',
+    name: product?.name ?? '',
+    category: product?.category || '',
+    brand: product?.brand || '',
+    cost: product?.cost || 0,
+    sale_price: product?.sale_price || 0,
+    stock_current: product?.stock_current || 0,
+    minimum_stock: product?.minimum_stock || 5,
+    unit: product?.unit || '',
+    location: product?.location || '',
+    notes: product?.notes || '',
+    is_active: product?.is_active ?? true,
   });
-
-  useEffect(() => {
-    if (product) {
-      setFormData({
-        sku: product.sku,
-        name: product.name,
-        category: product.category || '',
-        brand: product.brand || '',
-        cost: product.cost || 0,
-        sale_price: product.sale_price || 0,
-        stock_current: product.stock_current || 0,
-        minimum_stock: product.minimum_stock || 5,
-        unit: product.unit || '',
-        location: product.location || '',
-        notes: product.notes || '',
-        is_active: product.is_active,
-      });
-    } else {
-      setFormData({
-        sku: '',
-        name: '',
-        category: '',
-        brand: '',
-        cost: 0,
-        sale_price: 0,
-        stock_current: 0,
-        minimum_stock: 5,
-        unit: '',
-        location: '',
-        notes: '',
-        is_active: true,
-      });
-    }
-  }, [product, open]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,7 +100,6 @@ export function ProductModal({ open, onOpenChange, product, onProductSaved }: Pr
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent data-testid="product-dialog" className="max-h-[90vh] max-w-2xl overflow-y-auto border border-slate-800 bg-slate-950/95 text-slate-100">
         <DialogHeader>
           <DialogTitle className="text-slate-50">
@@ -259,6 +243,5 @@ export function ProductModal({ open, onOpenChange, product, onProductSaved }: Pr
           </div>
         </form>
       </DialogContent>
-    </Dialog>
   );
 }

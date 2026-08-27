@@ -4,7 +4,12 @@ import { z } from 'zod';
 import { requireScopedBranch } from '../lib/require-scoped-branch';
 
 // Helper to get active shift
-async function findActiveShift(supabase: any, tenantId: string, userId: string, sucursalId?: string) {
+async function findActiveShift(
+  supabase: ReturnType<typeof getTenantClient>,
+  tenantId: string,
+  userId: string,
+  sucursalId?: string,
+) {
   const select = sucursalId
     ? '*, cash_registers!inner(id, name, sucursal_id)'
     : '*, cash_registers(id, name, sucursal_id)';

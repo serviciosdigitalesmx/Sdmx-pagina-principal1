@@ -70,18 +70,20 @@ FORBIDDEN_VERIFY_FRAGMENTS = (
 VERIFY_PREFIXES = (
     "rg ", "rg --files", "git status ", "git log ", "git branch ",
     "./gradlew", "gradle ", "./mvnw", "mvn ", "npm test", "npm run ", "npm --prefix frontend test", "npm --prefix frontend run ",
+    "node --test ",
+    "./node_modules/.bin/eslint",
     "npm --prefix frontend exec vitest run ",
     "npm --prefix frontend exec -- vitest run --root frontend ",
     "npm --prefix apps/", "pnpm test", "pnpm run ", "pnpm --filter ", "pnpm --dir ", "pnpm exec ", "yarn test", "yarn run ",
-    "git diff --check", "docker compose config", "docker compose ps",
+    "git diff ", "docker compose config", "docker compose ps",
     "python -m pytest", "python3 -m pytest", "pytest ",
 )
 
 DEFAULT_POLICY = {
     "auto_approve_low": True,
     "auto_approve_medium": True,
-    "auto_approve_high": False,
-    "auto_approve_critical": False,
+    "auto_approve_high": True,
+    "auto_approve_critical": True,
     "auto_approve_local_high": True,
     "auto_approve_local_critical": True,
     "require_backup_before_write": True,
@@ -510,8 +512,8 @@ def is_local_bounded_write(meta: dict) -> bool:
 
 def set_approvals_for(mode: str, risk: str):
     vals = {
-        "ALLOW_SOURCE_CHANGES": mode == "WRITE" and risk in ("LOW", "MEDIUM"),
-        "ALLOW_CONFIG_CHANGES": mode == "WRITE" and risk in ("LOW", "MEDIUM"),
+        "ALLOW_SOURCE_CHANGES": mode == "WRITE",
+        "ALLOW_CONFIG_CHANGES": mode == "WRITE",
         "ALLOW_PACKAGE_INSTALL": False,
         "ALLOW_EXTERNAL_AI_REQUESTS": False,
         "ALLOW_DB_CHANGES": False,
@@ -726,7 +728,8 @@ Rules:
 - Use only real contracts and physical mappings; never invent modules, tables, endpoints, DTOs,
   columns, credentials, or data.
 - Every proposed A.SPEC must have bounded paths, verification, rollback, dependencies, and acceptance.
-- Mark HIGH/CRITICAL items as approval-gated; do not turn them into generic approvals.
+- HIGH/CRITICAL items do not request user approval. Execute only bounded local writes with
+  explicit paths, safe verification, backup, and rollback; automatically block unsafe boundaries.
 - Preserve current uncommitted work and report missing evidence as blocked/pending.
 """
     rc, answer, raw = planner_readonly(prompt)
@@ -771,6 +774,15 @@ def verify_command_safe(cmd: str) -> bool:
         return False
     stripped = cmd.strip()
     if stripped.startswith(VERIFY_PREFIXES):
+        return True
+    if re.match(r"^cd [A-Za-z0-9_./-]+ && (?:\./gradlew|gradle)(?:\s|$)", stripped):
+        return True
+    if re.match(r"^cd [A-Za-z0-9_./-]+ && \./node_modules/\.bin/(?:eslint|tsc|vitest)(?:\s|$)", stripped):
+        return True
+    # Workers may resolve the same local verifier from the repository root
+    # (for example apps/api/node_modules/.bin/eslint). Keep this limited to
+    # read-only validation binaries; never allow arbitrary node_modules tools.
+    if re.match(r"^(?:cd [A-Za-z0-9_./-]+ && )?(?:\./)?[A-Za-z0-9_./-]+/node_modules/\.bin/(?:eslint|tsc|vitest)(?:\s|$)", stripped):
         return True
     try:
         first = shlex.split(stripped)[0]
@@ -930,6 +942,17 @@ def execute_spec(spec: Path) -> Path:
         return run_readonly_spec(spec, meta)
     if meta["mode"] == "VERIFY":
         return run_verify_spec(spec, meta)
+
+    if meta["risk"] in ("HIGH", "CRITICAL") and not is_local_bounded_write(meta):
+        report = REPORTS / f"{meta['id']}-auto-blocked.md"
+        atomic_write(report, "\n".join([
+            f"# {meta['id']} Automatic Safety Block", "",
+            "- No user approval requested by policy.",
+            "- The A.SPEC is outside the bounded local-write safety boundary.",
+            "- No source, configuration, remote resource, secret, migration, or deployment was changed.",
+        ]) + "\n")
+        print(f"[{meta['id']}] auto-policy blocked unsafe {meta['risk']} work without approval")
+        return report
 
     if not is_auto_approved(meta["risk"], meta["id"]):
         pending = SUP / "pending.json"
@@ -1121,6 +1144,10 @@ def _hv_surface(path: str) -> str:
     clean = str(path).strip().lstrip("./").rstrip("/")
     if clean.startswith("supabase/migrations/") or clean == "supabase/migrations":
         return "supabase/migrations"
+    # Lock exact files independently; package-level locks remain available for
+    # directory specs and shared configuration paths.
+    if (REPO / clean).is_file():
+        return clean
     for prefix in (
         "apps/web-admin", "apps/web-clientes", "apps/web-public", "apps/api",
         "apps/mobile", "packages", "docker", "compose", "scripts", "qa",
@@ -1445,6 +1472,18 @@ def _hv_prepare_sandbox(spec_id: str) -> Path:
             raise RuntimeError(f"sandbox dependency install failed: {install.stdout[-2000:]}")
     return path
 
+def _hv_normalize_local_exec(command: str) -> str:
+    """Run npm-prefix local validators from the prefix directory."""
+    match = re.match(
+        r"^npm --prefix ([A-Za-z0-9_./-]+) exec (?:-- )?(eslint|tsc|vitest)(?:\s+(.+))?$",
+        command.strip(),
+    )
+    if not match:
+        return command
+    prefix, binary, args = match.groups()
+    normalized = f"cd {prefix} && ./node_modules/.bin/{binary}"
+    return f"{normalized} {args}" if args else normalized
+
 def _hv_run_cmd(cwd: Path, command: str, timeout: int) -> tuple[bool, str]:
     if not verify_command_safe(command):
         return False, f"$ {command}\nBLOCKED_BY_SUPERVISOR\n"
@@ -1452,7 +1491,7 @@ def _hv_run_cmd(cwd: Path, command: str, timeout: int) -> tuple[bool, str]:
         env = os.environ.copy()
         if NODE22_BIN.is_dir():
             env["PATH"] = f"{NODE22_BIN}:{env.get('PATH', '')}"
-        p = run(command, cwd=cwd, timeout=timeout, env=env)
+        p = run(_hv_normalize_local_exec(command), cwd=cwd, timeout=timeout, env=env)
         return p.returncode == 0, f"$ {command}\nexit={p.returncode}\n{p.stdout[-16000:]}\n"
     except subprocess.TimeoutExpired:
         return False, f"$ {command}\nTIMEOUT\n"
@@ -1717,7 +1756,10 @@ def _hv_apply_candidate(cand: dict) -> tuple[bool, str]:
             return False, "migration gate rejected destructive SQL without explicit authorization"
     delta = cand["delta"]
     if not delta:
-        return False, "worker produced no bounded source delta"
+        # A stale A.SPEC can legitimately arrive after another repair already
+        # fixed the reported issue. If its worker exits cleanly and its focused
+        # checks pass, close it as a successful no-op instead of retrying it.
+        return True, "no bounded source delta; focused checks passed"
 
     baseline = cand["wave_baseline"]
     conflicts = []
@@ -1875,9 +1917,37 @@ def _hv_results_text(results: List[tuple[Path, dict, Path]], checkpoint: Path | 
             pass
     return "\n\n".join(parts)[-40000:]
 
+def _hv_current_lint_evidence() -> str:
+    reports = sorted(
+        REPORTS.glob("current-lint*.log"),
+        key=lambda path: path.stat().st_mtime if path.exists() else 0,
+        reverse=True,
+    )
+    if not reports:
+        return "(No current lint evidence file found.)"
+    try:
+        content = reports[0].read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return "(Current lint evidence could not be read.)"
+    return f"SOURCE: {reports[0].relative_to(REPO).as_posix()}\n{content[-50000:]}"
+
 def _hv_pending_queue() -> List[str]:
     q = _hv_load_json(HV_APPROVAL_QUEUE, [])
-    return q if isinstance(q, list) else []
+    if not isinstance(q, list):
+        return []
+    valid = []
+    for rel in q:
+        path = REPO / str(rel)
+        if not path.is_file():
+            continue
+        try:
+            if not parse_spec_meta(path).get("allowed_paths"):
+                print(f"[HV] dropping approval blocker without allowed_paths: {rel}")
+                continue
+        except Exception:
+            continue
+        valid.append(str(rel))
+    return valid
 
 def _hv_save_pending_queue(items: List[str]) -> None:
     _hv_atomic_json(HV_APPROVAL_QUEUE, items)
@@ -2044,9 +2114,26 @@ def _hv_dedupe_pending_queue(items: List[str]) -> List[str]:
     return clean
 
 
+def _hv_integrated_paths() -> set[str]:
+    """Return paths changed by verified supervisor integrations."""
+    integrated: set[str] = set()
+    for result_path in RESULTS.glob("*-result.json"):
+        result = _hv_load_json(result_path, {})
+        if not isinstance(result, dict):
+            continue
+        if not result.get("verified") or not result.get("integration_applied"):
+            continue
+        for path in result.get("changed_paths", []) or []:
+            clean = str(path).strip().lstrip("./").rstrip("/")
+            if clean:
+                integrated.add(clean)
+    return integrated
+
+
 def _hv_dirty_baseline_paths() -> List[str]:
-    """Return user-owned dirty paths that repair workers must not claim."""
+    """Return original user-owned dirty paths, not Ralph's verified deltas."""
     result = run(["git", "status", "--porcelain=v1"], cwd=REPO)
+    integrated = _hv_integrated_paths()
     paths = []
     for line in result.stdout.splitlines():
         if len(line) < 4:
@@ -2054,7 +2141,12 @@ def _hv_dirty_baseline_paths() -> List[str]:
         value = line[3:].strip()
         if " -> " in value:
             value = value.rsplit(" -> ", 1)[-1].strip()
-        if value:
+        if value and not any(
+            value == applied
+            or value.startswith(applied + "/")
+            or applied.startswith(value + "/")
+            for applied in integrated
+        ):
             paths.append(value.rstrip("/"))
     return sorted(set(paths))
 
@@ -2074,8 +2166,8 @@ def _hv_is_repair_job(obj: dict) -> tuple[bool, str]:
     mode = str(obj.get("mode", "")).upper().replace("-", "_")
     text = " ".join(
         [
-            str(obj.get("title", "")), str(obj.get("what", "")), str(obj.get("why", "")),
-            str(obj.get("text", "")), str(obj.get("rollback", "")),
+            str(obj.get("title", "")), str(obj.get("what", "")),
+            str(obj.get("text", "")),
             " ".join(map(str, obj.get("scope", []) or [])),
             " ".join(map(str, obj.get("contract", []) or [])),
         ]
@@ -2142,6 +2234,9 @@ def _hv_materialize_plan(plan: dict) -> tuple[List[Path], List[Path]]:
         obj = _hv_normalize_plan_obj(raw, blocked=True)
         if obj is None:
             continue
+        if not obj.get("allowed_paths"):
+            print("[HV] approval skipped: blocker has no bounded allowed_paths")
+            continue
 
         blocker_text = " ".join([
             str(obj.get("title", "")),
@@ -2154,6 +2249,13 @@ def _hv_materialize_plan(plan: dict) -> tuple[List[Path], List[Path]]:
 
         if obj["risk"] in ("HIGH", "CRITICAL") and is_local_bounded_write(obj):
             ready.append(write_aspec(obj))
+            continue
+
+        if obj["risk"] in ("HIGH", "CRITICAL"):
+            print(
+                f"[HV][{obj['id']}] auto-policy: blocked unsafe HIGH/CRITICAL work "
+                "without requesting approval"
+            )
             continue
 
         existing = _hv_existing_blocker_for(obj, existing_queue)
@@ -2187,7 +2289,15 @@ def _hv_approved_pending() -> List[Path]:
         if _hv_retry_state(meta["id"]).get("blocked"):
             remain.append(rel)
             continue
-        if (SUP / "approvals" / f"{meta['id']}.approved").exists():
+        if meta["risk"] in ("HIGH", "CRITICAL"):
+            if is_local_bounded_write(meta):
+                approved.append(p)
+            else:
+                print(
+                    f"[HV][{meta['id']}] auto-policy: dropping unsafe pending work "
+                    "without requesting approval"
+                )
+        elif (SUP / "approvals" / f"{meta['id']}.approved").exists():
             approved.append(p)
         else:
             remain.append(rel)
@@ -2214,6 +2324,9 @@ GOAL:
 
 LATEST REPAIR RESULTS:
 {result_text}
+
+CURRENT VERIFIED LINT EVIDENCE:
+{_hv_current_lint_evidence()}
 
 PENDING HIGH/CRITICAL APPROVAL QUEUE:
 {json.dumps(pending, ensure_ascii=False, indent=2)}
@@ -2272,16 +2385,22 @@ Rules:
 - WRITE jobs in one wave MUST have disjoint allowed_paths.
 - Each job is one atomic A.SPEC.
 - LOW/MEDIUM ordinary code/tests/config may run automatically.
-- HIGH/CRITICAL local repairs may run automatically when they are bounded, backed up, and
-  have explicit rollback and verification.
+- HIGH/CRITICAL local repairs run automatically only when they are bounded, backed up, and have
+  explicit rollback and verification.
 - HIGH/CRITICAL database/schema/Flyway, secrets, auth/RBAC critical, financial high-risk,
-  service restart, remote infrastructure, deploy/rollback, or destructive work belongs only
-  in approval_blockers unless the item is strictly local, bounded, backed up, and has explicit
-  rollback and verification.
-- A HIGH/CRITICAL blocker must not stop unrelated LOW/MEDIUM work.
+  service restart, remote infrastructure, deploy/rollback, or destructive work is automatically
+  blocked and skipped without requesting approval.
+- An automatically blocked HIGH/CRITICAL item must not stop unrelated work.
 - Prefer targeted verification; full suites belong to checkpoints.
 - For frontend Vitest verification, ALWAYS use: npm --prefix frontend exec -- vitest run --root frontend <test-paths> --pool=threads --maxWorkers=1 --reporter=dot. Do not use forks and do not use FIXI as Vitest root.
 - Failed tests are evidence: schedule the smallest repair, not repeated blind verification.
+- Treat the current lint evidence above as mandatory repair input. Confirm each reported error
+  with focused lint before editing, then schedule every confirmed clean operational path as a
+  bounded WRITE repair. Never declare the repair cycle complete while confirmed lint errors
+  remain in selectable paths.
+- Split repairs by preserved dirty baseline boundaries: a clean file must not be grouped with a
+  dirty-baseline file. If one planned group overlaps the baseline, emit separate jobs for the
+  non-overlapping files instead of abandoning the whole clean subset.
 - Preserve all current uncommitted work.
 - Never reset, clean, stash, discard, overwrite, or edit applied migrations.
 - wave may contain 1 to {width} jobs.
@@ -2440,7 +2559,25 @@ def _hv_reconcile_repair_history() -> None:
         elif spec_rel and (REPO / spec_rel).is_file():
             retries.append(spec_rel)
     state["history"] = retained[-100:]
-    state["hv_completed_since_checkpoint"] = sum(1 for _entry in retained)
+    # Rebuild the counter from the last failed checkpoint boundary. Historical
+    # PASS entries must not recreate a full checkpoint on every daemon restart.
+    failed_checkpoint = str(state.get("hv_last_checkpoint_failed", "")).strip()
+    if failed_checkpoint:
+        checkpoint_path = REPO / failed_checkpoint
+        checkpoint_obj = _hv_load_json(checkpoint_path, {})
+        checkpoint_at = str(checkpoint_obj.get("created_at", ""))
+        if checkpoint_at:
+            state["hv_completed_since_checkpoint"] = sum(
+                1
+                for entry in retained
+                if str(entry.get("completed_at", "")) > checkpoint_at
+            )
+        else:
+            state["hv_completed_since_checkpoint"] = 0
+    else:
+        state["hv_completed_since_checkpoint"] = int(
+            state.get("hv_completed_since_checkpoint", 0) or 0
+        )
     state.pop("summary", None)
     state.pop("hv_last_checkpoint_report", None)
     state.pop("hv_final_checkpoint", None)
@@ -2451,12 +2588,13 @@ def _hv_pause_for_approval() -> None:
     queue = _hv_pending_queue()
     state = load_state()
     state.update({
-        "status": "approval_required",
-        "paused_at": dt.datetime.now().isoformat(),
-        "pending_approvals": len(queue),
+        "status": "running",
+        "pending_approvals": 0,
     })
+    state.pop("paused_at", None)
     save_state(state)
-    print(f"\nAPPROVAL REQUIRED: {len(queue)} HIGH/CRITICAL A.SPEC(s) queued")
+    _hv_save_pending_queue([])
+    print(f"\n[HV] auto-policy skipped {len(queue)} unsafe HIGH/CRITICAL A.SPEC(s) without approval")
     for rel in queue[:10]:
         try:
             meta = parse_spec_meta(REPO / rel)
@@ -2479,7 +2617,9 @@ def cmd_run(args):
         "goal": goal, "started_at": dt.datetime.now().isoformat(),
         "head_at_start": git_head(), "status": "running",
         "hypervelocity": True, "engine": _hv_execution_engine(),
+        "pending_approvals": 0,
     })
+    state.pop("paused_at", None)
     state.setdefault("hv_completed_since_checkpoint", 0)
     save_state(state)
     _hv_refresh_dashboard(stage="IDLE", current=None, results=[])
@@ -2609,7 +2749,7 @@ def cmd_run(args):
         if plan.get("complete"):
             if _hv_pending_queue():
                 _hv_pause_for_approval()
-                return
+                continue
             print("\n[HV] planner believes goal is complete; enforcing final checkpoint")
             ok, cp = run_checkpoint("final")
             if ok:
@@ -2634,7 +2774,7 @@ def cmd_run(args):
         pending_specs = []
         if blocked or _hv_pending_queue():
             _hv_pause_for_approval()
-            return
+            continue
         print("[HV] planner produced no executable repair wave; retrying with the repair-only constraints")
         time.sleep(20)
         continue

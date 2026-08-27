@@ -71,7 +71,11 @@ export default function ComprasPage() {
   };
 
   useEffect(() => {
-    void loadData();
+    const loadTimer = window.setTimeout(() => {
+      void loadData();
+    }, 0);
+
+    return () => window.clearTimeout(loadTimer);
   }, []);
 
   const supplierMap = useMemo(() => new Map(suppliers.map((supplier) => [supplier.id, supplier.business_name ?? supplier.id ?? 'Proveedor'])), [suppliers]);

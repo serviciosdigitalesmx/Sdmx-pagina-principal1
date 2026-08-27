@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -98,15 +98,12 @@ export function Sidebar({
 }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [activeSucursalId] = useState(() => (
+    typeof window === 'undefined' ? null : getActiveSucursalId()
+  ));
   const { identity, isLoading } = useTenantIdentity();
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const activeSucursalId = mounted ? getActiveSucursalId() : null;
-  const showConsolidated = mounted ? canUseConsolidatedView() : false;
+  const showConsolidated = canUseConsolidatedView();
   const visibleModules = DASHBOARD_MODULES.filter((module) => {
     const role = identity?.role ?? 'manager';
     const allowedByRole = ROLE_ALLOWED_MODULES[role as keyof typeof ROLE_ALLOWED_MODULES];

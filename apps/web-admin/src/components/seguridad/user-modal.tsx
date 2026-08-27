@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -22,38 +22,12 @@ interface UserModalProps {
   onUserSaved: () => void;
 }
 
-export function UserModal({ open, onOpenChange, user, onUserSaved }: UserModalProps) {
+function UserModalForm({ open, onOpenChange, user, onUserSaved }: UserModalProps) {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    role: 'technician',
-    password: '',
-    notas: '',
-    activo: true,
-  });
-
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        password: '',
-        notas: '',
-        activo: user.activo,
-      });
-    } else {
-      setFormData({
-        name: '',
-        email: '',
-        role: 'technician',
-        password: '',
-        notas: '',
-        activo: true,
-      });
-    }
-  }, [user, open]);
+  const initialFormData = user
+    ? { name: user.name, email: user.email, role: user.role, password: '', notas: '', activo: user.activo }
+    : { name: '', email: '', role: 'technician', password: '', notas: '', activo: true };
+  const [formData, setFormData] = useState(initialFormData);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -178,4 +152,8 @@ export function UserModal({ open, onOpenChange, user, onUserSaved }: UserModalPr
       </DialogContent>
     </Dialog>
   );
+}
+
+export function UserModal(props: UserModalProps) {
+  return <UserModalForm key={`${props.open}-${props.user?.id ?? 'new'}`} {...props} />;
 }

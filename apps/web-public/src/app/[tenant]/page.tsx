@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { optionalEnv } from "@white-label/config";
+import { resolveApiBaseUrl } from "@white-label/config";
 import { AnimateIn } from "@/hooks/useInView";
 import { ContactCard } from "@/components/ContactCard";
 import { PhoneMockup } from "@/components/PhoneMockup";
@@ -188,27 +188,21 @@ function resolveMapEmbedUrl(value: string) {
 type TenantLandingData = LandingResponse["data"];
 
 async function getTenantLanding(tenant: string): Promise<TenantLandingData | null> {
-  const apiBaseUrl =
-    optionalEnv("NEXT_PUBLIC_API_URL") ??
-    optionalEnv("NEXT_PUBLIC_APP_URL") ??
-    optionalEnv("NEXT_PUBLIC_WEB_PUBLIC_URL") ??
-    "http://127.0.0.1:3008";
+  try {
+    const response = await fetch(`${resolveApiBaseUrl()}/api/public/tenant/${encodeURIComponent(tenant)}/landing`, {
+      cache: "no-store",
+    });
+    const payload = (await response.json().catch(() => null)) as LandingResponse | { error?: string } | null;
 
-  const response = await fetch(`${apiBaseUrl}/api/public/tenant/${encodeURIComponent(tenant)}/landing`, {
-    cache: "no-store",
-  });
-  const payload = (await response.json().catch(() => null)) as LandingResponse | { error?: string } | null;
+    if (!response.ok || !payload || !("success" in payload)) {
+      return null;
+    }
 
-  if (!response.ok || !payload || !("success" in payload)) {
+    return payload.data;
+  } catch {
     return null;
   }
-
-  return payload.data;
 }
-
-const adminBaseUrl = optionalEnv("NEXT_PUBLIC_WEB_ADMIN_URL") ?? null;
-const adminLoginUrl = adminBaseUrl ? `${adminBaseUrl}/login` : "/login";
-const adminSignupUrl = adminBaseUrl ? `${adminBaseUrl}/login?mode=signup` : "/login?mode=signup";
 
 export async function generateMetadata({
   params,

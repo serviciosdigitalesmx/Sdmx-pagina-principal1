@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { DynamicFields, type DynamicFieldDefinition } from "@white-label/ui";
 import { getAssetLabel, getConfirmActionLabel, getCreatedSuccessLabel, getCustomerLabel, getNewEntityLabel } from "@/lib/labels";
@@ -101,21 +101,14 @@ export function OrderIntakeModal({
   onSubmit,
   onCopy,
 }: Props) {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3>(() => (successSummary ? 3 : 1));
   const [fileInputKey, setFileInputKey] = useState(0);
   const customerLabel = getCustomerLabel();
   const assetLabel = getAssetLabel();
   const newOrderLabel = getNewEntityLabel();
   const confirmOrderLabel = getConfirmActionLabel();
   const createdLabel = getCreatedSuccessLabel();
-
-  useEffect(() => {
-    if (open) {
-      setStep(successSummary ? 3 : 1);
-      return;
-    }
-    setStep(1);
-  }, [open, successSummary]);
+  const visibleStep: 1 | 2 | 3 = successSummary ? 3 : step;
 
   const portalUrl = useMemo(() => {
     if (!successSummary?.folio || !tenantSlug) return "";
@@ -128,6 +121,24 @@ export function OrderIntakeModal({
     if (!successSummary) return null;
     return buildWhatsAppUrl(successSummary.phone, portalUrl);
   }, [portalUrl, successSummary]);
+
+  const handleClose = useCallback(() => {
+    setStep(1);
+    onClose();
+  }, [onClose]);
+
+  const handleResetFlow = useCallback(() => {
+    setStep(1);
+    onResetFlow();
+  }, [onResetFlow]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleClose]);
 
   if (!open) {
     return null;
@@ -151,21 +162,12 @@ export function OrderIntakeModal({
     stepThreeComplete && !estimatedCostValid ? "Costo estimado inválido" : null,
   ].filter(Boolean) as string[];
 
-  useEffect(() => {
-    if (!onClose) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
-
   return (
     <div
       className="fixed inset-0 z-50 bg-slate-950/65 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={(e) => {
-        if (e.target === e.currentTarget && onClose) {
-          onClose();
+        if (e.target === e.currentTarget) {
+          handleClose();
         }
       }}
     >
@@ -179,7 +181,7 @@ export function OrderIntakeModal({
             <button type="button" onClick={() => document.documentElement.requestFullscreen().catch(() => undefined)} className="rounded-2xl border border-zinc-700/80 bg-slate-950 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-slate-900">
               Pantalla completa
             </button>
-            <button type="button" onClick={onClose} className="flex items-center gap-1.5 rounded-2xl border border-zinc-700/80 bg-slate-950 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-slate-900" title="Cerrar (Esc)">
+            <button type="button" onClick={handleClose} className="flex items-center gap-1.5 rounded-2xl border border-zinc-700/80 bg-slate-950 px-4 py-3 text-sm font-semibold text-zinc-100 transition hover:bg-slate-900" title="Cerrar (Esc)">
               <X className="h-4 w-4" />
               <span>Cerrar</span>
             </button>
@@ -193,20 +195,20 @@ export function OrderIntakeModal({
                 <div className="flex items-center gap-3">
                   <div className="rounded-2xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs font-semibold text-slate-200">{newOrderLabel} de Servicio</div>
                   <div className="text-sm text-zinc-400">Recepción profesional · {formatDate(new Date().toISOString())}</div>
-                  <button type="button" onClick={onClose} className="ml-2 text-sm font-semibold text-zinc-400">Salir</button>
+                  <button type="button" onClick={handleClose} className="ml-2 text-sm font-semibold text-zinc-400">Salir</button>
                 </div>
               </div>
 
               <div className="mx-auto mb-8 flex max-w-[340px] items-center justify-center rounded-full border border-sky-500/20 bg-slate-950/40 p-2">
                 {[1, 2, 3].map((currentStep) => {
-                  const completed = currentStep < step;
-                  const active = currentStep === step;
+                  const completed = currentStep < visibleStep;
+                  const active = currentStep === visibleStep;
                   return (
                     <div key={currentStep} className="flex items-center">
                       <div className={`flex h-12 w-12 items-center justify-center rounded-full text-lg font-semibold ${completed ? "bg-emerald-500 text-white" : active ? "bg-sky-500 text-white" : "border border-sky-500/40 bg-slate-900 text-zinc-300"}`}>
                         {completed ? "✓" : currentStep}
                       </div>
-                      {currentStep < 3 ? <div className={`h-1 w-10 ${currentStep < step ? "bg-sky-500" : "bg-slate-700"}`} /> : null}
+                      {currentStep < 3 ? <div className={`h-1 w-10 ${currentStep < visibleStep ? "bg-sky-500" : "bg-slate-700"}`} /> : null}
                     </div>
                   );
                 })}
@@ -498,7 +500,7 @@ export function OrderIntakeModal({
                 ) : null}
               </div>
               <p className="mt-6 text-sm text-zinc-400">Comparte este folio con el cliente para que pueda consultar el estado.</p>
-              <button type="button" onClick={onResetFlow} className="mt-8 rounded-2xl bg-sky-500 px-8 py-4 text-lg font-semibold text-white">{newOrderLabel}</button>
+              <button type="button" onClick={handleResetFlow} className="mt-8 rounded-2xl bg-sky-500 px-8 py-4 text-lg font-semibold text-white">{newOrderLabel}</button>
             </div>
           )}
 

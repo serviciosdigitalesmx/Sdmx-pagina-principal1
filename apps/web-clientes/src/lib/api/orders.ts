@@ -2,6 +2,12 @@ import { apiClient } from "./client";
 import type { BackendOrderResponse, PortalOrderResponse, PublicAuthorizationResponse } from "../types";
 
 export function getOrderByFolio(tenantSlug: string, folio: string) {
+  if (!tenantSlug || typeof tenantSlug !== "string" || !tenantSlug.trim()) {
+    throw new Error("Tenant slug is required and must be a non-empty string");
+  }
+  if (!folio || typeof folio !== "string" || !folio.trim()) {
+    throw new Error("Folio is required and must be a non-empty string");
+  }
   return apiClient<BackendOrderResponse>(`/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(folio)}`);
 }
 
@@ -16,6 +22,12 @@ export function getPortalOrderByToken(tenantSlug: string, publicToken: string) {
 }
 
 export function getOrderAuthorization(tenantSlug: string, publicToken: string) {
+  if (!tenantSlug || typeof tenantSlug !== "string" || !tenantSlug.trim()) {
+    throw new Error("Tenant slug is required and must be a non-empty string");
+  }
+  if (!publicToken || typeof publicToken !== "string" || !publicToken.trim()) {
+    throw new Error("Public token is required and must be a non-empty string");
+  }
   return apiClient<PublicAuthorizationResponse>(`/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(publicToken)}/authorization`);
 }
 
@@ -24,6 +36,12 @@ export function submitOrderAuthorization(
   publicToken: string,
   payload: Record<string, unknown>,
 ) {
+  if (!tenantSlug || typeof tenantSlug !== "string" || !tenantSlug.trim()) {
+    throw new Error("Tenant slug is required and must be a non-empty string");
+  }
+  if (!publicToken || typeof publicToken !== "string" || !publicToken.trim()) {
+    throw new Error("Public token is required and must be a non-empty string");
+  }
   return apiClient<{ success: boolean }>(`/api/public/tenant/${encodeURIComponent(tenantSlug)}/orders/${encodeURIComponent(publicToken)}/authorization`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

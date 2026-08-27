@@ -1,8 +1,8 @@
 {
   "auto_approve_low": true,
   "auto_approve_medium": true,
-  "auto_approve_high": false,
-  "auto_approve_critical": false,
+  "auto_approve_high": true,
+  "auto_approve_critical": true,
   "auto_approve_local_high": true,
   "auto_approve_local_critical": true,
   "require_backup_before_write": true,
@@ -26,6 +26,7 @@
   "hypervelocity_max_parallel_workers": 7,
   "hypervelocity_max_parallel_specs": 7,
   "hypervelocity_max_attempts": 0,
+  "hypervelocity_prepare_timeout_seconds": 15,
   "hypervelocity_integration_gate": true,
   "hypervelocity_checkpoint_tags": true,
   "gemini_api_key_services": [

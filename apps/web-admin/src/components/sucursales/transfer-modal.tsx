@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -43,11 +43,20 @@ export function TransferModal({ open, onOpenChange, sucursales, onTransferComple
     }
   };
 
-  useEffect(() => {
-    if (open) {
-      loadProducts();
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (nextOpen) {
+      setFormData({
+        sku: '',
+        sucursalOrigen: '',
+        sucursalDestino: '',
+        cantidad: 1,
+        motivo: '',
+        notas: '',
+      });
+      void loadProducts();
     }
-  }, [open]);
+    onOpenChange(nextOpen);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,7 +105,7 @@ export function TransferModal({ open, onOpenChange, sucursales, onTransferComple
   const activeSucursales = sucursales.filter((s) => s.is_active);
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md border border-slate-800 bg-slate-950/95">
         <DialogHeader>
           <DialogTitle className="text-slate-100">

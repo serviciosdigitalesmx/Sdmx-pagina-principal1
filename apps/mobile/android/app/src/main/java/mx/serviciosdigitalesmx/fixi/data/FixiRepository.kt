@@ -52,7 +52,7 @@ data class RealUser(
 
 object FixiRepository {
 
-    private const val BASE_URL = "https://sdmx-backend-api-qh5d.onrender.com/api"
+    private const val BASE_URL = "https://api.serviciosdigitalesmx.online/api"
     private var authToken: String? = null
 
     // Cache local reactivo en memoria para operar inmediatamente

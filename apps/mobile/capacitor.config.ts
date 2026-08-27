@@ -23,7 +23,13 @@ const entryUrl = webUrl ? new URL("/login", webUrl).toString() : "";
 
 const isDev = process.env.NODE_ENV !== "production";
 
-if (!isDev && entryUrl) {
+if (!isDev) {
+  if (!entryUrl) {
+    throw new Error(
+      "Production mobile server URL is required. Set MOBILE_WEB_URL, NEXT_PUBLIC_WEB_ADMIN_URL, or APP_URL.",
+    );
+  }
+
   const parsedUrl = new URL(entryUrl);
   if (parsedUrl.protocol !== "https:") {
     throw new Error(`Production mobile server URL must use HTTPS. Got: ${entryUrl}`);
@@ -40,9 +46,6 @@ const config: CapacitorConfig = {
         cleartext: /^http:\/\//i.test(entryUrl),
       }
     : undefined,
-  android: {
-    allowMixedContent: true,
-  },
 };
 
 export default config;

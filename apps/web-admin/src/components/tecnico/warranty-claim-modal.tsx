@@ -14,6 +14,8 @@ import { Label } from '@/components/ui/label';
 import { apiGateway } from '@/services/apiGateway';
 import { ShieldAlert, AlertCircle, Calendar } from 'lucide-react';
 
+type WarrantyClaimData = Parameters<typeof apiGateway.createOrderWarrantyClaim>[1];
+
 function formatDate(value?: string | null) {
   if (!value) return "Sin fecha";
   const date = new Date(value);
@@ -32,7 +34,7 @@ interface WarrantyClaimModalProps {
 
 export function WarrantyClaimModal({ open, onOpenChange, orderId, orderFolio, warrantyUntil, onSuccess }: WarrantyClaimModalProps) {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<WarrantyClaimData>({
     claimReason: '',
     reportedIssue: '',
     requestedResolution: '',
@@ -54,8 +56,12 @@ export function WarrantyClaimModal({ open, onOpenChange, orderId, orderFolio, wa
       alert('El reclamo de garantía ha sido registrado correctamente.');
       onSuccess();
       onOpenChange(false);
-    } catch (err: any) {
-      alert(`Error al registrar garantía: ${err.message || 'Ocurrió un error inesperado.'}`);
+    } catch (err: unknown) {
+      const message =
+        typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string'
+          ? err.message
+          : 'Ocurrió un error inesperado.';
+      alert(`Error al registrar garantía: ${message}`);
     } finally {
       setLoading(false);
     }

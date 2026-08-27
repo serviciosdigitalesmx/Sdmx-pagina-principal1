@@ -1,6 +1,11 @@
 import { MercadoPagoConfig, Preference } from 'mercadopago';
+type PublicPaymentOrder = {
+  id: string;
+  tenant_id: string;
+  folio?: string;
+};
 
-export async function createMercadoPagoPreference(order: any, amount: number) {
+export async function createMercadoPagoPreference(order: PublicPaymentOrder, amount: number) {
   const token = process.env.MERCADOPAGO_ACCESS_TOKEN;
   if (!token) {
     throw new Error('MERCADOPAGO_ACCESS_TOKEN not configured');
@@ -13,7 +18,7 @@ export async function createMercadoPagoPreference(order: any, amount: number) {
     body: {
       items: [
         {
-          id: order.folio,
+          id: order.folio ?? order.id,
           title: `Servicio Fixi - Orden ${order.folio}`,
           quantity: 1,
           unit_price: amount,

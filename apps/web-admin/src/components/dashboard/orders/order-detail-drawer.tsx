@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { X } from "lucide-react";
 import { OrderTimeline } from "./order-timeline";
 import { getTenantSlug } from "@/lib/tenant";
@@ -118,11 +118,18 @@ type Props = {
   }) => Promise<void>;
   onEditChecklist: () => void;
   onArchive: () => void;
+  onOrderUpdated?: () => void;
 };
 
-function buildTrackingUrl(customerPortalUrl?: string | null, folio?: string | null, publicToken?: string | null) {
+type OrderDetailTab = "details" | "notes" | "checklist" | "history" | "inventory" | "payments";
+
+function isOrderDetailTab(value: string): value is OrderDetailTab {
+  return ["details", "notes", "checklist", "history", "inventory", "payments"].includes(value);
+}
+
+function buildTrackingUrl(customerPortalUrl?: string | null, _folio?: string | null, publicToken?: string | null) {
   const baseDomain = resolveBaseDomain();
-  const customerPortalBase = process.env.NEXT_PUBLIC_CUSTOMER_TRACKING_URL?.replace(/\/$/, "") ?? (baseDomain ? `https://clientes.${baseDomain}` : "");
+  const customerPortalBase = customerPortalUrl?.replace(/\/$/, "") ?? process.env.NEXT_PUBLIC_CUSTOMER_TRACKING_URL?.replace(/\/$/, "") ?? (baseDomain ? `https://clientes.${baseDomain}` : "");
   const tenantSlug = getTenantSlug();
   if (publicToken && tenantSlug) {
     const tokenPath = `/t/${encodeURIComponent(tenantSlug)}/portal?token=${encodeURIComponent(publicToken)}`;
@@ -251,8 +258,8 @@ export function OrderDetailDrawer({
   onEditDetails,
   onEditChecklist,
   onArchive,
-  ...props
-}: Props & { onOrderUpdated?: () => void }) {
+  onOrderUpdated,
+}: Props) {
   const order = data?.order;
   const [activeTab, setActiveTab] = useState<"details" | "notes" | "checklist" | "history" | "inventory" | "payments">("details");
   const [editingField, setEditingField] = useState<string | null>(null);
@@ -272,12 +279,9 @@ export function OrderDetailDrawer({
     try {
       await inventoryService.consumeInventoryReservation(reservationId, { 
         quantity, 
-        idempotencyKey: `consume-${Date.now()}` 
+        idempotencyKey: `consume-${crypto.randomUUID()}`
       });
-      // Optionally notify parent
-      if (typeof (props as any).onOrderUpdated === 'function') {
-        (props as any).onOrderUpdated();
-      }
+      onOrderUpdated?.();
     } catch (err) {
       console.error(err);
       alert("Error al consumir");
@@ -291,9 +295,7 @@ export function OrderDetailDrawer({
     setIsMutating(true);
     try {
       await inventoryService.releaseInventoryReservation(reservationId, { quantity });
-      if (typeof (props as any).onOrderUpdated === 'function') {
-        (props as any).onOrderUpdated();
-      }
+      onOrderUpdated?.();
     } catch (err) {
       console.error(err);
       alert("Error al liberar");
@@ -311,9 +313,7 @@ export function OrderDetailDrawer({
         paymentMethod 
       });
       setPaymentAmount("");
-      if (typeof (props as any).onOrderUpdated === 'function') {
-        (props as any).onOrderUpdated();
-      }
+      onOrderUpdated?.();
     } catch (err) {
       console.error(err);
       alert("Error al registrar pago");
@@ -327,18 +327,18 @@ export function OrderDetailDrawer({
   }
 
   const checklist = data?.checklist ?? null;
-  const phone = (order?.device_info as { customer_phone?: string } | undefined)?.customer_phone ?? null;
+  const phone = typeof order?.device_info?.customer_phone === "string" ? order.device_info.customer_phone : null;
   const publicToken = order?.public_token ?? order?.publicToken ?? null;
   const waLink = whatsappLink(phone, order?.folio, customerPortalUrl, publicToken);
   const deliveryWaLink = deliveryWhatsappLink(phone, order?.folio, order?.warranty_until ?? null);
   const pdfUrl = order?.receipt_url ?? data?.documents?.find((document) => document.file_type === "receipt_pdf" && document.public_url)?.public_url ?? null;
   const portalUrl = buildTrackingUrl(customerPortalUrl, order?.folio, publicToken);
-  const metadataEntries = Object.entries((order?.metadata as Record<string, unknown> | undefined) ?? {}).filter(([, value]) => value !== undefined && value !== null && value !== "");
+  const metadataEntries = Object.entries(order?.metadata ?? {}).filter(([, value]) => value !== undefined && value !== null && value !== "");
   const operationalRisk = order?.operational_risk ?? null;
   const financialSummary = data?.financialSummary ?? null;
 
   function getDeviceInfoValue(key: "customer_name" | "customer_phone" | "customer_email" | "type" | "brand" | "model" | "serial_number") {
-    return String((order?.device_info as Record<string, unknown> | undefined)?.[key] ?? "");
+    return String(order?.device_info?.[key] ?? "");
   }
 
   async function saveField(field: string) {
@@ -426,7 +426,9 @@ export function OrderDetailDrawer({
                   <button
                     key={tab.key}
                     type="button"
-                    onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                    onClick={() => {
+                      if (isOrderDetailTab(tab.key)) setActiveTab(tab.key);
+                    }}
                     className={`px-4 py-3 transition ${
                       activeTab === tab.key
                         ? "border-b-2 border-sky-400 text-sky-100"
@@ -766,14 +768,14 @@ export function OrderDetailDrawer({
                                     <>
                                       <button 
                                         disabled={isMutating}
-                                        onClick={() => handleConsume(res.id as string, Number(res.reserved_quantity) - Number(res.consumed_quantity))}
+                                        onClick={() => res.id && void handleConsume(res.id, Number(res.reserved_quantity) - Number(res.consumed_quantity))}
                                         className="rounded border border-emerald-500/30 px-2 py-1 text-[10px] text-emerald-300 disabled:opacity-50"
                                       >
                                         Consumir
                                       </button>
                                       <button 
                                         disabled={isMutating}
-                                        onClick={() => handleRelease(res.id as string, Number(res.reserved_quantity) - Number(res.consumed_quantity))}
+                                        onClick={() => res.id && void handleRelease(res.id, Number(res.reserved_quantity) - Number(res.consumed_quantity))}
                                         className="rounded border border-amber-500/30 px-2 py-1 text-[10px] text-amber-300 disabled:opacity-50"
                                       >
                                         Liberar
@@ -840,9 +842,9 @@ export function OrderDetailDrawer({
                                     if (confirm("¿Reembolsar este pago?")) {
                                       try {
                                         setIsMutating(true);
-                                        await ordersService.refundOrderPayment(order!.id as string, payment.id as string, { amount: Number(payment.amount), reason: "Solicitud del operador" });
-                                        if (typeof props.onOrderUpdated === 'function') props.onOrderUpdated();
-                                      } catch (e) {
+                                        if (order?.id && payment.id) await ordersService.refundOrderPayment(order.id, payment.id, { amount: Number(payment.amount), reason: "Solicitud del operador" });
+                                        onOrderUpdated?.();
+                                      } catch {
                                         alert("Error al reembolsar");
                                       } finally {
                                         setIsMutating(false);

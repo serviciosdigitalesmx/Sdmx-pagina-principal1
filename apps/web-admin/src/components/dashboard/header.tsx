@@ -53,7 +53,9 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    void refreshOfflineState();
+    const initialRefresh = window.setTimeout(() => {
+      void refreshOfflineState();
+    }, 0);
 
     const handleOnline = () => {
       setIsOnline(true);
@@ -74,6 +76,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
     window.addEventListener('offline', handleOffline);
 
     return () => {
+      window.clearTimeout(initialRefresh);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };

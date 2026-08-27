@@ -24,6 +24,15 @@ test('authorization client uses encoded public routes for tenant and token', asy
   assert.match(orders, /method:\s*["']POST["']/);
 });
 
+test('getOrderByFolio guards tenant and folio before using the encoded public route', async () => {
+  const orders = await source(ordersPath);
+
+  assert.match(orders, /getOrderByFolio\(tenantSlug: string, folio: string\)/);
+  assert.match(orders, /if \(!tenantSlug \|\| typeof tenantSlug !== ["']string["'] \|\| !tenantSlug\.trim\(\)\)/);
+  assert.match(orders, /if \(!folio \|\| typeof folio !== ["']string["'] \|\| !folio\.trim\(\)\)/);
+  assert.match(orders, /apiClient<BackendOrderResponse>\(`\/api\/public\/tenant\/\$\{encodeURIComponent\(tenantSlug\)\}\/orders\/\$\{encodeURIComponent\(folio\)\}`\)/);
+});
+
 test('client delegates public configuration to fetchJson and contains no privileged credentials', async () => {
   const client = await source(apiClientPath);
   const orders = await source(ordersPath);

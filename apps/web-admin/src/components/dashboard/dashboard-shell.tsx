@@ -1,3 +1,5 @@
+"use client";
+
 function getSessionUser() {
   const session = getCurrentSession();
 
@@ -7,16 +9,14 @@ function getSessionUser() {
     id: session.userId,
     email: session.email,
     name: session.email || 'Usuario activo',
-    role: session.role as any,
+    role: session.role,
     tenantId: session.tenantId,
     tenantSlug: session.tenantSlug,
     sucursalId: session.branchId,
   };
 }
 
-"use client";
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/dashboard/header";
@@ -41,13 +41,11 @@ export type TenantConfig = {
 export function DashboardShell({ children }: { children: React.ReactNode; tenant?: TenantConfig }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState(getSessionUser());
+  const user = getSessionUser();
 
   useEffect(() => {
     if (!isAuthenticated()) {
       router.push("/login");
-    } else {
-      setUser(getSessionUser());
     }
   }, [router, pathname]);
 

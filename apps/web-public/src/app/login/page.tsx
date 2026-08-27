@@ -71,7 +71,7 @@ export default function LoginPage() {
     } else if (adminLoginUrl) {
       window.location.replace(adminLoginUrl);
     }
-  }, []);
+  }, [adminLoginUrl]);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = event.target;

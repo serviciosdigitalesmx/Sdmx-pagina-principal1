@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -21,21 +21,9 @@ interface SucursalModalProps {
   onSucursalSaved: (sucursal?: Sucursal) => void;
 }
 
-export function SucursalModal({ open, onOpenChange, sucursal, onSucursalSaved }: SucursalModalProps) {
+function SucursalModalForm({ open, onOpenChange, sucursal, onSucursalSaved }: SucursalModalProps) {
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    code: '',
-    address: '',
-    city: '',
-    state: '',
-    phone: '',
-    is_active: true,
-  });
-
-  useEffect(() => {
-    if (sucursal) {
-      setFormData({
+  const initialFormData = sucursal ? {
         name: sucursal.name,
         code: sucursal.code || '',
         address: sucursal.address || '',
@@ -43,9 +31,7 @@ export function SucursalModal({ open, onOpenChange, sucursal, onSucursalSaved }:
         state: sucursal.state || '',
         phone: sucursal.phone || '',
         is_active: sucursal.is_active,
-      });
-    } else {
-      setFormData({
+      } : {
         name: '',
         code: '',
         address: '',
@@ -53,9 +39,8 @@ export function SucursalModal({ open, onOpenChange, sucursal, onSucursalSaved }:
         state: '',
         phone: '',
         is_active: true,
-      });
-    }
-  }, [sucursal, open]);
+      };
+  const [formData, setFormData] = useState(initialFormData);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,4 +164,8 @@ export function SucursalModal({ open, onOpenChange, sucursal, onSucursalSaved }:
       </DialogContent>
     </Dialog>
   );
+}
+
+export function SucursalModal(props: SucursalModalProps) {
+  return <SucursalModalForm key={`${props.open}-${props.sucursal?.id ?? 'new'}`} {...props} />;
 }

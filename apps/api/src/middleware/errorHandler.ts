@@ -16,11 +16,12 @@ const ERROR_MAP: Record<string, { status: number; code: string; message: string 
   'TENANT_REQUIRED': { status: 401, code: 'TENANT_REQUIRED', message: 'Tenant requerido' },
 };
 
-export function errorHandler(err: any, req: Request, res: Response, next: NextFunction) {
+export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
+  const error = err instanceof Error ? err : new Error('Unknown error');
   // Log completo para debugging interno (no exponer)
   console.error('[ERROR]', {
-    message: err.message,
-    stack: err.stack,
+    message: error.message,
+    stack: error.stack,
     path: req.path,
     method: req.method,
     requestId: req.headers['x-request-id'],
@@ -66,7 +67,9 @@ export function errorHandler(err: any, req: Request, res: Response, next: NextFu
   }
 
   // Errores lanzados con código específico (ej: desde RPC)
-  const code = err.code || err.message?.match(/^[A-Z_]+/)?.[0];
+  const code = typeof err === 'object' && err !== null && 'code' in err && typeof err.code === 'string'
+    ? err.code
+    : error.message.match(/^[A-Z_]+/)?.[0];
   if (code && ERROR_MAP[code]) {
     const mapped = ERROR_MAP[code];
     return res.status(mapped.status).json({
@@ -78,10 +81,14 @@ export function errorHandler(err: any, req: Request, res: Response, next: NextFu
   }
 
   // Errores que ya tienen statusCode (como BranchScopeError)
-  if (err.statusCode && err.code) {
+  if (
+    typeof err === 'object' && err !== null &&
+    'statusCode' in err && typeof err.statusCode === 'number' &&
+    'code' in err && typeof err.code === 'string'
+  ) {
     return res.status(err.statusCode).json({
       success: false,
-      error: err.message,
+      error: 'message' in err && typeof err.message === 'string' ? err.message : error.message,
       code: err.code,
       requestId: req.headers['x-request-id'] || null,
     });

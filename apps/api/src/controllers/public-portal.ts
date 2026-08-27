@@ -161,7 +161,7 @@ export async function authorizeOrder(req: Request, res: Response) {
       const base64Data = signatureDataUrl.replace(/^data:image\/\w+;base64,/, '');
       const buffer = Buffer.from(base64Data, 'base64');
       const filename = `${order.id}/${Date.now()}-signature.png`;
-      const { data: uploadData, error: uploadErr } = await supabaseAdmin.storage
+      const { data: uploadData } = await supabaseAdmin.storage
         .from('signatures')
         .upload(filename, buffer, { contentType: 'image/png' });
         
@@ -213,8 +213,6 @@ export async function authorizeOrder(req: Request, res: Response) {
 // 3. POST /api/public-portal/order/:publicToken/payment — Create payment intent
 export async function createPublicOrderPayment(req: Request, res: Response) {
   const { publicToken } = req.params;
-  const { paymentMethod } = req.body;
-
   if (!publicToken || publicToken.length < 10) {
     return res.status(404).json({ error: 'Not found' });
   }
@@ -263,11 +261,11 @@ export async function createPublicOrderPayment(req: Request, res: Response) {
       preferenceId: preference.id,
       initPoint: preference.init_point,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return res.status(500).json({
       success: false,
       error: 'No se pudo crear la preferencia de pago',
-      details: error.message
+      details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 }
