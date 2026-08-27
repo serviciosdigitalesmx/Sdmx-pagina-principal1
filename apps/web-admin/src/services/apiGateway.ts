@@ -1,3 +1,5 @@
+import type { DeviceHistoryItem } from "@/types";
+
 type JsonRecord = Record<string, unknown>;
 
 type ApiMeta = {
@@ -1047,8 +1049,8 @@ class ApiGateway {
     return result.data;
   }
 
-  public async getDeviceHistoryBySerial(serialNumber: string, limit: number = 50): Promise<JsonRecord[]> {
-    const result = await this.request<ApiListResponse<JsonRecord[]>>(
+  public async getDeviceHistoryBySerial(serialNumber: string, limit: number = 50): Promise<DeviceHistoryItem[]> {
+    const result = await this.request<ApiListResponse<DeviceHistoryItem[]>>(
       this.apiPath(`/orders/device-history?serialNumber=${encodeURIComponent(serialNumber)}&limit=${limit}`),
       { method: 'GET' }
     );

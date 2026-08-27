@@ -153,7 +153,7 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await executeSearch(folio, "auto");
+    await executeSearch(folio);
   };
 
   const evidenceAttachments: NormalizedAttachment[] = useMemo(() => {
@@ -452,7 +452,7 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
                   <AuthorizationPanel
                     tenantSlug={tenantSlug}
                     publicToken={activePublicToken}
-                    onDecision={() => executeSearch(activePublicToken, "token")}
+                    onDecision={() => executeSearch(activePublicToken)}
                   />
                 ) : null}
                 {result.authorization ? (

@@ -14,12 +14,8 @@ interface Rule {
   event_type: string;
   action_type: string;
   is_active: boolean;
-  condition: {
-    status?: string;
-  };
-  action_config: {
-    template?: string;
-  };
+  condition: unknown;
+  action_config: unknown;
 }
 
 interface Log {
@@ -29,6 +25,18 @@ interface Log {
   error_message: string | null;
   created_at: string;
   rule?: Rule;
+}
+
+function readStatus(value: unknown) {
+  if (!value || typeof value !== 'object' || !('status' in value)) return undefined;
+  const status = value.status;
+  return typeof status === 'string' ? status : undefined;
+}
+
+function readTemplate(value: unknown) {
+  if (!value || typeof value !== 'object' || !('template' in value)) return undefined;
+  const template = value.template;
+  return typeof template === 'string' ? template : undefined;
 }
 
 export default function AutomationPage() {
@@ -188,9 +196,9 @@ export default function AutomationPage() {
                 </div>
 
                 <div className="text-xs text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-1">
-                  <div>Condición: <strong>Si el estado es &quot;{rule.condition?.status}&quot;</strong></div>
+                  <div>Condición: <strong>Si el estado es &quot;{readStatus(rule.condition) ?? 'no definido'}&quot;</strong></div>
                   <div>Acción: <strong>{rule.action_type === 'send_whatsapp' ? 'Preparar WhatsApp' : rule.action_type === 'send_notification' ? 'Enviar notificación' : 'Acción no disponible'}</strong></div>
-                  <div>Plantilla: <strong>{rule.action_config?.template}</strong></div>
+                  <div>Plantilla: <strong>{readTemplate(rule.action_config) ?? 'no definida'}</strong></div>
                 </div>
               </div>
             ))

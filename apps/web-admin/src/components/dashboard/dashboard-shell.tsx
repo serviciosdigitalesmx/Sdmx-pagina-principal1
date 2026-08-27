@@ -1,6 +1,16 @@
 "use client";
 
-function getSessionUser() {
+import type { User } from "@/types";
+
+function normalizeRole(role: string): User["role"] {
+  if (role === "owner" || role === "manager" || role === "technician" || role === "client") {
+    return role;
+  }
+
+  return "manager";
+}
+
+function getSessionUser(): User | null {
   const session = getCurrentSession();
 
   if (!session) return null;
@@ -9,7 +19,7 @@ function getSessionUser() {
     id: session.userId,
     email: session.email,
     name: session.email || 'Usuario activo',
-    role: session.role,
+    role: normalizeRole(session.role),
     tenantId: session.tenantId,
     tenantSlug: session.tenantSlug,
     sucursalId: session.branchId,
