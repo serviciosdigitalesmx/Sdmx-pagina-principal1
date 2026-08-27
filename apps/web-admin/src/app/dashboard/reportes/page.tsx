@@ -48,8 +48,11 @@ export default function ReportesPage() {
   }
 
   useEffect(() => {
-    setMounted(true);
-    void load();
+    const task = window.setTimeout(() => {
+      setMounted(true);
+      void load();
+    }, 0);
+    return () => window.clearTimeout(task);
   }, [scope?.mode, scope?.sucursalId]);
 
   const statusRows = useMemo(() => {

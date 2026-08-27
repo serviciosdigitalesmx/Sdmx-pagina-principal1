@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { Wrench, CheckCircle2, XCircle, CreditCard, AlertCircle, Clock, Smartphone, FileText, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,13 +9,32 @@ import { toast } from 'sonner';
 import { apiGateway } from '@/services/apiGateway';
 import { SignaturePad } from '@/components/ordenes/signature-pad';
 
+type PublicOrderPayload = {
+  order?: {
+    folio?: string;
+    status?: string;
+    final_cost?: number | string;
+    estimated_cost?: number | string;
+    problem_description?: string;
+    device_info?: {
+      brand?: string;
+      model?: string;
+      customer_name?: string;
+      customer_phone?: string;
+    };
+  };
+  authorization?: {
+    decision?: string;
+  };
+};
+
 export default function PublicPremiumPortalPage() {
   const params = useParams();
   const token = params.token as string;
 
   const [loading, setLoading] = useState(true);
-  const [orderData, setOrderData] = useState<any>(null);
-  const [authorization, setAuthorization] = useState<any>(null);
+  const [orderData, setOrderData] = useState<PublicOrderPayload | null>(null);
+  const [authorization, setAuthorization] = useState<PublicOrderPayload['authorization'] | null>(null);
 
   // Formularios de decisión
   const [acceptedByName, setAcceptedByName] = useState('');
@@ -25,25 +44,27 @@ export default function PublicPremiumPortalPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
 
-  useEffect(() => {
-    if (token) loadPortal();
-  }, [token]);
-
-  const loadPortal = async () => {
+  const loadPortal = useCallback(async () => {
+    if (!token) return;
     try {
-      const res = await apiGateway.getPublicOrderDetails(token);
+      const res = (await apiGateway.getPublicOrderDetails(token)) as PublicOrderPayload;
       setOrderData(res);
-      setAuthorization(res.authorization);
+      setAuthorization(res.authorization ?? null);
       
       // Pre-llenar datos del cliente si existen
       if (res.order?.device_info?.customer_name) setAcceptedByName(res.order.device_info.customer_name);
       if (res.order?.device_info?.customer_phone) setAcceptedByPhone(res.order.device_info.customer_phone);
-    } catch (e) {
+    } catch {
       toast.error('No se pudo cargar la información.');
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    const task = window.setTimeout(() => { void loadPortal(); }, 0);
+    return () => window.clearTimeout(task);
+  }, [loadPortal]);
 
   const handleDecision = async (decision: 'accepted' | 'rejected') => {
     if (decision === 'accepted') {
@@ -63,8 +84,8 @@ export default function PublicPremiumPortalPage() {
       toast.success(decision === 'accepted' ? '¡Orden autorizada con éxito!' : 'Presupuesto rechazado.');
       setAuthorization(res.authorization);
       await loadPortal(); // Recargar estado real
-    } catch (e: any) {
-      toast.error(e.message || 'Error al enviar respuesta');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Error al enviar respuesta');
     } finally {
       setDecisionLoading(false);
     }
@@ -79,8 +100,8 @@ export default function PublicPremiumPortalPage() {
       if (res.initPoint) {
         window.location.href = res.initPoint;
       }
-    } catch (e: any) {
-      toast.error(e.message || 'Error al generar link de pago');
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Error al generar link de pago');
       setPaymentLoading(false);
     }
   };
@@ -134,7 +155,7 @@ export default function PublicPremiumPortalPage() {
             <Wrench className="h-4 w-4" /> Diagnóstico Técnico
           </h3>
           <p className="text-lg font-medium text-slate-800 leading-relaxed bg-slate-50 p-4 rounded-2xl border border-slate-100">
-            "{order.problem_description}"
+            &quot;{order.problem_description}&quot;
           </p>
         </div>
 

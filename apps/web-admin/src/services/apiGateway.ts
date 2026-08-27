@@ -86,13 +86,6 @@ type ApiErrorResponse = {
   details?: unknown;
 };
 
-type EncodedFilePayload = {
-  fileName: string;
-  mimeType: string;
-  base64: string;
-  fileType: 'intake_photo' | 'attachment_pdf';
-};
-
 type LandingServicePayload = {
   title: string;
   description: string;

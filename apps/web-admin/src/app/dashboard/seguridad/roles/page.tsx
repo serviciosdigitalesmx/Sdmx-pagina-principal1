@@ -28,25 +28,32 @@ export default function RolesPage() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    Promise.all([
-      apiGateway.getTenantRolePermissions('manager'),
-      apiGateway.getTenantRolePermissions('technician'),
-    ])
-      .then(([manager, technician]) => {
-        if (!active) return;
-        setPermissions((current) => ({
-          manager: { ...current.manager, ...manager },
-          technician: { ...current.technician, ...technician },
-        }));
-      })
-      .catch((error) => toast.error(error instanceof Error ? error.message : 'No se pudieron cargar los permisos'))
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+    const task = window.setTimeout(() => {
+      if (!active) return;
+      setLoading(true);
+      Promise.all([
+        apiGateway.getTenantRolePermissions('manager'),
+        apiGateway.getTenantRolePermissions('technician'),
+      ])
+        .then(([manager, technician]) => {
+          if (!active) return;
+          setPermissions((current) => ({
+            manager: { ...current.manager, ...manager },
+            technician: { ...current.technician, ...technician },
+          }));
+        })
+        .catch((error: unknown) => {
+          if (!active) return;
+          toast.error(error instanceof Error ? error.message : 'Error al cargar permisos');
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }, 0);
 
     return () => {
       active = false;
+      window.clearTimeout(task);
     };
   }, []);
 

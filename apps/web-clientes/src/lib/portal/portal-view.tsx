@@ -76,7 +76,7 @@ function resolveLookupError(error: unknown) {
   return error instanceof Error ? error.message : "No pudimos completar la consulta.";
 }
 
-export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = "auto" }: PortalViewProps) {
+export function PortalView({ tenantSlug, initialFolio = "" }: PortalViewProps) {
   const [folio, setFolio] = useState(initialFolio);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,19 +101,26 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
 
   useEffect(() => {
     if (!tenantSlug) return;
+    let cancelled = false;
 
     getTenantLanding(tenantSlug)
       .then((payload) => {
+        if (cancelled) return;
         if (!payload.success) throw new Error("Respuesta inválida del servidor");
         setTenant(payload.data.tenant);
         setTenantLabel(payload.data.tenant.name || tenantSlug);
       })
       .catch((loadingError) => {
+        if (cancelled) return;
         setTenantError(loadingError instanceof Error ? loadingError.message : "Error al cargar la información del taller.");
       })
       .finally(() => {
-        setLoadingTenant(false);
+        if (!cancelled) setLoadingTenant(false);
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [tenantSlug]);
 
   const executeSearch = useCallback(
@@ -149,7 +156,7 @@ export function PortalView({ tenantSlug, initialFolio = "", initialLookupMode = 
     if (!initialFolio || typeof initialFolio !== "string" || !initialFolio.trim()) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void executeSearch(initialFolio);
-  }, [executeSearch, initialFolio, initialLookupMode]);
+  }, [executeSearch, initialFolio]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

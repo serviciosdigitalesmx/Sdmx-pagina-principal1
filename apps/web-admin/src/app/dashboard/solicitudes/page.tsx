@@ -34,11 +34,13 @@ export default function SolicitudesPage() {
   };
 
   useEffect(() => {
-    loadRequests();
-    // Auto-refresh cada 30 segundos
-    const interval = setInterval(() => loadRequests(), 30000);
-    return () => clearInterval(interval);
-  }, []);
+    const task = window.setTimeout(() => { void loadRequests(); }, 0);
+    const interval = setInterval(() => { void loadRequests(); }, 30000);
+    return () => {
+      window.clearTimeout(task);
+      clearInterval(interval);
+    };
+  }, [loadRequests]);
 
   const handleQuoteClick = (request: ServiceRequest) => {
     setSelectedRequest(request);

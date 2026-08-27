@@ -11,15 +11,42 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Lock } from "lucide-react";
 
+type PlanLimitEventDetails = {
+  resource?: string;
+  planKey?: string;
+  limit?: string | number;
+  current?: string | number;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function getPlanLimitDetails(value: unknown): PlanLimitEventDetails {
+  if (!isRecord(value)) return {};
+
+  return {
+    resource: typeof value.resource === "string" ? value.resource : undefined,
+    planKey: typeof value.planKey === "string" ? value.planKey : undefined,
+    limit:
+      typeof value.limit === "string" || typeof value.limit === "number"
+        ? value.limit
+        : undefined,
+    current:
+      typeof value.current === "string" || typeof value.current === "number"
+        ? value.current
+        : undefined,
+  };
+}
+
 export function PlanLimitModal() {
   const [open, setOpen] = useState(false);
-  const [details, setDetails] = useState<any>(null);
+  const [details, setDetails] = useState<PlanLimitEventDetails | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const handleLimitExceeded = (e: Event) => {
-      const event = e as CustomEvent;
-      setDetails(event.detail);
+      setDetails(e instanceof CustomEvent ? getPlanLimitDetails(e.detail) : {});
       setOpen(true);
     };
 

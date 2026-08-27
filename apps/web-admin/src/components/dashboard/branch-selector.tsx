@@ -14,22 +14,22 @@ export function BranchSelector() {
   const [open, setOpen] = useState(false);
   const showConsolidated = canUseConsolidatedView();
 
-  const loadSucursales = async () => {
-    try {
-      const data = await apiClient.get<{ data: Sucursal[] }>('/sucursales', {
-        tenantSlug: getTenantSlug() || undefined,
-      });
-      const active = getActiveSucursalId();
-      setSucursales(data.data || []);
-      setActiveId(active);
-    } catch (error) {
-      console.error('Failed to load sucursales:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const loadSucursales = async () => {
+      try {
+        const data = await apiClient.get<{ data: Sucursal[] }>('/sucursales', {
+          tenantSlug: getTenantSlug() || undefined,
+        });
+        const active = getActiveSucursalId();
+        setSucursales(data.data || []);
+        setActiveId(active);
+      } catch (error) {
+        console.error('Failed to load sucursales:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadSucursales();
   }, []);
 

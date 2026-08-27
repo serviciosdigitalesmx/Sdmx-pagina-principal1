@@ -27,7 +27,7 @@ export default function PosPage() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   
   // Estado de Caja
-  const [activeShift, setActiveShift] = useState<any>(null);
+  const [activeShift, setActiveShift] = useState<Record<string, unknown> | null>(null);
   const [shiftModalOpen, setShiftModalOpen] = useState(false);
   const [shiftModalMode, setShiftModalMode] = useState<'open' | 'close'>('open');
 
@@ -39,7 +39,7 @@ export default function PosPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   // Ticket
-  const [receiptSale, setReceiptSale] = useState<any>(null);
+  const [receiptSale, setReceiptSale] = useState<Record<string, unknown> | null>(null);
 
   // Buffer para lector de código de barras
   const barcodeBuffer = useRef<string>('');
@@ -48,7 +48,7 @@ export default function PosPage() {
   const checkShift = useCallback(async () => {
     try {
       const shift = await apiGateway.getActiveCashShift();
-      setActiveShift(shift);
+      setActiveShift(shift as Record<string, unknown>);
     } catch (e) {
       console.error(e);
     }
@@ -58,15 +58,15 @@ export default function PosPage() {
     try {
       setLoading(true);
       const response = await apiGateway.getInventory();
-      const mapped = response.map((p: any) => ({
-        id: p.id,
-        sku: p.sku || 'N/A',
-        description: p.description || p.name || 'Producto sin nombre',
+      const mapped = response.map((p: Record<string, unknown>) => ({
+        id: String(p.id || ''),
+        sku: String(p.sku || 'N/A'),
+        description: String(p.description || p.name || 'Producto sin nombre'),
         unitPrice: Number(p.sale_price || 0),
         stock: Number(p.stock_current || 0),
       }));
       setProducts(mapped);
-    } catch (err) {
+    } catch {
       toast.error('No se pudo cargar el inventario.');
     } finally {
       setLoading(false);
@@ -74,9 +74,30 @@ export default function PosPage() {
   }, []);
 
   useEffect(() => {
-    void checkShift();
-    void loadInventory();
+    const task = window.setTimeout(() => {
+      void checkShift();
+      void loadInventory();
+    }, 0);
+    return () => window.clearTimeout(task);
   }, [checkShift, loadInventory]);
+
+  const addToCart = useCallback((product: Product) => {
+    if (product.stock <= 0) {
+      toast.error('Producto sin stock');
+      return;
+    }
+    setCart(prev => {
+      const exists = prev.find(i => i.id === product.id);
+      if (exists) {
+        if (exists.quantity >= product.stock) {
+          toast.error('Stock máximo alcanzado');
+          return prev;
+        }
+        return prev.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
+      }
+      return [...prev, { ...product, quantity: 1 }];
+    });
+  }, []);
 
   // Lógica del Escáner de Código de Barras y Atajos
   useEffect(() => {
@@ -132,7 +153,7 @@ export default function PosPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [products, cart, activeShift]);
+  }, [products, cart, activeShift, addToCart]);
 
   // Mantener el foco en el buscador para captura fluida
   useEffect(() => {
@@ -140,24 +161,6 @@ export default function PosPage() {
       searchInputRef.current?.focus();
     }
   }, [checkoutModalOpen, shiftModalOpen, receiptSale, activeShift]);
-
-  const addToCart = (product: Product) => {
-    if (product.stock <= 0) {
-      toast.error('Producto sin stock');
-      return;
-    }
-    setCart(prev => {
-      const exists = prev.find(i => i.id === product.id);
-      if (exists) {
-        if (exists.quantity >= product.stock) {
-          toast.error('Stock máximo alcanzado');
-          return prev;
-        }
-        return prev.map(i => i.id === product.id ? { ...i, quantity: i.quantity + 1 } : i);
-      }
-      return [...prev, { ...product, quantity: 1 }];
-    });
-  };
 
   const updateQuantity = (id: string, delta: number) => {
     setCart(prev => prev.map(item => {
@@ -206,8 +209,8 @@ export default function PosPage() {
       setCustomerName('Venta Mostrador');
       setCheckoutModalOpen(false);
       void loadInventory(); // Refrescar stock visualmente
-    } catch (err: any) {
-      toast.error(err?.message || 'Error al procesar la venta');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Error al procesar la venta');
     } finally {
       setCheckoutLoading(false);
     }
@@ -516,7 +519,7 @@ export default function PosPage() {
               </div>
 
               <div className="border-t border-b border-dashed border-slate-300 py-3 my-4 space-y-2">
-                {receiptSale.items?.map((item: any, idx: number) => (
+                {((receiptSale.items as CartItem[]) ?? []).map((item: CartItem, idx: number) => (
                   <div key={idx} className="flex justify-between">
                     <span className="truncate pr-2">{item.quantity}x {item.description}</span>
                     <span className="font-bold">${(item.unitPrice * item.quantity).toFixed(2)}</span>

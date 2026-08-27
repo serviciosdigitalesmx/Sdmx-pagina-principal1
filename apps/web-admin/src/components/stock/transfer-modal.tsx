@@ -35,7 +35,7 @@ export function TransferModal({ open, onOpenChange, product, onTransferSuccess }
   });
   const origen = (product as Product & { sucursal_id?: string | null }).sucursal_id || scope?.sucursalId;
 
-  async function loadSucursales() {
+  const loadSucursales = async () => {
     try {
       const data = await apiGateway.getSucursales();
       setSucursales(data.reduce<Array<{ id: string; name: string }>>((branches, branch) => {
@@ -47,7 +47,7 @@ export function TransferModal({ open, onOpenChange, product, onTransferSuccess }
     } catch (error) {
       console.error('Error al cargar sucursales:', error);
     }
-  }
+  };
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {

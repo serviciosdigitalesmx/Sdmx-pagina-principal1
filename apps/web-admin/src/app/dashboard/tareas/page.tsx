@@ -53,8 +53,9 @@ export default function TareasPage() {
   };
 
   useEffect(() => {
-    loadTasks();
-  }, []);
+    const task = window.setTimeout(() => { void loadTasks(); }, 0);
+    return () => window.clearTimeout(task);
+  }, [loadTasks]);
 
   useEffect(() => {
     let filtered = [...tasks];
@@ -80,7 +81,8 @@ export default function TareasPage() {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 
-    setFilteredTasks(filtered);
+    const timer = window.setTimeout(() => setFilteredTasks(filtered), 0);
+    return () => window.clearTimeout(timer);
   }, [searchTerm, statusFilter, tasks]);
 
   const handleDelete = async (task: Task) => {

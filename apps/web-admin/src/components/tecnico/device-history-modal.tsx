@@ -32,6 +32,15 @@ export function DeviceHistoryModal({ open, onOpenChange, serialNumber, currentOr
   const [history, setHistory] = useState<DeviceHistoryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setLoading(false);
+      setHistory([]);
+      setError(null);
+    }
+    onOpenChange(nextOpen);
+  };
+
   const loadHistory = useCallback(async () => {
     if (!serialNumber) return;
 
@@ -70,7 +79,7 @@ export function DeviceHistoryModal({ open, onOpenChange, serialNumber, currentOr
   if (!serialNumber) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-3xl border border-slate-800 bg-slate-950 text-slate-100 max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-3">

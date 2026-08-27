@@ -133,12 +133,14 @@ export function OrderIntakeModal({
   }, [onResetFlow]);
 
   useEffect(() => {
+    if (!open) return undefined;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") handleClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleClose]);
+  }, [handleClose, open]);
 
   if (!open) {
     return null;

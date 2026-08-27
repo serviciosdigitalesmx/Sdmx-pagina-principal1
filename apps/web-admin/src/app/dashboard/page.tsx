@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   TrendingUp,
@@ -72,7 +72,7 @@ export default function DashboardPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [summary, setSummary] = useState<ReportsSummary | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
   const [quickReceiveOpen, setQuickReceiveOpen] = useState(false);
 
   const safeNumber = (value: unknown, fallback = 0) => {
@@ -97,16 +97,18 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    setMounted(true);
     if (identityLoading) return;
     if (identity?.role === 'technician') {
       router.replace('/dashboard/tecnico');
       return;
     }
-    loadData();
+    const initialLoad = setTimeout(() => void loadData(), 0);
     // Auto-refresh every 60 seconds
     const interval = setInterval(() => loadData(), 60000);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(initialLoad);
+      clearInterval(interval);
+    };
   }, [identity, identityLoading, router]);
 
   if (loading) {

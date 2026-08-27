@@ -43,22 +43,21 @@ export default function SucursalesPage() {
   };
 
   useEffect(() => {
-    loadSucursales();
-  }, []);
+    const task = window.setTimeout(() => { void loadSucursales(); }, 0);
+    return () => window.clearTimeout(task);
+  }, [loadSucursales]);
 
   useEffect(() => {
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      const filtered = sucursales.filter(
-        (s) =>
-          s.name.toLowerCase().includes(term) ||
-          (s.code && s.code.toLowerCase().includes(term)) ||
-          (s.address && s.address.toLowerCase().includes(term))
-      );
-      setFilteredSucursales(filtered);
-    } else {
-      setFilteredSucursales(sucursales);
-    }
+    const filtered = searchTerm
+      ? sucursales.filter(
+          (s) =>
+            s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (s.code && s.code.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (s.address && s.address.toLowerCase().includes(searchTerm.toLowerCase()))
+        )
+      : sucursales;
+    const timer = window.setTimeout(() => setFilteredSucursales(filtered), 0);
+    return () => window.clearTimeout(timer);
   }, [searchTerm, sucursales]);
 
   const handleSetActive = (sucursalId: string | null) => {
