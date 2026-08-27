@@ -93,8 +93,9 @@ export default function UsuariosPage() {
   }
 
   useEffect(() => {
-    void loadUsers();
-  }, [query, roleFilter, status]);
+    const task = window.setTimeout(() => { void loadUsers(); }, 0);
+    return () => window.clearTimeout(task);
+  }, [loadUsers]);
 
   useEffect(() => {
     let cancelled = false;
@@ -118,8 +119,8 @@ export default function UsuariosPage() {
 
   useEffect(() => {
     if (!historyUser) {
-      setHistoryRows([]);
-      return;
+      const task = window.setTimeout(() => { setHistoryRows([]); }, 0);
+      return () => window.clearTimeout(task);
     }
 
     const activeHistoryUser = historyUser;

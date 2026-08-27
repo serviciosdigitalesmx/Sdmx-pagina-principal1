@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { CSSProperties } from "react";
 import { LeadForm } from "../lead/lead-form";
 import { resolveLandingSectionRegistry } from "./section-registry";
@@ -52,7 +53,7 @@ export function LandingRenderer({ tenant, landingContent }: LandingRendererProps
         <div className="mx-auto flex max-w-[1400px] items-center justify-between gap-4">
           <a href="#inicio" className="flex min-w-0 items-center gap-3 text-lg font-black uppercase tracking-[0.08em] sm:text-xl" style={displayStyle}>
             <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded border border-white/20 bg-white/5">
-              {tenant.branding.logoUrl ? <img src={tenant.branding.logoUrl} alt="" className="h-full w-full object-contain" /> : initials(tenant.name)}
+              {tenant.branding.logoUrl ? <Image src={tenant.branding.logoUrl} alt="" width={36} height={36} className="h-full w-full object-contain" /> : initials(tenant.name)}
             </span>
             <span className="truncate">{tenant.name}</span>
           </a>
@@ -90,7 +91,7 @@ export function LandingRenderer({ tenant, landingContent }: LandingRendererProps
           </div>
           <div className="relative mx-auto w-full max-w-[500px] lg:justify-self-end">
             <div className="aspect-square overflow-hidden border-2 bg-[#2b2b2b] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.5),inset_0_0_40px_color-mix(in_srgb,var(--tenant-accent)_12%,transparent)]" style={{ borderColor: "var(--tenant-accent)" }}>
-              {heroImage ? <img src={heroImage} alt={tenant.name} className="h-full w-full object-contain" /> : <div className="flex h-full items-center justify-center text-center text-sm text-[#8a8f95]">El tenant puede configurar su imagen principal.</div>}
+              {heroImage ? <Image src={heroImage} alt={tenant.name} width={500} height={500} className="h-full w-full object-contain" /> : <div className="flex h-full items-center justify-center text-center text-sm text-[#8a8f95]">El tenant puede configurar su imagen principal.</div>}
             </div>
           </div>
         </div>
@@ -124,7 +125,7 @@ export function LandingRenderer({ tenant, landingContent }: LandingRendererProps
 
       {enabled.has("about") ? <section className="bg-[#1e1e1e] px-5 py-20 md:px-[5%]"><div className="mx-auto max-w-4xl border-l-4 py-3 pl-7" style={{ borderColor: "var(--tenant-primary)" }}><p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: "var(--tenant-accent)" }}>Sobre el taller</p><h2 className="mt-3 text-4xl font-black uppercase" style={displayStyle}>{landingContent.aboutTitle}</h2><p className="mt-5 max-w-3xl text-base leading-8 text-[#b6bbc0]">{landingContent.aboutDescription}</p></div></section> : null}
 
-      {enabled.has("gallery") && landingContent.gallery?.length ? <section className="bg-[#1e1e1e] px-5 py-20 md:px-[5%]"><div className="mx-auto max-w-[1200px]"><h2 className="text-center text-4xl font-black uppercase" style={displayStyle}>Nuestro trabajo</h2><div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{landingContent.gallery.map((item, index) => <figure key={item.id || `${item.url}-${index}`} className="overflow-hidden border border-white/15 bg-[#2b2b2b]"><img src={item.url} alt={item.alt || tenant.name} className="aspect-[4/3] w-full object-cover" />{item.caption ? <figcaption className="p-4 text-sm text-[#b6bbc0]">{item.caption}</figcaption> : null}</figure>)}</div></div></section> : null}
+      {enabled.has("gallery") && landingContent.gallery?.length ? <section className="bg-[#1e1e1e] px-5 py-20 md:px-[5%]"><div className="mx-auto max-w-[1200px]"><h2 className="text-center text-4xl font-black uppercase" style={displayStyle}>Nuestro trabajo</h2><div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{landingContent.gallery.map((item, index) => <figure key={item.id || `${item.url}-${index}`} className="overflow-hidden border border-white/15 bg-[#2b2b2b]"><Image src={item.url} alt={item.alt || tenant.name} width={1200} height={900} className="aspect-[4/3] w-full object-cover" />{item.caption ? <figcaption className="p-4 text-sm text-[#b6bbc0]">{item.caption}</figcaption> : null}</figure>)}</div></div></section> : null}
 
       {enabled.has("testimonials") && landingContent.testimonials?.length ? <section id="opiniones" className="bg-[#2b2b2b] px-5 py-20 md:px-[5%]"><div className="mx-auto max-w-[1200px]"><header className="text-center"><h2 className="text-4xl font-black uppercase" style={displayStyle}>Lo que dicen nuestros clientes</h2><p className="mt-4 text-[#8a8f95]">Opiniones compartidas por este taller</p></header><div className="mt-10 grid gap-5 lg:grid-cols-3">{landingContent.testimonials.map((testimonial, index) => <article key={`${testimonial.clientName}-${index}`} className="border border-[#5e646a] bg-[#242424] p-6"><div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-black text-white" style={{ backgroundColor: "var(--tenant-accent)" }}>{initials(testimonial.clientName)}</span><div><h3 className="font-bold text-white">{testimonial.clientName}</h3><p className="text-xs tracking-[0.12em]" style={{ color: "var(--tenant-primary)" }}>{"*".repeat(Math.max(1, Math.min(5, testimonial.rating || 5)))}</p></div></div><p className="mt-5 text-sm leading-7 text-[#c0c4c8]">&ldquo;{testimonial.comment}&rdquo;</p>{testimonial.date ? <p className="mt-5 text-xs uppercase tracking-[0.12em] text-[#8a8f95]">{testimonial.date}</p> : null}</article>)}</div></div></section> : null}
 

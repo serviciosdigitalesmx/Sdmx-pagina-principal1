@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -210,7 +211,7 @@ export function SetupWizardModal() {
                 <div className="border-2 border-dashed border-slate-300 bg-white rounded-2xl p-8 text-center flex flex-col items-center justify-center min-h-[200px]">
                   {logoPreview ? (
                     <div className="relative">
-                      <img src={logoPreview} alt="Logo preview" className="h-24 object-contain rounded-lg" />
+                      <Image src={logoPreview} alt="Logo preview" width={96} height={96} className="h-24 object-contain rounded-lg" />
                       <button onClick={() => { setLogoFile(null); setLogoPreview(null); }} className="absolute -top-3 -right-3 bg-rose-500 text-white rounded-full p-1 text-xs">X</button>
                     </div>
                   ) : (

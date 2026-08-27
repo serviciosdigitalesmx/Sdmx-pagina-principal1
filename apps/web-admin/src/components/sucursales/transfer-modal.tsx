@@ -22,17 +22,24 @@ interface TransferModalProps {
   onTransferComplete: () => void;
 }
 
+const EMPTY_FORM_DATA = {
+  sku: '',
+  sucursalOrigen: '',
+  sucursalDestino: '',
+  cantidad: 1,
+  motivo: '',
+  notas: '',
+};
+
 export function TransferModal({ open, onOpenChange, sucursales, onTransferComplete }: TransferModalProps) {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
-  const [formData, setFormData] = useState({
-    sku: '',
-    sucursalOrigen: '',
-    sucursalDestino: '',
-    cantidad: 1,
-    motivo: '',
-    notas: '',
-  });
+  const [formData, setFormData] = useState(EMPTY_FORM_DATA);
+
+  const resetTransferState = () => {
+    setFormData(EMPTY_FORM_DATA);
+    setLoading(false);
+  };
 
   const loadProducts = async () => {
     try {
@@ -45,14 +52,7 @@ export function TransferModal({ open, onOpenChange, sucursales, onTransferComple
 
   const handleOpenChange = (nextOpen: boolean) => {
     if (nextOpen) {
-      setFormData({
-        sku: '',
-        sucursalOrigen: '',
-        sucursalDestino: '',
-        cantidad: 1,
-        motivo: '',
-        notas: '',
-      });
+      resetTransferState();
       void loadProducts();
     }
     onOpenChange(nextOpen);
@@ -86,14 +86,7 @@ export function TransferModal({ open, onOpenChange, sucursales, onTransferComple
 
       onTransferComplete();
       onOpenChange(false);
-      setFormData({
-        sku: '',
-        sucursalOrigen: '',
-        sucursalDestino: '',
-        cantidad: 1,
-        motivo: '',
-        notas: '',
-      });
+      resetTransferState();
     } catch (error) {
       console.error('Failed to transfer stock:', error);
       alert('Error al transferir el stock');

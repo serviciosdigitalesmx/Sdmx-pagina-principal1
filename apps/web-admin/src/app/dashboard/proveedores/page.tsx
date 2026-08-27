@@ -105,23 +105,22 @@ export default function ProveedoresPage() {
   };
 
   useEffect(() => {
-    void loadSuppliers();
-  }, []);
+    const task = window.setTimeout(() => { void loadSuppliers(); }, 0);
+    return () => window.clearTimeout(task);
+  }, [loadSuppliers]);
 
   useEffect(() => {
     const term = search.trim().toLowerCase();
-    if (!term) {
-      setFiltered(rows);
-      return;
-    }
-    setFiltered(
-      rows.filter((row) =>
-        [supplierName(row), row.rfc ?? '', supplierPhone(row), row.email ?? '', row.categories ?? '']
-          .join(' ')
-          .toLowerCase()
-          .includes(term),
-      ),
-    );
+    const nextFiltered = !term
+      ? rows
+      : rows.filter((row) =>
+          [supplierName(row), row.rfc ?? '', supplierPhone(row), row.email ?? '', row.categories ?? '']
+            .join(' ')
+            .toLowerCase()
+            .includes(term),
+        );
+    const timer = window.setTimeout(() => setFiltered(nextFiltered), 0);
+    return () => window.clearTimeout(timer);
   }, [rows, search]);
 
   const activeCount = useMemo(() => filtered.filter((row) => isActive(row)).length, [filtered]);

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Plus, ChevronRight, Trash2, Smartphone, Cpu, Wrench } from 'lucide-react';
 import { apiGateway } from '@/services/apiGateway';
 import { toast } from 'sonner';
-import { CatalogFamily, CatalogBrand, CatalogModel, CatalogFault } from '@/types';
+import { type CatalogFamily, type CatalogBrand, type CatalogModel, type CatalogFault } from '@/services/apiGateway';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -26,75 +26,64 @@ export function CatalogManager() {
   const [entryCost, setEntryCost] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
-  useEffect(() => {
-    loadFamilies();
+  const loadFamilies = useCallback(async () => {
+    try {
+      const data = await apiGateway.getCatalogFamilies();
+      setFamilies(data);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Error al cargar familias');
+    }
+  }, []);
+
+  const loadBrands = useCallback(async (familyId: string) => {
+    try {
+      const data = await apiGateway.getCatalogBrands(familyId);
+      setBrands(data);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Error al cargar marcas');
+    }
+  }, []);
+
+  const loadModels = useCallback(async (brandId: string) => {
+    try {
+      const data = await apiGateway.getCatalogModels(brandId);
+      setModels(data);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Error al cargar modelos');
+    }
+  }, []);
+
+  const loadFaults = useCallback(async (modelId: string) => {
+    try {
+      const data = await apiGateway.getCatalogFaults(modelId);
+      setFaults(data);
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Error al cargar fallas');
+    }
   }, []);
 
   useEffect(() => {
-    if (selectedFamily) {
-      loadBrands(selectedFamily.id);
-      setSelectedBrand(null);
-      setSelectedModel(null);
-      setModels([]);
-      setFaults([]);
-    } else {
-      setBrands([]);
-    }
-  }, [selectedFamily]);
+    const task = window.setTimeout(() => { void loadFamilies(); }, 0);
+    return () => window.clearTimeout(task);
+  }, [loadFamilies]);
 
   useEffect(() => {
-    if (selectedBrand) {
-      loadModels(selectedBrand.id);
-      setSelectedModel(null);
-      setFaults([]);
-    } else {
-      setModels([]);
-    }
-  }, [selectedBrand]);
+    if (!selectedFamily) return;
+    const task = window.setTimeout(() => { void loadBrands(selectedFamily.id); }, 0);
+    return () => window.clearTimeout(task);
+  }, [loadBrands, selectedFamily]);
 
   useEffect(() => {
-    if (selectedModel) {
-      loadFaults(selectedModel.id);
-    } else {
-      setFaults([]);
-    }
-  }, [selectedModel]);
+    if (!selectedBrand) return;
+    const task = window.setTimeout(() => { void loadModels(selectedBrand.id); }, 0);
+    return () => window.clearTimeout(task);
+  }, [loadModels, selectedBrand]);
 
-  const loadFamilies = async () => {
-    try {
-      const data = await apiGateway.getCatalogFamilies();
-      setFamilies(data as unknown as CatalogFamily[]);
-    } catch (e: any) {
-      toast.error(e.message || 'Error al cargar familias');
-    }
-  };
-
-  const loadBrands = async (familyId: string) => {
-    try {
-      const data = await apiGateway.getCatalogBrands(familyId);
-      setBrands(data as unknown as CatalogBrand[]);
-    } catch (e: any) {
-      toast.error(e.message || 'Error al cargar marcas');
-    }
-  };
-
-  const loadModels = async (brandId: string) => {
-    try {
-      const data = await apiGateway.getCatalogModels(brandId);
-      setModels(data as unknown as CatalogModel[]);
-    } catch (e: any) {
-      toast.error(e.message || 'Error al cargar modelos');
-    }
-  };
-
-  const loadFaults = async (modelId: string) => {
-    try {
-      const data = await apiGateway.getCatalogFaults(modelId);
-      setFaults(data as unknown as CatalogFault[]);
-    } catch (e: any) {
-      toast.error(e.message || 'Error al cargar fallas');
-    }
-  };
+  useEffect(() => {
+    if (!selectedModel) return;
+    const task = window.setTimeout(() => { void loadFaults(selectedModel.id); }, 0);
+    return () => window.clearTimeout(task);
+  }, [loadFaults, selectedModel]);
 
   const openEntryDialog = (type: CatalogEntryType) => {
     setEntryType(type);
@@ -149,13 +138,13 @@ export function CatalogManager() {
   const handleDelete = async (type: 'family'|'brand'|'model'|'fault', id: string) => {
     if (!window.confirm('¿Eliminar este elemento?')) return;
     try {
-      if (type === 'family') { await apiGateway.deleteCatalogFamily(id); loadFamilies(); if (selectedFamily?.id === id) setSelectedFamily(null); }
-      if (type === 'brand') { await apiGateway.deleteCatalogBrand(id); loadBrands(selectedFamily!.id); if (selectedBrand?.id === id) setSelectedBrand(null); }
-      if (type === 'model') { await apiGateway.deleteCatalogModel(id); loadModels(selectedBrand!.id); if (selectedModel?.id === id) setSelectedModel(null); }
-      if (type === 'fault') { await apiGateway.deleteCatalogFault(id); loadFaults(selectedModel!.id); }
+      if (type === 'family') { await apiGateway.deleteCatalogFamily(id); await loadFamilies(); if (selectedFamily?.id === id) setSelectedFamily(null); }
+      if (type === 'brand' && selectedFamily) { await apiGateway.deleteCatalogBrand(id); await loadBrands(selectedFamily.id); if (selectedBrand?.id === id) setSelectedBrand(null); }
+      if (type === 'model' && selectedBrand) { await apiGateway.deleteCatalogModel(id); await loadModels(selectedBrand.id); if (selectedModel?.id === id) setSelectedModel(null); }
+      if (type === 'fault' && selectedModel) { await apiGateway.deleteCatalogFault(id); await loadFaults(selectedModel.id); }
       toast.success('Elemento eliminado');
-    } catch (e: any) {
-      toast.error('Error al eliminar');
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Error al eliminar');
     }
   };
 
@@ -171,7 +160,14 @@ export function CatalogManager() {
           {families.map(f => (
             <div 
               key={f.id} 
-              onClick={() => setSelectedFamily(f)}
+              onClick={() => {
+                setSelectedFamily(f);
+                setSelectedBrand(null);
+                setSelectedModel(null);
+                setBrands([]);
+                setModels([]);
+                setFaults([]);
+              }}
               className={`group flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${selectedFamily?.id === f.id ? 'bg-sky-50 text-sky-700' : 'hover:bg-slate-100 text-slate-700'}`}
             >
               <div className="flex items-center gap-2">
@@ -198,7 +194,12 @@ export function CatalogManager() {
           {brands.map(b => (
             <div 
               key={b.id} 
-              onClick={() => setSelectedBrand(b)}
+              onClick={() => {
+                setSelectedBrand(b);
+                setSelectedModel(null);
+                setModels([]);
+                setFaults([]);
+              }}
               className={`group flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${selectedBrand?.id === b.id ? 'bg-sky-50 text-sky-700' : 'hover:bg-slate-100 text-slate-700'}`}
             >
               <span className="font-medium">{b.name}</span>
@@ -222,7 +223,10 @@ export function CatalogManager() {
           {models.map(m => (
             <div 
               key={m.id} 
-              onClick={() => setSelectedModel(m)}
+              onClick={() => {
+                setSelectedModel(m);
+                setFaults([]);
+              }}
               className={`group flex cursor-pointer items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${selectedModel?.id === m.id ? 'bg-sky-50 text-sky-700' : 'hover:bg-slate-100 text-slate-700'}`}
             >
               <div className="flex items-center gap-2">

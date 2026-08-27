@@ -59,7 +59,7 @@ export default function TecnicoPage() {
       // Calcular días restantes y color si no vienen del backend
       const enrichedOrders = ordersList.map((order) => {
         const promisedDays = getPromiseDays(order.promised_date);
-        let diasRestantes = order.diasRestantes ?? promisedDays ?? undefined;
+        const diasRestantes = order.diasRestantes ?? promisedDays ?? undefined;
         let color = order.color;
 
         if (order.status === 'entregado') {
@@ -165,15 +165,19 @@ export default function TecnicoPage() {
   }, [handleFilterChange]);
 
   useEffect(() => {
-    loadOrders();
-  }, []);
+    const task = window.setTimeout(() => { void loadOrders(); }, 0);
+    return () => window.clearTimeout(task);
+  }, [loadOrders]);
 
   useEffect(() => {
     if (orderIdFromUrl && orders.length > 0) {
       const order = orders.find((o) => o.id === orderIdFromUrl || o.folio === orderIdFromUrl);
       if (order) {
-        setSelectedOrder(order);
-        setModalOpen(true);
+        const task = window.setTimeout(() => {
+          setSelectedOrder(order);
+          setModalOpen(true);
+        }, 0);
+        return () => window.clearTimeout(task);
       }
     }
   }, [orderIdFromUrl, orders]);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { OrderTimeline } from "./order-timeline";
 import { getTenantSlug } from "@/lib/tenant";
@@ -269,6 +269,8 @@ export function OrderDetailDrawer({
   const [isMutating, setIsMutating] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const componentId = useId();
+  const idempotencySequence = useRef(0);
 
   const inventoryReservations = data?.inventoryReservations ?? [];
   const payments = data?.payments ?? [];
@@ -277,9 +279,10 @@ export function OrderDetailDrawer({
     if (!order?.id || isMutating) return;
     setIsMutating(true);
     try {
+      idempotencySequence.current += 1;
       await inventoryService.consumeInventoryReservation(reservationId, { 
         quantity, 
-        idempotencyKey: `consume-${crypto.randomUUID()}`
+        idempotencyKey: `consume-${componentId}-${idempotencySequence.current}`
       });
       onOrderUpdated?.();
     } catch (err) {

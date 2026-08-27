@@ -46,7 +46,7 @@ export default function StockPage() {
   // Suggestions state
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<Array<Record<string, unknown>>>([]);
   const [selectedSupplier, setSelectedSupplier] = useState('');
   const [poModalOpen, setPoModalOpen] = useState(false);
   const [generatingPo, setGeneratingPo] = useState(false);
@@ -131,11 +131,14 @@ export default function StockPage() {
   };
 
   useEffect(() => {
-    loadProducts();
-    loadAlerts();
-    loadSuggestions();
-    loadSuppliers();
-  }, []);
+    const task = window.setTimeout(() => {
+      void loadProducts();
+      void loadAlerts();
+      void loadSuggestions();
+      void loadSuppliers();
+    }, 0);
+    return () => window.clearTimeout(task);
+  }, [loadProducts, loadAlerts, loadSuggestions, loadSuppliers]);
 
   useEffect(() => {
     let filtered = [...products];
@@ -158,7 +161,8 @@ export default function StockPage() {
       filtered = filtered.filter((p) => p.alerta_stock);
     }
 
-    setFilteredProducts(filtered);
+    const timer = window.setTimeout(() => setFilteredProducts(filtered), 0);
+    return () => window.clearTimeout(timer);
   }, [searchTerm, categoryFilter, showAlertsOnly, products]);
 
   const handleGeneratePO = async () => {

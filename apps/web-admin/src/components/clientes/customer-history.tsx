@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -23,13 +23,7 @@ export function CustomerHistory({ open, onOpenChange, customer }: CustomerHistor
   const [history, setHistory] = useState<CustomerHistory | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (customer && open) {
-      loadHistory();
-    }
-  }, [customer, open]);
-
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     if (!customer) return;
     setLoading(true);
     setError(null);
@@ -43,7 +37,17 @@ export function CustomerHistory({ open, onOpenChange, customer }: CustomerHistor
     } finally {
       setLoading(false);
     }
-  };
+  }, [customer]);
+
+  useEffect(() => {
+    if (customer && open) {
+      const timeoutId = window.setTimeout(() => {
+        void loadHistory();
+      }, 0);
+
+      return () => window.clearTimeout(timeoutId);
+    }
+  }, [customer, open, loadHistory]);
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '—';

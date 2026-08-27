@@ -17,16 +17,22 @@ import { isBillingExpired, onBillingExpired } from '@/lib/billing-expired';
 
 import { GlobalQuickReceiveModal } from '@/components/ordenes/global-quick-receive';
 
-function getSessionUser() {
+import type { User } from '@/types';
+
+function getSessionUser(): User | null {
   const session = getCurrentSession();
 
   if (!session) return null;
+
+  const role = (['owner', 'manager', 'technician', 'client'].includes(session.role)
+    ? session.role
+    : 'manager') as User['role'];
 
   return {
     id: session.userId,
     email: session.email,
     name: session.email || 'Usuario activo',
-    role: session.role as any,
+    role,
     tenantId: session.tenantId,
     tenantSlug: session.tenantSlug,
     sucursalId: session.branchId,
@@ -40,23 +46,22 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [user, setUser] = useState<ReturnType<typeof getSessionUser>>(null);
+  const [user] = useState<ReturnType<typeof getSessionUser>>(() =>
+    isAuthenticated() ? getSessionUser() : null,
+  );
   const [menuOpen, setMenuOpen] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
-  const [billingExpired, setBillingExpired] = useState(false);
+  const [authError] = useState<string | null>(() =>
+    isAuthenticated() ? null : 'Necesitas iniciar sesión para acceder al panel.',
+  );
+  const [billingExpired, setBillingExpired] = useState(isBillingExpired);
 
   useEffect(() => {
     if (!isAuthenticated()) {
       router.push('/login');
-      setAuthError('Necesitas iniciar sesión para acceder al panel.');
-    } else {
-      setUser(getSessionUser());
-      setAuthError(null);
     }
   }, [router, pathname]);
 
   useEffect(() => {
-    setBillingExpired(isBillingExpired());
     return onBillingExpired(setBillingExpired);
   }, []);
 

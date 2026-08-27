@@ -18,7 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiClient } from "@/lib/api-client";
 import { resolveAdminApiBaseUrl } from "@/lib/api-base-url";
 import { getApiOptions } from "@/lib/tenant";
-import type { Order, OrderChecklist, OrderDocument, OrderEvent } from "@/types";
+import type { InventoryReservation, Order, OrderChecklist, OrderDocument, OrderEvent } from "@/types";
 import { getTenantSlug } from "@/lib/tenant";
 import { resolveBaseDomain } from "@white-label/config";
 import { inventoryService } from "@/services/inventory/inventoryService";
@@ -73,15 +73,6 @@ function InfoRow({ label, value }: { label: string; value?: string | number | nu
       <span className="max-w-[62%] text-right font-medium text-slate-100">{String(value)}</span>
     </div>
   );
-}
-
-export interface InventoryReservation {
-  id?: string;
-  product_id?: string;
-  reserved_quantity?: number;
-  consumed_quantity?: number;
-  released_quantity?: number;
-  status?: string;
 }
 
 export interface OrderPayment {
@@ -166,7 +157,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
           documents: loaded.documents ?? [],
           events: loaded.events ?? [],
           payments: loaded.payments ?? [],
-          inventoryReservations: reservations ?? [],
+          inventoryReservations: (reservations ?? []) as unknown as InventoryReservation[],
         });
         setDetailsDraft({
           clientName: loaded.order.device_info?.customer_name || "",
@@ -331,7 +322,7 @@ export function OrderModal({ open, onOpenChange, order, onOrderUpdated }: Props)
       await onOrderUpdated();
       
       const reservations = await inventoryService.getInventoryReservations(order.id).catch(() => []);
-      setDetail(prev => prev ? { ...prev, inventoryReservations: reservations ?? [] } : null);
+      setDetail(prev => prev ? { ...prev, inventoryReservations: (reservations ?? []) as unknown as InventoryReservation[] } : null);
     } catch (err) {
       console.error(err);
       alert("Error al crear reserva");

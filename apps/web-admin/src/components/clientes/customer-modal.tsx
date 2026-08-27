@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -22,25 +22,36 @@ interface CustomerModalProps {
 }
 
 export function CustomerModal({ open, onOpenChange, customer, onCustomerSaved }: CustomerModalProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <CustomerModalContent
+        key={`${customer?.id ?? 'new'}-${open ? 'open' : 'closed'}`}
+        customer={customer}
+        onOpenChange={onOpenChange}
+        onCustomerSaved={onCustomerSaved}
+      />
+    </Dialog>
+  );
+}
+
+function CustomerModalContent({
+  customer,
+  onOpenChange,
+  onCustomerSaved,
+}: Omit<CustomerModalProps, 'open'>) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    email: '',
-  });
-
-  useEffect(() => {
+  const [formData, setFormData] = useState(() => {
     if (customer) {
-      setFormData({
+      return {
         name: customer.full_name || customer.name,
         phone: customer.phone,
         email: customer.email || '',
-      });
-    } else {
-      setFormData({ name: '', phone: '', email: '' });
+      };
     }
-  }, [customer, open]);
+
+    return { name: '', phone: '', email: '' };
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,8 +81,7 @@ export function CustomerModal({ open, onOpenChange, customer, onCustomerSaved }:
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent data-testid="customer-dialog" className="max-w-md border border-slate-800 bg-slate-950/95 text-slate-100">
+    <DialogContent data-testid="customer-dialog" className="max-w-md border border-slate-800 bg-slate-950/95 text-slate-100">
         <DialogHeader>
           <DialogTitle className="text-slate-50">
             {customer ? 'Editar cliente' : 'Nuevo cliente'}
@@ -128,6 +138,5 @@ export function CustomerModal({ open, onOpenChange, customer, onCustomerSaved }:
           </div>
         </form>
       </DialogContent>
-    </Dialog>
   );
 }

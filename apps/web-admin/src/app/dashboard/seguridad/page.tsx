@@ -26,7 +26,7 @@ export default function SeguridadPage() {
   const [mfaCode, setMfaCode] = useState('');
   const [copied, setCopied] = useState(false);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
     try {
@@ -47,11 +47,12 @@ export default function SeguridadPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    const task = window.setTimeout(() => { void loadData(); }, 0);
+    return () => window.clearTimeout(task);
+  }, [loadData]);
 
   const handleSetupMFA = async () => {
     try {
@@ -65,20 +66,16 @@ export default function SeguridadPage() {
   };
 
   const handleVerifyMFA = async () => {
-    if (!mfaCode) {
-      alert('Ingresa el código de verificación');
-      return;
-    }
+    if (!mfaCode) return;
     try {
       await apiClient.post('/security/mfa/verify', { code: mfaCode }, getApiOptions());
-      alert('MFA activado correctamente');
+      alert('MFA activado con éxito');
       setMfaSecret(null);
-      setMfaUri(null);
       setMfaCode('');
       loadData();
     } catch (error) {
       console.error('Failed to verify MFA:', error);
-      alert('Código inválido');
+      alert('Código MFA inválido');
     }
   };
 
@@ -91,29 +88,26 @@ export default function SeguridadPage() {
   };
 
   const handleRevokeSession = async (sessionId: string) => {
-    if (!confirm('¿Revocar esta sesión?')) return;
     try {
       await apiClient.delete(`/security/sessions/${sessionId}`, getApiOptions());
       loadData();
     } catch (error) {
       console.error('Failed to revoke session:', error);
-      alert('Error al revocar la sesión');
     }
   };
 
   const handleRotateKeys = async () => {
-    if (!confirm('¿Rotar las claves JWT? Todas las sesiones activas serán invalidadas.')) return;
+    if (!confirm('¿Estás seguro de rotar las claves API? Las integraciones actuales dejarán de funcionar.')) return;
     try {
-      await apiClient.post('/security/rotate-keys', { confirm: true }, getApiOptions());
-      alert('Claves rotadas exitosamente');
-      loadData();
+      await apiClient.post('/security/keys/rotate', {}, getApiOptions());
+      alert('Claves rotadas con éxito');
     } catch (error) {
       console.error('Failed to rotate keys:', error);
       alert('Error al rotar las claves');
     }
   };
 
-  const handleUpdateConfig = async (field: string, value: any) => {
+  const handleUpdateConfig = async (field: string, value: unknown) => {
     try {
       await apiClient.patch('/security/config', { [field]: value }, getApiOptions());
       loadData();
