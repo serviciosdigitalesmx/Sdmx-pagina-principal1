@@ -2,7 +2,7 @@
 
 import { useCallback, useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { Wrench, CheckCircle2, XCircle, CreditCard, AlertCircle, Clock, Smartphone, FileText, Check, Loader2 } from 'lucide-react';
+import { Wrench, CheckCircle2, XCircle, CreditCard, AlertCircle, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';

@@ -14,13 +14,10 @@ import {
   Truck,
   DollarSign,
   ArrowRight,
-  RefreshCw,
   ShoppingCart,
   BarChart3,
 } from 'lucide-react';
 import {
-  AreaChart,
-  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -31,12 +28,10 @@ import {
   Cell,
   BarChart,
   Bar,
-  Legend,
 } from 'recharts';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
 import { getCustomerLabel, getOrderLabel, getTechnicianLabel } from '@/lib/labels';
-import { isModuleEnabled } from '@/lib/module-access';
 import { useTenantIdentity } from '@/providers/TenantIdentityProvider';
 import type { ReportsSummary } from '@/types';
 import { SurfaceCard } from '@white-label/ui';
@@ -69,7 +64,6 @@ export default function DashboardPage() {
   const technicianLabel = getTechnicianLabel();
   const { identity, isLoading: identityLoading } = useTenantIdentity();
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [summary, setSummary] = useState<ReportsSummary | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const mounted = useSyncExternalStore(() => () => {}, () => true, () => false);
@@ -82,8 +76,7 @@ export default function DashboardPage() {
 
   const safeArray = <T,>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
 
-  const loadData = async (showRefresh = false) => {
-    if (showRefresh) setRefreshing(true);
+  const loadData = async () => {
     try {
       const data = await apiClient.get<{ data: ReportsSummary }>('/reports/summary', getApiOptions());
       setSummary(data.data);
@@ -92,7 +85,6 @@ export default function DashboardPage() {
       console.error('Failed to load dashboard data:', error);
     } finally {
       setLoading(false);
-      if (showRefresh) setRefreshing(false);
     }
   };
 

@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Loader2, Calendar, Package, DollarSign, FileText } from 'lucide-react';
+import { Loader2, Package, FileText } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
 import type { Customer, CustomerHistory } from '@/types';

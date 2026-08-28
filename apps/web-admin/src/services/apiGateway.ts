@@ -1,4 +1,4 @@
-import type { DeviceHistoryItem } from "@/types";
+import type { CashRegister, CashShift, DeviceHistoryItem, Sale } from "@/types";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -2009,8 +2009,12 @@ class ApiGateway {
     });
   }
 
-  public async getActiveCashShift() {
-    return this.request<JsonRecord>(`/api/cash/shifts/active`, { method: 'GET' });
+  public async getActiveCashShift(): Promise<(CashShift & {
+    cash_registers?: Pick<CashRegister, 'id' | 'name' | 'sucursal_id'> | null;
+  }) | null> {
+    return this.request<(CashShift & {
+      cash_registers?: Pick<CashRegister, 'id' | 'name' | 'sucursal_id'> | null;
+    }) | null>(`/api/cash/shifts/active`, { method: 'GET' });
   }
 
   public async closeCashShift(finalCash: number, notes?: string) {
@@ -2021,14 +2025,15 @@ class ApiGateway {
   }
 
   public async createSale(data: {
+    idempotencyKey: string;
     customerName: string;
     customerPhone?: string;
     items: Array<{ productId: string; quantity: number }>;
     paymentMethod: 'cash' | 'card' | 'transfer';
     reference?: string;
     notes?: string;
-  }) {
-    return this.request<JsonRecord>(`/api/cash/sales`, {
+  }): Promise<ApiSingleResponse<{ sale: Sale; idempotentReplay: boolean }>> {
+    return this.request<ApiSingleResponse<{ sale: Sale; idempotentReplay: boolean }>>(`/api/cash/sales`, {
       method: 'POST',
       body: JSON.stringify(data),
     });

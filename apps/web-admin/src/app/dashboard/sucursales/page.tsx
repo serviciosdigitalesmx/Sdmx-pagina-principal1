@@ -1,8 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Plus, RefreshCw, Edit2, Trash2, Building2, Phone, Mail, MapPin, ArrowRightLeft, Search } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, Edit2, Trash2, Building2, Phone, Mail, MapPin, ArrowRightLeft, Search } from 'lucide-react';
 import { Badge, SurfaceCard } from '@white-label/ui';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions, getActiveSucursalId, setActiveSucursalId } from '@/lib/tenant';
@@ -15,7 +14,6 @@ import { useAuth } from '@/components/guard/use-auth';
 import type { Sucursal } from '@/types';
 
 export default function SucursalesPage() {
-  const router = useRouter();
   const auth = useAuth();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -27,7 +25,7 @@ export default function SucursalesPage() {
   const [transferOpen, setTransferOpen] = useState(false);
   const [activeSucursalId, setActiveSucursalIdLocal] = useState<string | null>(null);
 
-  const loadSucursales = async () => {
+  const loadSucursales = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
     try {
@@ -40,7 +38,7 @@ export default function SucursalesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const task = window.setTimeout(() => { void loadSucursales(); }, 0);

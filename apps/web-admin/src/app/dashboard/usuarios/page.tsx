@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, RefreshCw, Search, Shield, UserX, History } from "lucide-react";
 import { Badge, SurfaceCard } from "@white-label/ui";
 import { usersService } from "@/services/users/usersService";
@@ -72,7 +72,7 @@ export default function UsuariosPage() {
   const [historyRows, setHistoryRows] = useState<UserHistoryRow[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  async function loadUsers() {
+  const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
       setError("");
@@ -90,7 +90,7 @@ export default function UsuariosPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [query, roleFilter, status]);
 
   useEffect(() => {
     const task = window.setTimeout(() => { void loadUsers(); }, 0);

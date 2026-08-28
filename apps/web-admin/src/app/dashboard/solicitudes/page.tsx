@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { RefreshCw, FileText, MessageSquare } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { RefreshCw } from 'lucide-react';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
 import { RequestCard } from '@/components/solicitudes/request-card';
@@ -16,7 +16,7 @@ export default function SolicitudesPage() {
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const loadRequests = async (showRefresh = false) => {
+  const loadRequests = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
     setLoadError(null);
     try {
@@ -31,7 +31,7 @@ export default function SolicitudesPage() {
       setLoading(false);
       if (showRefresh) setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const task = window.setTimeout(() => { void loadRequests(); }, 0);

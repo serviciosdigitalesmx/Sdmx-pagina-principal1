@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, RefreshCw, Edit2, Eye, Trash2, Phone, MessageSquare, Wrench } from 'lucide-react';
+import { Plus, Search, RefreshCw, Edit2, Eye, Phone, Wrench } from 'lucide-react';
 import { Badge, SurfaceCard } from '@white-label/ui';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
@@ -50,10 +50,10 @@ export default function ClientesPage() {
         }
       });
       const dupPhones = Array.from(phoneMap.entries())
-        .filter(([_, count]) => count > 1)
+        .filter(([, count]) => count > 1)
         .map(([phone]) => phone);
       const dupNames = Array.from(nameMap.entries())
-        .filter(([_, count]) => count > 1)
+        .filter(([, count]) => count > 1)
         .map(([name]) => name);
 
       setCustomers(customersList);

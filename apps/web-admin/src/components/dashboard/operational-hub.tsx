@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ordersService } from "@/services/orders/ordersService";
 import { reportsService } from "@/services/reports/reportsService";
-import { isModuleEnabled } from "@/lib/module-access";
 import { getCustomerLabel, getNewEntityLabel, getOrderLabel } from "@/lib/labels";
 
 type OrderRecord = {
@@ -207,7 +206,7 @@ export function OperationalHub() {
       { label: "Ingresos del mes", value: formatMoney(summary?.totalIncome), helper: "Cobros confirmados en el tenant." },
       { label: `${customerLabel}s nuevos`, value: String(safeNumber(summary?.customersCount)), helper: "Relación comercial del tenant." },
     ];
-  }, [orders.length, summary]);
+  }, [customerLabel, orders.length, ordersLabel, summary]);
 
   const groupedOrders = useMemo(() => {
     const groups: Record<BoardStatus, OrderRecord[]> = {

@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { Plus, RefreshCw, Search, Edit2, Phone, Mail, Truck, Power, Trash2, X } from 'lucide-react';
 import { Badge, SurfaceCard } from '@white-label/ui';
 import { procurementService } from '@/services/procurement/procurementService';
@@ -87,7 +87,7 @@ export default function ProveedoresPage() {
   const [editing, setEditing] = useState<SupplierRow | null>(null);
   const [form, setForm] = useState<SupplierForm>(INITIAL_FORM);
 
-  const loadSuppliers = async () => {
+  const loadSuppliers = useCallback(async () => {
     setLoading(true);
     try {
       const data = await procurementService.getSuppliers();
@@ -102,7 +102,7 @@ export default function ProveedoresPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const task = window.setTimeout(() => { void loadSuppliers(); }, 0);
