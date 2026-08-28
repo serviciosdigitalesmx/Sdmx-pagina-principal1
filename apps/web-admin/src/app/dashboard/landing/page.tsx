@@ -1,5 +1,8 @@
 "use client";
 
+/* Tenant-provided URLs can come from arbitrary storage hosts. */
+/* eslint-disable @next/next/no-img-element */
+
 import { useEffect, useMemo, useState } from "react";
 import { Globe, RefreshCw, Save, Eye, Copy, ExternalLink } from "lucide-react";
 import { SurfaceCard } from "@white-label/ui";
@@ -471,6 +474,7 @@ export default function LandingSettingsPage() {
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
+              {/* Tenant-provided URLs can come from arbitrary storage hosts, so keep native image loading. */}
               {branding?.logoUrl ? <img src={branding.logoUrl} alt="Logo actual" className="h-24 w-full rounded-2xl border border-slate-800 bg-slate-900/60 object-contain p-3" /> : null}
               {branding?.heroImageUrl ? <img src={branding.heroImageUrl} alt="Imagen hero actual" className="h-24 w-full rounded-2xl border border-slate-800 bg-slate-900/60 object-cover" /> : null}
             </div>

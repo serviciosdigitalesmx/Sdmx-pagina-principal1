@@ -90,8 +90,7 @@ export default function OrdersPage() {
     }),
   });
 
-  const orders = (data?.data ?? []) as unknown as Order[];
-  const meta = data?.meta || { total: 0 };
+  const orders = useMemo(() => (data?.data ?? []) as unknown as Order[], [data?.data]);
 
   const groupedOrders = useMemo(() => {
     const groups = new Map<string, Order[]>();

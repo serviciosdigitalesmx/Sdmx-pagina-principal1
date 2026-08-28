@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
-import { Plus, Search, RefreshCw, Edit2, Trash2, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { Plus, Search, RefreshCw, Edit2, Trash2, Clock } from 'lucide-react';
 import { Badge, SurfaceCard } from '@white-label/ui';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
@@ -37,7 +37,7 @@ export default function TareasPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const loadTasks = async () => {
+  const loadTasks = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
     try {
@@ -50,7 +50,7 @@ export default function TareasPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const task = window.setTimeout(() => { void loadTasks(); }, 0);

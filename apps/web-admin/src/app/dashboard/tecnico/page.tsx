@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Search, Filter, RefreshCw, Eye } from 'lucide-react';
-import { Badge, SurfaceCard } from '@white-label/ui';
+import { Search, RefreshCw, Eye } from 'lucide-react';
+import { SurfaceCard } from '@white-label/ui';
 import { apiClient } from '@/lib/api-client';
 import { getApiOptions } from '@/lib/tenant';
 import { OrderCard } from '@/components/tecnico/order-card';
@@ -38,7 +38,6 @@ export default function TecnicoPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [kpis, setKpis] = useState<KPI>({ urgentes: 0, atencion: 0, conMargen: 0, total: 0 });
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -49,7 +48,7 @@ export default function TecnicoPage() {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('todos');
   const [sortOrder, setSortOrder] = useState<SortOrder>('dias_asc');
 
-  const loadOrders = async (showRefresh = false) => {
+  const loadOrders = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
     setLoadError(null);
     try {
@@ -78,8 +77,6 @@ export default function TecnicoPage() {
       });
 
       setOrders(enrichedOrders);
-      applyFilters(enrichedOrders, searchTerm, filterColor, filterStatus, sortOrder);
-
       // Calcular KPIs
       const activeOrders = enrichedOrders.filter((o) => o.status !== 'entregado');
       const urgentes = activeOrders.filter((o) => {
@@ -103,20 +100,14 @@ export default function TecnicoPage() {
       setLoading(false);
       if (showRefresh) setRefreshing(false);
     }
-  };
+  }, []);
 
-  const applyFilters = (
-    ordersList: Order[],
-    search: string,
-    color: FilterColor,
-    status: FilterStatus,
-    sort: SortOrder
-  ) => {
-    let filtered = [...ordersList];
+  const filteredOrders = useMemo(() => {
+    let filtered = [...orders];
 
     // Búsqueda
-    if (search) {
-      const term = search.toLowerCase();
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
       filtered = filtered.filter(
         (o) =>
           o.folio?.toLowerCase().includes(term) ||
@@ -128,18 +119,18 @@ export default function TecnicoPage() {
     }
 
     // Filtro por color
-    if (color !== 'todos') {
-      filtered = filtered.filter((o) => o.color === color);
+    if (filterColor !== 'todos') {
+      filtered = filtered.filter((o) => o.color === filterColor);
     }
 
     // Filtro por estado
-    if (status !== 'todos') {
-      filtered = filtered.filter((o) => o.status === status);
+    if (filterStatus !== 'todos') {
+      filtered = filtered.filter((o) => o.status === filterStatus);
     }
 
     // Ordenamiento
     filtered.sort((a, b) => {
-      switch (sort) {
+      switch (sortOrder) {
         case 'dias_asc':
           return (a.diasRestantes ?? 999) - (b.diasRestantes ?? 999);
         case 'dias_desc':
@@ -153,16 +144,8 @@ export default function TecnicoPage() {
       }
     });
 
-    setFilteredOrders(filtered);
-  };
-
-  const handleFilterChange = useCallback(() => {
-    applyFilters(orders, searchTerm, filterColor, filterStatus, sortOrder);
-  }, [orders, searchTerm, filterColor, filterStatus, sortOrder]);
-
-  useEffect(() => {
-    handleFilterChange();
-  }, [handleFilterChange]);
+    return filtered;
+  }, [filterColor, filterStatus, orders, searchTerm, sortOrder]);
 
   useEffect(() => {
     const task = window.setTimeout(() => { void loadOrders(); }, 0);

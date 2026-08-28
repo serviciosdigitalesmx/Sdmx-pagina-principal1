@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, ArrowDownRight, ArrowUpRight, Banknote, CircleCheckBig, Clock3, RefreshCw } from 'lucide-react';
+import { AlertTriangle, ArrowDownRight, ArrowUpRight, Banknote, CircleCheckBig, RefreshCw } from 'lucide-react';
 import { Badge, SurfaceCard } from '@white-label/ui';
 import { financeService } from '@/services/finance/financeService';
 import { ordersService } from '@/services/orders/ordersService';

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Search, RefreshCw, Edit2, Package, AlertTriangle, ArrowUpDown, Filter, Layers3, ArrowRightLeft, ShoppingCart, Loader2 } from 'lucide-react';
 import { Badge, SurfaceCard } from '@white-label/ui';
 import { apiClient } from '@/lib/api-client';
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { ProductModal } from '@/components/stock/product-modal';
 import { MovementModal } from '@/components/stock/movement-modal';
 import { TransferModal } from '@/components/stock/transfer-modal';
-import type { Product, StockAlert } from '@/types';
+import type { Product, Supplier } from '@/types';
 import { apiGateway } from '@/services/apiGateway';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -27,11 +27,8 @@ interface Suggestion {
 
 export default function StockPage() {
   const [activeTab, setActiveTab] = useState<'inventory' | 'suggestions'>('inventory');
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [alerts, setAlerts] = useState<StockAlert[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [showAlertsOnly, setShowAlertsOnly] = useState(false);
@@ -46,7 +43,7 @@ export default function StockPage() {
   // Suggestions state
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-  const [suppliers, setSuppliers] = useState<Array<Record<string, unknown>>>([]);
+  const [suppliers, setSuppliers] = useState<Array<Pick<Supplier, 'id' | 'business_name'>>>([]);
   const [selectedSupplier, setSelectedSupplier] = useState('');
   const [poModalOpen, setPoModalOpen] = useState(false);
   const [generatingPo, setGeneratingPo] = useState(false);
@@ -60,9 +57,7 @@ export default function StockPage() {
     return { totalProducts, lowStock, outOfStock, stockValue };
   }, [products]);
 
-  const loadProducts = async () => {
-    setLoading(true);
-    setLoadError(null);
+  const loadProducts = useCallback(async () => {
     try {
       const data = await apiClient.get<{ data: Product[] }>('/inventory', getApiOptions());
       const productsList = data.data || [];
@@ -93,52 +88,39 @@ export default function StockPage() {
       setCategories(uniqueCategories);
     } catch (error) {
       console.error('Failed to load products:', error);
-      setLoadError(error instanceof Error ? error.message : 'No se pudieron cargar los productos');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, []);
 
-  const loadAlerts = async () => {
-    try {
-      const data = await apiClient.get<{ data: StockAlert[] }>('/stock-alerts', getApiOptions());
-      setAlerts(data.data || []);
-    } catch (error) {
-      console.error('Failed to load alerts:', error);
-    }
-  };
-
-  const loadSuggestions = async () => {
+  const loadSuggestions = useCallback(async () => {
     setSuggestionsLoading(true);
     try {
       const res = await apiGateway.getProcurementSuggestions();
       setSuggestions(res.data || []);
-    } catch (e) {
+    } catch {
       toast.error('Error al cargar sugerencias');
     } finally {
       setSuggestionsLoading(false);
     }
-  };
+  }, []);
 
-  const loadSuppliers = async () => {
+  const loadSuppliers = useCallback(async () => {
     try {
-      const res = await apiGateway.getSuppliers() as Array<Record<string, unknown>>;
+      const res = await apiGateway.getSuppliers() as unknown as Array<Pick<Supplier, 'id' | 'business_name'>>;
       setSuppliers(res || []);
       if (res.length > 0) setSelectedSupplier(String(res[0].id));
     } catch (e) {
       console.error(e);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const task = window.setTimeout(() => {
       void loadProducts();
-      void loadAlerts();
       void loadSuggestions();
       void loadSuppliers();
     }, 0);
     return () => window.clearTimeout(task);
-  }, [loadProducts, loadAlerts, loadSuggestions, loadSuppliers]);
+  }, [loadProducts, loadSuggestions, loadSuppliers]);
 
   useEffect(() => {
     let filtered = [...products];
@@ -191,7 +173,7 @@ export default function StockPage() {
       await apiGateway.createPurchaseOrder(payload);
       toast.success('¡Orden de compra generada como borrador!');
       setPoModalOpen(false);
-    } catch (e) {
+    } catch {
       toast.error('Error al generar la orden de compra');
     } finally {
       setGeneratingPo(false);
@@ -340,7 +322,6 @@ export default function StockPage() {
             <Button
               onClick={() => {
                 loadProducts();
-                loadAlerts();
               }}
               variant="outline"
               className="gap-2 border-slate-250 hover:bg-slate-50 font-semibold"
@@ -504,7 +485,6 @@ export default function StockPage() {
         product={selectedProduct}
         onProductSaved={() => {
           loadProducts();
-          loadAlerts();
         }}
       />
 
@@ -514,7 +494,6 @@ export default function StockPage() {
         product={movementProduct}
         onMovementSaved={() => {
           loadProducts();
-          loadAlerts();
         }}
       />
 
@@ -524,7 +503,6 @@ export default function StockPage() {
         product={transferProduct}
         onTransferSuccess={() => {
           loadProducts();
-          loadAlerts();
         }}
       />
 
@@ -545,7 +523,7 @@ export default function StockPage() {
                 className="flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none"
               >
                 {suppliers.map(sup => (
-                  <option key={sup.id} value={sup.id}>{sup.name}</option>
+                  <option key={sup.id} value={sup.id}>{sup.business_name}</option>
                 ))}
               </select>
             </div>

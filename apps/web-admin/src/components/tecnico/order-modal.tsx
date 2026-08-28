@@ -1,5 +1,8 @@
 "use client";
 
+/* Evidence URLs can use tenant-managed storage hosts. */
+/* eslint-disable @next/next/no-img-element */
+
 import { useEffect, useState } from "react";
 import { CheckCircle, Clock3, FileText, MessageCircle, Shield, X } from "lucide-react";
 import {

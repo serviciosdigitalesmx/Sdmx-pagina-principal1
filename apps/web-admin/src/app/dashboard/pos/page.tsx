@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { ShoppingCart, Search, Plus, Minus, Trash2, CreditCard, Loader2, Wallet, LogOut, Receipt, Barcode, TerminalSquare } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, CreditCard, Loader2, Wallet, LogOut, Receipt, Barcode, TerminalSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { apiGateway } from '@/services/apiGateway';
 import { ShiftModal } from '@/components/pos/shift-modal';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import type { CashRegister, CashShift, Sale } from '@/types';
 
 type Product = {
   id: string;
@@ -18,6 +19,10 @@ type Product = {
 };
 
 type CartItem = Product & { quantity: number };
+type ActiveCashShift = CashShift & {
+  cash_registers?: Pick<CashRegister, 'id' | 'name' | 'sucursal_id'> | null;
+};
+type ReceiptSale = Sale & { items: CartItem[] };
 
 export default function PosPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -27,7 +32,7 @@ export default function PosPage() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   
   // Estado de Caja
-  const [activeShift, setActiveShift] = useState<Record<string, unknown> | null>(null);
+  const [activeShift, setActiveShift] = useState<ActiveCashShift | null>(null);
   const [shiftModalOpen, setShiftModalOpen] = useState(false);
   const [shiftModalMode, setShiftModalMode] = useState<'open' | 'close'>('open');
 
@@ -39,7 +44,7 @@ export default function PosPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   // Ticket
-  const [receiptSale, setReceiptSale] = useState<Record<string, unknown> | null>(null);
+  const [receiptSale, setReceiptSale] = useState<ReceiptSale | null>(null);
 
   // Buffer para lector de código de barras
   const barcodeBuffer = useRef<string>('');
@@ -48,7 +53,7 @@ export default function PosPage() {
   const checkShift = useCallback(async () => {
     try {
       const shift = await apiGateway.getActiveCashShift();
-      setActiveShift(shift as Record<string, unknown>);
+      setActiveShift(shift);
     } catch (e) {
       console.error(e);
     }
@@ -203,7 +208,7 @@ export default function PosPage() {
       // Arquitectura Real: Cero fake service orders. Consumimos el endpoint transaccional de ventas.
       const result = await apiGateway.createSale(payload);
       
-      setReceiptSale({ ...result, items: [...cart], total, paymentMethod });
+      setReceiptSale({ ...result.data.sale, items: [...cart], total });
       setCart([]);
       setAmountPaid('');
       setCustomerName('Venta Mostrador');
@@ -519,7 +524,7 @@ export default function PosPage() {
               </div>
 
               <div className="border-t border-b border-dashed border-slate-300 py-3 my-4 space-y-2">
-                {((receiptSale.items as CartItem[]) ?? []).map((item: CartItem, idx: number) => (
+                {receiptSale.items.map((item, idx) => (
                   <div key={idx} className="flex justify-between">
                     <span className="truncate pr-2">{item.quantity}x {item.description}</span>
                     <span className="font-bold">${(item.unitPrice * item.quantity).toFixed(2)}</span>
