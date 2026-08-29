@@ -56,8 +56,11 @@ const defaultProductionOrigins = [
   process.env.APP_URL?.trim(),
   process.env.NEXT_PUBLIC_WEB_PUBLIC_URL?.trim(),
   process.env.NEXT_PUBLIC_WEB_ADMIN_URL?.trim(),
+  process.env.NEXT_PUBLIC_WEB_CLIENTES_URL?.trim(),
   'https://serviciosdigitalesmx.online',
   'https://app.serviciosdigitalesmx.online',
+  'https://admin.serviciosdigitalesmx.online',
+  'https://clientes.serviciosdigitalesmx.online',
   'https://api.serviciosdigitalesmx.online',
 ].filter((origin): origin is string => Boolean(origin));
 

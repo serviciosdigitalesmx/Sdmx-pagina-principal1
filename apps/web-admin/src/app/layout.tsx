@@ -24,10 +24,6 @@ export default function RootLayout({
 
   return (
     <html lang="es">
-      <head>
-        <link rel="icon" href="/favicon.png" />
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
-      </head>
       <body data-build-id={buildId}>
         <QueryProvider>
           {children}
