@@ -177,7 +177,12 @@ export default function OnboardingPage() {
         </div>
 
         <div className={`${srFixTheme.surface} p-8`}>
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form
+            className="space-y-4"
+            method="post"
+            action={getPublicApiPath("/api/auth/register")}
+            onSubmit={handleSubmit}
+          >
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-300" htmlFor="workshopName">
                 Nombre del Taller

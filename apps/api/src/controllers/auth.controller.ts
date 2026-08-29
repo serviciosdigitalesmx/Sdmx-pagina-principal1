@@ -492,10 +492,12 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
 
     const userQuery = await supabaseAdmin
       .from('users')
-      .select('id, tenant_id, role, sucursal_id, activo, is_active')
+      .select('id, tenant_id, role, sucursal_id, activo, is_active, created_at')
       .eq('auth_user_id', data.user.id)
-      .maybeSingle();
-    let userRow = userQuery.data;
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+      .limit(1);
+    let userRow = userQuery.data?.[0] ?? null;
     const userRowError = userQuery.error;
 
     console.log("EXCHANGE_AFTER_USERS_QUERY", {
@@ -544,11 +546,14 @@ export const exchangeSupabaseSession = async (req: Request, res: Response) => {
 
       await enableGlobalFreeAccess(autoTenant.tenant_id);
 
-      const { data: refreshedUserRow, error: refreshErr } = await supabaseAdmin
+      const { data: refreshedUserRows, error: refreshErr } = await supabaseAdmin
         .from('users')
-        .select('id, tenant_id, role, sucursal_id, activo, is_active')
+        .select('id, tenant_id, role, sucursal_id, activo, is_active, created_at')
         .eq('auth_user_id', data.user.id)
-        .maybeSingle();
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .limit(1);
+      const refreshedUserRow = refreshedUserRows?.[0] ?? null;
 
       if (refreshErr || !refreshedUserRow?.tenant_id) {
         return res.status(500).json({ error: 'No se pudo vincular el usuario al tenant automático' });

@@ -183,7 +183,7 @@ export default function LoginPage() {
         </SurfaceCard>
 
         <SurfaceCard elevated className="p-8">
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form className="space-y-5" method="post" action="/login" onSubmit={handleSubmit}>
             <div>
               <label className="mb-2 block text-sm font-medium text-stone-300" htmlFor="email">
                 Correo electrónico

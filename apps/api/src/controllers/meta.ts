@@ -98,11 +98,14 @@ export const resolveTenantForSupabaseUser = async (req: Request, res: Response) 
       return res.status(401).json({ error: error?.message ?? 'Unable to validate session' });
     }
 
-    const { data: userRow, error: userRowError } = await supabaseAdmin
+    const { data: userRows, error: userRowError } = await supabaseAdmin
       .from('users')
-      .select('tenant_id, role, sucursal_id')
+      .select('tenant_id, role, sucursal_id, created_at')
       .eq('auth_user_id', data.user.id)
-      .maybeSingle();
+      .order('created_at', { ascending: false })
+      .order('tenant_id', { ascending: false })
+      .limit(1);
+    const userRow = userRows?.[0] ?? null;
 
     if (userRowError) {
       return res.status(502).json({ error: userRowError.message });
