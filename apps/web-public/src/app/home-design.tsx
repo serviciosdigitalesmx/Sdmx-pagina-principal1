@@ -22,8 +22,8 @@ export const metadata: Metadata = {
  icons: { icon: "/brand/fixi-logo.jpg", apple: "/brand/fixi-logo.jpg" },
  title: "FIXI — Todas las reparaciones de tu taller, bajo control",
  description: "Organiza órdenes, fotografías, clientes, inventario, anticipos y cobros con FIXI. Prueba gratis durante 15 días. Planes desde $300 MXN al mes.",
- alternates: { canonical: optionalEnv("NEXT_PUBLIC_WEB_PUBLIC_URL") ?? "https://serviciosdigitalesmx.online" },
- openGraph: { title: "FIXI — Tu taller, bajo control", description: "Software de gestión para talleres de reparación. Probar 15 días gratis.", locale: "es_MX", type: "website" },
+ alternates: { canonical: "https://serviciosdigitalesmx.online" },
+ openGraph: { title: "FIXI — Tu taller, bajo control", description: "Software de gestión para talleres de reparación. Probar 15 días gratis.", url: "https://serviciosdigitalesmx.online", locale: "es_MX", type: "website" },
 };
 const nav = [["Beneficios","beneficios"],["Cómo funciona","como-funciona"],["Funcionalidades","funcionalidades"],["Precios","planes"]];
 const problems = [
@@ -97,5 +97,6 @@ export default function Home(){
   <footer className={s.footer}><div className={s.container}><div className={s.footerGrid}><div><Link href="#inicio"><Brand/></Link><p>Software de gestión para talleres de reparación.</p><p>Servicios Digitales MX</p></div><nav aria-label="Producto"><h3>Producto</h3><a href="#beneficios">Beneficios</a><a href="#como-funciona">Cómo funciona</a><a href="#planes">Precios</a><a href="/fixi-app.apk" download>Descargar app Android</a></nav><nav aria-label="Acceso"><h3>Acceso</h3><Link href={login}>Iniciar sesión</Link><Link href={signup}>Crear mi taller</Link><a href="#preguntas">Preguntas frecuentes</a></nav></div><div className={s.footerBottom}><span>© {new Date().getFullYear()} FIXI · Servicios Digitales MX</span><span>De la recepción a la entrega.</span></div></div></footer>
  </main>;
 }
+
 
 
